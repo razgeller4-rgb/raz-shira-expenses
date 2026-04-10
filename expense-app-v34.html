@@ -1388,6 +1388,11 @@ const USERS = [{id:"raz", label:"רז"}, {id:"shira", label:"שירה"}];
 const ACTIVE_USER_STORAGE_KEY = "expense_app_active_user_v1";
 const CLOUD_SYNC_CONFIG_KEY = "expense_app_cloud_sync_config_v1";
 const CLOUD_SYNC_ROW_ID = "shared-expense-app";
+const DEFAULT_CLOUD_SYNC_CONFIG = {
+  url:"https://otfrgdwrdfmwcrlntfkv.supabase.co",
+  anonKey:"sb_publishable_47PInnWFqJK13IXJyzBL6Q_3IqOjbPH",
+  disabled:false
+};
 const DEFAULT_CATEGORIES_TEMPLATE = [{"name":"מסחר","budget":1600},{"name":"קניות לבית","budget":null},{"name":"סופר","budget":1000},{"name":"רכב/דלק","budget":800},{"name":"הזמנות ואוכל בחוץ עם שירה","budget":1000},{"name":"ביטוחים","budget":null},{"name":"מנויים","budget":null},{"name":"לא רלוונטי","budget":null},{"name":"מותרות","budget":1000},{"name":"עישון","budget":600},{"name":"אין ברירה","budget":null}];
 const DEFAULT_MANUAL_SETTINGS = {openingBalance:null, salary:null};
 const DEFAULT_PAYMENT_METHODS = {
@@ -1515,23 +1520,36 @@ function getIncomeEntriesMap(){ try { return JSON.parse(localStorage.getItem(get
 function saveIncomeEntriesMap(map){ localStorage.setItem(getIncomeStorageKey(), JSON.stringify(map)); scheduleCloudSync(); }
 function getCloudSyncConfig(){
   try {
-    return JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null") || {url:"", anonKey:""};
+    const parsed = JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null");
+    if(parsed && typeof parsed === "object"){
+      return {
+        url:String(parsed.url || DEFAULT_CLOUD_SYNC_CONFIG.url || "").trim().replace(/\/+$/,""),
+        anonKey:String(parsed.anonKey || DEFAULT_CLOUD_SYNC_CONFIG.anonKey || "").trim(),
+        disabled:Boolean(parsed.disabled)
+      };
+    }
   } catch(e){
-    return {url:"", anonKey:""};
+    return {...DEFAULT_CLOUD_SYNC_CONFIG};
   }
+  return {...DEFAULT_CLOUD_SYNC_CONFIG};
 }
 function saveCloudSyncConfig(config){
   localStorage.setItem(CLOUD_SYNC_CONFIG_KEY, JSON.stringify({
     url:String(config.url || "").trim().replace(/\/+$/,""),
-    anonKey:String(config.anonKey || "").trim()
+    anonKey:String(config.anonKey || "").trim(),
+    disabled:Boolean(config.disabled)
   }));
 }
 function clearCloudSyncConfig(){
-  localStorage.removeItem(CLOUD_SYNC_CONFIG_KEY);
+  localStorage.setItem(CLOUD_SYNC_CONFIG_KEY, JSON.stringify({
+    url:DEFAULT_CLOUD_SYNC_CONFIG.url,
+    anonKey:DEFAULT_CLOUD_SYNC_CONFIG.anonKey,
+    disabled:true
+  }));
 }
 function hasCloudSyncConfig(){
   const config = getCloudSyncConfig();
-  return Boolean(config.url && config.anonKey);
+  return Boolean(!config.disabled && config.url && config.anonKey);
 }
 function setCloudSyncState(next){
   cloudSyncState = {...cloudSyncState, ...next};
@@ -1549,12 +1567,14 @@ function renderCloudSyncStatus(){
   const urlInput = document.getElementById("cloudSyncUrl");
   const keyInput = document.getElementById("cloudSyncAnonKey");
   const saveBtn = document.getElementById("saveCloudSyncBtn");
-  if(urlInput && document.activeElement !== urlInput) urlInput.value = getCloudSyncConfig().url || "";
-  if(keyInput && document.activeElement !== keyInput) keyInput.value = getCloudSyncConfig().anonKey || "";
+  const config = getCloudSyncConfig();
+  if(urlInput && document.activeElement !== urlInput) urlInput.value = config.url || "";
+  if(keyInput && document.activeElement !== keyInput) keyInput.value = config.anonKey || "";
   if(saveBtn) saveBtn.textContent = hasCloudSyncConfig() ? "עדכן חיבור ענן" : "שמור חיבור ענן";
   if(badgesEl){
     const badges = [];
-    badges.push(`<span class="tag">${hasCloudSyncConfig() ? "מחובר ל־Supabase" : "לא מחובר"}</span>`);
+    if(config.disabled) badges.push(`<span class="tag">סנכרון כבוי במכשיר הזה</span>`);
+    else badges.push(`<span class="tag">${hasCloudSyncConfig() ? "מחובר ל־Supabase" : "לא מחובר"}</span>`);
     if(cloudSyncState.lastPulledAt) badges.push(`<span class="tag">משיכה אחרונה: ${getReadableDateTime(cloudSyncState.lastPulledAt)}</span>`);
     if(cloudSyncState.lastPushedAt) badges.push(`<span class="tag">דחיפה אחרונה: ${getReadableDateTime(cloudSyncState.lastPushedAt)}</span>`);
     if(cloudSyncState.lastRemoteUpdatedAt) badges.push(`<span class="tag">עדכון ענן: ${getReadableDateTime(cloudSyncState.lastRemoteUpdatedAt)}</span>`);
@@ -1809,7 +1829,7 @@ async function saveCloudSyncConnection(){
     alert("צריך להזין גם Project URL וגם Anon Key.");
     return;
   }
-  saveCloudSyncConfig({url, anonKey});
+  saveCloudSyncConfig({url, anonKey, disabled:false});
   setCloudSyncState({status:"syncing", message:"בודק את חיבור הענן..."});
   try {
     const remote = await fetchCloudState();
@@ -1856,11 +1876,11 @@ async function pushCloudSyncNow(){
   }
 }
 function clearCloudSyncConnection(){
-  if(!confirm("לנתק את החיבור ל־Supabase במכשיר הזה? הנתונים המקומיים יישארו, אבל לא יתבצע סנכרון אוטומטי.")) return;
+  if(!confirm("לכבות את החיבור ל־Supabase במכשיר הזה? הנתונים המקומיים יישארו, אבל לא יתבצע סנכרון אוטומטי.")) return;
   clearCloudSyncConfig();
   if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
   cloudSyncTimer = null;
-  setCloudSyncState({status:"idle", message:"חיבור הענן נותק במכשיר הזה.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null});
+  setCloudSyncState({status:"idle", message:"סנכרון הענן כובה במכשיר הזה. אפשר להפעיל שוב בלחיצה על שמור חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null});
   renderCloudSyncStatus();
 }
 async function bootstrapCloudSync(){
