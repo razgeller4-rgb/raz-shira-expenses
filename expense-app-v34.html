@@ -2478,9 +2478,17 @@ function clearCloudSyncConnection(){
   setCloudSyncState({status:"idle", message:"סנכרון הענן כובה במכשיר הזה. אפשר להפעיל שוב בלחיצה על שמור חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null});
   renderCloudSyncStatus();
 }
+function hasAnyLocalExpenses(){
+  return USERS.some(user => {
+    const key = getScopedStorageKey("expense_app_overrides_v29", user.id);
+    try {
+      const data = JSON.parse(localStorage.getItem(key) || "null");
+      if(!data || typeof data !== "object") return false;
+      return Object.values(data).some(arr => Array.isArray(arr) && arr.length > 0);
+    } catch(e){ return false; }
+  });
+}
 async function bootstrapCloudSync(){
-  // Always enforce the hardcoded credentials.
-  // Only skip auto-connect if the user explicitly clicked "נתק סנכרון" on this device.
   const stored = (() => { try { return JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null"); } catch(e){ return null; } })();
   const userDisabledManually = stored && Boolean(stored.disabled);
   if(!userDisabledManually){
@@ -2490,9 +2498,15 @@ async function bootstrapCloudSync(){
   if(!hasCloudSyncConfig()) return;
   try {
     setCloudSyncState({status:"syncing", message:"מתחבר לענן..."});
-    await pullCloudSnapshot({message:"מחובר לענן — הנתונים עדכניים.", emptyMessage:"החיבור קיים, אבל עדיין אין נתונים בענן. אפשר לדחוף ידנית."});
+    if(hasAnyLocalExpenses()){
+      // יש נתונים מקומיים — דחוף לענן (אל תדרוס את ה-localStorage בגירסת ענן)
+      await pushCloudSnapshot({message:"מחובר לענן — הנתונים מעודכנים."});
+    } else {
+      // אין נתונים מקומיים — משוך מהענן (התקנון ראשוני במכשיר חדש)
+      await pullCloudSnapshot({message:"מחובר לענן — הנתונים נטענו.", emptyMessage:"החיבור קיים, אבל עדיין אין נתונים בענן."});
+    }
   } catch(error){
-    setCloudSyncState({status:"error", message:`לא הצלחתי לטעון את הענן: ${error.message}`});
+    setCloudSyncState({status:"error", message:`לא הצלחתי להתחבר לענן: ${error.message}`});
   }
 }
 function formatDisplayDateFullYear(dateRaw){
