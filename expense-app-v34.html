@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Expense App V35 Local</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
   --bg:#f5f0e8;
@@ -1779,6 +1780,8 @@ body.edit-active .table-shell tr{border:none}
         <div class="toolbar">
           <div>
             <button id="addExpenseBtn" class="primary-cta" type="button">הוצאה חדשה</button>
+            <button id="importCCBtn" class="secondary" type="button">ייבוא מאשראי ↑</button>
+            <input id="importCCFile" type="file" accept=".xlsx,.xls,.csv" style="display:none">
           </div>
           <div style="display:flex;gap:10px;flex-wrap:wrap">
             <button id="copySelectedExpensesBtn" class="secondary" type="button" style="display:none">העתק מסומנות לחודש הבא</button>
@@ -4685,6 +4688,7 @@ document.getElementById("backupFileInput").onchange=(event)=>{
   event.target.value = "";
 };
 document.getElementById("addExpenseBtn").onclick=()=>toggleAddExpenseForm();
+document.getElementById("importCCBtn").onclick=openCCImport;
 document.getElementById("newPayment").onchange=syncNewExpenseImmediateState;
 document.getElementById("newMerchant").onblur=maybeFillNewCategoryFromMerchant;
 document.getElementById("newMerchant").onchange=maybeFillNewCategoryFromMerchant;
@@ -4724,6 +4728,244 @@ function exportBackupFromBanner(){
 }
 
 bootstrapCloudSync().finally(() => { render(); setTimeout(maybeShowBackupBanner, 1200); });
+
+
+// ── Credit Card Import ────────────────────────────────
+let ccImportRows = [];
+
+function openCCImport(){
+  const input = document.getElementById("importCCFile");
+  input.value = "";
+  input.onchange = handleCCFile;
+  input.click();
+}
+
+function closeCCImport(){
+  document.getElementById("ccImportModal").style.display = "none";
+  ccImportRows = [];
+}
+
+function handleCCFile(e){
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = function(ev){
+    try {
+      const wb = XLSX.read(ev.target.result, {type:"array"});
+      const ws = wb.Sheets[wb.SheetNames[0]];
+      const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
+      const result = parseCCStatement(raw, file.name);
+      showCCImportModal(result, file.name);
+    } catch(err){
+      alert("לא הצלחתי לקרוא את הקובץ: " + err.message);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function parseCCStatement(rows, filename){
+  // Detect format by scanning rows
+  let headerRow = -1;
+  let cardName = "";
+  let chargeDate = "";
+
+  for(let i = 0; i < Math.min(rows.length, 15); i++){
+    const r = rows[i];
+    if(!r) continue;
+    const c0 = String(r[0]||"").replace(/[\u202a-\u202e]/g,"").trim();
+    const c7 = String(r[7]||"").trim();
+    // Isracard: card name row
+    if(c0 && (c0.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") || c0.includes("\u05d5\u05d9\u05d6\u05d0") || c0.includes("\u05de\u05e7\u05e1") || c0.includes("\u05db\u05e8\u05d8\u05d9\u05e1") || /\d{4}/.test(c0))){
+      if(!cardName) cardName = c0;
+    }
+    if(c7.includes("\u05dc\u05d7\u05d9\u05d5\u05d1")) chargeDate = c7;
+    // Header row
+    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e8\u05db\u05d9\u05e9\u05d4" || c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
+      headerRow = i;
+    }
+  }
+
+  const txns = [];
+  if(headerRow >= 0){
+    for(let i = headerRow + 1; i < rows.length; i++){
+      const r = rows[i];
+      if(!r || !r[0]) continue;
+      const d = String(r[0]).trim();
+      // Must match date DD.MM.YY or DD/MM/YY
+      if(!/^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(d)) continue;
+      const merchant = String(r[1]||"").trim();
+      if(!merchant || merchant.includes("\u05e1\u05d4\"\u05db")) continue;
+      // Amount: use charge amount (col 4) in ILS
+      const amtCharge = parseFloat(r[4]);
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
+      const currOrig = String(r[3]||"\u20aa").trim();
+      const amtOrig = r[2];
+      const notes = String(r[7]||"").trim();
+      // Parse date
+      const parts = d.replace(/\//g,".").split(".");
+      const dd = parts[0].padStart(2,"0");
+      const mm = parts[1].padStart(2,"0");
+      const yy = parts[2];
+      const year = yy.length === 2 ? "20"+yy : yy;
+      const dateStr = dd+"/"+mm+"/"+year;
+      txns.push({
+        date_raw: dateStr,
+        merchant: merchant.replace(/\s+/g," "),
+        amount: Math.round(amtCharge * 100) / 100,
+        foreign: (currOrig !== "\u20aa" && currOrig !== "\u05e9\u05e7\u05dc") ? (amtOrig + " " + currOrig) : "",
+        notes: notes
+      });
+    }
+  }
+  return {cardName, chargeDate, txns};
+}
+
+function showCCImportModal(result, filename){
+  ccImportRows = result.txns.map(t => Object.assign({}, t, {
+    category: "",
+    type: "\u05de\u05e9\u05ea\u05e0\u05d4",
+    payment: "",
+    immediate: ""
+  }));
+
+  // Populate payment selector
+  const paySel = document.getElementById("ccImportPayment");
+  paySel.innerHTML = getPaymentOptions(true).map(o =>
+    "<option value=\""+o.value+"\">"+o.label+"</option>"
+  ).join("");
+
+  // Auto-guess payment from card name
+  const cn = (result.cardName||"").toLowerCase();
+  const methods = getPaymentMethods();
+  const guess = methods.find(m => {
+    const mn = m.name.toLowerCase();
+    if(cn.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") && mn.includes("\u05d7\u05d1\u05e8")) return true;
+    if(cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9")) && mn.includes("\u05de\u05e7\u05e1") return true;
+    if(cn.includes("\u05de\u05d6\u05e8\u05d7\u05d9") && mn.includes("\u05de\u05d6\u05e8\u05d7\u05d9")) return true;
+    return false;
+  });
+  if(guess) paySel.value = guess.name;
+
+  // Populate sheet selector
+  const sheetSel = document.getElementById("ccImportSheet");
+  // Generate last 6 months
+  const now = new Date();
+  const opts = [];
+  for(let i = 0; i < 6; i++){
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const heb = ["\u05d9\u05e0\u05d5\u05d0\u05e8","\u05e4\u05d1\u05e8\u05d5\u05d0\u05e8","\u05de\u05e8\u05e5","\u05d0\u05e4\u05e8\u05d9\u05dc","\u05de\u05d0\u05d9","\u05d9\u05d5\u05e0\u05d9","\u05d9\u05d5\u05dc\u05d9","\u05d0\u05d5\u05d2\u05d5\u05e1\u05d8","\u05e1\u05e4\u05d8\u05de\u05d1\u05e8","\u05d0\u05d5\u05e7\u05d8\u05d5\u05d1\u05e8","\u05e0\u05d5\u05d1\u05de\u05d1\u05e8","\u05d3\u05e6\u05de\u05d1\u05e8"];
+    const lbl = heb[d.getMonth()] + " " + String(d.getFullYear()).slice(2);
+    opts.push("<option value=\""+lbl+"\">" + lbl + "</option>");
+  }
+  sheetSel.innerHTML = opts.join("");
+  sheetSel.value = selectedSheet;
+
+  // Detected info
+  const det = document.getElementById("ccImportDetected");
+  if(result.cardName || result.chargeDate){
+    det.style.display = "block";
+    det.innerHTML = "<b>\u05d6\u05d5\u05d4\u05d4:</b> " + (result.cardName||"") + (result.chargeDate ? " &nbsp;|&nbsp; " + result.chargeDate : "");
+  }
+
+  // Build preview table
+  buildCCImportTable();
+  document.getElementById("ccImportModal").style.display = "block";
+}
+
+function buildCCImportTable(){
+  const cats = getCategoryDefinitions().map(c => c.name);
+  const catOptions = ["<option value=\"\">\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4</option>"]
+    .concat(cats.map(c => "<option value=\""+c+"\">"+c+"</option>"))
+    .join("");
+  const typeOptions = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t =>
+    "<option value=\""+t+"\">"+t+"</option>"
+  ).join("");
+
+  let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
+  html += "<thead><tr style=\"background:var(--bg);\">";
+  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2"].forEach(h => {
+    html += "<th style=\"padding:8px 6px;text-align:right;font-weight:700;color:var(--muted);border-bottom:2px solid var(--line)\">"+h+"</th>";
+  });
+  html += "</tr></thead><tbody>";
+
+  ccImportRows.forEach((row, i) => {
+    const amtExtra = row.foreign ? " <small style=\"color:var(--muted);font-size:11px\">("+row.foreign+")</small>" : "";
+    html += "<tr style=\"border-bottom:1px solid var(--line)\">";
+    html += "<td style=\"padding:6px\"><input type=\"checkbox\" checked onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
+    html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
+    html += "<td style=\"padding:6px;font-weight:600\">"+row.merchant+"</td>";
+    html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
+    html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].category=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+catOptions+"</select></td>";
+    html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].type=this.value\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+typeOptions+"</select></td>";
+    html += "</tr>";
+  });
+  html += "</tbody></table>";
+  document.getElementById("ccImportTable").innerHTML = html;
+}
+
+function confirmCCImport(){
+  const payment = document.getElementById("ccImportPayment").value || "";
+  const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
+  const toImport = ccImportRows.filter(r => !r._skip);
+  if(!toImport.length){ alert("\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d9\u05d9\u05d1\u05d5\u05d0."); return; }
+
+  const isImm = isPaymentMethodImmediate(payment);
+  const overrides = getOverrides();
+  if(!overrides[sheet]) overrides[sheet] = [];
+
+  // Find max existing row number
+  const allRows = getEditableRows(sheet);
+  let nextRow = allRows.length ? Math.max(...allRows.map(r => r.row||0)) + 1 : 14;
+
+  toImport.forEach(r => {
+    overrides[sheet].push({
+      row: nextRow++,
+      date_raw: r.date_raw,
+      merchant: r.merchant,
+      amount: r.amount,
+      category: r.category || "",
+      type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      payment: payment,
+      immediate: isImm ? "\u05db\u05df" : "",
+      notes: r.notes || ""
+    });
+  });
+
+  saveOverrides(overrides);
+  closeCCImport();
+
+  // Switch to the imported sheet
+  selectedSheet = sheet;
+  render();
+  alert("\u05d9\u05d5\u05d9\u05d1\u05d0\u05d5 " + toImport.length + " \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d2\u05d9\u05dc\u05d9\u05d5\u05df " + sheet + " \u05d1\u05d4\u05e6\u05dc\u05d7\u05d4!");
+}
+
 </script>
+
+<!-- Credit Card Import Modal -->
+<div id="ccImportModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);overflow-y:auto;padding:20px 12px">
+  <div style="max-width:700px;margin:0 auto;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
+      <div style="font-size:18px;font-weight:800;color:var(--text)">ייבוא עסקאות מאשראי</div>
+      <button onclick="closeCCImport()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&times;</button>
+    </div>
+    <div id="ccImportDetected" style="background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);display:none"></div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">משיך לכרטיס באפליקציה</div>
+        <select id="ccImportPayment" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px"></select>
+      </div>
+      <div style="flex:1;min-width:120px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">גיליון יעד</div>
+        <select id="ccImportSheet" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px"></select>
+      </div>
+    </div>
+    <div id="ccImportTable" style="overflow-x:auto;margin-bottom:16px"></div>
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button onclick="closeCCImport()" style="padding:11px 20px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-weight:700;cursor:pointer">בטל</button>
+      <button onclick="confirmCCImport()" id="ccImportConfirmBtn" style="padding:11px 22px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-weight:800;cursor:pointer;font-size:14px">ייבא עסקאות</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
