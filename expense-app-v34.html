@@ -1968,6 +1968,38 @@ body.edit-active .table-shell tr{border:none}
   </div>
 </div>
 
+<div id="localDraftDebug" style="display:none;position:fixed;left:12px;bottom:12px;z-index:9999;max-width:min(560px,calc(100vw - 24px));background:rgba(114,35,28,.96);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 18px 34px rgba(0,0,0,.24);font-size:13px;line-height:1.55;text-align:left;direction:ltr"></div>
+
+<script>
+  (function(){
+    var box = document.getElementById('localDraftDebug');
+    if(!box) return;
+    box.style.display = 'block';
+    box.innerHTML = '<strong>Local Draft Debug</strong><br>pre-script ran';
+    window.onerror = function(message, source, lineno, colno, error){
+      box.style.display = 'block';
+      box.innerHTML = '<strong>Local Draft Debug</strong><br>window.onerror<br>' +
+        String(message || '') + '<br>' +
+        String(source || '') + ':' + String(lineno || '') + ':' + String(colno || '');
+      if(error && error.stack){
+        box.innerHTML += '<br><br>' + String(error.stack).replace(/\n/g, '<br>');
+      }
+      return false;
+    };
+    window.addEventListener('error', function(event){
+      box.style.display = 'block';
+      box.innerHTML = '<strong>Local Draft Debug</strong><br>window error event<br>' +
+        String(event && event.message || '') + '<br>' +
+        String(event && event.filename || '') + ':' + String(event && event.lineno || '') + ':' + String(event && event.colno || '');
+    });
+    window.addEventListener('unhandledrejection', function(event){
+      box.style.display = 'block';
+      box.innerHTML = '<strong>Local Draft Debug</strong><br>unhandled rejection<br>' +
+        String(event && event.reason && (event.reason.stack || event.reason.message || event.reason) || '');
+    });
+  })();
+</script>
+
 <script>
 const SEEDED_BY_SHEET = {"אוקטובר 2025": [{"row": 14, "date_raw": "11/10/25", "merchant": "הגיחון של תותי", "amount": 112.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל"}, {"row": 15, "date_raw": "12/10/25", "merchant": "OPENAI *CHATGPT SUBSCR SAN FRANCISCO USA", "amount": 66.34, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "מנוי ChatGPT"}, {"row": 16, "date_raw": "12/10/25", "merchant": "BIT", "amount": 300.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "טבק"}, {"row": 17, "date_raw": "13/10/25", "merchant": "סופר טל אם המושבות", "amount": 88.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 18, "date_raw": "14/10/25", "merchant": "TOPSTEP CHICAGO USA", "amount": 495.25, "category": "", "type": "משתנה", "payment": "מקס חול", "immediate": "", "notes": "טופסטפ"}, {"row": 19, "date_raw": "15/10/25", "merchant": "נומי", "amount": 102.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה"}, {"row": 20, "date_raw": "15/10/25", "merchant": "CARREFOUR כפר סבא", "amount": 193.4, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 21, "date_raw": "17/10/25", "merchant": "סונול כפר סבא הירוקה", "amount": 254.03, "category": "", "type": "משתנה", "payment": "מקס חול", "immediate": "", "notes": "דלק"}, {"row": 22, "date_raw": "18/10/25", "merchant": "הגיחון של תותי", "amount": 28.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל / מסעדה"}, {"row": 23, "date_raw": "20/10/25", "merchant": "בזק", "amount": 138.53, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "אינטרנט"}, {"row": 24, "date_raw": "20/10/25", "merchant": "מתנות באשראי IWIW", "amount": 770.3, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חתונה של דור"}, {"row": 25, "date_raw": "21/10/25", "merchant": "אי הממתקים", "amount": 18.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "קניות קטנות"}, {"row": 26, "date_raw": "24/10/25", "merchant": "TOPSTEP CHICAGO USA", "amount": 96.77, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "טופסטפ"}, {"row": 27, "date_raw": "24/10/25", "merchant": "מאפיית המשפחה כפר סבא טשר", "amount": 53.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מאפייה"}, {"row": 28, "date_raw": "24/10/25", "merchant": "יונה אברך בע״מ כפר סבא צפו", "amount": 242.73, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "דלק"}, {"row": 29, "date_raw": "24/10/25", "merchant": "BIT", "amount": 1000.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "החזר לאבא"}, {"row": 30, "date_raw": "25/10/25", "merchant": "DENVER", "amount": 21.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל / שתייה"}, {"row": 31, "date_raw": "25/10/25", "merchant": "JONY WINE BAR", "amount": 100.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בר / בילוי"}, {"row": 32, "date_raw": "26/10/25", "merchant": "מ. התחבורה – פנגו מוביט", "amount": 23.0, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "תחבורה / חניה"}, {"row": 33, "date_raw": "27/10/25", "merchant": "מכבי שירותי בריאות", "amount": 33.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "טיפול אורטופדי חד פעמי"}, {"row": 34, "date_raw": "27/10/25", "merchant": "מ. התחבורה – רב פס", "amount": 16.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "תחבורה"}, {"row": 35, "date_raw": "27/10/25", "merchant": "מתנות באשראי IWIW", "amount": 1033.1, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חתונה של שיר"}, {"row": 36, "date_raw": "28/10/25", "merchant": "ביטוח רכב AIG", "amount": 110.63, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "ביטוח רכב – צד ג׳"}, {"row": 37, "date_raw": "28/10/25", "merchant": "NETFLIX.COM", "amount": 32.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "", "notes": "נטפליקס"}, {"row": 38, "date_raw": "29/10/25", "merchant": "איילון ביטוח חיים וב", "amount": 54.61, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח חיים"}, {"row": 39, "date_raw": "29/10/25", "merchant": "איילון ביטוח חיים וב", "amount": 37.52, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח חיים נוסף"}, {"row": 40, "date_raw": "29/10/25", "merchant": "כלל ב. בריאות ה.ק", "amount": 96.57, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח בריאות"}, {"row": 41, "date_raw": "29/10/25", "merchant": "דור – בני דרור", "amount": 190.04, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 42, "date_raw": "30/10/25", "merchant": "ספאר כפר סבא", "amount": 368.42, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 43, "date_raw": "30/10/25", "merchant": "סופר פארם בית הלד", "amount": 199.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "וויד"}, {"row": 44, "date_raw": "30/10/25", "merchant": "BIT", "amount": 417.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "תשלום לשירה על בגדים"}, {"row": 45, "date_raw": "01/11/25", "merchant": "משרד התחבורה – רשות התעופה", "amount": 410.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אגרה / טסט"}, {"row": 46, "date_raw": "01/11/25", "merchant": "פז אפליקציית יילו", "amount": 187.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "דלק"}, {"row": 47, "date_raw": "01/11/25", "merchant": "הגיחון של תותי", "amount": 84.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה / אוכל"}, {"row": 48, "date_raw": "02/11/25", "merchant": "אי הממתקים", "amount": 30.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מתוקים / קניות קטנות"}], "נובמבר 25": [{"row": 14, "date_raw": "07/11/25", "merchant": "Apex Trader Funding", "amount": 188.48, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "מנוי"}, {"row": 15, "date_raw": "10/11/25", "merchant": "בזק הוראת קבע", "amount": 133.01, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "אינטרנט"}, {"row": 16, "date_raw": "12/11/25", "merchant": "chat gpt", "amount": 64.82, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "מנוי"}, {"row": 17, "date_raw": "13/11/25", "merchant": "דור אלון בני דרור", "amount": 227.02, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 18, "date_raw": "13/11/25", "merchant": "ג׳ירף", "amount": 41.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל לתומר"}, {"row": 19, "date_raw": "15/11/25", "merchant": "טיב טעם", "amount": 79.61, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "סופר"}, {"row": 20, "date_raw": "16/11/25", "merchant": "דנוור", "amount": 151.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה עם שירה"}, {"row": 21, "date_raw": "17/11/25", "merchant": "טרמינל בבל", "amount": 35.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "קיוסק"}, {"row": 22, "date_raw": "17/11/25", "merchant": "טיקס טריידינג", "amount": 1032.5, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בוט מסחר תשלום  1/4"}, {"row": 23, "date_raw": "18/11/25", "merchant": "ביי דה ווי כפר סבא", "amount": 44.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בית קפה"}, {"row": 24, "date_raw": "20/11/25", "merchant": "דרך ארץ", "amount": 84.02, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "כביש 6"}, {"row": 25, "date_raw": "20/11/25", "merchant": "ריבאר אפליקציה", "amount": 28.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מתנה לשירה"}, {"row": 26, "date_raw": "20/11/25", "merchant": "ג׳אגר", "amount": 105.64, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 27, "date_raw": "20/11/25", "merchant": "פז יילו", "amount": 216.24, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "דלק"}, {"row": 28, "date_raw": "21/11/25", "merchant": "TradingView", "amount": 23.63, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "חד פעמי"}, {"row": 29, "date_raw": "21/11/25", "merchant": "TradingView", "amount": 77.0, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 30, "date_raw": "23/11/25", "merchant": "ביט", "amount": 225.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "ביט ליובל"}, {"row": 31, "date_raw": "24/11/25", "merchant": "טיב טעם", "amount": 56.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 32, "date_raw": "24/11/25", "merchant": "TakeProfitTrader", "amount": 344.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי מסחר"}, {"row": 33, "date_raw": "26/11/25", "merchant": "סונול כפר סבא הירוקה", "amount": 233.27, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 34, "date_raw": "26/11/25", "merchant": "פרחי חן אייל", "amount": 140.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "פרחים לשירה"}, {"row": 35, "date_raw": "26/11/25", "merchant": "נומי", "amount": 44.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בית קפה"}, {"row": 36, "date_raw": "26/11/25", "merchant": "ויוינו", "amount": 400.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה עם שירה"}, {"row": 37, "date_raw": "26/11/25", "merchant": "באולינג כפר סבא", "amount": 84.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בילוי"}, {"row": 38, "date_raw": "26/11/25", "merchant": "TopStep", "amount": 294.57, "category": "", "type": "משתנה", "payment": "מקס חול", "immediate": "כן", "notes": "מנוי מסחר"}, {"row": 39, "date_raw": "27/11/25", "merchant": "איילון ביטוח חיים ווב", "amount": 37.7, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 40, "date_raw": "27/11/25", "merchant": "איילון ביטוח חיים ווב", "amount": 54.86, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 41, "date_raw": "27/11/25", "merchant": "טיב טעם", "amount": 572.34, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 42, "date_raw": "27/11/25", "merchant": "נטפליקס", "amount": 32.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 43, "date_raw": "28/11/25", "merchant": "כלל ביטוח בריאות", "amount": 111.71, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 44, "date_raw": "28/11/25", "merchant": "בית מרקחת אבן חן", "amount": 339.3, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "וויד"}, {"row": 45, "date_raw": "29/11/25", "merchant": "ג׳ירף", "amount": 16.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל לתומר"}, {"row": 46, "date_raw": "30/11/25", "merchant": "ביט", "amount": 56.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל "}, {"row": 47, "date_raw": "30/11/25", "merchant": "המושבה (קיוסק)", "amount": 21.66, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "נייר גלגול"}, {"row": 48, "date_raw": "01/12/25", "merchant": "ביטוח חובה AIG", "amount": 242.4, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "ביטוח"}, {"row": 49, "date_raw": "04/12/25", "merchant": "ספוטיפיי", "amount": 43.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 50, "date_raw": "05/12/25", "merchant": "נומי", "amount": 28.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בית קפה"}, {"row": 51, "date_raw": "05/12/25", "merchant": "נומי", "amount": 18.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בית קפה"}, {"row": 52, "date_raw": "06/12/25", "merchant": "הג׳חנון של תותי", "amount": 84.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל "}, {"row": 53, "date_raw": "07/12/25", "merchant": "ג׳ירף", "amount": 20.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל לכיסוף, החזיר בביט"}], "דצמבר 25": [{"row": 14, "date_raw": "17/11/25", "merchant": "טיקס טריידינג", "amount": 1032.5, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בוט מסחר תשלום  2/4"}, {"row": 15, "date_raw": "01/01/25", "merchant": "ביטוח חובה AIG", "amount": 242.4, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "ביטוח"}, {"row": 16, "date_raw": "04/12/25", "merchant": "פז יילו", "amount": 229.23, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 17, "date_raw": "05/12/25", "merchant": "כרטיס לאלסטיקה - ג. דרופ", "amount": 241.5, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "כרטיס למסיבה"}, {"row": 18, "date_raw": "06/12/25", "merchant": "ביי דה ווי כפר סבא", "amount": 35.0, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "קפה עם שירה"}, {"row": 19, "date_raw": "09/12/25", "merchant": "טיב טעם", "amount": 62.12, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "סופר"}, {"row": 20, "date_raw": "10/12/25", "merchant": "אלי אקספרס", "amount": 210.09, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "קניות לבית"}, {"row": 21, "date_raw": "10/12/25", "merchant": "בזק הוראת קבע", "amount": 166.14, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "אינטרנט"}, {"row": 22, "date_raw": "11/12/25", "merchant": "מנטה דלק", "amount": 145.39, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "דלק"}, {"row": 23, "date_raw": "11/12/25", "merchant": "אלי אקספרס", "amount": 18.46, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "קניות לבית"}, {"row": 24, "date_raw": "11/12/25", "merchant": "אלי אקספרס", "amount": 143.59, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "קניות לבית"}, {"row": 25, "date_raw": "12/12/25", "merchant": "chat gpt", "amount": 64.82, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "כן", "notes": "מנוי"}, {"row": 26, "date_raw": "12/12/25", "merchant": "קפה קוקו", "amount": 102.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "בית קפה עם שירה"}, {"row": 27, "date_raw": "12/12/25", "merchant": "חניון עליון דיזינגוף", "amount": 22.4, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חנייה"}, {"row": 28, "date_raw": "13/12/25", "merchant": "ביט", "amount": 110.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 29, "date_raw": "14/12/25", "merchant": "ספארו מאפייה דרורים", "amount": 34.0, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "סופגנייה"}, {"row": 30, "date_raw": "15/12/25", "merchant": "פז יילו", "amount": 114.93, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 31, "date_raw": "15/12/25", "merchant": "מסעדת a", "amount": 500.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה עם שירה"}, {"row": 32, "date_raw": "15/12/25", "merchant": "חניון שרונה עזריאלי", "amount": 25.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חנייה"}, {"row": 33, "date_raw": "16/12/25", "merchant": "שיבא מרפאת קנאביס", "amount": 184.0, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "אגרה לרישיון"}, {"row": 34, "date_raw": "16/12/25", "merchant": "pickmytrade", "amount": 162.71, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "כן", "notes": "מנוי"}, {"row": 35, "date_raw": "16/12/25", "merchant": "רישיון רפואי", "amount": 1500.0, "category": "", "type": "משתנה", "payment": "", "immediate": "כן", "notes": "העברה בנקאית"}, {"row": 36, "date_raw": "16/12/25", "merchant": "apex", "amount": 63.7, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "כן", "notes": "מנוי"}, {"row": 37, "date_raw": "17/12/25", "merchant": "אי הממתקים", "amount": 12.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "נייר גלגול"}, {"row": 38, "date_raw": "17/12/25", "merchant": "וולט", "amount": 221.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל"}, {"row": 39, "date_raw": "17/12/25", "merchant": "סונול", "amount": 247.46, "category": "", "type": "משתנה", "payment": "מקס חול", "immediate": "", "notes": "דלק"}, {"row": 40, "date_raw": "20/12/25", "merchant": "חומוס אסלי", "amount": 134.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל למשפחה אבא החזיר"}, {"row": 41, "date_raw": "20/12/25", "merchant": "אלי אקספרס", "amount": 17.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "קניות לבית"}, {"row": 42, "date_raw": "21/12/25", "merchant": "TradingView", "amount": 77.0, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 43, "date_raw": "26/12/25", "merchant": "פז יילו", "amount": 249.82, "category": "", "type": "משתנה", "payment": "חבר", "immediate": "", "notes": "דלק"}, {"row": 44, "date_raw": "26/12/25", "merchant": "topstep", "amount": 287.91, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "כן", "notes": "מנוי"}, {"row": 45, "date_raw": "27/12/25", "merchant": "נטפליקס", "amount": 32.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 46, "date_raw": "28/12/25", "merchant": "בית מרקחת אבן חן", "amount": 478.2, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "וויד"}, {"row": 47, "date_raw": "28/12/25", "merchant": "סבן מרקט", "amount": 610.61, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 48, "date_raw": "28/12/25", "merchant": "משק יוסף", "amount": 40.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "אוכל - תותים"}, {"row": 49, "date_raw": "28/12/25", "merchant": "טיב טעם", "amount": 150.04, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 50, "date_raw": "29/12/25", "merchant": "איילון ביטוח חיים ובריאות", "amount": 37.52, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 51, "date_raw": "29/12/25", "merchant": "איילון ביטוח חיים ובריאות", "amount": 54.6, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 52, "date_raw": "30/12/25", "merchant": "כלל ביטוח בריאות", "amount": 111.25, "category": "", "type": "קבועה", "payment": "חבר", "immediate": "", "notes": "ביטוח"}, {"row": 53, "date_raw": "30/12/25", "merchant": "ביטוח צד ג׳  AIG", "amount": 113.36, "category": "", "type": "קבועה", "payment": "מקס חול", "immediate": "", "notes": "ביטוח"}, {"row": 54, "date_raw": "31/12/25", "merchant": "טרמינל בבל", "amount": 24.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "שוקולד לקינוח"}, {"row": 55, "date_raw": "01/01/26", "merchant": "מכבידנט", "amount": 113.7, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "שיננית"}, {"row": 56, "date_raw": "01/01/26", "merchant": "דור אלון", "amount": 142.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "דלק"}, {"row": 57, "date_raw": "02/01/26", "merchant": "חניון כיכר המושבה", "amount": 13.2, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חנייה"}, {"row": 58, "date_raw": "02/01/26", "merchant": "נאי לון", "amount": 351.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "מסעדה עם שירה"}, {"row": 59, "date_raw": "03/01/26", "merchant": "סבן מרקט", "amount": 372.09, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}, {"row": 60, "date_raw": "04/01/26", "merchant": "ספוטיפיי", "amount": 43.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "מנוי"}, {"row": 61, "date_raw": "04/01/26", "merchant": "משחקייה אושילנד", "amount": 110.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "משחקייה עם שירה"}, {"row": 62, "date_raw": "05/01/26", "merchant": "כיכר מזל -  קיוסק עלייה", "amount": 125.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "ווייפ"}, {"row": 63, "date_raw": "06/01/26", "merchant": "סונול", "amount": 239.17, "category": "", "type": "משתנה", "payment": "מקס חול", "immediate": "", "notes": "דלק"}, {"row": 64, "date_raw": "07/01/26", "merchant": "אפל", "amount": 9.9, "category": "", "type": "קבועה", "payment": "ויזה מזרחי", "immediate": "כן", "notes": "שטח אחסון גוגל"}, {"row": 65, "date_raw": "07/01/26", "merchant": "סונול", "amount": 99.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "וייפ"}, {"row": 66, "date_raw": "07/01/26", "merchant": "פז יילו", "amount": 21.9, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "קפה ונשנוש לנסיעה"}, {"row": 67, "date_raw": "07/01/26", "merchant": "סופר דה מרקט הרצליה", "amount": 20.8, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "חדפ לעל הבאש"}, {"row": 68, "date_raw": "08/01/26", "merchant": "ביט", "amount": 100.0, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "ביט לאביב על האש"}, {"row": 69, "date_raw": "08/01/26", "merchant": "קרפור", "amount": 77.8, "category": "", "type": "משתנה", "payment": "ויזה מזרחי", "immediate": "", "notes": "סופר"}]};
 const SHEET_SUMMARIES = {"אוקטובר 2025": {"totalExpenses": 9002.23, "totalFixed": 849.3699999999999, "totalVariable": 8152.86, "fuel": 873.8, "groceries": 1442.3100000000002, "trading": null, "charge2": null, "charge10": null, "immediate": null, "loan": null, "opening": null, "closing": null, "incomeTotal": null}, "נובמבר 25": {"totalExpenses": 6031.479999999999, "totalFixed": 1830.8000000000002, "totalVariable": 2709.6600000000008, "fuel": 676.53, "groceries": 814.49, "trading": null, "charge2": 1040.3, "charge10": 4198.809999999999, "immediate": 792.3699999999999, "loan": null, "opening": null, "closing": null, "incomeTotal": null}, "דצמבר 25": {"totalExpenses": 10908.449999999997, "totalFixed": 2500.61, "totalVariable": 4899.539999999997, "fuel": 1368.9, "groceries": 1382.6599999999999, "trading": null, "charge2": 1353.9699999999998, "charge10": 6164.859999999998, "immediate": 2632.88, "loan": 756.74, "opening": 6303.0, "closing": null, "incomeTotal": 1860.0}, "ינואר 26": {"totalExpenses": 10993.519999999999, "totalFixed": 2143.59, "totalVariable": 3951.119999999997, "fuel": 652.77, "groceries": 787.46, "trading": 2685.8900000000003, "charge2": 985.93, "charge10": 7541.729999999998, "immediate": 1693.17, "loan": 772.69, "opening": 5107.16, "closing": 7642.640000000001, "incomeTotal": null}, "פברואר 26": {"totalExpenses": 9861.35, "totalFixed": 1280.3300000000002, "totalVariable": 4616.86, "fuel": 699.6700000000001, "groceries": 1223.8300000000002, "trading": 1267.97, "charge2": 3048.0699999999997, "charge10": 5654.77, "immediate": 385.81999999999994, "loan": 772.69, "opening": 7610.84, "closing": 9149.49, "incomeTotal": 11400.0}, "מרץ 26": {"totalExpenses": 10927.86, "totalFixed": 1201.35, "totalVariable": 7766.6, "fuel": 477.14, "groceries": 710.0799999999999, "trading": 1465.0300000000002, "charge2": 1568.1799999999998, "charge10": 2929.7200000000016, "immediate": 5657.269999999999, "loan": 772.69, "opening": 7610.84, "closing": 5299.16, "incomeTotal": 8616.18}};
@@ -2075,6 +2107,33 @@ let yearlyPrefsOpen = false;
 let cloudSyncTimer = null;
 let cloudSyncState = {status:"idle", message:"עדיין לא הוגדר חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null};
 let suppressCloudSync = false;
+const IS_LOCAL_DRAFT_FILE = window.location.protocol === "file:";
+
+function showLocalDraftDebug(message){
+  const box = document.getElementById("localDraftDebug");
+  if(!box) return;
+  box.style.display = "block";
+  box.innerHTML = `<strong>Local Draft Debug</strong><br>${String(message || "").replace(/\n/g,"<br>")}`;
+}
+
+function appendLocalDraftDebug(message){
+  const box = document.getElementById("localDraftDebug");
+  if(!box) return;
+  box.style.display = "block";
+  const existing = box.innerHTML ? box.innerHTML + "<br><br>" : "<strong>Local Draft Debug</strong><br>";
+  box.innerHTML = `${existing}${String(message || "").replace(/\n/g,"<br>")}`;
+}
+
+function clearLocalDraftDebug(){
+  const box = document.getElementById("localDraftDebug");
+  if(!box) return;
+  box.style.display = "none";
+  box.innerHTML = "";
+}
+
+if(IS_LOCAL_DRAFT_FILE){
+  showLocalDraftDebug("script loaded");
+}
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function getFatherDebtStart(){ return Number(getDebtData().fatherDebtStart || 0); }
@@ -2128,6 +2187,19 @@ function getCloudSyncConfig(){
     return {...DEFAULT_CLOUD_SYNC_CONFIG};
   }
   return {...DEFAULT_CLOUD_SYNC_CONFIG};
+}
+function ensureLocalDraftPreviewData(){
+  if(!IS_LOCAL_DRAFT_FILE) return;
+  const existingRaz = getOverrides();
+  if(Object.keys(existingRaz).length) return;
+  const seededOverrides = clone(SEEDED_BY_SHEET || {});
+  localStorage.setItem("expense_app_overrides_v29", JSON.stringify(seededOverrides));
+  if(!localStorage.getItem("expense_app_categories_v1")){
+    localStorage.setItem("expense_app_categories_v1", JSON.stringify(clone(DEFAULT_CATEGORIES_TEMPLATE)));
+  }
+  if(!localStorage.getItem("expense_app_payment_methods_v1")){
+    localStorage.setItem("expense_app_payment_methods_v1", JSON.stringify(clone(DEFAULT_PAYMENT_METHODS.raz)));
+  }
 }
 function saveCloudSyncConfig(config){
   localStorage.setItem(CLOUD_SYNC_CONFIG_KEY, JSON.stringify({
@@ -2451,7 +2523,7 @@ async function pullCloudSnapshot(options={}){
   return remote;
 }
 function scheduleCloudSync(){
-  if(suppressCloudSync || !hasCloudSyncConfig()) return;
+  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
   if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(async ()=>{
     try {
@@ -2534,6 +2606,19 @@ function hasAnyLocalExpenses(){
   });
 }
 async function bootstrapCloudSync(){
+  if(IS_LOCAL_DRAFT_FILE){
+    ensureLocalDraftPreviewData();
+    appendLocalDraftDebug(`bootstrap local draft mode<br>currentUser=${currentUser}<br>seeded sheets=${Object.keys(getOverrides()).length}`);
+    setCloudSyncState({
+      status:"idle",
+      message:"מצב טיוטה מקומית: הסנכרון האוטומטי לענן כבוי כאן כדי שלא נשפיע על האתר החי.",
+      lastPulledAt:null,
+      lastPushedAt:null,
+      lastRemoteUpdatedAt:null
+    });
+    renderCloudSyncStatus();
+    return;
+  }
   const stored = (() => { try { return JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null"); } catch(e){ return null; } })();
   const userDisabledManually = stored && Boolean(stored.disabled);
   if(!userDisabledManually){
@@ -4571,70 +4656,84 @@ function renderYearSelect(){
   };
 }
 function render(){
-  syncRecurringFixedRows();
-  renderTabs();
-  renderSelect();
-  renderYearSelect();
-  renderFilterOptions();
-  renderDashboardPrefsPanel();
-  renderYearlyPrefsPanel();
-  renderNewCategoryOptions();
-  renderPaymentSelectOptions();
-  renderPaymentMethodTab();
-  const baseRows = getSheetRows();
-  const rows = getFilteredRows(baseRows);
-  renderHero(baseRows);
-  renderExcelKpis();
-  renderCategorySummary(baseRows);
-  renderChart(baseRows);
-  renderIncomeTab();
-  renderTable(rows);
-  renderDebts();
-  renderYearly();
-  renderCloudSyncStatus();
-  document.body.classList.toggle("edit-active", editMode);
-  const btn=document.getElementById("toggleEditBtn");
-  btn.textContent = `מצב עריכה: ${editMode ? "פעיל" : "כבוי"}`;
-  btn.classList.toggle("active", editMode);
-  const copySelectedBtn = document.getElementById("copySelectedExpensesBtn");
-  if(copySelectedBtn){
-    copySelectedBtn.style.display = editMode ? "inline-flex" : "none";
-    copySelectedBtn.textContent = selectedExpenseRows.size ? `העתק מסומנות (${selectedExpenseRows.size}) לחודש הבא` : "העתק מסומנות לחודש הבא";
-  }
-  const incomeBtn = document.getElementById("toggleIncomeEditBtn");
-  incomeBtn.textContent = `מצב עריכה: ${incomeEditMode ? "פעיל" : "כבוי"}`;
-  incomeBtn.classList.toggle("active", incomeEditMode);
-  document.getElementById("addIncomeBtn").style.display = incomeEditMode ? "inline-flex" : "none";
-  const debtBtn = document.getElementById("toggleDebtEditBtn");
-  debtBtn.textContent = `מצב עריכה: ${debtEditMode ? "פעיל" : "כבוי"}`;
-  debtBtn.classList.toggle("active", debtEditMode);
-  const categoryBtn = document.getElementById("toggleCategoryEditBtn");
-  if(categoryBtn){
-    categoryBtn.textContent = `מצב עריכה: ${categoryEditMode ? "פעיל" : "כבוי"}`;
-    categoryBtn.classList.toggle("active", categoryEditMode);
-  }
-  const addCategoryBtn = document.getElementById("addCategoryBtn");
-  if(addCategoryBtn){
-    addCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
-  }
-  const cardBtn = document.getElementById("toggleCardEditBtn");
-  if(cardBtn){
-    cardBtn.textContent = `מצב עריכה: ${cardEditMode ? "פעיל" : "כבוי"}`;
-    cardBtn.classList.toggle("active", cardEditMode);
-  }
-  const addCardBtn = document.getElementById("addCardBtn");
-  if(addCardBtn){
-    addCardBtn.style.display = cardEditMode ? "inline-flex" : "none";
-  }
-  const dashboardPrefsBtn = document.getElementById("toggleDashboardPrefsBtn");
-  if(dashboardPrefsBtn){
-    dashboardPrefsBtn.textContent = dashboardPrefsOpen ? "סגור התאמה" : "התאם כרטיסיות";
-    dashboardPrefsBtn.classList.toggle("active", dashboardPrefsOpen);
-  }
-  const yearlyPrefsBtn = document.getElementById("toggleYearlyPrefsBtn");
-  if(yearlyPrefsBtn){
-    yearlyPrefsBtn.textContent = yearlyPrefsOpen ? "סגור התאמה" : "התאם סיכום";
-    yearlyPrefsBtn.classList.toggle("active", yearlyPrefsOpen);
+  try {
+    if(IS_LOCAL_DRAFT_FILE){
+      showLocalDraftDebug(`render start<br>user=${currentUser}<br>sheet=${selectedSheet}`);
+    } else {
+      clearLocalDraftDebug();
+    }
+    syncRecurringFixedRows();
+    renderTabs();
+    renderSelect();
+    renderYearSelect();
+    renderFilterOptions();
+    renderDashboardPrefsPanel();
+    renderYearlyPrefsPanel();
+    renderNewCategoryOptions();
+    renderPaymentSelectOptions();
+    renderPaymentMethodTab();
+    const baseRows = getSheetRows();
+    const rows = getFilteredRows(baseRows);
+    renderHero(baseRows);
+    renderExcelKpis();
+    renderBudgetOverview(baseRows);
+    renderCategorySummary(baseRows);
+    renderChart(baseRows);
+    renderIncomeTab();
+    renderTable(rows);
+    renderDebts();
+    renderYearly();
+    renderCloudSyncStatus();
+    document.body.classList.toggle("edit-active", editMode);
+    const btn=document.getElementById("toggleEditBtn");
+    btn.textContent = `מצב עריכה: ${editMode ? "פעיל" : "כבוי"}`;
+    btn.classList.toggle("active", editMode);
+    const copySelectedBtn = document.getElementById("copySelectedExpensesBtn");
+    if(copySelectedBtn){
+      copySelectedBtn.style.display = editMode ? "inline-flex" : "none";
+      copySelectedBtn.textContent = selectedExpenseRows.size ? `העתק מסומנות (${selectedExpenseRows.size}) לחודש הבא` : "העתק מסומנות לחודש הבא";
+    }
+    const incomeBtn = document.getElementById("toggleIncomeEditBtn");
+    incomeBtn.textContent = `מצב עריכה: ${incomeEditMode ? "פעיל" : "כבוי"}`;
+    incomeBtn.classList.toggle("active", incomeEditMode);
+    document.getElementById("addIncomeBtn").style.display = incomeEditMode ? "inline-flex" : "none";
+    const debtBtn = document.getElementById("toggleDebtEditBtn");
+    debtBtn.textContent = `מצב עריכה: ${debtEditMode ? "פעיל" : "כבוי"}`;
+    debtBtn.classList.toggle("active", debtEditMode);
+    const categoryBtn = document.getElementById("toggleCategoryEditBtn");
+    if(categoryBtn){
+      categoryBtn.textContent = `מצב עריכה: ${categoryEditMode ? "פעיל" : "כבוי"}`;
+      categoryBtn.classList.toggle("active", categoryEditMode);
+    }
+    const addCategoryBtn = document.getElementById("addCategoryBtn");
+    if(addCategoryBtn){
+      addCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
+    }
+    const cardBtn = document.getElementById("toggleCardEditBtn");
+    if(cardBtn){
+      cardBtn.textContent = `מצב עריכה: ${cardEditMode ? "פעיל" : "כבוי"}`;
+      cardBtn.classList.toggle("active", cardEditMode);
+    }
+    const addCardBtn = document.getElementById("addCardBtn");
+    if(addCardBtn){
+      addCardBtn.style.display = cardEditMode ? "inline-flex" : "none";
+    }
+    const dashboardPrefsBtn = document.getElementById("toggleDashboardPrefsBtn");
+    if(dashboardPrefsBtn){
+      dashboardPrefsBtn.textContent = dashboardPrefsOpen ? "סגור התאמה" : "התאם כרטיסיות";
+      dashboardPrefsBtn.classList.toggle("active", dashboardPrefsOpen);
+    }
+    const yearlyPrefsBtn = document.getElementById("toggleYearlyPrefsBtn");
+    if(yearlyPrefsBtn){
+      yearlyPrefsBtn.textContent = yearlyPrefsOpen ? "סגור התאמה" : "התאם סיכום";
+      yearlyPrefsBtn.classList.toggle("active", yearlyPrefsOpen);
+    }
+    if(IS_LOCAL_DRAFT_FILE){
+      appendLocalDraftDebug(`render ok<br>rows=${getSheetRows().length}<br>hero=${document.getElementById("heroCurrentTotal").textContent}`);
+    }
+  } catch (error) {
+    showLocalDraftDebug(`${error && error.message ? error.message : error}<br>${error && error.stack ? error.stack : ""}`);
+    throw error;
   }
 }
 
@@ -4727,7 +4826,11 @@ function exportBackupFromBanner(){
   dismissBackupBanner();
 }
 
-bootstrapCloudSync().finally(() => { render(); setTimeout(maybeShowBackupBanner, 1200); });
+bootstrapCloudSync().finally(() => {
+  if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
+  render();
+  setTimeout(maybeShowBackupBanner, 1200);
+});
 
 
 // ── Credit Card Import ────────────────────────────────
@@ -4743,6 +4846,59 @@ function openCCImport(){
 function closeCCImport(){
   document.getElementById("ccImportModal").style.display = "none";
   ccImportRows = [];
+}
+
+function escapeHtmlAttr(value){
+  return String(value == null ? "" : value)
+    .replace(/&/g, "&amp;")
+    .replace(/"/g, "&quot;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;");
+}
+
+function normalizeImportMerchant(value){
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toLowerCase();
+}
+
+function getAllExpenseSheetsForDuplicateScan(){
+  const sheetKeys = new Set([
+    ...SHEET_OPTIONS,
+    ...Object.keys(SEEDED_BY_SHEET || {}),
+    ...Object.keys(getOverrides() || {})
+  ]);
+  return [...sheetKeys];
+}
+
+function refreshCCImportDuplicateState(){
+  ccImportRows.forEach(row => {
+    row._isDuplicate = findDuplicateExpense(row);
+    if(row._isDuplicate){
+      row._skip = true;
+    }
+  });
+}
+
+function updateCCImportField(index, field, value){
+  const row = ccImportRows[index];
+  if(!row) return;
+  row[field] = value;
+  if(field === "merchant"){
+    row.merchant = String(value || "").replace(/\s+/g, " ").trim();
+  }
+  refreshCCImportDuplicateState();
+  buildCCImportTable();
+}
+
+function buildCCImportOptionMarkup(options, selectedValue){
+  const selected = String(selectedValue == null ? "" : selectedValue);
+  return options.map(option => {
+    const value = String(option.value == null ? "" : option.value);
+    const label = String(option.label == null ? "" : option.label);
+    return `<option value="${escapeHtmlAttr(value)}" ${value === selected ? "selected" : ""}>${label}</option>`;
+  }).join("");
 }
 
 function handleCCFile(e){
@@ -4872,7 +5028,7 @@ function showCCImportModal(result, filename){
   }));
 
   // Mark duplicates
-  ccImportRows.forEach(r => { r._isDuplicate = findDuplicateExpense(r); });
+  refreshCCImportDuplicateState();
 
   // Populate payment selector
   const paySel = document.getElementById("ccImportPayment");
@@ -4940,16 +5096,18 @@ function showCCImportModal(result, filename){
 function findDuplicateExpense(txn){
   // Check all sheets for an expense matching date+amount+merchant
   try {
-    const overrides = getOverrides();
     const tDate = txn.date_raw || "";
     const tAmt  = txn.amount;
-    const tMer  = (txn.merchant||"").replace(/\s+/g," ").trim().toLowerCase();
-    for(const sheet of Object.keys(overrides)){
-      const rows = overrides[sheet] || [];
+    const tMer  = normalizeImportMerchant(txn.merchant);
+    if(!tDate || !Number.isFinite(Number(tAmt)) || !tMer) return false;
+    for(const sheet of getAllExpenseSheetsForDuplicateScan()){
+      const rows = getEditableRows(sheet) || [];
       for(const row of rows){
         if(row.date_raw === tDate && Math.abs((row.amount||0) - tAmt) < 0.02){
-          const rMer = (row.merchant||"").replace(/\s+/g," ").trim().toLowerCase();
-          if(rMer === tMer || rMer.includes(tMer.slice(0,6)) || tMer.includes(rMer.slice(0,6))) return true;
+          const rMer = normalizeImportMerchant(row.merchant);
+          const shortMer = tMer.slice(0, Math.min(6, tMer.length));
+          const shortRow = rMer.slice(0, Math.min(6, rMer.length));
+          if(rMer === tMer || (shortMer && rMer.includes(shortMer)) || (shortRow && tMer.includes(shortRow))) return true;
         }
       }
     }
@@ -4959,12 +5117,9 @@ function findDuplicateExpense(txn){
 
 function buildCCImportTable(){
   const cats = getCategoryDefinitions().map(c => c.name);
-  const catOptions = ["<option value=\"\">\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4</option>"]
-    .concat(cats.map(c => "<option value=\""+c+"\">"+c+"</option>"))
-    .join("");
-  const typeOptions = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t =>
-    "<option value=\""+t+"\">"+t+"</option>"
-  ).join("");
+  const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
+    .concat(cats.map(c => ({value:c, label:c})));
+  const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
 
   let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
   html += "<thead><tr style=\"background:var(--bg);\">";
@@ -4984,10 +5139,10 @@ function buildCCImportTable(){
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
     html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
-    html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+row.merchant.replace(/\"/g,'&quot;')+"" onchange=\"ccImportRows["+i+"].merchant=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
+    html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].category=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+catOptions+"</select></td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].type=this.value\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+typeOptions+"</select></td>";
+    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'category', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(categoryOptionDefs, row.category)+"</select></td>";
+    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'type', this.value)\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(typeOptionDefs, row.type)+"</select></td>";
     html += "<td style=\"padding:6px;font-size:11px;color:var(--muted)\">"+(isDup ? "\u05db\u05e4\u05d5\u05dc?" : "")+"</td>";
     html += "</tr>";
   });
