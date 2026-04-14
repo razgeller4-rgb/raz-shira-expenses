@@ -1800,6 +1800,7 @@ body.edit-active .table-shell tr{border:none}
             <div class="field"><label>סוג</label><select id="newType"><option value="משתנה">משתנה</option><option value="קבועה">קבועה</option></select></div>
             <div class="field"><label>אשראי</label><select id="newPayment"><option value="__unset__">בחר אשראי</option><option value="">העברה בנקאית</option><option value="חבר">חבר</option><option value="ויזה מזרחי">ויזה מזרחי</option><option value="מקס חול">מקס חול</option></select></div>
             <div class="field"><label>מיידי</label><select id="newImmediate"><option value="">לא</option><option value="כן">כן</option></select></div>
+            <div class="field"><label>שיוך חיוב</label><select id="newBillingShift"><option value="0">רגיל / אוטומטי</option><option value="1">חריג: לחודש הבא</option></select></div>
             <div class="field"><label>הערות</label><input id="newNotes" placeholder="הערות"></div>
           </div>
           <div class="actions">
@@ -3057,7 +3058,7 @@ function syncRecurringFixedRows(){
   });
   if(changed) saveOverrides(nextMap);
 }
-function getBillingSheetForExpense(dateValue, payment, immediate){
+function getBillingSheetForExpense(dateValue, payment, immediate, billingShiftMonths=0){
   if(!dateValue) return selectedSheet;
   const parts = String(dateValue).split("-");
   if(parts.length !== 3) return selectedSheet;
@@ -3076,6 +3077,12 @@ function getBillingSheetForExpense(dateValue, payment, immediate){
   const cycleStartDay = paymentMethod ? Number(paymentMethod.cycleDay) : null;
   if(cycleStartDay && day < cycleStartDay){
     const shifted = shiftMonth(year, month, -1);
+    year = shifted.year;
+    month = shifted.month;
+  }
+  const extraShift = Math.max(0, Number(billingShiftMonths || 0));
+  if(extraShift){
+    const shifted = shiftMonth(year, month, extraShift);
     year = shifted.year;
     month = shifted.month;
   }
@@ -3869,6 +3876,7 @@ function renderPaymentSelectOptions(){
 function syncNewExpenseImmediateState(){
   const paymentSelect = document.getElementById("newPayment");
   const immediateSelect = document.getElementById("newImmediate");
+  const billingShiftSelect = document.getElementById("newBillingShift");
   if(!paymentSelect || !immediateSelect) return;
   const paymentValue = paymentSelect.value || "";
   const paymentMethod = getPaymentMethodByName(paymentValue);
@@ -3883,6 +3891,15 @@ function syncNewExpenseImmediateState(){
   } else {
     immediateSelect.disabled = false;
     delete immediateSelect.dataset.lockedByCard;
+  }
+  if(billingShiftSelect){
+    const isImmediateCharge = paymentValue === "" || Boolean(paymentMethod && paymentMethod.isImmediate);
+    if(isImmediateCharge){
+      billingShiftSelect.value = "0";
+      billingShiftSelect.disabled = true;
+    } else {
+      billingShiftSelect.disabled = false;
+    }
   }
 }
 function getPaymentMethodChargeForSheet(sheet, methodName){
@@ -4147,6 +4164,7 @@ function clearNewExpenseForm(){
   document.getElementById("newType").value="משתנה";
   document.getElementById("newPayment").value="__unset__";
   document.getElementById("newImmediate").value="";
+  document.getElementById("newBillingShift").value="0";
   document.getElementById("newImmediate").disabled=false;
   delete document.getElementById("newImmediate").dataset.lockedByCard;
 }
@@ -4220,6 +4238,70 @@ function copyRowToNextMonth(rowNumber){
   selectedSheet = targetSheet;
   render();
   setTimeout(()=>alert(`ההוצאה הועתקה ל-${formatSheetLabel(targetSheet)}.`), 0);
+}
+function updateRowBillingShift(rowNumber, nextShiftValue){
+  const sourceRows = getEditableRows(selectedSheet);
+  const sourceRow = sourceRows.find(r => Number(r.row) === Number(rowNumber));
+  if(!sourceRow) return;
+  if(isRowImmediate(sourceRow) || !sourceRow.payment){
+    alert("שיוך חריג לחודש הבא רלוונטי רק לחיובים שנכנסים למחזור אשראי.");
+    return;
+  }
+  const desiredShift = Math.max(0, Number(nextShiftValue || 0));
+  const targetSheet = getBillingSheetForExpense(
+    toIsoDate(sourceRow.date_raw),
+    sourceRow.payment,
+    sourceRow.immediate,
+    desiredShift
+  );
+  if(!targetSheet){
+    alert("לא הצלחתי לחשב את חודש החיוב החדש של ההוצאה.");
+    return;
+  }
+  const targetRows = targetSheet === selectedSheet ? sourceRows : getEditableRows(targetSheet);
+  const alreadyExists = targetRows.some(row =>
+    Number(row.row) !== Number(rowNumber) &&
+    row.date_raw === sourceRow.date_raw &&
+    String(row.merchant || "").trim() === String(sourceRow.merchant || "").trim() &&
+    Number(row.amount || 0) === Number(sourceRow.amount || 0) &&
+    normalizeCategory(row.category) === normalizeCategory(sourceRow.category) &&
+    String(row.type || "") === String(sourceRow.type || "") &&
+    String(row.payment || "") === String(sourceRow.payment || "") &&
+    String(row.immediate || "") === String(sourceRow.immediate || "") &&
+    String(row.notes || "").trim() === String(sourceRow.notes || "").trim() &&
+    Number(row.billingShiftMonths || 0) === desiredShift
+  );
+  if(alreadyExists){
+    alert(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)} עם אותו שיוך חיוב.`);
+    return;
+  }
+  const movedRow = {
+    ...clone(sourceRow),
+    billingShiftMonths: desiredShift
+  };
+  const overrides = getOverrides();
+  if(targetSheet === selectedSheet){
+    overrides[selectedSheet] = sourceRows.map(row => Number(row.row) === Number(rowNumber) ? movedRow : row);
+    saveOverrides(overrides);
+    render();
+    setTimeout(()=>alert(desiredShift ? "ההוצאה סומנה כחריג ותיכנס לחודש הבא." : "ההוצאה חזרה לשיוך החיוב האוטומטי."), 0);
+    return;
+  }
+  const nextRow = targetRows.length ? Math.max(...targetRows.map(r => Number(r.row) || 0)) + 1 : 1;
+  movedRow.row = nextRow;
+  overrides[selectedSheet] = sourceRows.filter(r => Number(r.row) !== Number(rowNumber));
+  overrides[targetSheet] = [...targetRows, movedRow];
+  saveOverrides(overrides);
+  selectedSheet = targetSheet;
+  selectedExpenseRows.delete(Number(rowNumber));
+  render();
+  setTimeout(()=>alert(desiredShift ? `ההוצאה הועברה ל-${formatSheetLabel(targetSheet)} כחריג חיוב.` : `ההוצאה חזרה ל-${formatSheetLabel(targetSheet)} לפי החיוב האוטומטי.`), 0);
+}
+function moveRowToNextMonth(rowNumber){
+  updateRowBillingShift(rowNumber, Math.max(1, Number((getEditableRows(selectedSheet).find(r => Number(r.row) === Number(rowNumber)) || {}).billingShiftMonths || 0) + 1));
+}
+function resetRowBillingShift(rowNumber){
+  updateRowBillingShift(rowNumber, 0);
 }
 function copySelectedRowsToNextMonth(){
   const selectedRows = getSelectedExpenseRowNumbers();
@@ -4305,7 +4387,8 @@ function addNewExpense(){
   const payment = rawPayment;
   const paymentMethod = getPaymentMethodByName(payment);
   const immediate = paymentMethod && paymentMethod.isImmediate ? "כן" : (document.getElementById("newImmediate").value || "");
-  const targetSheet = getBillingSheetForExpense(dateValue, payment, immediate);
+  const billingShiftMonths = Number(document.getElementById("newBillingShift").value || 0);
+  const targetSheet = getBillingSheetForExpense(dateValue, payment, immediate, billingShiftMonths);
   const createdSheet = ensureSheetExists(targetSheet);
   const rows = getEditableRows(targetSheet);
   const nextRow = rows.length ? Math.max(...rows.map(r => Number(r.row) || 0)) + 1 : 1;
@@ -4319,6 +4402,7 @@ function addNewExpense(){
     type: document.getElementById("newType").value || "משתנה",
     payment,
     immediate,
+    billingShiftMonths,
     notes: (document.getElementById("newNotes").value || "").trim()
   };
   rows.push(newRow);
@@ -4342,6 +4426,10 @@ function updateRow(rowNumber, field, value){
   rows[idx][field] = field === "amount" ? Number(value || 0) : value;
   if(field === "payment" && isPaymentMethodImmediate(value)){
     rows[idx].immediate = "כן";
+    rows[idx].billingShiftMonths = 0;
+  }
+  if(field === "immediate" && String(value || "").trim() === "כן"){
+    rows[idx].billingShiftMonths = 0;
   }
   const o = getOverrides();
   o[selectedSheet] = rows;
@@ -4379,6 +4467,14 @@ function renderTable(rows){
     const paymentMethod = getPaymentMethodByName(e.payment);
     const immediateLabel = isRowImmediate(e) ? "כן" : "לא";
     const isSelected = selectedExpenseRows.has(Number(rowId));
+    const billingShiftMonths = Math.max(0, Number(e.billingShiftMonths || 0));
+    const delayedLabel = billingShiftMonths > 0 ? `<span class="compact-badge">שיוך חריג: לחודש הבא</span>` : "";
+    const canShiftBilling = !isRowImmediate(e) && Boolean(e.payment);
+    const shiftControl = !isRowImmediate(e) && e.payment
+      ? `<div class="field"><label>שיוך חיוב</label><select onchange="updateRowBillingShift(${rowId}, this.value)"><option value="0" ${billingShiftMonths === 0 ? "selected" : ""}>רגיל / אוטומטי</option><option value="1" ${billingShiftMonths === 1 ? "selected" : ""}>חריג: לחודש הבא</option></select></div>`
+      : `<div class="field"><label>שיוך חיוב</label><select disabled><option selected>לא רלוונטי במיידי</option></select></div>`;
+    const moveShiftBtn = canShiftBilling ? `<button type="button" class="secondary" onclick="moveRowToNextMonth(${rowId})">העבר חריג לחודש הבא</button>` : "";
+    const resetShiftBtn = billingShiftMonths > 0 ? `<button type="button" class="secondary" onclick="resetRowBillingShift(${rowId})">בטל חריג</button>` : "";
     return `<tr><td colspan="8">
       <div class="edit-card">
         <div class="edit-card-top">
@@ -4390,6 +4486,9 @@ function renderTable(rows){
             </label>
             <span class="compact-badge">${paymentLabel}</span>
             <span class="compact-badge">מיידי: ${immediateLabel}</span>
+            ${delayedLabel}
+            ${moveShiftBtn}
+            ${resetShiftBtn}
             <button type="button" class="secondary" onclick="copyRowToNextMonth(${rowId})">העתק לחודש הבא</button>
             <button type="button" class="secondary" onclick="deleteRow(${rowId})">מחק הוצאה</button>
           </div>
@@ -4401,6 +4500,7 @@ function renderTable(rows){
           <div class="field"><label>סוג</label><select onchange="updateRow(${rowId}, 'type', this.value)"><option value="" ${!e.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${e.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${e.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
           <div class="field"><label>אשראי</label><select onchange="updateRow(${rowId}, 'payment', this.value)">${paymentOptions.map(opt=>`<option value="${opt.value}" ${e.payment===opt.value || (!e.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
           <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="updateRow(${rowId}, 'immediate', this.value)"><option value="" ${!isRowImmediate(e) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(e) ? "selected" : ""}>כן</option></select></div>
+          ${shiftControl}
           <div class="field" style="grid-column:span 2"><label>הערות</label><input value="${String(e.notes || "").replace(/"/g,"&quot;")}" onchange="updateRow(${rowId}, 'notes', this.value)"></div>
         </div>
       </div>
