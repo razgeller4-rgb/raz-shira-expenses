@@ -4984,7 +4984,7 @@ function buildCCImportTable(){
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
     html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
-    html += "<td style=\"padding:6px;font-weight:600\">"+dupBadge+row.merchant+"</td>";
+    html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+row.merchant.replace(/\"/g,'&quot;')+"" onchange=\"ccImportRows["+i+"].merchant=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
     html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].category=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+catOptions+"</select></td>";
     html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].type=this.value\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+typeOptions+"</select></td>";
