@@ -775,6 +775,43 @@ body.edit-active .table-shell tr{border:none}
   display:grid;
   gap:14px;
 }
+
+/* ── Backup banner ───────────────────────────────────── */
+.backup-banner{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  background:linear-gradient(135deg,#6b4530,#8c5a3a);
+  color:#fff;
+  border-radius:16px;
+  padding:14px 18px;
+  margin:0 0 16px;
+  box-shadow:0 4px 16px rgba(107,69,48,.25);
+  animation:slideDown .35s ease;
+}
+@keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
+.backup-banner-text{font-size:14px;font-weight:700;flex:1}
+.backup-banner-text small{display:block;font-size:12px;font-weight:400;opacity:.85;margin-top:2px}
+.backup-banner-btn{
+  background:rgba(255,255,255,.2);
+  border:1.5px solid rgba(255,255,255,.5);
+  color:#fff;
+  border-radius:10px;
+  padding:8px 14px;
+  font-size:13px;
+  font-weight:700;
+  cursor:pointer;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.backup-banner-btn:hover{background:rgba(255,255,255,.35)}
+.backup-banner-close{
+  background:none;border:none;color:rgba(255,255,255,.7);
+  font-size:20px;cursor:pointer;padding:0 0 0 4px;line-height:1;flex-shrink:0;
+}
+.backup-banner-close:hover{color:#fff}
+
 .backup-actions{
   display:flex;
   gap:10px;
@@ -1952,7 +1989,12 @@ const DEFAULT_PAYMENT_METHODS = {
     {id:"raz-card-mizrahi", name:"ויזה מזרחי", cycleDay:10},
     {id:"raz-card-max", name:"מקס חול", cycleDay:10}
   ],
-  shira: []
+  shira: [
+    {id:"shira-card-american", name:"אמריקן חבר", cycleDay:10},
+    {id:"shira-card-hightechzone", name:"הייטקזון", cycleDay:10},
+    {id:"shira-card-discount-direct", name:"דיסקונט מיידי", cycleDay:1, isImmediate:true},
+    {id:"shira-card-discount-visa", name:"דיסקונט ויזא", cycleDay:10}
+  ]
 };
 const DEFAULT_UI_PREFS = {
   raz: {
@@ -2286,7 +2328,7 @@ function getCategoryDefinitions(){
         .filter(item=>item.name);
     }
   } catch(e){}
-  return clone(DEFAULT_CATEGORIES_TEMPLATE);
+  return clone(currentUser === "shira" ? DEFAULT_CATEGORIES_SHIRA : DEFAULT_CATEGORIES_TEMPLATE);
 }
 function saveCategoryDefinitions(list){
   const normalized = (Array.isArray(list) ? list : [])
@@ -3985,9 +4027,31 @@ function renderIncomeTab(){
   `).join("");
 }
 function toggleAddExpenseForm(force){
+  const wasOpen = addExpenseOpen;
   addExpenseOpen = typeof force === "boolean" ? force : !addExpenseOpen;
   const box=document.getElementById("addExpenseForm");
   if(box) box.classList.toggle("open", addExpenseOpen);
+  if(addExpenseOpen && !wasOpen) prefillNewExpenseFromFilters();
+}
+function prefillNewExpenseFromFilters(){
+  const fpEl = document.getElementById("filterPayment");
+  const ftEl = document.getElementById("filterType");
+  const fpVal = fpEl ? fpEl.value : "";
+  const ftVal = ftEl ? ftEl.value : "";
+  if(fpVal){
+    const paymentSel = document.getElementById("newPayment");
+    if(paymentSel){
+      const match = [...paymentSel.options].find(o => o.value === fpVal);
+      if(match){
+        paymentSel.value = fpVal;
+        syncNewExpenseImmediateState();
+      }
+    }
+  }
+  if(ftVal){
+    const typeSel = document.getElementById("newType");
+    if(typeSel) typeSel.value = ftVal;
+  }
 }
 function clearNewExpenseForm(){
   ["newDate","newMerchant","newAmount","newNotes"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
@@ -4627,7 +4691,39 @@ document.getElementById("newMerchant").onchange=maybeFillNewCategoryFromMerchant
 document.getElementById("cancelNewExpenseBtn").onclick=()=>{ clearNewExpenseForm(); toggleAddExpenseForm(false); };
 document.getElementById("saveNewExpenseBtn").onclick=addNewExpense;
 window.addEventListener("resize", render);
-bootstrapCloudSync().finally(render);
+
+const BACKUP_BANNER_KEY = "expense_app_last_backup_banner_v1";
+function maybeShowBackupBanner(){
+  if(!hasAnyLocalExpenses()) return;
+  const lastShown = localStorage.getItem(BACKUP_BANNER_KEY) || "";
+  const today = new Date().toISOString().slice(0,10);
+  if(lastShown === today) return; // already shown today
+  const banner = document.getElementById("backupBanner");
+  if(!banner) return;
+  // Show last-backup date in sub-text
+  const sub = document.getElementById("backupBannerSub");
+  if(sub){
+    if(lastShown) {
+      const d = new Date(lastShown);
+      sub.textContent = "גיבוי אחרון: " + d.toLocaleDateString("he-IL");
+    } else {
+      sub.textContent = "טרם עשיתא גיבוי מאז שהתחלתה השימוש באפליקציה";
+    }
+  }
+  banner.style.display = "flex";
+}
+function dismissBackupBanner(){
+  const banner = document.getElementById("backupBanner");
+  if(banner) banner.style.display = "none";
+  const today = new Date().toISOString().slice(0,10);
+  localStorage.setItem(BACKUP_BANNER_KEY, today);
+}
+function exportBackupFromBanner(){
+  exportBackup();
+  dismissBackupBanner();
+}
+
+bootstrapCloudSync().finally(() => { render(); setTimeout(maybeShowBackupBanner, 1200); });
 </script>
 </body>
 </html>
