@@ -4840,7 +4840,7 @@ function showCCImportModal(result, filename){
   const guess = methods.find(m => {
     const mn = m.name.toLowerCase();
     if(cn.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") && mn.includes("\u05d7\u05d1\u05e8")) return true;
-    if(cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9")) && mn.includes("\u05de\u05e7\u05e1") return true;
+    if((cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9")) && mn.includes("\u05de\u05e7\u05e1")) return true;
     if(cn.includes("\u05de\u05d6\u05e8\u05d7\u05d9") && mn.includes("\u05de\u05d6\u05e8\u05d7\u05d9")) return true;
     return false;
   });
