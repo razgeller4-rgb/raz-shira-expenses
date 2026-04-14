@@ -4764,61 +4764,104 @@ function handleCCFile(e){
 }
 
 function parseCCStatement(rows, filename){
-  // Detect format by scanning rows
+  // Detect format: "תאריך עסקה" = Max, "תאריך רכישה" = Isracard
+  let format = null;
   let headerRow = -1;
   let cardName = "";
   let chargeDate = "";
+  let last4 = "";
 
   for(let i = 0; i < Math.min(rows.length, 15); i++){
     const r = rows[i];
     if(!r) continue;
     const c0 = String(r[0]||"").replace(/[\u202a-\u202e]/g,"").trim();
-    const c7 = String(r[7]||"").trim();
-    // Isracard: card name row
-    if(c0 && (c0.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") || c0.includes("\u05d5\u05d9\u05d6\u05d0") || c0.includes("\u05de\u05e7\u05e1") || c0.includes("\u05db\u05e8\u05d8\u05d9\u05e1") || /\d{4}/.test(c0))){
-      if(!cardName) cardName = c0;
-    }
-    if(c7.includes("\u05dc\u05d7\u05d9\u05d5\u05d1")) chargeDate = c7;
-    // Header row
-    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e8\u05db\u05d9\u05e9\u05d4" || c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
+    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
+      // Max format
+      format = "max";
       headerRow = i;
+      // Card name is 2 rows above header (row i-2)
+      if(i >= 2 && rows[i-2] && rows[i-2][0]){
+        cardName = String(rows[i-2][0]).trim();
+      }
+      break;
+    }
+    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e8\u05db\u05d9\u05e9\u05d4"){
+      // Isracard format
+      format = "isracard";
+      headerRow = i;
+      break;
+    }
+  }
+
+  // For Isracard: scan rows before header for card name
+  if(format === "isracard"){
+    for(let i = 0; i < headerRow && i < 15; i++){
+      const r = rows[i];
+      if(!r) continue;
+      const c0 = String(r[0]||"").replace(/[\u202a-\u202e]/g,"").trim();
+      const c7 = String(r[7]||"").trim();
+      if(c0 && (c0.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") || c0.includes("\u05d5\u05d9\u05d6\u05d0") || c0.includes("\u05de\u05e7\u05e1") || c0.includes("\u05db\u05e8\u05d8\u05d9\u05e1") || /\d{4}/.test(c0))){
+        if(!cardName) cardName = c0;
+      }
+      if(c7.includes("\u05dc\u05d7\u05d9\u05d5\u05d1")) chargeDate = c7;
     }
   }
 
   const txns = [];
-  if(headerRow >= 0){
-    for(let i = headerRow + 1; i < rows.length; i++){
-      const r = rows[i];
-      if(!r || !r[0]) continue;
-      const d = String(r[0]).trim();
-      // Must match date DD.MM.YY or DD/MM/YY
-      if(!/^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(d)) continue;
-      const merchant = String(r[1]||"").trim();
-      if(!merchant || merchant.includes("\u05e1\u05d4\"\u05db")) continue;
-      // Amount: use charge amount (col 4) in ILS
-      const amtCharge = parseFloat(r[4]);
+  if(headerRow < 0) return {cardName, chargeDate, format, last4, txns};
+
+  for(let i = headerRow + 1; i < rows.length; i++){
+    const r = rows[i];
+    if(!r || !r[0]) continue;
+
+    let dateStr = "", merchant = "", amtCharge = 0, currOrig = "\u20aa", amtOrig = null, notes = "";
+
+    if(format === "max"){
+      // Max columns: 0=date(DD-MM-YYYY) 1=merchant 2=category 3=last4 4=type 5=chargeAmt 6=chargeCurr 7=origAmt 8=origCurr 9=billingDate 10=notes
+      const d = String(r[0]).replace(/[\u202a-\u202e]/g,"").trim();
+      if(!/^\d{1,2}-\d{1,2}-\d{2,4}$/.test(d)) continue;
+      merchant = String(r[1]||"").trim();
+      if(!merchant || merchant === "\u05e1\u05da \u05d4\u05db\u05dc") continue;
+      amtCharge = parseFloat(r[5]);
       if(isNaN(amtCharge) || amtCharge <= 0) continue;
-      const currOrig = String(r[3]||"\u20aa").trim();
-      const amtOrig = r[2];
-      const notes = String(r[7]||"").trim();
-      // Parse date
+      currOrig = String(r[8]||"\u20aa").replace("\u20aa","\u20aa").trim();
+      amtOrig = r[7];
+      notes = String(r[10]||"").trim();
+      if(!last4 && r[3]) last4 = String(r[3]).trim();
+      // Parse DD-MM-YYYY
+      const parts = d.split("-");
+      dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+parts[2];
+
+    } else {
+      // Isracard columns: 0=date(DD.MM.YY) 1=merchant 2=origAmt 3=origCurr 4=chargeAmt 5=chargeCurr 7=notes
+      const d = String(r[0]).replace(/[\u202a-\u202e]/g,"").trim();
+      if(!/^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(d)) continue;
+      merchant = String(r[1]||"").trim();
+      if(!merchant || merchant.includes("\u05e1\u05d4\"\u05db")) continue;
+      amtCharge = parseFloat(r[4]);
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
+      currOrig = String(r[3]||"\u20aa").trim();
+      amtOrig = r[2];
+      notes = String(r[7]||"").trim();
+      // Parse DD.MM.YY or DD/MM/YYYY
       const parts = d.replace(/\//g,".").split(".");
-      const dd = parts[0].padStart(2,"0");
-      const mm = parts[1].padStart(2,"0");
       const yy = parts[2];
       const year = yy.length === 2 ? "20"+yy : yy;
-      const dateStr = dd+"/"+mm+"/"+year;
-      txns.push({
-        date_raw: dateStr,
-        merchant: merchant.replace(/\s+/g," "),
-        amount: Math.round(amtCharge * 100) / 100,
-        foreign: (currOrig !== "\u20aa" && currOrig !== "\u05e9\u05e7\u05dc") ? (amtOrig + " " + currOrig) : "",
-        notes: notes
-      });
+      dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+year;
     }
+
+    txns.push({
+      date_raw: dateStr,
+      merchant: merchant.replace(/\s+/g," "),
+      amount: Math.round(amtCharge * 100) / 100,
+      foreign: (currOrig !== "\u20aa" && currOrig !== "\u05e9\u05e7\u05dc" && currOrig !== "ILS") ? (amtOrig + " " + currOrig) : "",
+      notes: notes
+    });
   }
-  return {cardName, chargeDate, txns};
+
+  return {cardName, chargeDate, format, last4, txns};
 }
+
 
 function showCCImportModal(result, filename){
   ccImportRows = result.txns.map(t => Object.assign({}, t, {
@@ -4828,19 +4871,27 @@ function showCCImportModal(result, filename){
     immediate: ""
   }));
 
+  // Mark duplicates
+  ccImportRows.forEach(r => { r._isDuplicate = findDuplicateExpense(r); });
+
   // Populate payment selector
   const paySel = document.getElementById("ccImportPayment");
   paySel.innerHTML = getPaymentOptions(true).map(o =>
     "<option value=\""+o.value+"\">"+o.label+"</option>"
   ).join("");
 
-  // Auto-guess payment from card name
+  // Auto-guess payment from card name + last4 digits
   const cn = (result.cardName||"").toLowerCase();
+  const l4 = (result.last4||"").trim();
   const methods = getPaymentMethods();
   const guess = methods.find(m => {
     const mn = m.name.toLowerCase();
+    const mid = (m.id||"").toLowerCase();
+    // Match by last 4 digits (most reliable for Max)
+    if(l4 && (mid.includes(l4) || (m.last4 && m.last4 === l4))) return true;
+    // Match by name keywords
     if(cn.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") && mn.includes("\u05d7\u05d1\u05e8")) return true;
-    if((cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9")) && mn.includes("\u05de\u05e7\u05e1")) return true;
+    if((cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9") || cn.includes("\u05de\u05e7\u05e1")) && mn.includes("\u05de\u05e7\u05e1")) return true;
     if(cn.includes("\u05de\u05d6\u05e8\u05d7\u05d9") && mn.includes("\u05de\u05d6\u05e8\u05d7\u05d9")) return true;
     return false;
   });
@@ -4848,7 +4899,6 @@ function showCCImportModal(result, filename){
 
   // Populate sheet selector
   const sheetSel = document.getElementById("ccImportSheet");
-  // Generate last 6 months
   const now = new Date();
   const opts = [];
   for(let i = 0; i < 6; i++){
@@ -4862,14 +4912,49 @@ function showCCImportModal(result, filename){
 
   // Detected info
   const det = document.getElementById("ccImportDetected");
-  if(result.cardName || result.chargeDate){
+  const fmtLabel = result.format === "max" ? "Max" : result.format === "isracard" ? "Isracard" : "";
+  const l4Label = result.last4 ? " | \u05e1\u05e4\u05e8\u05d5\u05ea \u05d0\u05d7\u05e8\u05d5\u05e0\u05d5\u05ea: "+result.last4 : "";
+  if(result.cardName || result.chargeDate || fmtLabel){
     det.style.display = "block";
-    det.innerHTML = "<b>\u05d6\u05d5\u05d4\u05d4:</b> " + (result.cardName||"") + (result.chargeDate ? " &nbsp;|&nbsp; " + result.chargeDate : "");
+    det.innerHTML = (fmtLabel ? "<b>\u05e4\u05d5\u05e8\u05de\u05d8:</b> "+fmtLabel+" &nbsp;|&nbsp; " : "") +
+      "<b>\u05db\u05e8\u05d8\u05d9\u05e1:</b> " + (result.cardName||"\u05dc\u05d0 \u05d6\u05d5\u05d4\u05d4") + l4Label +
+      (result.chargeDate ? " &nbsp;|&nbsp; " + result.chargeDate : "");
   }
 
-  // Build preview table
+  const dupCount = ccImportRows.filter(r => r._isDuplicate).length;
+  const dupNote = document.getElementById("ccImportDupNote");
+  if(dupNote){
+    if(dupCount > 0){
+      dupNote.style.display = "block";
+      dupNote.textContent = "\u26a0\ufe0f \u05d6\u05d5\u05d4\u05d5 "+dupCount+" \u05e8\u05e9\u05d5\u05de\u05d5\u05ea \u05e9\u05e2\u05e9\u05d5\u05d9\u05d5\u05ea \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d5\u05ea \u2014 \u05d4\u05df \u05de\u05e1\u05d5\u05de\u05e0\u05d5\u05ea \u05d1\u05db\u05ea\u05d5\u05dd \u05d5\u05d1\u05d5\u05d8\u05dc \u05d4\u05e1\u05d9\u05de\u05d5\u05df \u05e9\u05dc\u05d4\u05df.";
+    } else {
+      dupNote.style.display = "none";
+    }
+  }
+
   buildCCImportTable();
   document.getElementById("ccImportModal").style.display = "block";
+}
+
+
+function findDuplicateExpense(txn){
+  // Check all sheets for an expense matching date+amount+merchant
+  try {
+    const overrides = getOverrides();
+    const tDate = txn.date_raw || "";
+    const tAmt  = txn.amount;
+    const tMer  = (txn.merchant||"").replace(/\s+/g," ").trim().toLowerCase();
+    for(const sheet of Object.keys(overrides)){
+      const rows = overrides[sheet] || [];
+      for(const row of rows){
+        if(row.date_raw === tDate && Math.abs((row.amount||0) - tAmt) < 0.02){
+          const rMer = (row.merchant||"").replace(/\s+/g," ").trim().toLowerCase();
+          if(rMer === tMer || rMer.includes(tMer.slice(0,6)) || tMer.includes(rMer.slice(0,6))) return true;
+        }
+      }
+    }
+  } catch(e){}
+  return false;
 }
 
 function buildCCImportTable(){
@@ -4883,25 +4968,33 @@ function buildCCImportTable(){
 
   let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
   html += "<thead><tr style=\"background:var(--bg);\">";
-  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2"].forEach(h => {
+  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2",""].forEach(h => {
     html += "<th style=\"padding:8px 6px;text-align:right;font-weight:700;color:var(--muted);border-bottom:2px solid var(--line)\">"+h+"</th>";
   });
   html += "</tr></thead><tbody>";
 
   ccImportRows.forEach((row, i) => {
+    const isDup = row._isDuplicate;
+    const rowBg = isDup ? "background:rgba(220,150,50,.13);" : "";
     const amtExtra = row.foreign ? " <small style=\"color:var(--muted);font-size:11px\">("+row.foreign+")</small>" : "";
-    html += "<tr style=\"border-bottom:1px solid var(--line)\">";
-    html += "<td style=\"padding:6px\"><input type=\"checkbox\" checked onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
+    // Auto-uncheck duplicates
+    if(isDup && row._skip === undefined) row._skip = true;
+    const checked = !row._skip;
+    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
+    html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
+    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
-    html += "<td style=\"padding:6px;font-weight:600\">"+row.merchant+"</td>";
+    html += "<td style=\"padding:6px;font-weight:600\">"+dupBadge+row.merchant+"</td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
     html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].category=this.value\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+catOptions+"</select></td>";
     html += "<td style=\"padding:4px\"><select onchange=\"ccImportRows["+i+"].type=this.value\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+typeOptions+"</select></td>";
+    html += "<td style=\"padding:6px;font-size:11px;color:var(--muted)\">"+(isDup ? "\u05db\u05e4\u05d5\u05dc?" : "")+"</td>";
     html += "</tr>";
   });
   html += "</tbody></table>";
   document.getElementById("ccImportTable").innerHTML = html;
 }
+
 
 function confirmCCImport(){
   const payment = document.getElementById("ccImportPayment").value || "";
@@ -4950,6 +5043,7 @@ function confirmCCImport(){
       <button onclick="closeCCImport()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&times;</button>
     </div>
     <div id="ccImportDetected" style="background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);display:none"></div>
+    <div id="ccImportDupNote" style="display:none;background:rgba(212,130,50,.15);border:1px solid rgba(212,130,50,.4);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);font-weight:600"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
       <div style="flex:1;min-width:160px">
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">משיך לכרטיס באפליקציה</div>
