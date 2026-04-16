@@ -864,6 +864,55 @@ body.edit-active .table-shell tr{border:none}
   gap:8px;
   flex-wrap:wrap;
 }
+.recovery-card{
+  border:1px solid var(--line);
+  border-radius:20px;
+  background:linear-gradient(180deg,#fff,#f7f1e8);
+  padding:16px;
+  display:grid;
+  gap:14px;
+}
+.recovery-list{
+  display:grid;
+  gap:10px;
+}
+.recovery-item{
+  border:1px solid var(--line);
+  border-radius:16px;
+  background:#fff;
+  padding:12px 14px;
+  display:grid;
+  gap:10px;
+}
+.recovery-item-top{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  align-items:flex-start;
+  flex-wrap:wrap;
+}
+.recovery-item-title{
+  font-weight:700;
+  font-size:14px;
+}
+.recovery-item-meta{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.recovery-item-actions{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+}
+.recovery-empty{
+  border:1px dashed var(--line);
+  border-radius:16px;
+  padding:14px;
+  background:#fff;
+  color:var(--muted);
+  font-size:13px;
+}
 .debt-item{
   background:linear-gradient(180deg, #fff, #f5efe4);
   border:1px solid var(--line);
@@ -1949,6 +1998,20 @@ body.edit-active .table-shell tr{border:none}
             <button id="importBackupBtn" class="secondary" type="button">ייבוא גיבוי JSON</button>
             <input id="backupFileInput" type="file" accept="application/json,.json" style="display:none">
           </div>
+          <div class="recovery-card">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+              <div>
+                <h3 style="margin:0 0 4px">🛟 נקודות שחזור</h3>
+                <div class="small">האתר ישמור נקודות שחזור אוטומטיות לפני משיכה מהענן, לפני ייבוא, וגם אחרי שמירה לענן. אם משהו נמחק, נוכל לחזור לנקודה קודמת מתוך האתר.</div>
+              </div>
+              <div class="sync-actions" style="margin-top:0">
+                <button id="createRecoveryPointBtn" class="secondary" type="button">צור נקודת שחזור עכשיו</button>
+                <button id="refreshRecoveryPointsBtn" class="secondary" type="button">רענן רשימה</button>
+              </div>
+            </div>
+            <div id="recoveryPointsSummary" class="sync-status"></div>
+            <div id="recoveryPointsList" class="recovery-list"></div>
+          </div>
           <div class="backup-preview" id="backupStatus">עדיין לא בוצעה פעולת גיבוי בסשן הזה.</div>
         </div>
       </div>
@@ -2012,6 +2075,11 @@ const USERS = [{id:"raz", label:"רז"}, {id:"shira", label:"שירה"}];
 const ACTIVE_USER_STORAGE_KEY = "expense_app_active_user_v1";
 const CLOUD_SYNC_CONFIG_KEY = "expense_app_cloud_sync_config_v1";
 const CLOUD_SYNC_ROW_ID = "shared-expense-app";
+const CLOUD_BACKUP_PREFIX = "backup-snapshot-";
+const LOCAL_DATA_CHANGED_AT_KEY = "expense_app_local_changed_at_v1";
+const LOCAL_RECOVERY_POINTS_KEY = "expense_app_local_recovery_points_v1";
+const MAX_LOCAL_RECOVERY_POINTS = 12;
+const MAX_CLOUD_RECOVERY_POINTS = 20;
 const DEFAULT_CLOUD_SYNC_CONFIG = {
   url:"https://otfrgdwrdfmwcrlntfkv.supabase.co",
   anonKey:"sb_publishable_47PInnWFqJK13lXJyzBL6Q_3IqOjbPH",
@@ -2027,9 +2095,9 @@ const DEFAULT_PAYMENT_METHODS = {
   ],
   shira: [
     {id:"shira-card-american", name:"אמריקן חבר", cycleDay:10},
-    {id:"shira-card-hightechzone", name:"הייטקזון", cycleDay:10},
-    {id:"shira-card-discount-direct", name:"דיסקונט מיידי", cycleDay:1, isImmediate:true},
-    {id:"shira-card-discount-visa", name:"דיסקונט ויזא", cycleDay:10}
+    {id:"shira-card-hightechzone", name:"הייטקזון", cycleDay:10, last4:"8251"},
+    {id:"shira-card-discount-direct", name:"דיסקונט מיידי", cycleDay:1, isImmediate:true, last4:"9886"},
+    {id:"shira-card-discount-visa", name:"דיסקונט ויזה", cycleDay:10, last4:"3411"}
   ]
 };
 const DEFAULT_UI_PREFS = {
@@ -2107,6 +2175,7 @@ let dashboardPrefsOpen = false;
 let yearlyPrefsOpen = false;
 let cloudSyncTimer = null;
 let cloudSyncState = {status:"idle", message:"עדיין לא הוגדר חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null};
+let cloudRecoveryPoints = [];
 let suppressCloudSync = false;
 const IS_LOCAL_DRAFT_FILE = window.location.protocol === "file:";
 
@@ -2168,12 +2237,61 @@ function getBackupKeys(){
 function getCloudSyncKeys(){
   return USERS.flatMap(user => getAllUserStorageKeys(user.id));
 }
+function getIsoNow(){
+  return new Date().toISOString();
+}
+function getTimeMs(value){
+  if(!value) return 0;
+  const time = new Date(value).getTime();
+  return Number.isFinite(time) ? time : 0;
+}
+function getLocalDataChangedAt(){
+  return localStorage.getItem(LOCAL_DATA_CHANGED_AT_KEY) || "";
+}
+function markLocalDataChanged(timestamp=getIsoNow()){
+  localStorage.setItem(LOCAL_DATA_CHANGED_AT_KEY, timestamp);
+  return timestamp;
+}
+function buildRecoveryPointId(prefix="local"){
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
+}
+function getLocalRecoveryPoints(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(LOCAL_RECOVERY_POINTS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e){
+    return [];
+  }
+}
+function saveLocalRecoveryPoints(list){
+  localStorage.setItem(LOCAL_RECOVERY_POINTS_KEY, JSON.stringify((Array.isArray(list) ? list : []).slice(0, MAX_LOCAL_RECOVERY_POINTS)));
+}
+function rememberLocalRecoveryPoint(reason, snapshot=collectCloudSnapshot()){
+  const point = {
+    id: buildRecoveryPointId("local"),
+    createdAt: getIsoNow(),
+    reason: reason || "נקודת שחזור מקומית",
+    snapshot
+  };
+  const next = [point, ...getLocalRecoveryPoints()].slice(0, MAX_LOCAL_RECOVERY_POINTS);
+  saveLocalRecoveryPoints(next);
+  renderRecoveryPoints();
+  return point;
+}
+function getRecoverySnapshotMeta(snapshot){
+  const meta = snapshot && snapshot.backupMeta && typeof snapshot.backupMeta === "object" ? snapshot.backupMeta : {};
+  return {
+    source: meta.source || "cloud",
+    reason: meta.reason || "נקודת שחזור",
+    createdAt: meta.createdAt || snapshot?.changedAt || snapshot?.exportedAt || ""
+  };
+}
 function getOverrides(){ try { return JSON.parse(localStorage.getItem(getStorageKey()) || "{}"); } catch(e){ return {}; } }
-function saveOverrides(o){ localStorage.setItem(getStorageKey(), JSON.stringify(o)); scheduleCloudSync(); }
+function saveOverrides(o){ localStorage.setItem(getStorageKey(), JSON.stringify(o)); markLocalDataChanged(); scheduleCloudSync(); }
 function getManualSettingsMap(){ try { return JSON.parse(localStorage.getItem(getManualStorageKey()) || "{}"); } catch(e){ return {}; } }
-function saveManualSettingsMap(map){ localStorage.setItem(getManualStorageKey(), JSON.stringify(map)); scheduleCloudSync(); }
+function saveManualSettingsMap(map){ localStorage.setItem(getManualStorageKey(), JSON.stringify(map)); markLocalDataChanged(); scheduleCloudSync(); }
 function getIncomeEntriesMap(){ try { return JSON.parse(localStorage.getItem(getIncomeStorageKey()) || "{}"); } catch(e){ return {}; } }
-function saveIncomeEntriesMap(map){ localStorage.setItem(getIncomeStorageKey(), JSON.stringify(map)); scheduleCloudSync(); }
+function saveIncomeEntriesMap(map){ localStorage.setItem(getIncomeStorageKey(), JSON.stringify(map)); markLocalDataChanged(); scheduleCloudSync(); }
 function getCloudSyncConfig(){
   try {
     const parsed = JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null");
@@ -2254,16 +2372,30 @@ function renderCloudSyncStatus(){
 function getDefaultPaymentMethods(userId=currentUser){
   return clone(DEFAULT_PAYMENT_METHODS[userId] || []);
 }
+function enrichPaymentMethodWithDefaults(item, userId=currentUser){
+  const defaults = getDefaultPaymentMethods(userId);
+  const match = defaults.find(def =>
+    (item.id && def.id === item.id) ||
+    (item.name && def.name === item.name)
+  );
+  if(!match) return item;
+  return {
+    ...match,
+    ...item,
+    last4: String(item.last4 || match.last4 || "").trim()
+  };
+}
 function normalizePaymentMethodItem(item, index=0){
   const name = String(item && item.name || "").trim();
   const cycleDayRaw = item && item.cycleDay;
   const cycleDayNum = Number(cycleDayRaw);
-  return {
+  return enrichPaymentMethodWithDefaults({
     id: String(item && item.id || `card-${Date.now()}-${index}`),
     name,
     cycleDay: Number.isFinite(cycleDayNum) ? Math.min(31, Math.max(1, Math.round(cycleDayNum))) : 10,
-    isImmediate: Boolean(item && item.isImmediate)
-  };
+    isImmediate: Boolean(item && item.isImmediate),
+    last4: String(item && item.last4 || "").trim()
+  });
 }
 function getPaymentMethods(){
   try {
@@ -2279,6 +2411,7 @@ function savePaymentMethods(list){
     .map(normalizePaymentMethodItem)
     .filter(item => item.name);
   localStorage.setItem(getPaymentMethodsStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
   scheduleCloudSync();
 }
 function uniqueList(list){
@@ -2322,6 +2455,7 @@ function saveUiPrefs(prefs){
     yearlyWidgets: uniqueList(prefs.yearlyWidgets),
     yearlyColumns: uniqueList(prefs.yearlyColumns)
   }));
+  markLocalDataChanged();
   scheduleCloudSync();
 }
 function getPaymentMethodByName(name){
@@ -2411,6 +2545,7 @@ function saveCategoryDefinitions(list){
     .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget)}))
     .filter(item=>item.name);
   localStorage.setItem(getCategoriesStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
   scheduleCloudSync();
 }
 function formatMetricValue(value, format="currency"){
@@ -2435,7 +2570,7 @@ function getDebtData(){
     return normalizeDebtData(getDefaultDebtData());
   }
 }
-function saveDebtData(data){ localStorage.setItem(getDebtStorageKey(), JSON.stringify(normalizeDebtData(data))); scheduleCloudSync(); }
+function saveDebtData(data){ localStorage.setItem(getDebtStorageKey(), JSON.stringify(normalizeDebtData(data))); markLocalDataChanged(); scheduleCloudSync(); }
 function collectCloudSnapshot(){
   const data = {};
   getCloudSyncKeys().forEach(key => {
@@ -2449,6 +2584,7 @@ function collectCloudSnapshot(){
     app:"raz-expenses-local",
     version:"cloud-v1",
     exportedAt:new Date().toISOString(),
+    changedAt:getLocalDataChangedAt() || getIsoNow(),
     data
   };
 }
@@ -2463,9 +2599,190 @@ function applyCloudSnapshot(snapshot){
         else localStorage.setItem(key, JSON.stringify(value));
       }
     });
+    markLocalDataChanged(snapshot.changedAt || snapshot.exportedAt || getIsoNow());
   } finally {
     suppressCloudSync = false;
   }
+}
+async function fetchCloudRecoveryPoints(limit=8){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) return [];
+  const params = new URLSearchParams({
+    select:"id,payload,updated_at",
+    order:"updated_at.desc",
+    limit:String(limit)
+  });
+  params.append("id", `like.${CLOUD_BACKUP_PREFIX}*`);
+  const response = await fetch(`${config.url}/rest/v1/app_state?${params.toString()}`, {
+    headers:{
+      apikey:config.anonKey,
+      Authorization:`Bearer ${config.anonKey}`
+    }
+  });
+  if(!response.ok) throw new Error(`קריאת נקודות שחזור נכשלה (${response.status})`);
+  const rows = await response.json();
+  return Array.isArray(rows) ? rows : [];
+}
+async function pruneCloudRecoveryPoints(){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) return;
+  const rows = await fetchCloudRecoveryPoints(MAX_CLOUD_RECOVERY_POINTS + 10);
+  const extra = rows.slice(MAX_CLOUD_RECOVERY_POINTS);
+  if(!extra.length) return;
+  const ids = extra.map(row => row.id).filter(Boolean);
+  if(!ids.length) return;
+  const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
+  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}`, {
+    method:"DELETE",
+    headers:{
+      apikey:config.anonKey,
+      Authorization:`Bearer ${config.anonKey}`
+    }
+  });
+  if(!response.ok) throw new Error(`ניקוי נקודות שחזור ישנות נכשל (${response.status})`);
+}
+async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומטית"){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) return null;
+  const recoverySnapshot = {
+    ...clone(snapshot),
+    backupMeta:{
+      reason,
+      createdAt:getIsoNow(),
+      source:"cloud"
+    }
+  };
+  const response = await fetch(`${config.url}/rest/v1/app_state`, {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      apikey:config.anonKey,
+      Authorization:`Bearer ${config.anonKey}`,
+      Prefer:"return=representation"
+    },
+    body:JSON.stringify([{id:`${CLOUD_BACKUP_PREFIX}${Date.now()}`, payload:recoverySnapshot}])
+  });
+  if(!response.ok) throw new Error(`שמירת נקודת שחזור לענן נכשלה (${response.status})`);
+  await pruneCloudRecoveryPoints();
+  return true;
+}
+async function refreshRecoveryPoints(options={}){
+  const localPoints = getLocalRecoveryPoints();
+  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+    try {
+      cloudRecoveryPoints = await fetchCloudRecoveryPoints(options.limit || 8);
+    } catch(error){
+      if(options.showErrors){
+        setBackupStatus(`לא הצלחתי לרענן נקודות שחזור בענן: ${error.message}`);
+      }
+    }
+  }
+  renderRecoveryPoints(localPoints, cloudRecoveryPoints);
+}
+function renderRecoveryPoints(localPoints=getLocalRecoveryPoints(), remotePoints=cloudRecoveryPoints){
+  const summaryEl = document.getElementById("recoveryPointsSummary");
+  const listEl = document.getElementById("recoveryPointsList");
+  if(!summaryEl || !listEl) return;
+  const newestLocal = localPoints[0];
+  const newestRemote = Array.isArray(remotePoints) ? remotePoints[0] : null;
+  summaryEl.innerHTML = `
+    <div><strong>מקומי:</strong> ${localPoints.length} נקודות שחזור${newestLocal ? ` · אחרונה ${getReadableDateTime(newestLocal.createdAt)}` : ""}</div>
+    <div><strong>ענן:</strong> ${Array.isArray(remotePoints) ? remotePoints.length : 0} נקודות שחזור${newestRemote ? ` · אחרונה ${getReadableDateTime(newestRemote.updated_at || getRecoverySnapshotMeta(newestRemote.payload).createdAt)}` : ""}</div>
+  `;
+  const localMarkup = localPoints.map(point => `
+    <div class="recovery-item">
+      <div class="recovery-item-top">
+        <div>
+          <div class="recovery-item-title">מקומי · ${point.reason || "נקודת שחזור"}</div>
+          <div class="small">${getReadableDateTime(point.createdAt)}</div>
+        </div>
+        <div class="recovery-item-meta"><span class="tag">מכשיר זה</span></div>
+      </div>
+      <div class="recovery-item-actions">
+        <button class="secondary" type="button" onclick="restoreLocalRecoveryPoint('${point.id}')">שחזר מהמכשיר</button>
+      </div>
+    </div>
+  `).join("");
+  const remoteMarkup = (Array.isArray(remotePoints) ? remotePoints : []).map(point => {
+    const meta = getRecoverySnapshotMeta(point.payload);
+    return `
+      <div class="recovery-item">
+        <div class="recovery-item-top">
+          <div>
+            <div class="recovery-item-title">ענן · ${meta.reason}</div>
+            <div class="small">${getReadableDateTime(point.updated_at || meta.createdAt)}</div>
+          </div>
+          <div class="recovery-item-meta"><span class="tag">Supabase</span></div>
+        </div>
+        <div class="recovery-item-actions">
+          <button class="secondary" type="button" onclick="restoreCloudRecoveryPoint('${point.id}')">שחזר מהענן</button>
+        </div>
+      </div>
+    `;
+  }).join("");
+  listEl.innerHTML = localMarkup || remoteMarkup
+    ? `${remoteMarkup}${localMarkup}`
+    : `<div class="recovery-empty">עדיין אין נקודות שחזור. אחרי כל שמירה לענן, משיכה, או ייבוא גיבוי תתחיל להופיע כאן היסטוריה.</div>`;
+}
+async function restoreCloudRecoveryPoint(id){
+  if(!id || !hasCloudSyncConfig()) return;
+  if(!confirm("לשחזר את נקודת השחזור הזאת מהענן? המצב הנוכחי יישמר קודם כגיבוי מקומי.")) return;
+  try {
+    rememberLocalRecoveryPoint("לפני שחזור מהענן");
+    const config = getCloudSyncConfig();
+    const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
+      headers:{
+        apikey:config.anonKey,
+        Authorization:`Bearer ${config.anonKey}`
+      }
+    });
+    if(!response.ok) throw new Error(`טעינת נקודת שחזור מהענן נכשלה (${response.status})`);
+    const rows = await response.json();
+    const point = Array.isArray(rows) ? rows[0] || null : rows || null;
+    if(!point || !point.payload){
+      throw new Error("לא נמצאה נקודת שחזור תקינה בענן.");
+    }
+    applyCloudSnapshot(point.payload);
+    await pushCloudSnapshot({message:"השחזור מהענן הוחל ונשמר כמצב הפעיל.", reason:"שחזור ידני מהענן"});
+    setBackupStatus("השחזור מהענן הצליח והמצב החדש נשמר גם כמצב הפעיל.");
+    render();
+    await refreshRecoveryPoints();
+  } catch(error){
+    setBackupStatus(`שחזור מהענן נכשל: ${error.message}`);
+  }
+}
+async function restoreLocalRecoveryPoint(id){
+  if(!id) return;
+  const point = getLocalRecoveryPoints().find(item => item.id === id);
+  if(!point || !point.snapshot) return;
+  if(!confirm("לשחזר את נקודת השחזור המקומית הזאת? המצב הנוכחי יישמר קודם כגיבוי מקומי נוסף.")) return;
+  try {
+    rememberLocalRecoveryPoint("לפני שחזור מקומי");
+    applyCloudSnapshot(point.snapshot);
+    if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+      await pushCloudSnapshot({message:"השחזור המקומי הוחל ונשמר גם בענן.", reason:"שחזור ידני מקומי"});
+    }
+    setBackupStatus("השחזור המקומי הוחל בהצלחה.");
+    render();
+    await refreshRecoveryPoints();
+  } catch(error){
+    setBackupStatus(`שחזור מקומי נכשל: ${error.message}`);
+  }
+}
+async function createManualRecoveryPoint(){
+  const snapshot = collectCloudSnapshot();
+  rememberLocalRecoveryPoint("נקודת שחזור ידנית", snapshot);
+  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+    try {
+      await saveCloudRecoveryPoint(snapshot, "נקודת שחזור ידנית");
+      setBackupStatus("נשמרה נקודת שחזור ידנית גם מקומית וגם בענן.");
+    } catch(error){
+      setBackupStatus(`נשמרה נקודת שחזור מקומית, אבל השמירה לענן נכשלה: ${error.message}`);
+    }
+  } else {
+    setBackupStatus("נשמרה נקודת שחזור מקומית במכשיר הזה.");
+  }
+  await refreshRecoveryPoints();
 }
 async function fetchCloudState(){
   const config = getCloudSyncConfig();
@@ -2497,12 +2814,18 @@ async function pushCloudSnapshot(options={}){
   if(!response.ok) throw new Error(`שמירה לענן נכשלה (${response.status})`);
   const rows = await response.json();
   const remote = Array.isArray(rows) ? rows[0] || null : rows || null;
+  try {
+    await saveCloudRecoveryPoint(snapshot, options.reason || "שמירה אוטומטית");
+  } catch(error){
+    console.warn("Cloud recovery point failed", error);
+  }
   setCloudSyncState({
     status:"ok",
     message:options.message || "הנתונים נדחפו לענן בהצלחה.",
     lastPushedAt:new Date().toISOString(),
     lastRemoteUpdatedAt:remote?.updated_at || new Date().toISOString()
   });
+  await refreshRecoveryPoints();
   return remote;
 }
 async function pullCloudSnapshot(options={}){
@@ -2514,6 +2837,7 @@ async function pullCloudSnapshot(options={}){
     });
     return null;
   }
+  rememberLocalRecoveryPoint(options.localReason || "לפני משיכה מהענן");
   applyCloudSnapshot(remote.payload);
   setCloudSyncState({
     status:"ok",
@@ -2521,6 +2845,7 @@ async function pullCloudSnapshot(options={}){
     lastPulledAt:new Date().toISOString(),
     lastRemoteUpdatedAt:remote.updated_at || null
   });
+  renderRecoveryPoints();
   return remote;
 }
 function scheduleCloudSync(){
@@ -2547,6 +2872,7 @@ async function saveCloudSyncConnection(){
   try {
     const remote = await fetchCloudState();
     if(remote && remote.payload){
+      rememberLocalRecoveryPoint("לפני חיבור לענן");
       applyCloudSnapshot(remote.payload);
       setCloudSyncState({
         status:"ok",
@@ -2555,8 +2881,9 @@ async function saveCloudSyncConnection(){
         lastRemoteUpdatedAt:remote.updated_at || null
       });
     } else {
-      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה."});
+      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה.", reason:"חיבור ראשוני"});
     }
+    await refreshRecoveryPoints();
     render();
   } catch(error){
     setCloudSyncState({status:"error", message:`החיבור נשמר אבל הבדיקה נכשלה: ${error.message}`});
@@ -2610,6 +2937,7 @@ async function bootstrapCloudSync(){
   if(IS_LOCAL_DRAFT_FILE){
     ensureLocalDraftPreviewData();
     appendLocalDraftDebug(`bootstrap local draft mode<br>currentUser=${currentUser}<br>seeded sheets=${Object.keys(getOverrides()).length}`);
+    if(!getLocalDataChangedAt()) markLocalDataChanged();
     setCloudSyncState({
       status:"idle",
       message:"מצב טיוטה מקומית: הסנכרון האוטומטי לענן כבוי כאן כדי שלא נשפיע על האתר החי.",
@@ -2618,6 +2946,7 @@ async function bootstrapCloudSync(){
       lastRemoteUpdatedAt:null
     });
     renderCloudSyncStatus();
+    renderRecoveryPoints();
     return;
   }
   const stored = (() => { try { return JSON.parse(localStorage.getItem(CLOUD_SYNC_CONFIG_KEY) || "null"); } catch(e){ return null; } })();
@@ -2625,17 +2954,32 @@ async function bootstrapCloudSync(){
   if(!userDisabledManually){
     saveCloudSyncConfig({...DEFAULT_CLOUD_SYNC_CONFIG, disabled:false});
   }
+  if(!getLocalDataChangedAt()) markLocalDataChanged();
   renderCloudSyncStatus();
   if(!hasCloudSyncConfig()) return;
   try {
     setCloudSyncState({status:"syncing", message:"מתחבר לענן..."});
-    if(hasAnyLocalExpenses()){
-      // יש נתונים מקומיים — דחוף לענן (אל תדרוס את ה-localStorage בגירסת ענן)
-      await pushCloudSnapshot({message:"מחובר לענן — הנתונים מעודכנים."});
+    const remote = await fetchCloudState();
+    const remoteSnapshot = remote && remote.payload ? remote.payload : null;
+    const localHasData = hasAnyLocalExpenses();
+    const remoteHasData = Boolean(remoteSnapshot && remoteSnapshot.data);
+    const localChangedAt = getTimeMs(getLocalDataChangedAt());
+    const remoteChangedAt = getTimeMs(remoteSnapshot?.changedAt || remote?.updated_at);
+    if(remoteHasData && (!localHasData || remoteChangedAt >= localChangedAt)){
+      rememberLocalRecoveryPoint("לפני משיכה אוטומטית מהענן");
+      applyCloudSnapshot(remoteSnapshot);
+      setCloudSyncState({
+        status:"ok",
+        message:localHasData ? "הענן היה חדש יותר, ולכן הנתונים נטענו ממנו אוטומטית." : "החיבור קיים, והנתונים נטענו מהענן.",
+        lastPulledAt:getIsoNow(),
+        lastRemoteUpdatedAt:remote.updated_at || null
+      });
+    } else if(localHasData){
+      await pushCloudSnapshot({message:"מחובר לענן — הנתונים המקומיים חדשים יותר ונשמרו.", reason:"אתחול עם מקומי עדכני"});
     } else {
-      // אין נתונים מקומיים — משוך מהענן (התקנון ראשוני במכשיר חדש)
-      await pullCloudSnapshot({message:"מחובר לענן — הנתונים נטענו.", emptyMessage:"החיבור קיים, אבל עדיין אין נתונים בענן."});
+      setCloudSyncState({status:"idle", message:"החיבור קיים, אבל עדיין אין נתונים בענן או במכשיר הזה."});
     }
+    await refreshRecoveryPoints();
   } catch(error){
     setCloudSyncState({status:"error", message:`לא הצלחתי להתחבר לענן: ${error.message}`});
   }
@@ -2858,6 +3202,7 @@ function importBackupFile(file){
       }
       const ok = confirm("ייבוא הגיבוי יחליף את הנתונים המקומיים ששמורים בדפדפן. להמשיך?");
       if(!ok) return;
+      rememberLocalRecoveryPoint("לפני ייבוא קובץ גיבוי");
       const beforeImportFilename = `raz-expenses-before-import-${getNowStamp()}.json`;
       downloadBackupFile(collectBackupData(), beforeImportFilename);
       getBackupKeys().forEach(key => {
@@ -2867,10 +3212,12 @@ function importBackupFile(file){
           else localStorage.setItem(key, JSON.stringify(value));
         }
       });
+      markLocalDataChanged(backup.exportedAt || getIsoNow());
       currentUser = backup.currentUser || localStorage.getItem(ACTIVE_USER_STORAGE_KEY) || currentUser;
       selectedSheet = backup.selectedSheet || selectedSheet;
       selectedYear = backup.selectedYear || selectedYear;
       setBackupStatus(`הגיבוי נטען בהצלחה. לפני הייבוא הורד אוטומטית גיבוי בטיחות: ${beforeImportFilename}`);
+      refreshRecoveryPoints();
       render();
     } catch(e){
       alert("לא הצלחתי לקרוא את קובץ הגיבוי. ודא שזה קובץ JSON תקין.");
@@ -4784,6 +5131,7 @@ function render(){
     renderDebts();
     renderYearly();
     renderCloudSyncStatus();
+    renderRecoveryPoints();
     document.body.classList.toggle("edit-active", editMode);
     const btn=document.getElementById("toggleEditBtn");
     btn.textContent = `מצב עריכה: ${editMode ? "פעיל" : "כבוי"}`;
@@ -4880,6 +5228,8 @@ document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
 document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
 document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
 document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
+document.getElementById("createRecoveryPointBtn").onclick=()=>createManualRecoveryPoint();
+document.getElementById("refreshRecoveryPointsBtn").onclick=()=>refreshRecoveryPoints({showErrors:true});
 document.getElementById("exportBackupBtn").onclick=exportBackup;
 document.getElementById("importBackupBtn").onclick=()=>document.getElementById("backupFileInput").click();
 document.getElementById("backupFileInput").onchange=(event)=>{
@@ -5000,6 +5350,57 @@ function buildCCImportOptionMarkup(options, selectedValue){
     return `<option value="${escapeHtmlAttr(value)}" ${value === selected ? "selected" : ""}>${label}</option>`;
   }).join("");
 }
+function normalizeStatementCell(value){
+  return String(value == null ? "" : value).replace(/[\u202a-\u202e]/g,"").replace(/\s+/g," ").trim();
+}
+function excelSerialToDisplayDate(value){
+  const serial = Number(value);
+  if(!Number.isFinite(serial)) return "";
+  const utcDays = Math.floor(serial - 25569);
+  const utcValue = utcDays * 86400;
+  const dateInfo = new Date(utcValue * 1000);
+  if(Number.isNaN(dateInfo.getTime())) return "";
+  const day = String(dateInfo.getUTCDate()).padStart(2,"0");
+  const month = String(dateInfo.getUTCMonth() + 1).padStart(2,"0");
+  const year = String(dateInfo.getUTCFullYear());
+  return `${day}/${month}/${year}`;
+}
+function guessPaymentMethodForImport(cardLabel="", cardLast4="", cardBrand="", statementType=""){
+  const label = normalizeStatementCell(cardLabel).toLowerCase();
+  const last4 = String(cardLast4 || "").trim();
+  const brand = normalizeStatementCell(cardBrand).toLowerCase();
+  const type = normalizeStatementCell(statementType).toLowerCase();
+  const knownShiraMap = {
+    "9886":"דיסקונט מיידי",
+    "3411":"דיסקונט ויזה",
+    "8251":"הייטקזון"
+  };
+  if(last4 && currentUser === "shira" && knownShiraMap[last4]){
+    return knownShiraMap[last4];
+  }
+  const methods = getPaymentMethods();
+  const byLast4 = methods.find(method => last4 && String(method.last4 || "").trim() === last4);
+  if(byLast4) return byLast4.name;
+  const candidates = methods.filter(method => {
+    const name = String(method.name || "").toLowerCase();
+    if(label && name && (label.includes(name) || name.includes(label))) return true;
+    if(brand){
+      if(brand.includes("ויזה") && name.includes("ויזה")) return true;
+      if(brand.includes("מאסטר") && (name.includes("הייטקזון") || name.includes("מאסטר"))) return true;
+      if(brand.includes("אמריקן") && name.includes("אמריקן")) return true;
+    }
+    if(type.includes("מייד") && name.includes("מייד")) return true;
+    return false;
+  });
+  if(type.includes("מייד")){
+    const immediateCandidate = candidates.find(method => isPaymentMethodImmediate(method.name));
+    if(immediateCandidate) return immediateCandidate.name;
+  }
+  return candidates[0] ? candidates[0].name : "";
+}
+function getImportPaymentOptions(){
+  return [{value:"", label:"בחר כרטיס"}, ...getPaymentOptions(true)];
+}
 
 function handleCCFile(e){
   const file = e.target.files[0];
@@ -5020,7 +5421,7 @@ function handleCCFile(e){
 }
 
 function parseCCStatement(rows, filename){
-  // Detect format: "תאריך עסקה" = Max, "תאריך רכישה" = Isracard
+  // Detect format: Max / Isracard / CAL
   let format = null;
   let headerRow = -1;
   let cardName = "";
@@ -5030,14 +5431,25 @@ function parseCCStatement(rows, filename){
   for(let i = 0; i < Math.min(rows.length, 15); i++){
     const r = rows[i];
     if(!r) continue;
-    const c0 = String(r[0]||"").replace(/[\u202a-\u202e]/g,"").trim();
+    const c0 = normalizeStatementCell(r[0]);
+    const c1 = normalizeStatementCell(r[1]);
+    const c3 = normalizeStatementCell(r[3]);
+    const c4 = normalizeStatementCell(r[4]);
+    if(c0 === "תאריך עסקה" && c1 === "שם בית עסק" && c3 === "כרטיס" && c4 === "מועד חיוב"){
+      format = "cal";
+      headerRow = i;
+      if(i >= 1 && rows[i-1] && rows[i-1][0]){
+        cardName = normalizeStatementCell(rows[i-1][0]);
+      }
+      break;
+    }
     if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
       // Max format
       format = "max";
       headerRow = i;
       // Card name is 2 rows above header (row i-2)
       if(i >= 2 && rows[i-2] && rows[i-2][0]){
-        cardName = String(rows[i-2][0]).trim();
+        cardName = normalizeStatementCell(rows[i-2][0]);
       }
       break;
     }
@@ -5054,8 +5466,8 @@ function parseCCStatement(rows, filename){
     for(let i = 0; i < headerRow && i < 15; i++){
       const r = rows[i];
       if(!r) continue;
-      const c0 = String(r[0]||"").replace(/[\u202a-\u202e]/g,"").trim();
-      const c7 = String(r[7]||"").trim();
+      const c0 = normalizeStatementCell(r[0]);
+      const c7 = normalizeStatementCell(r[7]);
       if(c0 && (c0.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") || c0.includes("\u05d5\u05d9\u05d6\u05d0") || c0.includes("\u05de\u05e7\u05e1") || c0.includes("\u05db\u05e8\u05d8\u05d9\u05e1") || /\d{4}/.test(c0))){
         if(!cardName) cardName = c0;
       }
@@ -5071,39 +5483,61 @@ function parseCCStatement(rows, filename){
     if(!r || !r[0]) continue;
 
     let dateStr = "", merchant = "", amtCharge = 0, currOrig = "\u20aa", amtOrig = null, notes = "";
+    let payment = "", sourceCardLabel = "", sourceCardLast4 = "", sourceTxnType = "";
 
     if(format === "max"){
       // Max columns: 0=date(DD-MM-YYYY) 1=merchant 2=category 3=last4 4=type 5=chargeAmt 6=chargeCurr 7=origAmt 8=origCurr 9=billingDate 10=notes
-      const d = String(r[0]).replace(/[\u202a-\u202e]/g,"").trim();
+      const d = normalizeStatementCell(r[0]);
       if(!/^\d{1,2}-\d{1,2}-\d{2,4}$/.test(d)) continue;
-      merchant = String(r[1]||"").trim();
+      merchant = normalizeStatementCell(r[1]);
       if(!merchant || merchant === "\u05e1\u05da \u05d4\u05db\u05dc") continue;
       amtCharge = parseFloat(r[5]);
       if(isNaN(amtCharge) || amtCharge <= 0) continue;
-      currOrig = String(r[8]||"\u20aa").replace("\u20aa","\u20aa").trim();
+      currOrig = normalizeStatementCell(r[8]||"\u20aa").replace("\u20aa","\u20aa").trim();
       amtOrig = r[7];
-      notes = String(r[10]||"").trim();
-      if(!last4 && r[3]) last4 = String(r[3]).trim();
+      notes = normalizeStatementCell(r[10]);
+      if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
+      sourceCardLast4 = last4;
+      payment = guessPaymentMethodForImport(cardName, sourceCardLast4, cardName, "");
       // Parse DD-MM-YYYY
       const parts = d.split("-");
       dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+parts[2];
 
-    } else {
+    } else if(format === "isracard") {
       // Isracard columns: 0=date(DD.MM.YY) 1=merchant 2=origAmt 3=origCurr 4=chargeAmt 5=chargeCurr 7=notes
-      const d = String(r[0]).replace(/[\u202a-\u202e]/g,"").trim();
+      const d = normalizeStatementCell(r[0]);
       if(!/^\d{1,2}[./]\d{1,2}[./]\d{2,4}$/.test(d)) continue;
-      merchant = String(r[1]||"").trim();
+      merchant = normalizeStatementCell(r[1]);
       if(!merchant || merchant.includes("\u05e1\u05d4\"\u05db")) continue;
       amtCharge = parseFloat(r[4]);
       if(isNaN(amtCharge) || amtCharge <= 0) continue;
-      currOrig = String(r[3]||"\u20aa").trim();
+      currOrig = normalizeStatementCell(r[3]||"\u20aa");
       amtOrig = r[2];
-      notes = String(r[7]||"").trim();
+      notes = normalizeStatementCell(r[7]);
+      payment = guessPaymentMethodForImport(cardName, last4, cardName, "");
       // Parse DD.MM.YY or DD/MM/YYYY
       const parts = d.replace(/\//g,".").split(".");
       const yy = parts[2];
       const year = yy.length === 2 ? "20"+yy : yy;
       dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+year;
+    } else if(format === "cal"){
+      dateStr = excelSerialToDisplayDate(r[0]);
+      merchant = normalizeStatementCell(r[1]);
+      sourceCardLabel = normalizeStatementCell(r[3]);
+      sourceTxnType = normalizeStatementCell(r[5]);
+      notes = normalizeStatementCell(r[7]);
+      if(!dateStr || !merchant || !sourceCardLabel) continue;
+      if(sourceCardLabel.includes("הסכום אינו כולל")) continue;
+      amtCharge = parseFloat(r[2]);
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
+      const last4Match = sourceCardLabel.match(/(\d{4})/);
+      sourceCardLast4 = last4Match ? last4Match[1] : "";
+      if(!last4 && sourceCardLast4) last4 = sourceCardLast4;
+      if(!chargeDate){
+        const chargeDateValue = excelSerialToDisplayDate(r[4]);
+        if(chargeDateValue) chargeDate = `מועד חיוב: ${chargeDateValue}`;
+      }
+      payment = guessPaymentMethodForImport(sourceCardLabel, sourceCardLast4, sourceCardLabel, sourceTxnType);
     }
 
     txns.push({
@@ -5111,7 +5545,11 @@ function parseCCStatement(rows, filename){
       merchant: merchant.replace(/\s+/g," "),
       amount: Math.round(amtCharge * 100) / 100,
       foreign: (currOrig !== "\u20aa" && currOrig !== "\u05e9\u05e7\u05dc" && currOrig !== "ILS") ? (amtOrig + " " + currOrig) : "",
-      notes: notes
+      notes: notes,
+      payment,
+      sourceCardLabel,
+      sourceCardLast4,
+      sourceTxnType
     });
   }
 
@@ -5123,7 +5561,7 @@ function showCCImportModal(result, filename){
   ccImportRows = result.txns.map(t => Object.assign({}, t, {
     category: "",
     type: "\u05de\u05e9\u05ea\u05e0\u05d4",
-    payment: "",
+    payment: t.payment || "",
     immediate: ""
   }));
 
@@ -5132,7 +5570,7 @@ function showCCImportModal(result, filename){
 
   // Populate payment selector
   const paySel = document.getElementById("ccImportPayment");
-  paySel.innerHTML = getPaymentOptions(true).map(o =>
+  paySel.innerHTML = getImportPaymentOptions().map(o =>
     "<option value=\""+o.value+"\">"+o.label+"</option>"
   ).join("");
 
@@ -5168,7 +5606,7 @@ function showCCImportModal(result, filename){
 
   // Detected info
   const det = document.getElementById("ccImportDetected");
-  const fmtLabel = result.format === "max" ? "Max" : result.format === "isracard" ? "Isracard" : "";
+  const fmtLabel = result.format === "max" ? "Max" : result.format === "isracard" ? "ישראכארט" : result.format === "cal" ? "כאל" : "";
   const l4Label = result.last4 ? " | \u05e1\u05e4\u05e8\u05d5\u05ea \u05d0\u05d7\u05e8\u05d5\u05e0\u05d5\u05ea: "+result.last4 : "";
   if(result.cardName || result.chargeDate || fmtLabel){
     det.style.display = "block";
@@ -5220,10 +5658,11 @@ function buildCCImportTable(){
   const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
     .concat(cats.map(c => ({value:c, label:c})));
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
+  const paymentOptionDefs = getImportPaymentOptions();
 
   let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
   html += "<thead><tr style=\"background:var(--bg);\">";
-  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2",""].forEach(h => {
+  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05db\u05e8\u05d8\u05d9\u05e1","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2",""].forEach(h => {
     html += "<th style=\"padding:8px 6px;text-align:right;font-weight:700;color:var(--muted);border-bottom:2px solid var(--line)\">"+h+"</th>";
   });
   html += "</tr></thead><tbody>";
@@ -5241,6 +5680,7 @@ function buildCCImportTable(){
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
     html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
+    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'payment', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(paymentOptionDefs, row.payment)+"</select><div style=\"margin-top:4px;font-size:10px;color:var(--muted)\">"+escapeHtmlAttr(row.sourceCardLabel || "")+"</div></td>";
     html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'category', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(categoryOptionDefs, row.category)+"</select></td>";
     html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'type', this.value)\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(typeOptionDefs, row.type)+"</select></td>";
     html += "<td style=\"padding:6px;font-size:11px;color:var(--muted)\">"+(isDup ? "\u05db\u05e4\u05d5\u05dc?" : "")+"</td>";
@@ -5252,12 +5692,15 @@ function buildCCImportTable(){
 
 
 function confirmCCImport(){
-  const payment = document.getElementById("ccImportPayment").value || "";
+  const defaultPayment = document.getElementById("ccImportPayment").value || "";
   const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
   if(!toImport.length){ alert("\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d9\u05d9\u05d1\u05d5\u05d0."); return; }
-
-  const isImm = isPaymentMethodImmediate(payment);
+  const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
+  if(unresolved.length){
+    alert("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.");
+    return;
+  }
   const overrides = getOverrides();
   if(!overrides[sheet]) overrides[sheet] = [];
 
@@ -5266,6 +5709,8 @@ function confirmCCImport(){
   let nextRow = allRows.length ? Math.max(...allRows.map(r => r.row||0)) + 1 : 14;
 
   toImport.forEach(r => {
+    const payment = r.payment || defaultPayment || "";
+    const isImm = isPaymentMethodImmediate(payment);
     overrides[sheet].push({
       row: nextRow++,
       date_raw: r.date_raw,
@@ -5301,7 +5746,7 @@ function confirmCCImport(){
     <div id="ccImportDupNote" style="display:none;background:rgba(212,130,50,.15);border:1px solid rgba(212,130,50,.4);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);font-weight:600"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
       <div style="flex:1;min-width:160px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">משיך לכרטיס באפליקציה</div>
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">כרטיס ברירת מחדל לשורות שלא זוהו</div>
         <select id="ccImportPayment" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px"></select>
       </div>
       <div style="flex:1;min-width:120px">
