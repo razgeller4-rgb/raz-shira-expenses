@@ -97,6 +97,13 @@ body{
   position:relative;
   z-index:2;
 }
+.hero-utility-bar{
+  position:relative;
+  z-index:2;
+  margin-top:18px;
+  display:flex;
+  justify-content:flex-start;
+}
 h1{
   margin:0;
   font-size:clamp(32px,4.3vw,58px);
@@ -1122,6 +1129,7 @@ body.edit-active .table-shell tr{border:none}
   .hero::before{height:44px;opacity:.22}
   .hero::after{width:170px;height:170px;inset:-70px auto auto -80px}
   .hero-top{display:grid;gap:10px}
+  .hero-utility-bar{margin-top:12px}
   h1{font-size:25px;line-height:1.12;text-align:center;letter-spacing:-.35px;max-width:none}
   .subtitle{display:none}
   .hero-stats{width:100%;gap:8px;grid-template-columns:repeat(2,minmax(0,1fr))}
@@ -1278,6 +1286,28 @@ body.edit-active .table-shell tr{border:none}
   .chart-wrap{padding:10px}
   .chart-box{height:340px;min-height:340px}
   .chart-toolbar select{width:100%}
+  .mini-nav{
+    padding:10px 12px;
+    gap:8px;
+    border-radius:18px;
+    align-items:center;
+  }
+  .mini-nav-label-group{
+    width:auto;
+    justify-content:flex-start;
+    align-items:center;
+  }
+  .mini-nav-label{
+    font-size:15px;
+    gap:8px;
+  }
+  .mini-nav-kicker{font-size:10px}
+  .mini-nav-label-title{font-size:15px}
+  .nav-menu-btn{
+    padding:9px 12px;
+    border-radius:12px;
+    font-size:16px;
+  }
   .settings-card,.debt-card,.year-card{padding:13px;border-radius:18px}
   .settings-card h3,.debt-card h3,.year-card h3{font-size:18px}
   .sync-card{
@@ -1504,45 +1534,71 @@ body.edit-active .table-shell tr{border:none}
   display:flex;
   align-items:center;
   justify-content:flex-start;
-  padding:10px 2px;
-  margin:12px 0 14px;
-  gap:12px;
+  padding:10px 14px;
+  margin:0;
+  gap:10px;
+  position:static;
+  border:1px solid rgba(255,255,255,.16);
+  border-radius:18px;
+  background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
+  backdrop-filter:blur(14px);
+  box-shadow:0 16px 28px rgba(45,22,8,.14);
 }
 .mini-nav-label-group{
   display:flex;
   align-items:center;
   gap:10px;
   flex-direction:row-reverse;
+  min-width:0;
 }
 .mini-nav-label{
   display:flex;
   align-items:center;
-  gap:8px;
-  font-size:16px;
+  gap:10px;
+  font-size:17px;
   font-weight:800;
-  color:var(--text);
+  color:#fff;
+  min-width:0;
+}
+.mini-nav-label-text{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+}
+.mini-nav-kicker{
+  font-size:10px;
+  font-weight:700;
+  color:rgba(255,255,255,.74);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+}
+.mini-nav-label-title{
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .nav-menu-btn{
   display:flex;
   align-items:center;
   justify-content:center;
   gap:8px;
-  background:var(--card);
-  border:1px solid var(--line);
-  color:var(--text);
+  background:linear-gradient(135deg, var(--accent), var(--accent-2));
+  border:1px solid rgba(255,255,255,.16);
+  color:#fff;
   border-radius:14px;
   padding:10px 14px;
   font-size:18px;
   font-weight:700;
-  box-shadow:0 6px 16px rgba(107,69,48,.08);
+  box-shadow:0 12px 24px rgba(107,69,48,.16);
   cursor:pointer;
   transition:background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
   flex-shrink:0;
 }
 .nav-menu-btn:hover{
-  background:var(--accent);
+  background:linear-gradient(135deg, var(--accent-2), var(--accent));
   color:#fff;
-  border-color:var(--accent);
+  border-color:rgba(255,255,255,.16);
   box-shadow:0 10px 24px rgba(107,69,48,.18);
 }
 
@@ -1666,6 +1722,20 @@ body.edit-active .table-shell tr{border:none}
         <div class="hero-stat"><div class="label">סה״כ הכנסות לחודש</div><div class="value" id="heroIncomeTotal">—</div></div>
       </div>
     </div>
+    <div class="hero-utility-bar">
+      <div class="mini-nav">
+        <div class="mini-nav-label-group">
+          <button class="nav-menu-btn" onclick="openDrawer()">☰</button>
+          <div class="mini-nav-label">
+            <span id="miniNavIcon">📊</span>
+            <div class="mini-nav-label-text">
+              <div class="mini-nav-kicker">טאב פעיל</div>
+              <div class="mini-nav-label-title" id="miniNavLabelTitle">דשבורד</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- tabbar kept hidden — used by renderTabs() internally -->
@@ -1679,14 +1749,6 @@ body.edit-active .table-shell tr{border:none}
     <button class="tab-btn" data-tab="yearly">סיכום שנתי</button>
     <button class="tab-btn" data-tab="backup">גיבוי נתונים</button>
     <button class="tab-btn" id="showDebtsSetupBtn" type="button" style="display:none">הפעל טאב חובות</button>
-  </div>
-
-  <!-- Mini nav bar -->
-  <div class="mini-nav">
-    <div class="mini-nav-label-group">
-      <button class="nav-menu-btn" onclick="openDrawer()">☰</button>
-      <div class="mini-nav-label" id="miniNavLabel"><span id="miniNavIcon">📊</span>&nbsp;דשבורד</div>
-    </div>
   </div>
 
   <!-- Drawer backdrop -->
@@ -4897,8 +4959,17 @@ function switchToTab(tabId){
 }
 function updateMiniNavLabel(){
   const meta = TAB_META.find(t => t.id === activeTab);
-  const label = document.getElementById("miniNavLabel");
-  if(label && meta) label.innerHTML = `<span>${meta.icon}</span>&nbsp;${meta.label}`;
+  const icon = document.getElementById("miniNavIcon");
+  const title = document.getElementById("miniNavLabelTitle");
+  if(icon && meta) icon.textContent = meta.icon;
+  if(title && meta) title.textContent = meta.label;
+}
+function renderMiniNavMeta(){
+  const userChip = document.getElementById("miniNavUserChip");
+  const sheetChip = document.getElementById("miniNavSheetChip");
+  const userMeta = USERS.find(user => user.id === currentUser);
+  if(userChip) userChip.textContent = `חשבון: ${userMeta ? userMeta.label : currentUser}`;
+  if(sheetChip) sheetChip.textContent = `חודש: ${formatSheetLabel(selectedSheet)}`;
 }
 /* ─────────────────────────────────────────────────────── */
 function renderTabs(){
@@ -4921,6 +4992,7 @@ function renderTabs(){
     panel.classList.toggle("active", panel.dataset.panel === activeTab);
   });
   updateMiniNavLabel();
+  renderMiniNavMeta();
 }
 function renderDebts(){
   const debtData = getDebtData();
