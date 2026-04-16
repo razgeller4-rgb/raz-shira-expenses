@@ -3465,7 +3465,8 @@ function getDisplayedOpeningBalance(sheet){
 function getDisplayedClosingBalance(sheet){
   const opening = getDisplayedOpeningBalance(sheet);
   if(opening == null) return null;
-  return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
+  return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
 function getAvailableYears(){
   syncSheetOptions();
@@ -3485,10 +3486,11 @@ function getDashboardWidgetCatalog(sheet){
   const income = getIncomeTotal(sheet);
   const openingBalance = getDisplayedOpeningBalance(sheet);
   const closingBalance = getDisplayedClosingBalance(sheet);
-  const monthlyBalance = income - stats.total;
+  const debtEnabled = isDebtTrackingEnabled();
+  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
+  const monthlyBalance = income - stats.total - bankMonthly;
   const categorySums = getMonthlyCategorySums(sheet);
   const biggestExpense = rows.reduce((max,row)=>Number(row.amount || 0) > Number(max.amount || 0) ? row : max, {amount:0, merchant:""});
-  const debtEnabled = isDebtTrackingEnabled();
   const chargeWidgets = getChargeDayGroups().map(day => ({
     id:`charge_day_${day}`,
     label:`חיוב ${day}`,
@@ -3512,7 +3514,6 @@ function getDashboardWidgetCatalog(sheet){
     sub:"הוצאה בקטגוריה בחודש הנבחר",
     group:"קטגוריות"
   }));
-  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
   const fatherMonthly = debtEnabled ? getFatherRepaymentTotal(sheet) : 0;
   const totalDebtRemaining = debtEnabled ? Math.max(0, getLoanPrincipalBase() - getLoanSchedule()
     .filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= getTodayIso())
@@ -3527,11 +3528,11 @@ function getDashboardWidgetCatalog(sheet){
     {id:"fixed", label:"קבועות בגיליון", value:stats.fixed, sub:"סך כל ההוצאות הקבועות בחודש", group:"סקירה"},
     {id:"variable", label:"משתנות בגיליון", value:stats.variable, sub:"סך כל ההוצאות המשתנות בחודש", group:"סקירה"},
     {id:"income", label:"הכנסות", value:income, sub:"כל ההכנסות ששויכו לחודש הנבחר", group:"סקירה"},
-    {id:"monthly_balance", label:"מאזן חודשי", value:monthlyBalance, sub:"הכנסות פחות הוצאות החודש", group:"סקירה", tone:getMetricTone(monthlyBalance)},
+    {id:"monthly_balance", label:"מאזן חודשי", value:monthlyBalance, sub:"הכנסות פחות הוצאות והחזר בנק חודשי", group:"סקירה", tone:getMetricTone(monthlyBalance)},
     {id:"immediate", label:"מיידי", value:stats.immediate, sub:"חיובים שסומנו כמיידיים", group:"סקירה"},
     {id:"transfers", label:"העברות בנקאיות", value:stats.transfers, sub:"הוצאות ללא כרטיס אשראי", group:"סקירה"},
     {id:"opening_balance", label:"עו״ש פתיחה", value:openingBalance, sub:"יתרת פתיחה לחודש הנבחר", group:"סקירה", action:"editOpeningBalance()", actionLabel:"עריכה"},
-    {id:"closing_balance", label:"עו״ש סגירה", value:closingBalance, sub:"פתיחה + הכנסות - הוצאות", group:"סקירה", tone:getMetricTone(closingBalance)},
+    {id:"closing_balance", label:"עו״ש סגירה", value:closingBalance, sub:"פתיחה + הכנסות - הוצאות - החזר בנק", group:"סקירה", tone:getMetricTone(closingBalance)},
     {id:"expense_count", label:"מספר הוצאות", value:rows.length, format:"number", sub:"כמה שורות הוצאה יש בגיליון", group:"סקירה"},
     {id:"avg_expense", label:"ממוצע להוצאה", value:rows.length ? stats.total / rows.length : null, sub:"ממוצע לפי שורת הוצאה בחודש", group:"סקירה"},
     {id:"largest_expense", label:"ההוצאה הגדולה", value:biggestExpense.amount || null, sub:biggestExpense.merchant ? biggestExpense.merchant : "אין הוצאות עדיין", group:"סקירה"},
@@ -3545,7 +3546,7 @@ function getYearlyRowsData(year){
     const loanEntry = getLoanScheduleEntryForSheet(sheet);
     const stats = getExpenseStats(sheet);
     const income = getIncomeTotal(sheet);
-    const monthlyBalance = income - stats.total;
+    const monthlyBalance = income - stats.total - Number(loanEntry?.principal || 0);
     runningBalance += monthlyBalance;
     return {
       sheet,
