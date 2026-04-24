@@ -600,6 +600,18 @@ button:hover{transform:translateY(-1px)}
   margin:0;
 }
 .compact-badge{background:var(--card-soft);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px}
+.compact-action-btn{
+  padding:5px 10px;
+  border-radius:12px;
+  font-size:11px;
+  font-weight:700;
+  min-height:0;
+}
+.expense-card-actions{
+  margin-top:6px;
+  display:flex;
+  justify-content:flex-end;
+}
 .edit-mode-note{margin-bottom:12px}
 body.edit-active .table-shell table{min-width:100%}
 body.edit-active .table-shell thead{display:none}
@@ -1455,28 +1467,49 @@ body.edit-active .table-shell tr{border:none}
   .table-shell thead{display:none}
   .table-shell tbody{display:grid;gap:10px}
   .table-shell tr{
-    display:block;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:8px;
     border:1px solid var(--line);
     border-radius:18px;
     overflow:hidden;
     background:#fff;
     box-shadow:0 8px 18px rgba(107,69,48,.06);
+    padding:10px;
   }
   .table-shell td{
     display:flex;
-    justify-content:space-between;
-    gap:12px;
-    border-bottom:1px solid var(--line);
-    padding:10px 12px;
-    text-align:left;
+    flex-direction:column;
+    gap:4px;
+    border:none;
+    border-radius:12px;
+    padding:8px 9px;
+    text-align:right;
+    background:#fcfaf7;
+    min-height:64px;
   }
-  .table-shell td:last-child{border-bottom:none}
+  .table-shell td[colspan]{
+    grid-column:1 / -1;
+    background:transparent;
+    padding:0;
+    min-height:0;
+  }
   .table-shell td::before{
     content:attr(data-label);
     color:var(--muted);
-    font-size:12px;
+    font-size:10px;
     font-weight:700;
     text-align:right;
+  }
+  .table-shell td strong{font-size:15px;line-height:1.15}
+  .expense-card-actions{
+    margin-top:4px;
+    justify-content:flex-start;
+  }
+  .compact-action-btn{
+    width:100%;
+    padding:8px 12px;
+    font-size:12px;
   }
   body.edit-active .table-shell td{display:block}
   body.edit-active .table-shell td::before{display:none}
@@ -2404,6 +2437,8 @@ let cardEditMode = false;
 let selectedExpenseRows = new Set();
 let currentUser = localStorage.getItem(ACTIVE_USER_STORAGE_KEY) || "raz";
 let sharedSortBy = "date_desc";
+let inlineEditingExpenseRows = new Set();
+let inlineExpenseDrafts = {};
 let dashboardPrefsOpen = false;
 let yearlyPrefsOpen = false;
 let cloudSyncTimer = null;
@@ -4932,6 +4967,97 @@ function toggleExpenseSelection(rowNumber){
 function clearSelectedExpenseRows(){
   selectedExpenseRows.clear();
 }
+function getInlineExpenseDraftKey(rowNumber){
+  return `${selectedSheet}::${Number(rowNumber)}`;
+}
+function getInlineExpenseDraft(rowNumber){
+  return inlineExpenseDrafts[getInlineExpenseDraftKey(rowNumber)] || null;
+}
+function startInlineExpenseEdit(rowNumber){
+  const row = getEditableRows(selectedSheet).find(item => Number(item.row) === Number(rowNumber));
+  if(!row) return;
+  inlineEditingExpenseRows.add(Number(rowNumber));
+  inlineExpenseDrafts[getInlineExpenseDraftKey(rowNumber)] = clone(row);
+  render();
+}
+function cancelInlineExpenseEdit(rowNumber){
+  inlineEditingExpenseRows.delete(Number(rowNumber));
+  delete inlineExpenseDrafts[getInlineExpenseDraftKey(rowNumber)];
+  render();
+}
+function updateInlineExpenseDraft(rowNumber, field, value){
+  const key = getInlineExpenseDraftKey(rowNumber);
+  const draft = inlineExpenseDrafts[key];
+  if(!draft) return;
+  draft[field] = field === "amount" ? Number(value || 0) : value;
+  if(field === "payment" && isPaymentMethodImmediate(value)){
+    draft.immediate = "כן";
+    draft.billingShiftMonths = 0;
+  }
+  if(field === "immediate" && String(value || "").trim() === "כן"){
+    draft.billingShiftMonths = 0;
+  }
+  if(field === "sharedExpense"){
+    const isShared = Boolean(value);
+    draft.sharedExpense = isShared;
+    if(isShared){
+      draft.sharedSplitMode = draft.sharedSplitMode || "percent";
+      draft.sharedSplitPercent = normalizeSharedSplitPercent(draft.sharedSplitPercent);
+      draft.sharedOwnerAmount = getSharedOwnerAmount(draft);
+      draft.sharedWith = draft.sharedWith || getPartnerUserId(currentUser);
+      draft.sharedPaidBy = draft.sharedPaidBy || currentUser;
+      draft.sharedEntryId = draft.sharedEntryId || `shared-${Date.now()}-${Math.random().toString(36).slice(2,7)}`;
+    } else {
+      delete draft.sharedSplitMode;
+      delete draft.sharedSplitPercent;
+      delete draft.sharedOwnerAmount;
+      delete draft.sharedWith;
+      delete draft.sharedPaidBy;
+      delete draft.sharedEntryId;
+    }
+  }
+  inlineExpenseDrafts[key] = draft;
+  render();
+}
+function updateInlineExpenseDraftSharedSplit(rowNumber, mode, rawValue){
+  const draft = getInlineExpenseDraft(rowNumber);
+  if(!draft) return;
+  draft.sharedSplitMode = mode;
+  if(mode === "amount"){
+    draft.sharedOwnerAmount = normalizeSharedOwnerAmount(draft.amount, rawValue);
+    draft.sharedSplitPercent = Math.round((draft.sharedOwnerAmount / Number(draft.amount || 1)) * 100);
+  } else {
+    draft.sharedSplitPercent = normalizeSharedSplitPercent(rawValue);
+    draft.sharedOwnerAmount = Math.round((Number(draft.amount || 0) * (draft.sharedSplitPercent / 100)) * 100) / 100;
+  }
+  inlineExpenseDrafts[getInlineExpenseDraftKey(rowNumber)] = draft;
+  render();
+}
+function saveInlineExpenseEdit(rowNumber){
+  const draft = getInlineExpenseDraft(rowNumber);
+  if(!draft) return;
+  const sourceRows = getEditableRows(selectedSheet);
+  const idx = sourceRows.findIndex(item => Number(item.row) === Number(rowNumber));
+  if(idx === -1) return;
+  const targetSheet = getBillingSheetForExpense(toIsoDate(draft.date_raw), draft.payment, draft.immediate, draft.billingShiftMonths || 0);
+  const draftClone = clone(draft);
+  const overrides = getOverrides();
+  if(targetSheet === selectedSheet){
+    sourceRows[idx] = draftClone;
+    overrides[selectedSheet] = sourceRows;
+  } else {
+    const targetRows = getEditableRows(targetSheet);
+    const nextRow = targetRows.length ? Math.max(...targetRows.map(item => Number(item.row) || 0)) + 1 : 1;
+    draftClone.row = nextRow;
+    overrides[selectedSheet] = sourceRows.filter(item => Number(item.row) !== Number(rowNumber));
+    overrides[targetSheet] = [...targetRows, draftClone];
+    selectedSheet = targetSheet;
+  }
+  saveOverrides(overrides);
+  inlineEditingExpenseRows.delete(Number(rowNumber));
+  delete inlineExpenseDrafts[getInlineExpenseDraftKey(rowNumber)];
+  render();
+}
 function getSelectedExpenseRowNumbers(){
   return [...selectedExpenseRows].map(Number).filter(Number.isFinite);
 }
@@ -5240,39 +5366,40 @@ function renderTable(rows){
       <div><strong>${fmt(filteredTotal)}</strong><div class="small">${rows.length} הוצאות אחרי סינון</div></div>
     `;
   }
-  if(!editMode){
-    table.innerHTML = rows.map(e => `<tr>
-      <td data-label="תאריך">${e.date_raw || ""}</td>
-      <td data-label="בית עסק">${e.merchant || ""}</td>
-      <td data-label="סכום"><strong>${fmt(e.amount)}</strong></td>
-      <td data-label="קטגוריה">${normalizeCategory(e.category) || ""}</td>
-      <td data-label="סוג">${e.type || ""}</td>
-      <td data-label="אשראי">${e.payment || "העברה בנקאית"}${isSharedExpenseRow(e) ? `<div class="micro">משותפת</div>` : ""}</td>
-      <td data-label="מיידי">${isRowImmediate(e) ? "כן" : ""}</td>
-      <td data-label="הערות">${e.notes || ""}</td>
-    </tr>`).join("");
-    return;
-  }
   table.innerHTML = rows.map(e=>{
     const rowId = e.row;
-    const paymentLabel = e.payment || "העברה בנקאית";
-    const paymentMethod = getPaymentMethodByName(e.payment);
-    const immediateLabel = isRowImmediate(e) ? "כן" : "לא";
+    const rowEditActive = editMode || inlineEditingExpenseRows.has(Number(rowId));
+    const draft = rowEditActive ? (getInlineExpenseDraft(rowId) || clone(e)) : e;
+    const paymentLabel = draft.payment || "העברה בנקאית";
+    const paymentMethod = getPaymentMethodByName(draft.payment);
+    const immediateLabel = isRowImmediate(draft) ? "כן" : "לא";
     const isSelected = selectedExpenseRows.has(Number(rowId));
-    const billingShiftMonths = Math.max(0, Number(e.billingShiftMonths || 0));
+    const billingShiftMonths = Math.max(0, Number(draft.billingShiftMonths || 0));
     const delayedLabel = billingShiftMonths > 0 ? `<span class="compact-badge">שיוך חריג: לחודש הבא</span>` : "";
-    const sharedLabel = isSharedExpenseRow(e) ? `<span class="compact-badge">הוצאה משותפת</span>` : "";
-    const sharedSplit = getSharedSplitLabel(e);
-    const canShiftBilling = !isRowImmediate(e) && Boolean(e.payment);
-    const shiftControl = !isRowImmediate(e) && e.payment
-      ? `<div class="field"><label>שיוך חיוב</label><select onchange="updateRowBillingShift(${rowId}, this.value)"><option value="0" ${billingShiftMonths === 0 ? "selected" : ""}>רגיל / אוטומטי</option><option value="1" ${billingShiftMonths === 1 ? "selected" : ""}>חריג: לחודש הבא</option></select></div>`
+    const sharedLabel = isSharedExpenseRow(draft) ? `<span class="compact-badge">הוצאה משותפת</span>` : "";
+    const sharedSplit = getSharedSplitLabel(draft);
+    const canShiftBilling = !isRowImmediate(draft) && Boolean(draft.payment);
+    const shiftControl = !isRowImmediate(draft) && draft.payment
+      ? `<div class="field"><label>שיוך חיוב</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'billingShiftMonths', this.value)` : `updateRowBillingShift(${rowId}, this.value)`}"><option value="0" ${billingShiftMonths === 0 ? "selected" : ""}>רגיל / אוטומטי</option><option value="1" ${billingShiftMonths === 1 ? "selected" : ""}>חריג: לחודש הבא</option></select></div>`
       : `<div class="field"><label>שיוך חיוב</label><select disabled><option selected>לא רלוונטי במיידי</option></select></div>`;
     const moveShiftBtn = canShiftBilling ? `<button type="button" class="secondary" onclick="moveRowToNextMonth(${rowId})">העבר חריג לחודש הבא</button>` : "";
     const resetShiftBtn = billingShiftMonths > 0 ? `<button type="button" class="secondary" onclick="resetRowBillingShift(${rowId})">בטל חריג</button>` : "";
+    if(!rowEditActive){
+      return `<tr>
+        <td data-label="תאריך">${e.date_raw || ""}</td>
+        <td data-label="בית עסק">${e.merchant || ""}</td>
+        <td data-label="סכום"><strong>${fmt(e.amount)}</strong></td>
+        <td data-label="קטגוריה">${normalizeCategory(e.category) || ""}</td>
+        <td data-label="סוג">${e.type || ""}</td>
+        <td data-label="אשראי">${e.payment || "העברה בנקאית"}${isSharedExpenseRow(e) ? `<div class="micro">משותפת</div>` : ""}</td>
+        <td data-label="מיידי">${isRowImmediate(e) ? "כן" : ""}</td>
+        <td data-label="הערות">${e.notes || ""}<div class="expense-card-actions"><button type="button" class="secondary compact-action-btn" onclick="startInlineExpenseEdit(${rowId})">ערוך</button></div></td>
+      </tr>`;
+    }
     return `<tr><td colspan="8">
       <div class="edit-card">
         <div class="edit-card-top">
-          <div class="edit-card-title">${e.date_raw || ""} · ${e.merchant || ""}</div>
+          <div class="edit-card-title">${draft.date_raw || ""} · ${draft.merchant || ""}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="compact-badge" style="display:flex;align-items:center;gap:6px;cursor:pointer">
               <input type="checkbox" ${isSelected ? "checked" : ""} onchange="toggleExpenseSelection(${rowId})">
@@ -5285,38 +5412,39 @@ function renderTable(rows){
             ${moveShiftBtn}
             ${resetShiftBtn}
             <button type="button" class="secondary" onclick="copyRowToNextMonth(${rowId})">העתק לחודש הבא</button>
+            ${!editMode ? `<button type="button" class="secondary" onclick="cancelInlineExpenseEdit(${rowId})">ביטול</button><button type="button" class="success-btn" onclick="saveInlineExpenseEdit(${rowId})">שמור</button>` : ""}
             <button type="button" class="secondary" onclick="deleteRow(${rowId})">מחק הוצאה</button>
           </div>
         </div>
         <div class="edit-card-grid">
-          <div class="field"><label>בית עסק</label><input value="${String(e.merchant || "").replace(/"/g,"&quot;")}" onchange="updateRow(${rowId}, 'merchant', this.value)"></div>
-          <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(e.amount || 0)}" onchange="updateRow(${rowId}, 'amount', this.value)"></div>
-          <div class="field"><label>קטגוריה</label><select onchange="updateRow(${rowId}, 'category', this.value)">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(e.category)===normalizeCategory(opt) && (opt!=="" || !e.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
-          <div class="field"><label>סוג</label><select onchange="updateRow(${rowId}, 'type', this.value)"><option value="" ${!e.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${e.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${e.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
-          <div class="field"><label>אשראי</label><select onchange="updateRow(${rowId}, 'payment', this.value)">${paymentOptions.map(opt=>`<option value="${opt.value}" ${e.payment===opt.value || (!e.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
-          <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="updateRow(${rowId}, 'immediate', this.value)"><option value="" ${!isRowImmediate(e) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(e) ? "selected" : ""}>כן</option></select></div>
+          <div class="field"><label>בית עסק</label><input value="${String(draft.merchant || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
+          <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
+          <div class="field"><label>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
+          <div class="field"><label>סוג</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'type', this.value)` : `updateRow(${rowId}, 'type', this.value)`}"><option value="" ${!draft.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${draft.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${draft.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
+          <div class="field"><label>אשראי</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'payment', this.value)` : `updateRow(${rowId}, 'payment', this.value)`}">${paymentOptions.map(opt=>`<option value="${opt.value}" ${draft.payment===opt.value || (!draft.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
+          <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'immediate', this.value)` : `updateRow(${rowId}, 'immediate', this.value)`}"><option value="" ${!isRowImmediate(draft) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(draft) ? "selected" : ""}>כן</option></select></div>
           ${shiftControl}
           <div class="field field-checkbox">
             <label>הוצאה משותפת</label>
             <label class="toggle-check">
-              <input type="checkbox" ${isSharedExpenseRow(e) ? "checked" : ""} onchange="updateRowSharedExpense(${rowId}, this.checked)">
+              <input type="checkbox" ${isSharedExpenseRow(draft) ? "checked" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'sharedExpense', this.checked)` : `updateRowSharedExpense(${rowId}, this.checked)`}">
               <span>סמן אם זה הוצאה משותפת</span>
             </label>
           </div>
-          ${isSharedExpenseRow(e) ? `
+          ${isSharedExpenseRow(draft) ? `
             <div class="field">
               <label>חלוקה לפי</label>
-              <select onchange="updateRowSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)">
-                <option value="percent" ${((e.sharedSplitMode || "percent") === "percent") ? "selected" : ""}>אחוזים</option>
-                <option value="amount" ${e.sharedSplitMode === "amount" ? "selected" : ""}>סכום</option>
+              <select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)` : `updateRowSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)`}">
+                <option value="percent" ${((draft.sharedSplitMode || "percent") === "percent") ? "selected" : ""}>אחוזים</option>
+                <option value="amount" ${draft.sharedSplitMode === "amount" ? "selected" : ""}>סכום</option>
               </select>
             </div>
             <div class="field">
-              <label>${e.sharedSplitMode === "amount" ? "החלק שלי בסכום" : "החלק שלי באחוזים"}</label>
-              <input id="sharedSplitValue-${rowId}" type="number" step="0.01" value="${e.sharedSplitMode === "amount" ? sharedSplit.ownerAmount : sharedSplit.ownerPercent}" onchange="updateRowSharedSplit(${rowId}, '${e.sharedSplitMode || "percent"}', this.value)">
+              <label>${draft.sharedSplitMode === "amount" ? "החלק שלי בסכום" : "החלק שלי באחוזים"}</label>
+              <input id="sharedSplitValue-${rowId}" type="number" step="0.01" value="${draft.sharedSplitMode === "amount" ? sharedSplit.ownerAmount : sharedSplit.ownerPercent}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)` : `updateRowSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)`}">
             </div>
           ` : ""}
-          <div class="field" style="grid-column:span 2"><label>הערות</label><input value="${String(e.notes || "").replace(/"/g,"&quot;")}" onchange="updateRow(${rowId}, 'notes', this.value)"></div>
+          <div class="field" style="grid-column:span 2"><label>הערות</label><input value="${String(draft.notes || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'notes', this.value)` : `updateRow(${rowId}, 'notes', this.value)`}"></div>
         </div>
       </div>
     </td></tr>`;
