@@ -1840,20 +1840,24 @@ body.edit-active .table-shell tr{border:none}
 
 /* ── Hero collapse ─────────────────────────── */
 .hero-collapse-btn{
-  position:absolute;top:10px;left:12px;
-  background:rgba(255,255,255,.18);border:none;border-radius:50%;
-  width:30px;height:30px;display:flex;align-items:center;justify-content:center;
-  font-size:14px;cursor:pointer;color:#fff;transition:transform .25s;
-  backdrop-filter:blur(4px);
+  position:absolute;top:10px;left:12px;z-index:10;
+  background:rgba(255,255,255,.22);border:none;border-radius:50%;
+  width:32px;height:32px;display:flex;align-items:center;justify-content:center;
+  font-size:15px;cursor:pointer;color:#fff;transition:transform .3s ease;
+  backdrop-filter:blur(6px);-webkit-tap-highlight-color:transparent;
 }
 .hero{position:relative}
-.hero.hero-collapsed .hero-top > div:first-child,
-.hero.hero-collapsed .hero-stats .hero-stat:nth-child(3),
-.hero.hero-collapsed .hero-stats .hero-stat:nth-child(4){ display:none }
-.hero.hero-collapsed .hero-stats{ grid-template-columns:1fr 1fr; gap:6px }
-.hero.hero-collapsed h1{ display:none }
-.hero.hero-collapsed .hero-utility-bar{ margin-top:6px }
-.hero.hero-collapsed{ padding:10px 13px }
+.hero-collapsible-body{
+  overflow:hidden;
+  transition:max-height .35s ease, opacity .3s ease;
+  max-height:400px;
+  opacity:1;
+}
+.hero.hero-collapsed .hero-collapsible-body{
+  max-height:0;
+  opacity:0;
+}
+.hero.hero-collapsed{ padding-bottom:6px }
 .hero-collapse-btn.rotated{ transform:rotate(180deg) }
 
 /* ── Mobile compact expense list ───────────── */
@@ -1923,12 +1927,208 @@ body.edit-active .table-shell tr{border:none}
 .edit-toggle-btn .edit-label-on{ display:none }
 .edit-toggle-btn.active .edit-label-off{ display:none }
 .edit-toggle-btn.active .edit-label-on{ display:block }
+
+/* ═══════════════════════════════════════════════
+   FULL MOBILE REDESIGN — all tabs < 720px
+   ═══════════════════════════════════════════════ */
+@media (max-width:720px){
+
+  /* ── Budget tab ── */
+  .budget-overview-stats{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+  .budget-overview-stat{
+    padding:12px 14px !important;
+    border-radius:14px !important;
+  }
+  .budget-overview-stat .value{
+    font-size:20px !important;
+    word-break:break-all;
+  }
+  .budget-overview-hero{
+    padding:14px !important;
+    border-radius:18px !important;
+  }
+  .budget-overview-top{
+    flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:8px !important;
+  }
+  .budget-overview-badge{
+    font-size:12px !important;
+    padding:5px 10px !important;
+  }
+  /* Category summary table */
+  .summary-head,.summary-row{
+    grid-template-columns:1.8fr 0.8fr 0.8fr 0.8fr !important;
+    font-size:12px !important;
+    gap:0 !important;
+  }
+  .summary-head div,.summary-row div{
+    padding:8px 4px !important;
+    font-size:12px !important;
+  }
+  /* Bullet chart */
+  .bullet-row{
+    grid-template-columns:85px 1fr 46px !important;
+    gap:6px !important;
+    font-size:12px !important;
+  }
+
+  /* ── Dashboard tab ── */
+  .dashboard-grid,.dashboard-mini-grid{
+    grid-template-columns:repeat(2,1fr) !important;
+  }
+  .chart-wrap{ padding:10px !important }
+  .chart-wrap canvas{ max-height:200px }
+  .dashboard-note{
+    padding:11px 12px !important;
+    border-radius:14px !important;
+  }
+  .kpi .value{ font-size:17px !important; word-break:break-all }
+  .kpi .label{ font-size:10px !important }
+
+  /* ── Income tab ── */
+  .income-row{
+    grid-template-columns:1fr !important;
+    gap:0 !important;
+  }
+  .income-row.display-rich{
+    grid-template-columns:1fr !important;
+  }
+  .income-cell{
+    padding:6px 0 !important;
+    border-bottom:1px solid var(--line);
+  }
+  .income-cell:last-child{ border-bottom:none }
+  .income-cell strong{ font-size:14px }
+  .income-summary{
+    grid-template-columns:1fr 1fr !important;
+    gap:10px !important;
+    padding:14px !important;
+  }
+  .income-summary .value{ font-size:20px !important }
+
+  /* ── Shared tab ── */
+  .shared-topbar{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .shared-balance-card{
+    padding:14px !important;
+    border-radius:16px !important;
+  }
+  .shared-balance-card .value{ font-size:26px !important }
+  .shared-mini-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+  .shared-stat-card{
+    padding:12px !important;
+    border-radius:14px !important;
+  }
+  .shared-expense-grid{
+    grid-template-columns:1fr !important;
+  }
+
+  /* ── Debts tab ── */
+  .debt-overview{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+  .debt-grid{
+    grid-template-columns:1fr !important;
+  }
+  .debt-item{
+    padding:14px !important;
+    border-radius:16px !important;
+  }
+  .debt-item .big{ font-size:20px !important }
+  .debt-topbar{
+    flex-direction:column !important;
+    gap:10px !important;
+    align-items:stretch !important;
+  }
+  .debt-topbar .actions{ margin-top:0 !important }
+
+  /* ── Yearly tab ── */
+  .year-table{
+    overflow-x:auto !important;
+    -webkit-overflow-scrolling:touch;
+    border-radius:16px !important;
+  }
+  .year-table table{ min-width:520px }
+  .year-card .kpis{
+    grid-template-columns:repeat(2,1fr) !important;
+    gap:8px !important;
+  }
+  .year-card .kpi .value{ font-size:16px !important }
+
+  /* ── Cards/Settings tab ── */
+  .settings-card{
+    border-radius:18px !important;
+    padding:14px !important;
+  }
+  .edit-card-grid{
+    grid-template-columns:1fr !important;
+    gap:8px !important;
+  }
+  .card-chip{
+    width:100% !important;
+    justify-content:space-between !important;
+  }
+
+  /* ── General section headers ── */
+  .header{
+    padding:12px 14px !important;
+    font-size:14px !important;
+    gap:8px !important;
+  }
+  .header > div{ flex-wrap:wrap !important; gap:6px !important }
+
+  /* ── Add expense form ── */
+  .add-expense-grid{
+    grid-template-columns:1fr 1fr !important;
+  }
+  .add-expense-grid .field:first-child,
+  .add-expense-grid .field:nth-child(2){
+    grid-column:1 !important;
+  }
+
+  /* ── Filter toolbar ── */
+  .filter-grid{
+    grid-template-columns:1fr 1fr !important;
+    gap:8px !important;
+  }
+  .toolbar{
+    flex-direction:column !important;
+    gap:8px !important;
+    align-items:stretch !important;
+  }
+  .toolbar > div{
+    width:100% !important;
+    justify-content:stretch !important;
+  }
+  .toolbar button, .toolbar select{
+    flex:1 !important;
+  }
+
+  /* ── Table summary bar ── */
+  .table-summary-bar{
+    flex-direction:row !important;
+    justify-content:space-between !important;
+    padding:10px 12px !important;
+    font-size:13px !important;
+  }
+}
 </style>
 </head>
 <body>
 <div class="container">
   <div class="hero" id="heroCard">
     <button class="hero-collapse-btn" id="heroCollapseBtn" onclick="toggleHeroCollapse()" title="כווץ/הרחב">&#8963;</button>
+    <div class="hero-collapsible-body" id="heroCollapsibleBody">
     <div class="hero-top">
       <div>
         <h1>מנהל ההוצאות שתמיד רצית</h1>
@@ -1946,6 +2146,7 @@ body.edit-active .table-shell tr{border:none}
         <div class="hero-stat"><div class="label">סה״כ הכנסות לחודש</div><div class="value" id="heroIncomeTotal">—</div></div>
       </div>
     </div>
+    </div><!-- /hero-collapsible-body -->
     <div class="hero-utility-bar">
       <div class="mini-nav">
         <div class="mini-nav-label-group">
