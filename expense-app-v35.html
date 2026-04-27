@@ -2184,6 +2184,38 @@ body.edit-active .table-shell tr{border:none}
     padding:6px 3px !important;
     font-size:11px !important;
   }
+  /* Stage 5.2 — Restore single-column layout for budget cards on mobile.
+     The .summary-row override above was forcing the per-category budget cards
+     into a 4-col grid, which broke their internal layout (47% bar cut,
+     3 mini-stats stacked vertically on one side). */
+  .summary-row.budget-card{
+    grid-template-columns:1fr !important;
+    padding:14px !important;
+    gap:10px !important;
+  }
+  .summary-row.budget-card > div{
+    padding:0 !important;
+    font-size:inherit !important;
+  }
+  .budget-card-top{
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+  .budget-card-title strong{ font-size:17px !important }
+  .budget-card-badge{ font-size:11px !important; padding:5px 10px !important }
+  .budget-card-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+  .budget-card-stat{
+    padding:9px !important;
+    border-radius:13px !important;
+    gap:3px !important;
+  }
+  .budget-card-stat span{ font-size:10px !important }
+  .budget-card-stat strong{ font-size:14px !important }
+  .budget-progress-track{ height:18px !important }
+  .budget-pct-label{ font-size:10px !important }
 
   /* ── Debts tab ── */
   .debt-topbar{
@@ -5226,7 +5258,13 @@ function renderChart(rows){
     }).join("");
     return;
   }
-  setChartBoxHeight(isMobile ? 340 : 340);
+  /* Stage 5.3 — Pie/bar legend was clipped on iPhone with many categories.
+     Grow chart-box vertically based on label count so the wrapped legend
+     stays inside the container instead of being cut at the viewport edge. */
+  const labelCount = type === "pie" ? nonZero.length : labels.length;
+  const pieMobileExtra  = isMobile ? Math.max(0, (labelCount - 3) * 26) : 0;
+  const pieDesktopExtra = !isMobile ? Math.max(0, (labelCount - 6) * 14) : 0;
+  setChartBoxHeight(isMobile ? 300 + pieMobileExtra : 340 + pieDesktopExtra);
   chartInstance=new Chart(ctx,{
     type,
     data:{
@@ -6809,7 +6847,14 @@ function deleteRowFromMobile(rowId, e){
 }
 
 
-/* Auto-close filter on mobile */
+/* Auto-close filter on mobile.
+   Bug fix (Stage 5.1): the previous implementation also set
+   `content.style.display = 'none'` as an inline style. Inline styles override
+   stylesheet rules, so when the user later clicked the header and toggleSection()
+   added the `.open` class, the CSS rule `.open .content{display:block}` was
+   ignored — the filter content stayed hidden forever.
+   Fix: rely solely on the `.open` class. The CSS already handles visibility:
+     `.content { display:none }` (default) and `.open .content { display:block }`. */
 function initMobileFilterState(){
   if(window.innerWidth > 720) return;
   const panels = document.querySelectorAll('.tab-panel[data-panel="expenses"] .section');
@@ -6817,8 +6862,9 @@ function initMobileFilterState(){
     const hdr = sec.querySelector('.header span');
     if(hdr && hdr.textContent.includes('סינון')) {
       sec.classList.remove('open');
+      // Clean up any leftover inline display from previous buggy versions of this app.
       const content = sec.querySelector('.content');
-      if(content) content.style.display = 'none';
+      if(content && content.style.display === 'none') content.style.removeProperty('display');
     }
   });
 }
