@@ -2462,6 +2462,355 @@ body.edit-active .table-shell tr{border:none}
   .demo-banner-dot{ width:7px; height:7px }
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 6 — Visual jump: typography, semantic colors, motion, polish.
+   Everything below is ADDITIVE. No selectors above this block were modified.
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 6.A Tokens: typography scale + semantic palette ─────────────────────── */
+:root{
+  /* Type scale */
+  --fs-display: clamp(22px, 2.4vw, 30px);
+  --fs-title:   clamp(15px, 1.6vw, 18px);
+  --fs-body:    14px;
+  --fs-micro:   11px;
+  /* Semantic colors */
+  --good:       #2e7d4f;
+  --good-soft:  #e6f4ec;
+  --good-line:  #b6dec5;
+  --warn:       #b58410;
+  --warn-soft:  #fbf0d2;
+  --warn-line:  #ebd28a;
+  --bad:        #b03a2e;
+  --bad-soft:   #fde8e5;
+  --bad-line:   #f0b0a8;
+  --info:       #2a679d;
+  --info-soft:  #e2eef9;
+  --info-line:  #aac9e3;
+  /* Motion */
+  --ease-out:    cubic-bezier(.2,.7,.3,1);
+  --ease-spring: cubic-bezier(.34,1.32,.64,1);
+}
+
+/* ── 6.B Tabular numerals on every currency-bearing element ──────────────── */
+.kpi .value,
+.kpi-sub,
+.budget-card-stat strong,
+.budget-card-title strong,
+.budget-card-badge,
+.budget-overview-stat .value,
+.budget-overview-stat .sub,
+.income-summary .value,
+.shared-balance-card .value,
+.shared-stat-card .value,
+.debt-highlight-value,
+.debt-item .big,
+.summary-metric strong,
+.summary-metric input,
+.hero-stat .value,
+.mxp-amount,
+.mxp-detail-cell .val,
+.bullet-pct,
+.budget-pct-label,
+.budget-progress-meta,
+.year-table td,
+.income-cell strong,
+.table-summary-bar{
+  font-feature-settings:"tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── 6.C Per-tab section-header accent (visual rhythm) ───────────────────── */
+.tab-panel[data-panel="dashboard"] .section > .header{
+  background:linear-gradient(135deg,#4a2e18 0%,#7a5038 100%);
+}
+.tab-panel[data-panel="budget"] .section > .header{
+  background:linear-gradient(135deg,#1f4a36 0%,#3e7d4f 100%);
+}
+.tab-panel[data-panel="income"] .section > .header{
+  background:linear-gradient(135deg,#2a5d28 0%,#5a8a3f 100%);
+}
+.tab-panel[data-panel="cards"] .section > .header{
+  background:linear-gradient(135deg,#3a2e4d 0%,#6a5a8a 100%);
+}
+.tab-panel[data-panel="expenses"] .section > .header{
+  background:linear-gradient(135deg,#4a2e18 0%,#a87245 100%);
+}
+.tab-panel[data-panel="shared"] .section > .header{
+  background:linear-gradient(135deg,#4a1f3a 0%,#a8456a 100%);
+}
+.tab-panel[data-panel="debts"] .section > .header{
+  background:linear-gradient(135deg,#4a1f1f 0%,#b03a2e 100%);
+}
+.tab-panel[data-panel="yearly"] .section > .header{
+  background:linear-gradient(135deg,#2a3950 0%,#5a7a9d 100%);
+}
+.tab-panel[data-panel="backup"] .section > .header{
+  background:linear-gradient(135deg,#3a3a3a 0%,#7a7a7a 100%);
+}
+/* Header — softer top corners + subtle inner highlight */
+.section > .header{
+  position:relative;
+  letter-spacing:.01em;
+}
+.section > .header::before{
+  content:"";
+  position:absolute;
+  inset:0 0 auto 0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  pointer-events:none;
+}
+
+/* ── 6.D Card mount stagger (CSS-only, replays on tab switch) ────────────── */
+@keyframes s6CardEntry{
+  from{ opacity:0; transform: translateY(8px) scale(.985); }
+  to  { opacity:1; transform: translateY(0)   scale(1);    }
+}
+.tab-panel.active > .section,
+.tab-panel.active .summary-row.budget-card,
+.tab-panel.active .kpi,
+.tab-panel.active .income-row,
+.tab-panel.active .debt-item,
+.tab-panel.active .debt-highlight,
+.tab-panel.active .shared-balance-card,
+.tab-panel.active .shared-stat-card,
+.tab-panel.active .mxp-item,
+.tab-panel.active .year-card,
+.tab-panel.active .settings-card,
+.tab-panel.active .sync-card{
+  animation: s6CardEntry .42s var(--ease-out) backwards;
+}
+.tab-panel.active > .section:nth-child(1){ animation-delay:.02s }
+.tab-panel.active > .section:nth-child(2){ animation-delay:.08s }
+.tab-panel.active > .section:nth-child(3){ animation-delay:.14s }
+.tab-panel.active > .section:nth-child(4){ animation-delay:.20s }
+.tab-panel.active > .section:nth-child(5){ animation-delay:.26s }
+.tab-panel.active .kpi:nth-child(1){ animation-delay:.04s }
+.tab-panel.active .kpi:nth-child(2){ animation-delay:.10s }
+.tab-panel.active .kpi:nth-child(3){ animation-delay:.16s }
+.tab-panel.active .kpi:nth-child(4){ animation-delay:.22s }
+.tab-panel.active .summary-row.budget-card:nth-child(2){ animation-delay:.04s }
+.tab-panel.active .summary-row.budget-card:nth-child(3){ animation-delay:.08s }
+.tab-panel.active .summary-row.budget-card:nth-child(4){ animation-delay:.12s }
+.tab-panel.active .summary-row.budget-card:nth-child(5){ animation-delay:.16s }
+.tab-panel.active .summary-row.budget-card:nth-child(6){ animation-delay:.20s }
+.tab-panel.active .summary-row.budget-card:nth-child(7){ animation-delay:.24s }
+.tab-panel.active .summary-row.budget-card:nth-child(8){ animation-delay:.28s }
+.tab-panel.active .summary-row.budget-card:nth-child(9){ animation-delay:.32s }
+.tab-panel.active .summary-row.budget-card:nth-child(n+10){ animation-delay:.36s }
+.tab-panel.active .income-row:nth-child(1){ animation-delay:.04s }
+.tab-panel.active .income-row:nth-child(2){ animation-delay:.10s }
+.tab-panel.active .income-row:nth-child(3){ animation-delay:.16s }
+.tab-panel.active .income-row:nth-child(n+4){ animation-delay:.22s }
+.tab-panel.active .mxp-item:nth-child(1){ animation-delay:.02s }
+.tab-panel.active .mxp-item:nth-child(2){ animation-delay:.05s }
+.tab-panel.active .mxp-item:nth-child(3){ animation-delay:.08s }
+.tab-panel.active .mxp-item:nth-child(4){ animation-delay:.11s }
+.tab-panel.active .mxp-item:nth-child(5){ animation-delay:.14s }
+.tab-panel.active .mxp-item:nth-child(n+6){ animation-delay:.17s }
+
+@media (prefers-reduced-motion: reduce){
+  .tab-panel.active *{ animation:none !important }
+}
+
+/* ── 6.E Hover lift on cards (desktop only — never on touch) ─────────────── */
+.kpi,
+.summary-row.budget-card,
+.income-row,
+.debt-item,
+.debt-highlight,
+.mxp-item,
+.shared-balance-card,
+.shared-stat-card{
+  transition: transform .18s var(--ease-out),
+              box-shadow .22s var(--ease-out),
+              border-color .18s ease;
+  will-change: transform;
+}
+@media (hover:hover) and (pointer:fine){
+  .kpi:hover,
+  .summary-row.budget-card:hover,
+  .income-row:hover,
+  .debt-item:hover,
+  .debt-highlight:hover,
+  .shared-balance-card:hover,
+  .shared-stat-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(107,69,48,.14);
+  }
+  .mxp-item:hover{
+    box-shadow: 0 8px 22px rgba(107,69,48,.10);
+  }
+}
+
+/* ── 6.F Button press feedback + focus polish ────────────────────────────── */
+button:not([disabled]){
+  transition: background .15s ease,
+              color .15s ease,
+              border-color .15s ease,
+              transform .12s var(--ease-spring),
+              box-shadow .15s ease;
+}
+button:not([disabled]):active{ transform: scale(.97); }
+button:focus-visible,
+input:focus-visible,
+select:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:8px;
+}
+
+/* ── 6.G Progress bar fill animation on mount (replays per render) ───────── */
+@keyframes s6ProgressFill{
+  from{ transform: scaleX(.001); }
+  to  { transform: scaleX(1);    }
+}
+.budget-progress-fill{
+  transform-origin: right center; /* RTL-safe: bar fills from the right */
+  animation: s6ProgressFill .85s var(--ease-out);
+}
+.bullet-bar{
+  transform-origin: right center;
+  animation: s6ProgressFill .75s var(--ease-out);
+}
+
+/* ── 6.H Soften and harmonize the budget badge variants (semantic colors) ── */
+.budget-card-badge.good{
+  background:var(--good-soft);
+  border-color:var(--good-line);
+  color:var(--good);
+}
+.budget-card-badge.bad{
+  background:var(--bad-soft);
+  border-color:var(--bad-line);
+  color:var(--bad);
+}
+/* Add a "warn" variant for when usage is high but not over (used by JS later) */
+.budget-card-badge.warn{
+  background:var(--warn-soft);
+  border-color:var(--warn-line);
+  color:var(--warn);
+}
+
+/* ── 6.I KPI value semantic coloring (utility classes) ───────────────────── */
+.value-good { color: var(--good) !important; }
+.value-bad  { color: var(--bad) !important; }
+.value-warn { color: var(--warn) !important; }
+.value-info { color: var(--info) !important; }
+
+/* ── 6.J Polish the chevrons (Stage 2) — soft glass ──────────────────────── */
+.mini-nav-chevron{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── 6.K Hero polish: softer h1 weight, hero-stat number prominence ──────── */
+.hero h1{
+  letter-spacing:-.015em;
+  font-weight:800;
+}
+.hero-stat .value{
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.kpi .value{
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.kpi .label{
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-weight:700;
+  font-size:11px;
+}
+
+/* ── 6.L Currency suffix (₪) softening — applied via attribute selector ──── */
+/* Generic class that components can opt into for nicer ₪ rendering */
+.amount-fancy { font-feature-settings:"tnum" 1; font-variant-numeric: tabular-nums; }
+
+/* ── 6.M Section content fade — when section is open ─────────────────────── */
+.section.open > .content{
+  animation: s6CardEntry .35s var(--ease-out);
+}
+
+/* ── 6.N Demo banner: skip animations on it ──────────────────────────────── */
+.demo-banner{ animation:none !important }
+
+/* ── 6.O Targeted polish from real-device screenshots ────────────────────── */
+
+/* Hero: tighter visual rhythm — less heavy on iPhone */
+.hero{ margin-bottom:14px }
+.hero-stat{
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+@media (hover:hover) and (pointer:fine){
+  .hero-stat:hover{ transform: translateY(-1px) }
+}
+
+/* "מצב עריכה: כבוי" pill — looks like a real toggle, not dead text */
+.compact-action-btn{
+  background:var(--card-soft) !important;
+  border:1px solid var(--line) !important;
+  color:var(--text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+.compact-action-btn:hover{
+  border-color:var(--accent) !important;
+  background:#fff !important;
+}
+.compact-action-btn::before{
+  content:"";
+  display:inline-block;
+  width:8px; height:8px;
+  border-radius:50%;
+  margin-left:6px;
+  background:var(--muted);
+  vertical-align:middle;
+  transition: background .2s ease;
+}
+.compact-action-btn.active::before,
+.compact-action-btn[aria-pressed="true"]::before{
+  background:var(--good);
+  box-shadow: 0 0 0 3px rgba(46,125,79,.18);
+}
+
+/* KPI edit button: less obstrusive, more "subtle pencil" */
+.kpi-edit-btn{
+  opacity:.55;
+  transition: opacity .18s ease, background .18s ease;
+}
+.kpi-edit-btn:hover, .kpi-edit-btn:focus-visible{
+  opacity:1;
+}
+
+/* Income summary: gentle green wash to suggest "positive flow" */
+.income-summary{
+  background: linear-gradient(180deg, #fafdf7, #eef7e7) !important;
+  border:1px solid #d2e4be !important;
+}
+.income-summary .value{ color:#3a6f29 }
+
+/* Subtle divider between the hero block and the rest of the page */
+.hero + .tabbar,
+.hero + .tab-panel{
+  position:relative;
+}
+
+/* Tap-target shimmer when section header is pressed (mobile feedback) */
+.section > .header{
+  -webkit-tap-highlight-color: rgba(255,255,255,.18);
+}
+.section > .header:active{
+  filter: brightness(1.08);
+}
+
+/* Subtle outline on focused chevrons for keyboard users */
+.mini-nav-chevron:focus-visible{
+  outline:2px solid rgba(255,255,255,.7);
+  outline-offset:2px;
+}
+
 </style>
 </head>
 <body>
