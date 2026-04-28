@@ -8,20 +8,20 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#f5f0e8;
-  --bg-accent:#ede5d5;
-  --card:#faf7f2;
-  --card-soft:#f5efe4;
-  --text:#2c1a0e;
-  --muted:#8c7b6a;
-  --line:#dfd4c0;
-  --accent:#6b4530;
-  --accent-2:#9e6e4a;
-  --accent-3:#c4a070;
-  --good:#4a7c56;
-  --bad:#b23b30;
-  --warn:#9a6c15;
-  --shadow:0 18px 40px rgba(107,69,48,.10);
+  --bg:#f0f4f8;
+  --bg-accent:#e4eaf3;
+  --card:#ffffff;
+  --card-soft:#f7f9fc;
+  --text:#18243a;
+  --muted:#64748b;
+  --line:#e2e8f0;
+  --accent:#2563eb;
+  --accent-2:#4b8cf8;
+  --accent-3:#93c5fd;
+  --good:#059669;
+  --bad:#dc2626;
+  --warn:#d97706;
+  --shadow:0 18px 40px rgba(37,99,235,.08);
   --radius:22px;
 }
 *{box-sizing:border-box}
@@ -31,16 +31,16 @@ body{
   font-family:Arial,sans-serif;
   color:var(--text);
   background:
-    radial-gradient(circle at top right, rgba(196,158,108,.26), transparent 28%),
-    radial-gradient(circle at top left, rgba(255,255,255,.85), transparent 36%),
+    radial-gradient(circle at top right, rgba(99,102,241,.10), transparent 28%),
+    radial-gradient(circle at top left, rgba(255,255,255,.90), transparent 36%),
     linear-gradient(180deg, var(--bg-accent), var(--bg));
 }
 .container{max-width:1320px;margin:auto;padding:20px 16px 40px}
 .hero{
   background:
-    radial-gradient(circle at 16% 24%, rgba(210,168,112,.22), transparent 18%),
-    radial-gradient(circle at 76% 12%, rgba(255,255,255,.16), transparent 16%),
-    linear-gradient(135deg, #2d1608 0%, #5c3018 48%, #a07848 100%);
+    radial-gradient(circle at 16% 24%, rgba(147,197,253,.18), transparent 18%),
+    radial-gradient(circle at 76% 12%, rgba(255,255,255,.12), transparent 16%),
+    linear-gradient(135deg, #0f172a 0%, #1e40af 48%, #3b82f6 100%);
   color:#fff;
   border:1px solid rgba(255,255,255,.20);
   border-radius:34px;
@@ -1559,9 +1559,9 @@ body.edit-active .table-shell tr{border:none}
 /* ── Budget Overview Hero ───────────────────────────── */
 .budget-overview-hero{
   background:
-    radial-gradient(circle at 14% 22%, rgba(210,168,112,.20), transparent 20%),
+    radial-gradient(circle at 14% 22%, rgba(167,243,208,.22), transparent 20%),
     radial-gradient(circle at 78% 10%, rgba(255,255,255,.12), transparent 18%),
-    linear-gradient(135deg, #2d1608 0%, #5c3018 48%, #a07848 100%);
+    linear-gradient(135deg, #022c22 0%, #065f46 48%, #10b981 100%);
   border-radius:28px;
   padding:24px 28px;
   color:#fff;
@@ -2470,18 +2470,18 @@ body.edit-active .table-shell tr{border:none}
   --fs-body:    14px;
   --fs-micro:   11px;
   /* Semantic colors */
-  --good:       #2e7d4f;
-  --good-soft:  #e6f4ec;
-  --good-line:  #b6dec5;
-  --warn:       #b58410;
-  --warn-soft:  #fbf0d2;
-  --warn-line:  #ebd28a;
-  --bad:        #b03a2e;
-  --bad-soft:   #fde8e5;
-  --bad-line:   #f0b0a8;
-  --info:       #2a679d;
-  --info-soft:  #e2eef9;
-  --info-line:  #aac9e3;
+  --good:       #059669;
+  --good-soft:  #d1fae5;
+  --good-line:  #6ee7b7;
+  --warn:       #d97706;
+  --warn-soft:  #fef3c7;
+  --warn-line:  #fcd34d;
+  --bad:        #dc2626;
+  --bad-soft:   #fee2e2;
+  --bad-line:   #fca5a5;
+  --info:       #2563eb;
+  --info-soft:  #dbeafe;
+  --info-line:  #93c5fd;
   /* Motion */
   --ease-out:    cubic-bezier(.2,.7,.3,1);
   --ease-spring: cubic-bezier(.34,1.32,.64,1);
@@ -2519,40 +2519,40 @@ body.edit-active .table-shell tr{border:none}
    Each tab gets its own gradient + a 4px right-side accent stripe that
    makes the per-tab identity unmistakable on real devices. */
 .tab-panel[data-panel="dashboard"] .section > .header{
-  background:linear-gradient(135deg,#5a3a1c 0%,#9c6a3a 100%);
-  --header-accent:#e0a060;
+  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
+  --header-accent:#93c5fd;
 }
 .tab-panel[data-panel="budget"] .section > .header{
-  background:linear-gradient(135deg,#0f5a3a 0%,#3aa55c 100%);
-  --header-accent:#a8e0bc;
+  background:linear-gradient(135deg,#022c22 0%,#059669 100%);
+  --header-accent:#6ee7b7;
 }
 .tab-panel[data-panel="income"] .section > .header{
-  background:linear-gradient(135deg,#1f6a28 0%,#5fb24a 100%);
-  --header-accent:#c0e69c;
+  background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);
+  --header-accent:#86efac;
 }
 .tab-panel[data-panel="cards"] .section > .header{
-  background:linear-gradient(135deg,#3a2a6a 0%,#7060b0 100%);
-  --header-accent:#c8b8e8;
+  background:linear-gradient(135deg,#2e1065 0%,#7c3aed 100%);
+  --header-accent:#c4b5fd;
 }
 .tab-panel[data-panel="expenses"] .section > .header{
-  background:linear-gradient(135deg,#4a2e18 0%,#c98a48 100%);
-  --header-accent:#f5c890;
+  background:linear-gradient(135deg,#431407 0%,#ea580c 100%);
+  --header-accent:#fdba74;
 }
 .tab-panel[data-panel="shared"] .section > .header{
-  background:linear-gradient(135deg,#5a1f4d 0%,#c8487a 100%);
-  --header-accent:#f0a8c8;
+  background:linear-gradient(135deg,#4c0519 0%,#e11d48 100%);
+  --header-accent:#fda4af;
 }
 .tab-panel[data-panel="debts"] .section > .header{
-  background:linear-gradient(135deg,#5a1818 0%,#d04030 100%);
-  --header-accent:#f5b0a8;
+  background:linear-gradient(135deg,#450a0a 0%,#dc2626 100%);
+  --header-accent:#fca5a5;
 }
 .tab-panel[data-panel="yearly"] .section > .header{
-  background:linear-gradient(135deg,#1f3a5a 0%,#4080b8 100%);
-  --header-accent:#a8c8e8;
+  background:linear-gradient(135deg,#1e1b4b 0%,#4f46e5 100%);
+  --header-accent:#a5b4fc;
 }
 .tab-panel[data-panel="backup"] .section > .header{
-  background:linear-gradient(135deg,#2a2a2a 0%,#6a6a6a 100%);
-  --header-accent:#c8c8c8;
+  background:linear-gradient(135deg,#0f172a 0%,#475569 100%);
+  --header-accent:#cbd5e1;
 }
 /* Section header — accent stripe (RTL: right side) + inner highlight + tighter type */
 .section > .header{
@@ -2948,6 +2948,177 @@ select:focus-visible{
 .demo-banner{
   background: linear-gradient(90deg, #fde7a1 0%, #f4cc55 50%, #fde7a1 100%) !important;
   font-weight:700;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 9 — Modern color scheme (no brown) + expense column alignment
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 9.A  Shadow colors: replace warm-brown with cool-navy ──────────────── */
+.hero{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 18px 40px rgba(15,23,42,.22) !important;
+}
+.kpi,
+.summary-row.budget-card,
+.debt-item,
+.debt-highlight,
+.shared-balance-card,
+.shared-stat-card,
+.year-card,
+.settings-card{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 4px 12px rgba(15,23,42,.05),
+    0 14px 30px rgba(15,23,42,.04) !important;
+  border:1px solid rgba(37,99,235,.08) !important;
+}
+.section{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 6px 18px rgba(15,23,42,.06),
+    0 18px 40px rgba(15,23,42,.04) !important;
+}
+.card-method{
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.8) inset,
+    0 8px 24px rgba(15,23,42,.08),
+    0 20px 40px rgba(15,23,42,.06) !important;
+}
+.budget-overview-hero{
+  box-shadow: 0 24px 56px rgba(2,44,34,.28) !important;
+}
+
+/* ── 9.B  Hero decorative circles — use blue tones now ──────────────────── */
+.hero::after{
+  background:rgba(147,197,253,.14) !important;
+}
+.budget-overview-hero::after{
+  background:rgba(167,243,208,.10) !important;
+}
+/* KPI orb: blue tint */
+.kpi::after{
+  background: radial-gradient(circle, rgba(37,99,235,.07), transparent 70%) !important;
+}
+
+/* ── 9.C  Hero repeat-line pattern: blue instead of dark brown ──────────── */
+.hero::before{
+  background:
+    linear-gradient(180deg, transparent, rgba(15,23,42,.60)),
+    repeating-linear-gradient(90deg,
+      transparent 0 24px,
+      rgba(255,255,255,.14) 24px 26px,
+      transparent 26px 58px),
+    linear-gradient(90deg,
+      transparent 0 5%,
+      rgba(15,23,42,.70) 5% 12%,
+      transparent 12% 16%,
+      rgba(15,23,42,.58) 16% 24%,
+      transparent 24% 30%,
+      rgba(15,23,42,.70) 30% 36%,
+      transparent 36% 42%,
+      rgba(15,23,42,.52) 42% 51%,
+      transparent 51% 58%,
+      rgba(15,23,42,.66) 58% 66%,
+      transparent 66% 72%,
+      rgba(15,23,42,.58) 72% 84%,
+      transparent 84% 100%) !important;
+}
+
+/* ── 9.D  Stage-7 KPI overrides: update warm-brown text to cool dark ─────── */
+@media (max-width:720px){
+  .kpi .label{ color:#4a6080 !important }
+  .kpi .value{ color:#18243a !important }
+  .kpi-sub{ color:#5a78a0 !important }
+  .hero-stat .label{ color:rgba(255,255,255,.72) !important }
+  .mxp-amount{ color:var(--accent) !important }
+}
+
+/* ── 9.E  income-summary: keep the green wash ───────────────────────────── */
+.income-summary{
+  background: linear-gradient(180deg, #f0fdf4, #dcfce7) !important;
+  border:1px solid #bbf7d0 !important;
+}
+.income-summary .value{ color:#15803d !important }
+
+/* ── 9.F  nav-menu-btn + mini-nav: blue accent ───────────────────────────── */
+.nav-menu-btn{
+  background:linear-gradient(135deg, #1e40af, #3b82f6) !important;
+}
+.nav-menu-btn:hover{
+  background:linear-gradient(135deg, #2563eb, #1e40af) !important;
+}
+.mini-nav{
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)) !important;
+}
+
+/* ── 9.G  Primary buttons: blue ─────────────────────────────────────────── */
+.success-btn,
+.primary,
+button[type="submit"],
+.mxp-edit-btn,
+.add-btn{
+  background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+}
+
+/* ── 9.H  Expense list — table column alignment ──────────────────────────── */
+/* A sticky header row labels the 3 columns */
+.mxp-list-header{
+  display:grid;
+  grid-template-columns:52px 1fr 94px;
+  padding:6px 14px 5px;
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  border-bottom:1px solid var(--line);
+  margin-bottom:6px;
+}
+.mxp-list-header span:last-child{ text-align:left }
+/* Every row uses the same column widths */
+.mxp-row{
+  grid-template-columns:52px 1fr 94px !important;
+}
+/* Amount column: right → left in RTL means visually right-aligned */
+.mxp-row > div:last-child{
+  justify-content:flex-end !important;
+}
+.mxp-amount{
+  min-width:0 !important;
+  text-align:left !important;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── 9.I  Card visual: update Stage-8 gradient shadow colors ────────────── */
+.card-stat{
+  border:1px solid rgba(37,99,235,.08) !important;
+  box-shadow: 0 2px 6px rgba(15,23,42,.04) !important;
+}
+
+/* ── 9.J  Stage-7 hero-stat glass: blue tint instead of brown ──────────── */
+@media (max-width:720px){
+  .hero-stat{
+    background: rgba(255,255,255,.12) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+  }
+}
+
+/* ── 9.K  Budget card accent stripe: update warm colors ─────────────────── */
+.summary-row.budget-card::before{
+  background: linear-gradient(180deg, var(--accent), #60a5fa) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.good)::before{
+  background: linear-gradient(180deg, var(--good), #34d399) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.bad)::before{
+  background: linear-gradient(180deg, var(--bad), #f87171) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.warn)::before{
+  background: linear-gradient(180deg, var(--warn), #fbbf24) !important;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
@@ -7632,7 +7803,9 @@ function renderMobileExpenseList(rows){
     el.innerHTML = '<div style="text-align:center;padding:24px;color:var(--muted);font-size:14px">אין הוצאות להצגה</div>';
     return;
   }
-  el.innerHTML = rows.map((e,i) => {
+  /* Stage 9 — sticky column header for table-like alignment */
+  const header = `<div class="mxp-list-header"><span>תאריך</span><span>תיאור</span><span>סכום</span></div>`;
+  el.innerHTML = header + rows.map((e,i) => {
     const isImm = isRowImmediate(e);
     const payLabel = e.payment || "העברה";
     const badge = isImm
