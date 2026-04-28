@@ -204,23 +204,26 @@ h1{
 }
 .header{
   padding:16px 18px;
-  background:linear-gradient(135deg, #4a2e18, #7a5038);
-  color:#fff;
+  background:#f8fafc;
+  color:var(--text);
   cursor:pointer;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:10px;
   font-weight:700;
+  border-bottom:1px solid var(--line);
 }
 .content{display:none;padding:18px}
 .open .content{display:block}
 .pill{
-  background:rgba(255,255,255,.14);
+  background:rgba(37,99,235,.10);
+  color:var(--accent);
   padding:6px 10px;
   border-radius:999px;
   font-size:12px;
   white-space:nowrap;
+  font-weight:700;
 }
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
 .kpi{
@@ -2518,42 +2521,17 @@ body.edit-active .table-shell tr{border:none}
 /* ── 6.C Per-tab section-header accent (saturated, distinct, with stripe) ──
    Each tab gets its own gradient + a 4px right-side accent stripe that
    makes the per-tab identity unmistakable on real devices. */
-.tab-panel[data-panel="dashboard"] .section > .header{
-  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%);
-  --header-accent:#93c5fd;
-}
-.tab-panel[data-panel="budget"] .section > .header{
-  background:linear-gradient(135deg,#022c22 0%,#059669 100%);
-  --header-accent:#6ee7b7;
-}
-.tab-panel[data-panel="income"] .section > .header{
-  background:linear-gradient(135deg,#14532d 0%,#16a34a 100%);
-  --header-accent:#86efac;
-}
-.tab-panel[data-panel="cards"] .section > .header{
-  background:linear-gradient(135deg,#2e1065 0%,#7c3aed 100%);
-  --header-accent:#c4b5fd;
-}
-.tab-panel[data-panel="expenses"] .section > .header{
-  background:linear-gradient(135deg,#431407 0%,#ea580c 100%);
-  --header-accent:#fdba74;
-}
-.tab-panel[data-panel="shared"] .section > .header{
-  background:linear-gradient(135deg,#4c0519 0%,#e11d48 100%);
-  --header-accent:#fda4af;
-}
-.tab-panel[data-panel="debts"] .section > .header{
-  background:linear-gradient(135deg,#450a0a 0%,#dc2626 100%);
-  --header-accent:#fca5a5;
-}
-.tab-panel[data-panel="yearly"] .section > .header{
-  background:linear-gradient(135deg,#1e1b4b 0%,#4f46e5 100%);
-  --header-accent:#a5b4fc;
-}
-.tab-panel[data-panel="backup"] .section > .header{
-  background:linear-gradient(135deg,#0f172a 0%,#475569 100%);
-  --header-accent:#cbd5e1;
-}
+/* Per-tab: only the right-side accent stripe changes color.
+   Background stays neutral (set on .header base rule). */
+.tab-panel[data-panel="dashboard"] .section > .header{ --header-accent:#3b82f6 }
+.tab-panel[data-panel="budget"]    .section > .header{ --header-accent:#10b981 }
+.tab-panel[data-panel="income"]    .section > .header{ --header-accent:#22c55e }
+.tab-panel[data-panel="cards"]     .section > .header{ --header-accent:#8b5cf6 }
+.tab-panel[data-panel="expenses"]  .section > .header{ --header-accent:#f97316 }
+.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#f43f5e }
+.tab-panel[data-panel="debts"]     .section > .header{ --header-accent:#ef4444 }
+.tab-panel[data-panel="yearly"]    .section > .header{ --header-accent:#6366f1 }
+.tab-panel[data-panel="backup"]    .section > .header{ --header-accent:#94a3b8 }
 /* Section header — accent stripe (RTL: right side) + inner highlight + tighter type */
 .section > .header{
   position:relative;
@@ -2565,19 +2543,21 @@ body.edit-active .table-shell tr{border:none}
 .section > .header::before{
   content:"";
   position:absolute;
-  top:8px; bottom:8px; right:8px;
+  top:0; bottom:0; right:0;
   width:4px;
-  border-radius:2px;
-  background: var(--header-accent, rgba(255,255,255,.5));
-  box-shadow: 0 0 12px var(--header-accent, rgba(255,255,255,.4));
+  border-radius:0 4px 4px 0;
+  background: var(--header-accent, var(--accent));
+  box-shadow: 2px 0 10px var(--header-accent, var(--accent));
+  opacity:.85;
   pointer-events:none;
 }
 .section > .header::after{
   content:"";
   position:absolute;
-  inset:0 0 auto 0;
+  inset:auto 0 0 0;
   height:1px;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
+  background:linear-gradient(90deg, transparent, var(--header-accent, var(--line)), transparent);
+  opacity:.4;
   pointer-events:none;
 }
 
@@ -2773,10 +2753,10 @@ select:focus-visible{
 
 /* Tap-target shimmer when section header is pressed (mobile feedback) */
 .section > .header{
-  -webkit-tap-highlight-color: rgba(255,255,255,.18);
+  -webkit-tap-highlight-color: rgba(37,99,235,.08);
 }
 .section > .header:active{
-  filter: brightness(1.08);
+  background: #f1f5f9;
 }
 
 /* Subtle outline on focused chevrons for keyboard users */
