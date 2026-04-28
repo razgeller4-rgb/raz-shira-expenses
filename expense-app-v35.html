@@ -2950,6 +2950,302 @@ select:focus-visible{
   font-weight:700;
 }
 
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 8 — Full UX package
+   A. Scroll-proof resize (JS only — see bottom of script)
+   B. Bar chart → horizontal (JS only)
+   C. Budget hero — radial progress + body layout
+   D. Cards tab redesign
+   E. Category cards compact redesign
+   F. Hero collapse button — no overflow when collapsed
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 8.C  Budget hero — radial + body layout ────────────────────────────── */
+.budget-overview-body{
+  display:grid;
+  grid-template-columns:130px 1fr;
+  gap:16px;
+  align-items:center;
+}
+.budget-radial-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.budget-radial-svg{
+  width:120px;
+  height:120px;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.22));
+}
+/* Status-tinted "remaining" stat box */
+.budget-overview-stat.good{ border-color:rgba(94,207,146,.35) !important }
+.budget-overview-stat.bad{  border-color:rgba(224,122,104,.35) !important }
+.budget-overview-stat.warn{ border-color:rgba(244,200,106,.35) !important }
+
+/* Mobile: stack radial on top of stats */
+@media (max-width:720px){
+  .budget-overview-body{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .budget-radial-wrap{
+    /* On mobile show a slimmer ring beside text in a row */
+    order:-1;
+  }
+  .budget-radial-svg{ width:90px !important; height:90px !important }
+  /* Inline radial + stats side-by-side on mobile */
+  .budget-overview-body{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:12px !important;
+  }
+  .budget-overview-stats{
+    flex:1 !important;
+    min-width:0 !important;
+  }
+}
+
+/* ── 8.D  Cards tab redesign ─────────────────────────────────────────────── */
+.card-list{ gap:16px }
+
+/* Physical-card visual header */
+.card-method{
+  border-radius:24px !important;
+  padding:0 !important;
+  overflow:hidden;
+  background:none !important;
+  border:none !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.7) inset,
+    0 8px 24px rgba(45,22,8,.10),
+    0 20px 40px rgba(45,22,8,.08) !important;
+}
+.card-visual{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.20), transparent 32%),
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,.12), transparent 22%),
+    linear-gradient(135deg, #3a2a6a 0%, #6a58b8 55%, #9880d8 100%);
+  padding:20px 20px 16px;
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+  min-height:96px;
+}
+.card-visual.immediate{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.20), transparent 32%),
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,.12), transparent 22%),
+    linear-gradient(135deg, #1a4a2e 0%, #3a8a58 55%, #60b878 100%);
+}
+.card-visual::before{
+  content:"";
+  position:absolute;
+  top:-60px; left:-60px;
+  width:200px; height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,.10);
+  pointer-events:none;
+}
+.card-visual::after{
+  content:"";
+  position:absolute;
+  bottom:-40px; right:-40px;
+  width:160px; height:160px;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+  pointer-events:none;
+}
+.card-visual-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  position:relative;
+  z-index:1;
+}
+.card-visual-name{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.3px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+.card-visual-chip{
+  width:36px; height:26px;
+  border-radius:5px;
+  background:linear-gradient(135deg,rgba(255,215,100,.85),rgba(255,190,40,.55));
+  border:1px solid rgba(255,200,80,.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,.20);
+}
+.card-visual-type{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  opacity:.80;
+  margin-top:28px;
+  position:relative;
+  z-index:1;
+}
+.card-visual-tags{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+  position:relative;
+  z-index:1;
+}
+.card-visual-tag{
+  font-size:11px;
+  font-weight:700;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  padding:3px 10px;
+}
+.card-body{
+  padding:14px 16px 16px;
+  background:linear-gradient(180deg,#fafaf8,#f5efe4);
+}
+.card-method-grid{
+  gap:8px !important;
+  margin-top:0 !important;
+}
+.card-stat{
+  border-radius:14px !important;
+  padding:11px 13px !important;
+  min-height:76px !important;
+  background:linear-gradient(180deg,#fff,#faf5ee) !important;
+  border:1px solid rgba(107,69,48,.09) !important;
+  box-shadow: 0 2px 6px rgba(45,22,8,.04) !important;
+}
+.card-stat .label{
+  font-size:11px !important;
+  font-weight:700 !important;
+  color:var(--muted) !important;
+  text-transform:uppercase !important;
+  letter-spacing:.04em !important;
+}
+.card-stat .value{
+  font-size:20px !important;
+  font-weight:800 !important;
+  color:var(--text) !important;
+  margin-top:4px !important;
+  font-feature-settings:"tnum" 1;
+}
+.card-stat .sub{
+  font-size:11px !important;
+  line-height:1.3 !important;
+  margin-top:3px !important;
+}
+
+/* month chip on card — moved into card visual */
+.card-method .income-source-chip{ display:none }
+
+/* Mobile: single-column stats */
+@media (max-width:720px){
+  .card-visual-name{ font-size:17px !important }
+  .card-body{ padding:12px 12px 14px !important }
+  .card-method-grid{ grid-template-columns:1fr 1fr !important }
+  .card-stat{ min-height:64px !important }
+  .card-stat .value{ font-size:16px !important }
+}
+
+/* ── 8.E  Category cards — compact, no-scroll redesign ──────────────────── */
+/* Replace the tall 3-stat card with a tight single-row format:
+   [Name badge] ────progress──── [₪ amount / % label] */
+.budget-card-grid{ display:none !important }  /* hide the 3-stat row */
+
+.summary-row.budget-card{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  padding:12px 14px 12px 10px !important;
+}
+.budget-card-top{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  gap:8px !important;
+  flex-wrap:nowrap !important;
+}
+.budget-card-title{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+  flex:1 !important;
+}
+.budget-card-title strong{
+  font-size:14px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.budget-card-badge{
+  font-size:11px !important;
+  padding:3px 9px !important;
+  white-space:nowrap !important;
+  flex-shrink:0 !important;
+}
+/* Progress row: track + amount label right-aligned */
+.budget-progress{
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+.budget-progress-track{
+  height:10px !important;
+  border-radius:999px !important;
+}
+.budget-progress-meta{
+  display:none !important;  /* hidden to save space */
+}
+.budget-pct-label{
+  font-size:11px !important;
+  right:6px !important;
+}
+/* Amount shown beside the bar */
+.budget-card-amount-aside{
+  font-size:13px;
+  font-weight:800;
+  color:var(--text);
+  white-space:nowrap;
+  font-feature-settings:"tnum" 1;
+}
+/* On desktop keep the 3-stat grid (undo the hide) */
+@media (min-width:721px){
+  .budget-card-grid{ display:grid !important }
+  .budget-progress-meta{ display:flex !important }
+  .budget-card-amount-aside{ display:none }
+  .summary-row.budget-card{ padding:16px !important }
+  .budget-card-title strong{ font-size:16px !important }
+}
+
+/* ── 8.F  Hero collapse button — never overflows into section below ─────── */
+/* When hero is collapsed, the absolute-positioned button stays within hero
+   bounds because we ensure the hero itself has enough height to contain it. */
+.hero.hero-collapsed{
+  min-height:60px; /* guarantee the button has room */
+}
+/* On mobile (hero-collapsible-body hidden by default via display:none),
+   the collapse button should appear inside the mini-nav row, not float above it */
+@media (max-width:720px){
+  .hero-collapse-btn{
+    position:static !important;
+    width:36px !important; height:36px !important;
+    font-size:15px !important;
+    margin-left:auto !important;
+    flex-shrink:0 !important;
+  }
+  .hero-utility-bar{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -5561,6 +5857,11 @@ function renderBudgetOverview(rows){
                     : overBudget ? `חריגה של ${fmt(Math.abs(totalRemain))}`
                     : `נשאר ${fmt(totalRemain)} (${100-pct}%)`;
   const monthLabel  = formatSheetLabel ? formatSheetLabel(selectedSheet) : selectedSheet;
+  /* Stage 8 — budget hero: radial SVG progress + 2-column layout on mobile */
+  const circR = 52, circC = 60, circLen = +(2*Math.PI*circR).toFixed(1);
+  const dashFill = hasBudget ? +(circLen*pct/100).toFixed(1) : 0;
+  const radialColor = tone==="bad" ? "#e07a68" : tone==="warn" ? "#f4c86a" : "#5ecf92";
+  const statIcon = (t) => t==="bad" ? "🔴" : t==="warn" ? "🟡" : "🟢";
   el.innerHTML = `
     <div class="budget-overview-hero">
       <div class="budget-overview-top">
@@ -5568,23 +5869,39 @@ function renderBudgetOverview(rows){
           <div class="budget-overview-title">📊 תקציב — ${monthLabel}</div>
           <div class="budget-overview-subtitle">סיכום כולל מול ביצוע בפועל</div>
         </div>
-        <span class="budget-overview-badge ${tone}">${badgeText}</span>
+        <span class="budget-overview-badge ${tone}">${statIcon(tone)} ${badgeText}</span>
       </div>
-      <div class="budget-overview-stats">
-        <div class="budget-overview-stat">
-          <div class="label">תקציב מוקצה</div>
-          <div class="value">${hasBudget ? fmt(totalBudget) : "—"}</div>
-          <div class="sub">סך כל הקטגוריות עם תקציב</div>
-        </div>
-        <div class="budget-overview-stat">
-          <div class="label">יצא בפועל</div>
-          <div class="value">${fmt(totalSpent)}</div>
-          <div class="sub">${hasBudget ? `${pct}% מהתקציב` : "ללא תקציב מוגדר"}</div>
-        </div>
-        <div class="budget-overview-stat">
-          <div class="label">${overBudget ? "חריגה" : "נשאר"}</div>
-          <div class="value">${hasBudget ? fmt(Math.abs(totalRemain)) : "—"}</div>
-          <div class="sub">${overBudget ? "מעל התקציב" : "עדיין בתקציב"}</div>
+      <div class="budget-overview-body">
+        ${hasBudget ? `<div class="budget-radial-wrap">
+          <svg class="budget-radial-svg" viewBox="0 0 120 120" aria-hidden="true">
+            <circle cx="${circC}" cy="${circC}" r="${circR}" fill="none"
+              stroke="rgba(255,255,255,.15)" stroke-width="11"/>
+            <circle cx="${circC}" cy="${circC}" r="${circR}" fill="none"
+              stroke="${radialColor}" stroke-width="11" stroke-linecap="round"
+              stroke-dasharray="${dashFill} ${circLen}"
+              transform="rotate(-90 ${circC} ${circC})"/>
+            <text x="${circC}" y="55" text-anchor="middle"
+              fill="white" font-size="21" font-weight="800" font-family="Arial,sans-serif">${pct}%</text>
+            <text x="${circC}" y="72" text-anchor="middle"
+              fill="rgba(255,255,255,.72)" font-size="10" font-family="Arial,sans-serif">נוצל</text>
+          </svg>
+        </div>` : ""}
+        <div class="budget-overview-stats">
+          <div class="budget-overview-stat">
+            <div class="label">💰 תקציב מוקצה</div>
+            <div class="value">${hasBudget ? fmt(totalBudget) : "—"}</div>
+            <div class="sub">סך כל הקטגוריות עם תקציב</div>
+          </div>
+          <div class="budget-overview-stat">
+            <div class="label">📤 יצא בפועל</div>
+            <div class="value">${fmt(totalSpent)}</div>
+            <div class="sub">${hasBudget ? `${pct}% מהתקציב` : "ללא תקציב מוגדר"}</div>
+          </div>
+          <div class="budget-overview-stat ${tone}">
+            <div class="label">${overBudget ? "⚠️ חריגה" : "✅ נשאר"}</div>
+            <div class="value">${hasBudget ? fmt(Math.abs(totalRemain)) : "—"}</div>
+            <div class="sub">${overBudget ? "מעל התקציב" : "עדיין בתקציב"}</div>
+          </div>
         </div>
       </div>
       ${hasBudget ? `
@@ -5594,8 +5911,8 @@ function renderBudgetOverview(rows){
         </div>
         <div class="budget-overview-meta">
           <span>0</span>
-          <span>${pct}% נוצל</span>
-          <span>${fmt(totalBudget)}</span>
+          <span>${pct}% נוצל מתוך ${fmt(totalBudget)}</span>
+          <span>${fmt(totalSpent)}</span>
         </div>
       </div>` : ""}
     </div>`;
@@ -5638,6 +5955,10 @@ function renderCategorySummary(rows){
         </div>
       </div>`;
     }
+    /* Stage 8 — compact card: name + badge on top, progress + amount inline */
+    const amountLabel = c.budget == null
+      ? fmt(used)
+      : (remainingValue < 0 ? `-${fmt(Math.abs(remainingValue))}` : `${fmt(used)} / ${budgetText}`);
     return `<div class="summary-row budget-card ${cls==="bad" ? "status-bad" : cls==="good" ? "status-good" : ""}">
       <div class="budget-card-top">
         <div class="budget-card-title">
@@ -5650,6 +5971,7 @@ function renderCategorySummary(rows){
           <div class="budget-progress-fill ${cls}" style="width:${progress}%"></div>
           ${c.budget ? `<span class="budget-pct-label">${progressRaw}%</span>` : ""}
         </div>
+        <span class="budget-card-amount-aside">${amountLabel}</span>
         <div class="budget-progress-meta">
           <span>יצא: ${fmt(used)}</span>
           <span>${c.budget == null ? "ללא תקרה" : `מתוך ${budgetText}`}</span>
@@ -5769,6 +6091,57 @@ function renderChart(rows){
     ? (isMobile ? pieDiameter + legendH : pieDiameter + legendH)
     : (isMobile ? 320 : 340);
   setChartBoxHeight(boxHeight);
+  if(type === "bar"){
+    /* Stage 8 — Horizontal bar chart (indexAxis:"y") so Hebrew category names
+       have full width to breathe; vibrant multi-colour fill per bar. */
+    const barData = nonZero.length ? nonZero : labels.map((label,i)=>({label,value:values[i]})).filter(x=>x.value>0);
+    const barPalette = [
+      "#6b4530","#c87a48","#3d8a6a","#c4a030","#6055b0",
+      "#c84878","#2f7aae","#b04e2e","#5a9848","#c08050","#5580b8"
+    ];
+    const bLen = barData.length;
+    setChartBoxHeight(isMobile ? Math.max(280, bLen*44+80) : Math.max(320, bLen*48+80));
+    chartInstance = new Chart(ctx, {
+      type:"bar",
+      data:{
+        labels: barData.map(x=>x.label),
+        datasets:[{
+          label:"הוצאה",
+          data: barData.map(x=>x.value),
+          backgroundColor: barData.map((_,i)=>barPalette[i%barPalette.length]+"cc"),
+          borderColor:      barData.map((_,i)=>barPalette[i%barPalette.length]),
+          borderWidth:2,
+          borderRadius: isMobile ? 7 : 9,
+          borderSkipped:false
+        }]
+      },
+      options:{
+        responsive:true,
+        maintainAspectRatio:false,
+        indexAxis:"y",
+        plugins:{
+          legend:{ display:false },
+          tooltip:{
+            rtl:true,
+            callbacks:{ label: ctx=>`  ₪${Math.round(ctx.parsed.x).toLocaleString("he-IL")}` }
+          }
+        },
+        scales:{
+          x:{
+            beginAtZero:true,
+            grid:{ color:"rgba(107,69,48,.08)" },
+            ticks:{ font:{size:isMobile?10:12}, color:"#7a5840",
+              callback: v => "₪"+Math.round(v).toLocaleString("he-IL") }
+          },
+          y:{
+            grid:{ display:false },
+            ticks:{ font:{size:isMobile?10:12, weight:"700"}, color:"#4a2e18" }
+          }
+        }
+      }
+    });
+    return;
+  }
   chartInstance=new Chart(ctx,{
     type: isPie && isMobile ? "doughnut" : type,
     data:{
@@ -5802,7 +6175,7 @@ function renderChart(rows){
           }
         }
       },
-      scales:type==="bar" ? {y:{beginAtZero:true,ticks:{font:{size:isMobile ? 10 : 12}}},x:{ticks:{font:{size:isMobile ? 10 : 12}}}} : {}
+      scales:{}
     }
   });
 }
@@ -5939,71 +6312,87 @@ function renderPaymentMethodTab(){
             ? "הסכום עדיין שייך למחזור עתידי"
             : "הסכום יופיע בתאריך החיוב הקרוב")
       : "אין כרגע חיובים בגיליון שנבחר";
+    /* Stage 8 — Card visual: physical-card header (gradient) + body with stats */
+    const cardAmt = method.isImmediate ? monthlyCharge : scheduledCharge;
+    const cardCnt = method.isImmediate ? monthlyCount : scheduledCount;
     return cardEditMode ? `
       <div class="card-method">
-        <div class="card-method-edit">
-          <div class="field">
-            <label>שם הכרטיס</label>
-            <input value="${String(method.name || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
+        <div class="card-visual${method.isImmediate?" immediate":""}">
+          <div class="card-visual-top">
+            <div class="card-visual-name">${method.name}</div>
+            <div class="card-visual-chip"></div>
           </div>
-          <div class="field">
-            <label>יום תחילת מחזור</label>
-            <input type="number" min="1" max="31" value="${Number(method.cycleDay || 10)}" onchange="updatePaymentMethodRow('${method.id}', 'cycleDay', this.value)">
-          </div>
-          <div class="field">
-            <label>סוג חיוב</label>
-            <select onchange="updatePaymentMethodRow('${method.id}', 'isImmediate', this.value)">
-              <option value="delayed" ${method.isImmediate ? "" : "selected"}>לפי תאריך חיוב</option>
-              <option value="immediate" ${method.isImmediate ? "selected" : ""}>מיידי / דיירקט</option>
-            </select>
-          </div>
-          <button class="secondary" type="button" onclick="deletePaymentMethodRow('${method.id}')">מחק</button>
+          <div class="card-visual-type">${method.isImmediate ? "דיירקט / מיידי" : "כרטיס אשראי"}</div>
         </div>
-        <div class="card-method-grid">
-          <div class="card-stat">
-            <div class="label">${method.isImmediate ? "ירד מיידית בחודש הנבחר" : delayedHeadline}</div>
-            <div class="value">${(method.isImmediate ? monthlyCount : scheduledCount) ? fmt(method.isImmediate ? monthlyCharge : scheduledCharge) : "—"}</div>
-            <div class="sub">${method.isImmediate ? (monthlyCount ? `${monthlyCount} עסקאות ירדו ישר מהעו״ש` : "אין עסקאות בגיליון הזה") : delayedSubline}</div>
+        <div class="card-body">
+          <div class="card-method-edit">
+            <div class="field">
+              <label>שם הכרטיס</label>
+              <input value="${String(method.name || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
+            </div>
+            <div class="field">
+              <label>יום תחילת מחזור</label>
+              <input type="number" min="1" max="31" value="${Number(method.cycleDay || 10)}" onchange="updatePaymentMethodRow('${method.id}', 'cycleDay', this.value)">
+            </div>
+            <div class="field">
+              <label>סוג חיוב</label>
+              <select onchange="updatePaymentMethodRow('${method.id}', 'isImmediate', this.value)">
+                <option value="delayed" ${method.isImmediate ? "" : "selected"}>לפי תאריך חיוב</option>
+                <option value="immediate" ${method.isImmediate ? "selected" : ""}>מיידי / דיירקט</option>
+              </select>
+            </div>
+            <button class="secondary" type="button" onclick="deletePaymentMethodRow('${method.id}')">מחק</button>
           </div>
-          <div class="card-stat">
-            <div class="label">${method.isImmediate ? "אופי חיוב" : "מחזור חיוב"}</div>
-            <div class="value">${method.isImmediate ? "מיידי" : `מה-${method.cycleDay}`}</div>
-            <div class="sub">${method.isImmediate ? "כל עסקה יורדת מיד מהעו״ש" : `עד ${cycleEndDay} בחודש הבא`}</div>
-          </div>
-          <div class="card-stat">
-            <div class="label">חודש מוצג</div>
-            <div class="value">${formatSheetLabel(selectedSheet)}</div>
-            <div class="sub">${method.isImmediate ? "הסכום משקף ירידות בפועל בחודש הזה" : "החיוב מחושב מתוך הגיליון הזה"}</div>
+          <div class="card-method-grid" style="margin-top:12px">
+            <div class="card-stat">
+              <div class="label">${method.isImmediate ? "ירד מיידית" : delayedHeadline}</div>
+              <div class="value">${cardCnt ? fmt(cardAmt) : "—"}</div>
+              <div class="sub">${method.isImmediate ? (monthlyCount ? `${monthlyCount} עסקאות` : "אין עסקאות") : delayedSubline}</div>
+            </div>
+            <div class="card-stat">
+              <div class="label">${method.isImmediate ? "אופי חיוב" : "מחזור חיוב"}</div>
+              <div class="value">${method.isImmediate ? "מיידי" : `מה-${method.cycleDay}`}</div>
+              <div class="sub">${method.isImmediate ? "ירידה ישירה מהעו״ש" : `עד ${cycleEndDay} בחודש הבא`}</div>
+            </div>
+            <div class="card-stat">
+              <div class="label">חודש מוצג</div>
+              <div class="value">${formatSheetLabel(selectedSheet)}</div>
+              <div class="sub">${method.isImmediate ? "ירידות בפועל בחודש הזה" : "חיוב מחושב מגיליון זה"}</div>
+            </div>
           </div>
         </div>
       </div>
     ` : `
       <div class="card-method">
-        <div class="card-method-top">
-          <div>
-            <div class="card-method-name">${method.name}</div>
-            <div class="card-method-meta">
-              <span class="tag">${method.isImmediate ? "חיוב מיידי / דיירקט" : `מחזור מה-${method.cycleDay}`}</span>
-              <span class="tag">${method.isImmediate ? "לא נכנס לחיוב עתידי" : `עד ${cycleEndDay} בחודש שאחריו`}</span>
-            </div>
+        <div class="card-visual${method.isImmediate?" immediate":""}">
+          <div class="card-visual-top">
+            <div class="card-visual-name">${method.name}</div>
+            <div class="card-visual-chip"></div>
           </div>
-          <span class="income-source-chip">${formatSheetLabel(selectedSheet)}</span>
+          <div class="card-visual-type">${method.isImmediate ? "דיירקט / חיוב מיידי" : "כרטיס אשראי"}</div>
+          <div class="card-visual-tags">
+            <span class="card-visual-tag">${method.isImmediate ? "מיידי" : `מחזור מה-${method.cycleDay}`}</span>
+            <span class="card-visual-tag">${method.isImmediate ? "אין חיוב עתידי" : `עד ${cycleEndDay} בחודש שאחריו`}</span>
+            <span class="card-visual-tag">📅 ${formatSheetLabel(selectedSheet)}</span>
+          </div>
         </div>
-        <div class="card-method-grid">
-          <div class="card-stat">
-            <div class="label">${method.isImmediate ? "ירד מיידית בחודש הנבחר" : delayedHeadline}</div>
-            <div class="value">${(method.isImmediate ? monthlyCount : scheduledCount) ? fmt(method.isImmediate ? monthlyCharge : scheduledCharge) : "—"}</div>
-            <div class="sub">${method.isImmediate ? (monthlyCount ? `${monthlyCount} עסקאות ירדו כבר מהעו״ש` : "אין עסקאות בגיליון הזה") : delayedSubline}</div>
-          </div>
-          <div class="card-stat">
-            <div class="label">${method.isImmediate ? "סוג כרטיס" : "יום תחילת מחזור"}</div>
-            <div class="value">${method.isImmediate ? "דיירקט" : method.cycleDay}</div>
-            <div class="sub">${method.isImmediate ? "הוצאה נשארת בחודש התאריך עצמו" : "מכאן נקבע השיוך בין חודשים"}</div>
-          </div>
-          <div class="card-stat">
-            <div class="label">סטטוס</div>
-            <div class="value">${method.isImmediate ? (monthlyCount ? "חויב מיידית" : "ללא שימוש") : delayedStatus}</div>
-            <div class="sub">${method.isImmediate ? (monthlyCount ? "יש עסקאות שכבר ירדו בפועל" : "אין כרגע עסקאות בגיליון שנבחר") : delayedStatusSub}</div>
+        <div class="card-body">
+          <div class="card-method-grid">
+            <div class="card-stat">
+              <div class="label">${method.isImmediate ? "ירד מיידית" : delayedHeadline}</div>
+              <div class="value">${cardCnt ? fmt(cardAmt) : "—"}</div>
+              <div class="sub">${method.isImmediate ? (monthlyCount ? `${monthlyCount} עסקאות ירדו מהעו״ש` : "אין עסקאות בגיליון הזה") : delayedSubline}</div>
+            </div>
+            <div class="card-stat">
+              <div class="label">${method.isImmediate ? "סוג כרטיס" : "יום תחילת מחזור"}</div>
+              <div class="value">${method.isImmediate ? "דיירקט" : method.cycleDay}</div>
+              <div class="sub">${method.isImmediate ? "הוצאה נשארת בחודש התאריך" : "מכאן נקבע השיוך בין חודשים"}</div>
+            </div>
+            <div class="card-stat">
+              <div class="label">סטטוס</div>
+              <div class="value">${method.isImmediate ? (monthlyCount ? "חויב ✓" : "ללא שימוש") : delayedStatus}</div>
+              <div class="sub">${method.isImmediate ? (monthlyCount ? "עסקאות שכבר ירדו בפועל" : "אין עסקאות בגיליון שנבחר") : delayedStatusSub}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -7168,7 +7557,19 @@ document.getElementById("newMerchant").onblur=maybeFillNewCategoryFromMerchant;
 document.getElementById("newMerchant").onchange=maybeFillNewCategoryFromMerchant;
 document.getElementById("cancelNewExpenseBtn").onclick=()=>{ clearNewExpenseForm(); toggleAddExpenseForm(false); };
 document.getElementById("saveNewExpenseBtn").onclick=addNewExpense;
-window.addEventListener("resize", render);
+/* Stage 8 — iOS Safari fires "resize" on scroll when the address bar
+   shows/hides (only the HEIGHT changes). We skip height-only events so the
+   chart never re-renders during a normal scroll. Width changes (real resize /
+   orientation flip) still trigger a full render as before. */
+let _s8PrevW = window.innerWidth;
+let _s8ResizeRaf;
+window.addEventListener("resize", () => {
+  const w = window.innerWidth;
+  if(w === _s8PrevW) return; // height-only → skip (iOS toolbar)
+  _s8PrevW = w;
+  cancelAnimationFrame(_s8ResizeRaf);
+  _s8ResizeRaf = requestAnimationFrame(render);
+});
 
 const BACKUP_BANNER_KEY = "expense_app_last_backup_banner_v1";
 function maybeShowBackupBanner(){
