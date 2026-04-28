@@ -2451,11 +2451,6 @@ body.edit-active .table-shell tr{border:none}
   width:8px; height:8px; border-radius:50%;
   background:#b07a06;
   box-shadow:0 0 0 3px rgba(176,122,6,.18);
-  animation:demoBlink 1.6s ease-in-out infinite;
-}
-@keyframes demoBlink{
-  0%,100%{ opacity:1 }
-  50%{ opacity:.35 }
 }
 @media (max-width:720px){
   .demo-banner{ font-size:11px; padding:6px 10px }
@@ -2520,98 +2515,85 @@ body.edit-active .table-shell tr{border:none}
   font-variant-numeric: tabular-nums lining-nums;
 }
 
-/* ── 6.C Per-tab section-header accent (visual rhythm) ───────────────────── */
+/* ── 6.C Per-tab section-header accent (saturated, distinct, with stripe) ──
+   Each tab gets its own gradient + a 4px right-side accent stripe that
+   makes the per-tab identity unmistakable on real devices. */
 .tab-panel[data-panel="dashboard"] .section > .header{
-  background:linear-gradient(135deg,#4a2e18 0%,#7a5038 100%);
+  background:linear-gradient(135deg,#5a3a1c 0%,#9c6a3a 100%);
+  --header-accent:#e0a060;
 }
 .tab-panel[data-panel="budget"] .section > .header{
-  background:linear-gradient(135deg,#1f4a36 0%,#3e7d4f 100%);
+  background:linear-gradient(135deg,#0f5a3a 0%,#3aa55c 100%);
+  --header-accent:#a8e0bc;
 }
 .tab-panel[data-panel="income"] .section > .header{
-  background:linear-gradient(135deg,#2a5d28 0%,#5a8a3f 100%);
+  background:linear-gradient(135deg,#1f6a28 0%,#5fb24a 100%);
+  --header-accent:#c0e69c;
 }
 .tab-panel[data-panel="cards"] .section > .header{
-  background:linear-gradient(135deg,#3a2e4d 0%,#6a5a8a 100%);
+  background:linear-gradient(135deg,#3a2a6a 0%,#7060b0 100%);
+  --header-accent:#c8b8e8;
 }
 .tab-panel[data-panel="expenses"] .section > .header{
-  background:linear-gradient(135deg,#4a2e18 0%,#a87245 100%);
+  background:linear-gradient(135deg,#4a2e18 0%,#c98a48 100%);
+  --header-accent:#f5c890;
 }
 .tab-panel[data-panel="shared"] .section > .header{
-  background:linear-gradient(135deg,#4a1f3a 0%,#a8456a 100%);
+  background:linear-gradient(135deg,#5a1f4d 0%,#c8487a 100%);
+  --header-accent:#f0a8c8;
 }
 .tab-panel[data-panel="debts"] .section > .header{
-  background:linear-gradient(135deg,#4a1f1f 0%,#b03a2e 100%);
+  background:linear-gradient(135deg,#5a1818 0%,#d04030 100%);
+  --header-accent:#f5b0a8;
 }
 .tab-panel[data-panel="yearly"] .section > .header{
-  background:linear-gradient(135deg,#2a3950 0%,#5a7a9d 100%);
+  background:linear-gradient(135deg,#1f3a5a 0%,#4080b8 100%);
+  --header-accent:#a8c8e8;
 }
 .tab-panel[data-panel="backup"] .section > .header{
-  background:linear-gradient(135deg,#3a3a3a 0%,#7a7a7a 100%);
+  background:linear-gradient(135deg,#2a2a2a 0%,#6a6a6a 100%);
+  --header-accent:#c8c8c8;
 }
-/* Header — softer top corners + subtle inner highlight */
+/* Section header — accent stripe (RTL: right side) + inner highlight + tighter type */
 .section > .header{
   position:relative;
   letter-spacing:.01em;
+  font-size:15px;
+  font-weight:800;
+  padding-right:22px !important;
 }
 .section > .header::before{
   content:"";
   position:absolute;
+  top:8px; bottom:8px; right:8px;
+  width:4px;
+  border-radius:2px;
+  background: var(--header-accent, rgba(255,255,255,.5));
+  box-shadow: 0 0 12px var(--header-accent, rgba(255,255,255,.4));
+  pointer-events:none;
+}
+.section > .header::after{
+  content:"";
+  position:absolute;
   inset:0 0 auto 0;
   height:1px;
-  background:linear-gradient(90deg, transparent, rgba(255,255,255,.25), transparent);
+  background:linear-gradient(90deg, transparent, rgba(255,255,255,.32), transparent);
   pointer-events:none;
 }
 
-/* ── 6.D Card mount stagger (CSS-only, replays on tab switch) ────────────── */
-@keyframes s6CardEntry{
-  from{ opacity:0; transform: translateY(8px) scale(.985); }
-  to  { opacity:1; transform: translateY(0)   scale(1);    }
+/* ── 6.D Card mount: a single short fade — NO stagger (was too aggressive) ─
+   v1 had nth-child stagger replaying on every tab switch which made the app
+   feel "constantly loading". Replaced with a single 200ms fade on the panel
+   itself, no per-card reanimation. */
+@keyframes s6PanelFadeIn{
+  from{ opacity:.55; transform: translateY(4px); }
+  to  { opacity:1;   transform: translateY(0);   }
 }
-.tab-panel.active > .section,
-.tab-panel.active .summary-row.budget-card,
-.tab-panel.active .kpi,
-.tab-panel.active .income-row,
-.tab-panel.active .debt-item,
-.tab-panel.active .debt-highlight,
-.tab-panel.active .shared-balance-card,
-.tab-panel.active .shared-stat-card,
-.tab-panel.active .mxp-item,
-.tab-panel.active .year-card,
-.tab-panel.active .settings-card,
-.tab-panel.active .sync-card{
-  animation: s6CardEntry .42s var(--ease-out) backwards;
+.tab-panel.active{
+  animation: s6PanelFadeIn .18s var(--ease-out) both;
 }
-.tab-panel.active > .section:nth-child(1){ animation-delay:.02s }
-.tab-panel.active > .section:nth-child(2){ animation-delay:.08s }
-.tab-panel.active > .section:nth-child(3){ animation-delay:.14s }
-.tab-panel.active > .section:nth-child(4){ animation-delay:.20s }
-.tab-panel.active > .section:nth-child(5){ animation-delay:.26s }
-.tab-panel.active .kpi:nth-child(1){ animation-delay:.04s }
-.tab-panel.active .kpi:nth-child(2){ animation-delay:.10s }
-.tab-panel.active .kpi:nth-child(3){ animation-delay:.16s }
-.tab-panel.active .kpi:nth-child(4){ animation-delay:.22s }
-.tab-panel.active .summary-row.budget-card:nth-child(2){ animation-delay:.04s }
-.tab-panel.active .summary-row.budget-card:nth-child(3){ animation-delay:.08s }
-.tab-panel.active .summary-row.budget-card:nth-child(4){ animation-delay:.12s }
-.tab-panel.active .summary-row.budget-card:nth-child(5){ animation-delay:.16s }
-.tab-panel.active .summary-row.budget-card:nth-child(6){ animation-delay:.20s }
-.tab-panel.active .summary-row.budget-card:nth-child(7){ animation-delay:.24s }
-.tab-panel.active .summary-row.budget-card:nth-child(8){ animation-delay:.28s }
-.tab-panel.active .summary-row.budget-card:nth-child(9){ animation-delay:.32s }
-.tab-panel.active .summary-row.budget-card:nth-child(n+10){ animation-delay:.36s }
-.tab-panel.active .income-row:nth-child(1){ animation-delay:.04s }
-.tab-panel.active .income-row:nth-child(2){ animation-delay:.10s }
-.tab-panel.active .income-row:nth-child(3){ animation-delay:.16s }
-.tab-panel.active .income-row:nth-child(n+4){ animation-delay:.22s }
-.tab-panel.active .mxp-item:nth-child(1){ animation-delay:.02s }
-.tab-panel.active .mxp-item:nth-child(2){ animation-delay:.05s }
-.tab-panel.active .mxp-item:nth-child(3){ animation-delay:.08s }
-.tab-panel.active .mxp-item:nth-child(4){ animation-delay:.11s }
-.tab-panel.active .mxp-item:nth-child(5){ animation-delay:.14s }
-.tab-panel.active .mxp-item:nth-child(n+6){ animation-delay:.17s }
-
 @media (prefers-reduced-motion: reduce){
-  .tab-panel.active *{ animation:none !important }
+  .tab-panel.active{ animation:none !important }
 }
 
 /* ── 6.E Hover lift on cards (desktop only — never on touch) ─────────────── */
@@ -2661,19 +2643,10 @@ select:focus-visible{
   border-radius:8px;
 }
 
-/* ── 6.G Progress bar fill animation on mount (replays per render) ───────── */
-@keyframes s6ProgressFill{
-  from{ transform: scaleX(.001); }
-  to  { transform: scaleX(1);    }
-}
-.budget-progress-fill{
-  transform-origin: right center; /* RTL-safe: bar fills from the right */
-  animation: s6ProgressFill .85s var(--ease-out);
-}
-.bullet-bar{
-  transform-origin: right center;
-  animation: s6ProgressFill .75s var(--ease-out);
-}
+/* ── 6.G Progress bar: rely on existing CSS width transition only.
+   The mount animation that used to live here was retriggering on every
+   tab switch (display:none → block restarts CSS animations) which
+   contributed to the "constantly loading" feel reported by the user. */
 
 /* ── 6.H Soften and harmonize the budget badge variants (semantic colors) ── */
 .budget-card-badge.good{
@@ -2729,13 +2702,14 @@ select:focus-visible{
 /* Generic class that components can opt into for nicer ₪ rendering */
 .amount-fancy { font-feature-settings:"tnum" 1; font-variant-numeric: tabular-nums; }
 
-/* ── 6.M Section content fade — when section is open ─────────────────────── */
-.section.open > .content{
-  animation: s6CardEntry .35s var(--ease-out);
-}
+/* ── 6.M Section content: no animation. The .open class change is enough. ── */
+/* (Previous versions had a fade-in here that fired on every section toggle
+   and contributed to the "constantly loading" feeling reported by the user.) */
 
 /* ── 6.N Demo banner: skip animations on it ──────────────────────────────── */
 .demo-banner{ animation:none !important }
+/* Force-hide the file:// debug overlay even if a stale inline display sticks */
+#localDraftDebug{ display:none !important }
 
 /* ── 6.O Targeted polish from real-device screenshots ────────────────────── */
 
@@ -2809,6 +2783,171 @@ select:focus-visible{
 .mini-nav-chevron:focus-visible{
   outline:2px solid rgba(255,255,255,.7);
   outline-offset:2px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 7 — Bolder, more visible polish
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* Stronger, more distinct card elevation so each card "lifts" off the page */
+.kpi,
+.summary-row.budget-card,
+.debt-item,
+.debt-highlight,
+.shared-balance-card,
+.shared-stat-card,
+.year-card,
+.settings-card{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 4px 12px rgba(45,22,8,.06),
+    0 14px 30px rgba(45,22,8,.05);
+  border:1px solid rgba(107,69,48,.10);
+}
+
+/* KPI values — bigger, bolder, more contrast on mobile */
+@media (max-width:720px){
+  .kpi{ padding:14px 14px !important }
+  .kpi .label{
+    font-size:10px !important;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#7a5040;
+    opacity:.85;
+  }
+  .kpi .value{
+    font-size:22px !important;
+    font-weight:800 !important;
+    letter-spacing:-.015em !important;
+    color:#3a1f0d;
+  }
+  .kpi-sub{
+    font-size:11px !important;
+    color:#9a6a48;
+  }
+}
+
+/* KPI top-left subtle gradient orb for visual interest */
+.kpi{
+  position:relative;
+  overflow:hidden;
+}
+.kpi::after{
+  content:"";
+  position:absolute;
+  top:-30px; left:-30px;
+  width:90px; height:90px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(107,69,48,.07), transparent 70%);
+  pointer-events:none;
+}
+
+/* Hero gets a bolder, warmer feel */
+.hero{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 18px 40px rgba(45,22,8,.18);
+}
+@media (max-width:720px){
+  .hero h1{
+    font-size:24px !important;
+    letter-spacing:-.02em !important;
+    line-height:1.05 !important;
+  }
+  .hero-stat{
+    background: rgba(255,255,255,.10) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    border-radius:14px !important;
+    padding:10px 12px !important;
+    backdrop-filter: blur(8px);
+  }
+  .hero-stat .label{
+    font-size:10px !important;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:rgba(255,255,255,.7) !important;
+  }
+  .hero-stat .value{
+    font-size:18px !important;
+    font-weight:800 !important;
+    color:#fff !important;
+  }
+  .hero-month-picker select{
+    color:#fff !important;
+    font-weight:700 !important;
+  }
+}
+
+/* Section card — stronger elevation, slightly lifted feel */
+.section{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 6px 18px rgba(45,22,8,.07),
+    0 18px 40px rgba(45,22,8,.05) !important;
+}
+
+/* Budget card per-category — accent stripe by status (good/warn/bad) */
+.summary-row.budget-card{
+  position:relative;
+  overflow:hidden;
+}
+.summary-row.budget-card::before{
+  content:"";
+  position:absolute;
+  top:0; bottom:0; right:0;
+  width:4px;
+  background: linear-gradient(180deg, var(--accent), #d4845a);
+  border-radius: 0 4px 4px 0;
+}
+.summary-row.budget-card:has(.budget-card-badge.good)::before{
+  background: linear-gradient(180deg, var(--good), #5fb274);
+}
+.summary-row.budget-card:has(.budget-card-badge.bad)::before{
+  background: linear-gradient(180deg, var(--bad), #d4604a);
+}
+.summary-row.budget-card:has(.budget-card-badge.warn)::before{
+  background: linear-gradient(180deg, var(--warn), #d4a030);
+}
+
+/* Mobile expense card — a touch more elevation + tap shimmer */
+@media (max-width:720px){
+  .mxp-item{
+    box-shadow: 0 2px 6px rgba(45,22,8,.06), 0 8px 18px rgba(45,22,8,.04);
+  }
+  .mxp-amount{
+    font-size:16px !important;
+    font-weight:800;
+    color:var(--accent);
+  }
+}
+
+/* Debt highlights — make the value monumental */
+@media (max-width:720px){
+  .debt-highlight{
+    padding:14px !important;
+  }
+  .debt-highlight-value{
+    font-size:24px !important;
+    font-weight:800 !important;
+    letter-spacing:-.02em;
+  }
+}
+
+/* Pie chart container — center the canvas, prevent it shrinking */
+.chart-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
+.chart-box canvas{
+  max-width:100% !important;
+}
+
+/* Stage 7 demo banner — slightly more refined */
+.demo-banner{
+  background: linear-gradient(90deg, #fde7a1 0%, #f4cc55 50%, #fde7a1 100%) !important;
+  font-weight:700;
 }
 
 </style>
@@ -3464,7 +3603,14 @@ let suppressCloudSync = false;
 /* IS_LOCAL_DRAFT_FILE moved to top of script (line ~2904) so it can be used
    to namespace localStorage keys before they are declared. */
 
+/* The debug overlay was originally a `file://` development aid. When v35.html
+   loads over https (the GitHub Pages demo), the user does NOT want to see it.
+   Keep all three functions as no-ops unless the page is genuinely served from
+   the local file system. */
+const SHOW_DEBUG_PANEL = window.location.protocol === "file:";
+
 function showLocalDraftDebug(message){
+  if(!SHOW_DEBUG_PANEL) return;
   const box = document.getElementById("localDraftDebug");
   if(!box) return;
   box.style.display = "block";
@@ -3472,6 +3618,7 @@ function showLocalDraftDebug(message){
 }
 
 function appendLocalDraftDebug(message){
+  if(!SHOW_DEBUG_PANEL) return;
   const box = document.getElementById("localDraftDebug");
   if(!box) return;
   box.style.display = "block";
@@ -3480,13 +3627,14 @@ function appendLocalDraftDebug(message){
 }
 
 function clearLocalDraftDebug(){
+  if(!SHOW_DEBUG_PANEL) return;
   const box = document.getElementById("localDraftDebug");
   if(!box) return;
   box.style.display = "none";
   box.innerHTML = "";
 }
 
-if(IS_LOCAL_DRAFT_FILE){
+if(SHOW_DEBUG_PANEL){
   showLocalDraftDebug("script loaded");
 }
 
@@ -5607,28 +5755,53 @@ function renderChart(rows){
     }).join("");
     return;
   }
-  /* Stage 5.3 — Pie/bar legend was clipped on iPhone with many categories.
-     Grow chart-box vertically based on label count so the wrapped legend
-     stays inside the container instead of being cut at the viewport edge. */
+  /* Stage 7.3 — Make the pie/doughnut visually fill its frame on mobile.
+     Box height = pie diameter + legend rows (no wasted whitespace).
+     We render as a doughnut on mobile (larger perceived ring), keep pie on
+     desktop where there's room to breathe. */
   const labelCount = type === "pie" ? nonZero.length : labels.length;
-  const pieMobileExtra  = isMobile ? Math.max(0, (labelCount - 3) * 26) : 0;
-  const pieDesktopExtra = !isMobile ? Math.max(0, (labelCount - 6) * 14) : 0;
-  setChartBoxHeight(isMobile ? 300 + pieMobileExtra : 340 + pieDesktopExtra);
+  const isPie = type === "pie";
+  // Mobile legend — assume 2 items per row at ~24px row height with our font
+  const legendRows = isMobile ? Math.ceil(labelCount / 2) : Math.ceil(labelCount / 3);
+  const legendH = isMobile ? legendRows * 22 + 14 : legendRows * 24 + 18;
+  const pieDiameter = isMobile ? 320 : 320;
+  const boxHeight = isPie
+    ? (isMobile ? pieDiameter + legendH : pieDiameter + legendH)
+    : (isMobile ? 320 : 340);
+  setChartBoxHeight(boxHeight);
   chartInstance=new Chart(ctx,{
-    type,
+    type: isPie && isMobile ? "doughnut" : type,
     data:{
       labels:type==="pie" ? nonZero.map(x=>x.label) : labels,
       datasets:[{
         label:"הוצאה לפי קטגוריה",
         data:type==="pie" ? nonZero.map(x=>x.value) : values,
-        borderWidth:1,
-        backgroundColor:chartPalette
+        borderWidth:isPie ? 2 : 1,
+        borderColor: isPie ? "#ffffff" : undefined,
+        backgroundColor:chartPalette,
+        hoverOffset: isPie ? 6 : 0
       }]
     },
     options:{
       responsive:true,
       maintainAspectRatio:false,
-      plugins:{legend:{display:true,position:"bottom",labels:{boxWidth:isMobile ? 12 : 18,padding:isMobile ? 10 : 16,font:{size:isMobile ? 11 : 12}}}},
+      cutout: isPie && isMobile ? "52%" : 0,   /* doughnut on mobile */
+      layout:{ padding: isPie ? {top:4, right:4, bottom:4, left:4} : 6 },
+      plugins:{
+        legend:{
+          display:true,
+          position:"bottom",
+          align:"center",
+          labels:{
+            boxWidth: isMobile ? 11 : 16,
+            boxHeight: isMobile ? 11 : 16,
+            padding: isMobile ? 8 : 14,
+            font:{size: isMobile ? 11 : 12, weight: "600"},
+            usePointStyle: true,
+            pointStyle: "rectRounded"
+          }
+        }
+      },
       scales:type==="bar" ? {y:{beginAtZero:true,ticks:{font:{size:isMobile ? 10 : 12}}},x:{ticks:{font:{size:isMobile ? 10 : 12}}}} : {}
     }
   });
