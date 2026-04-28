@@ -2930,151 +2930,6 @@ select:focus-visible{
   font-weight:700;
 }
 
-/* ════════════════════════════════════════════════════════════════════════════
-   Stage 10 — A: Hero → white card  |  B: Section headers → colored per tab
-   Target: iPhone 17 Pro (402px), iPhone 15 (393px), MacBook 1440px, Lenovo 1536px
-   ═══════════════════════════════════════════════════════════════════════════*/
-
-/* ── 10.A  Hero: white card with dark text ───────────────────────────────── */
-.hero{
-  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%) !important;
-  color: var(--text) !important;
-  border: 1px solid rgba(37,99,235,.10) !important;
-  box-shadow:
-    0 1px 0 #fff inset,
-    0 4px 16px rgba(15,23,42,.06),
-    0 20px 48px rgba(15,23,42,.05) !important;
-}
-/* Kill the dark-background decorative layers */
-.hero::before{ opacity:0 !important }
-.hero::after{
-  background: radial-gradient(circle, rgba(37,99,235,.05), transparent 68%) !important;
-  top:-80px; left:-80px;
-}
-
-/* Title + subtitle */
-.hero h1{
-  color: var(--text) !important;
-  text-shadow: none !important;
-}
-/* Account/month select: dark text, dark chevron */
-.hero-month-picker select{
-  color: var(--text) !important;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2318243a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
-}
-/* Stat boxes: light blue tint on white */
-.hero-stat{
-  background: rgba(37,99,235,.06) !important;
-  border: 1px solid rgba(37,99,235,.13) !important;
-  border-radius: 16px !important;
-}
-.hero-stat .label{ color: var(--muted) !important; opacity:1 !important }
-.hero-stat .value{ color: var(--text) !important }
-
-/* Collapse button: dark circle on white */
-.hero-collapse-btn{
-  background: rgba(15,23,42,.07) !important;
-  color: var(--text) !important;
-  border: 1px solid rgba(15,23,42,.08) !important;
-}
-
-/* Mini-nav: stays as a bold accent strip (blue), white text inside */
-.mini-nav{
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
-  border: none !important;
-  box-shadow: 0 8px 20px rgba(30,64,175,.22) !important;
-}
-.mini-nav-label,
-.mini-nav-kicker,
-.mini-nav-label-title,
-#miniNavIcon{ color: #fff !important; opacity:1 !important }
-.nav-menu-btn{
-  background: rgba(255,255,255,.18) !important;
-  border: 1px solid rgba(255,255,255,.26) !important;
-  color: #fff !important;
-}
-.mini-nav-chevron{
-  background: rgba(255,255,255,.15) !important;
-  border-color: rgba(255,255,255,.22) !important;
-  color: #fff !important;
-}
-
-/* Stage-7 mobile overrides for hero-stat — re-assert for white bg */
-@media (max-width:720px){
-  .hero-stat{
-    background: rgba(37,99,235,.07) !important;
-    border: 1px solid rgba(37,99,235,.14) !important;
-    backdrop-filter: none !important;
-  }
-  .hero-stat .label{ color: var(--muted) !important; text-transform:uppercase; letter-spacing:.04em }
-  .hero-stat .value{ color: var(--text) !important }
-  .hero-month-picker select{ color: var(--text) !important }
-  .hero h1{ color: var(--text) !important; text-shadow:none !important }
-}
-
-/* ── 10.B  Section headers: colored gradient per tab, white text ─────────── */
-/* 1. Restore base header to colored (dark bg + white text) */
-.header{
-  background: linear-gradient(135deg, #1e293b, #334155) !important;
-  color: #fff !important;
-  border-bottom: none !important;
-}
-/* 2. Each tab gets its own distinct gradient */
-.tab-panel[data-panel="dashboard"] .section > .header{
-  background:linear-gradient(135deg,#0f172a 0%,#1d4ed8 100%) !important;
-  --header-accent:#93c5fd;
-  color:#fff !important;
-}
-.tab-panel[data-panel="budget"] .section > .header{
-  background:linear-gradient(135deg,#022c22 0%,#059669 100%) !important;
-  --header-accent:#6ee7b7;
-  color:#fff !important;
-}
-.tab-panel[data-panel="income"] .section > .header{
-  background:linear-gradient(135deg,#14532d 0%,#16a34a 100%) !important;
-  --header-accent:#86efac;
-  color:#fff !important;
-}
-.tab-panel[data-panel="cards"] .section > .header{
-  background:linear-gradient(135deg,#2e1065 0%,#7c3aed 100%) !important;
-  --header-accent:#c4b5fd;
-  color:#fff !important;
-}
-.tab-panel[data-panel="expenses"] .section > .header{
-  background:linear-gradient(135deg,#431407 0%,#ea580c 100%) !important;
-  --header-accent:#fdba74;
-  color:#fff !important;
-}
-.tab-panel[data-panel="shared"] .section > .header{
-  background:linear-gradient(135deg,#4c0519 0%,#e11d48 100%) !important;
-  --header-accent:#fda4af;
-  color:#fff !important;
-}
-.tab-panel[data-panel="debts"] .section > .header{
-  background:linear-gradient(135deg,#450a0a 0%,#dc2626 100%) !important;
-  --header-accent:#fca5a5;
-  color:#fff !important;
-}
-.tab-panel[data-panel="yearly"] .section > .header{
-  background:linear-gradient(135deg,#1e1b4b 0%,#4f46e5 100%) !important;
-  --header-accent:#a5b4fc;
-  color:#fff !important;
-}
-.tab-panel[data-panel="backup"] .section > .header{
-  background:linear-gradient(135deg,#0f172a 0%,#475569 100%) !important;
-  --header-accent:#cbd5e1;
-  color:#fff !important;
-}
-/* 3. Pill: white-transparent (for dark bg headers) */
-.pill{
-  background: rgba(255,255,255,.16) !important;
-  color: #fff !important;
-  border: 1px solid rgba(255,255,255,.22) !important;
-}
-/* 4. Header press: brightness on dark bg */
-.section > .header:active{ background:unset; filter:brightness(1.10) !important }
-/* 5. Accent stripe (::before) glow is now white-opaque on dark bg */
-.section > .header::before{ opacity:.90 !important }
 
 /* ════════════════════════════════════════════════════════════════════════════
    Stage 9 — Modern color scheme (no brown) + expense column alignment
@@ -3542,6 +3397,179 @@ button[type="submit"],
     gap:8px !important;
   }
 }
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 10 — Hero white card + colored section headers (FINAL POSITION)
+   Must stay at end of <style> to win over all earlier stage overrides.
+   iPhone 17 Pro (402px) | iPhone 15 (393px) | MacBook 1440px | Lenovo 1536px
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 10.A  Hero: clean white card ─────────────────────────────────────────── */
+.hero{
+  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(37,99,235,.10) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 6px 18px rgba(15,23,42,.07),
+    0 24px 56px rgba(15,23,42,.06) !important;
+}
+/* Disable dark-background decorative layers */
+.hero::before{ opacity:0 !important }
+.hero::after{
+  background: radial-gradient(circle, rgba(37,99,235,.06), transparent 68%) !important;
+  top:-80px; left:-80px;
+}
+/* Title */
+.hero h1{
+  color: var(--text) !important;
+  text-shadow: none !important;
+}
+/* Subtitle */
+.hero .subtitle{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+/* Month/account picker label + select */
+.hero-month-picker .label{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+.hero-month-picker select{
+  color: var(--text) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2318243a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+}
+/* Stat boxes: soft blue tint so they lift off the white card */
+.hero-stat{
+  background: rgba(37,99,235,.07) !important;
+  border: 1px solid rgba(37,99,235,.14) !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(37,99,235,.06) !important;
+}
+.hero-stat .label{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+.hero-stat .value{
+  color: var(--text) !important;
+}
+/* Collapse button: dark subtle circle on white */
+.hero-collapse-btn{
+  background: rgba(15,23,42,.07) !important;
+  border: 1px solid rgba(15,23,42,.09) !important;
+  color: var(--text) !important;
+}
+/* Mini-nav: bold blue strip anchors the bottom of the white card */
+.mini-nav{
+  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(30,64,175,.22), 0 2px 0 rgba(255,255,255,.12) inset !important;
+}
+.mini-nav-label{ color: #fff !important }
+.mini-nav-kicker{ color: rgba(255,255,255,.82) !important }
+.mini-nav-label-title{ color: #fff !important }
+#miniNavIcon{ color: #fff !important; opacity:1 !important }
+.nav-menu-btn{
+  background: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(255,255,255,.26) !important;
+  color: #fff !important;
+}
+.mini-nav-chevron{
+  background: rgba(255,255,255,.16) !important;
+  border-color: rgba(255,255,255,.24) !important;
+  color: #fff !important;
+}
+
+/* ── 10.A Mobile: override all earlier white-on-white hero text stages ───── */
+@media (max-width:720px){
+  .hero h1{
+    color: var(--text) !important;
+    text-shadow: none !important;
+  }
+  .hero-month-picker select{ color: var(--text) !important }
+  .hero-stat{
+    background: rgba(37,99,235,.07) !important;
+    border: 1px solid rgba(37,99,235,.14) !important;
+    backdrop-filter: none !important;
+    padding: 10px 12px !important;
+  }
+  .hero-stat .label{
+    font-size: 10px !important;
+    color: var(--muted) !important;
+    opacity: 1 !important;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .hero-stat .value{
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+  }
+}
+
+/* ── 10.B  Section headers: vivid per-tab gradient ───────────────────────── */
+/* Base fallback (unmatched tabs) */
+.header{
+  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  color: #fff !important;
+  border-bottom: none !important;
+}
+/* Per-tab distinct gradients */
+.tab-panel[data-panel="dashboard"] .section > .header{
+  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
+  --header-accent: #93c5fd;
+  color: #fff !important;
+}
+.tab-panel[data-panel="budget"] .section > .header{
+  background: linear-gradient(135deg, #022c22 0%, #059669 100%) !important;
+  --header-accent: #6ee7b7;
+  color: #fff !important;
+}
+.tab-panel[data-panel="income"] .section > .header{
+  background: linear-gradient(135deg, #14532d 0%, #16a34a 100%) !important;
+  --header-accent: #86efac;
+  color: #fff !important;
+}
+.tab-panel[data-panel="cards"] .section > .header{
+  background: linear-gradient(135deg, #2e1065 0%, #7c3aed 100%) !important;
+  --header-accent: #c4b5fd;
+  color: #fff !important;
+}
+.tab-panel[data-panel="expenses"] .section > .header{
+  background: linear-gradient(135deg, #431407 0%, #ea580c 100%) !important;
+  --header-accent: #fdba74;
+  color: #fff !important;
+}
+.tab-panel[data-panel="shared"] .section > .header{
+  background: linear-gradient(135deg, #4c0519 0%, #e11d48 100%) !important;
+  --header-accent: #fda4af;
+  color: #fff !important;
+}
+.tab-panel[data-panel="debts"] .section > .header{
+  background: linear-gradient(135deg, #450a0a 0%, #dc2626 100%) !important;
+  --header-accent: #fca5a5;
+  color: #fff !important;
+}
+.tab-panel[data-panel="yearly"] .section > .header{
+  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%) !important;
+  --header-accent: #a5b4fc;
+  color: #fff !important;
+}
+.tab-panel[data-panel="backup"] .section > .header{
+  background: linear-gradient(135deg, #0f172a 0%, #475569 100%) !important;
+  --header-accent: #cbd5e1;
+  color: #fff !important;
+}
+/* Pill badges sit on dark gradient — white glass */
+.pill{
+  background: rgba(255,255,255,.16) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+}
+/* Tap feedback on dark header */
+.section > .header:active{ filter: brightness(.90) !important }
+/* Accent stripe: visible on dark header */
+.section > .header::before{ opacity: .88 !important }
 
 </style>
 </head>
@@ -6327,8 +6355,8 @@ function renderChart(rows){
       data:{
         labels:dayLabels,
         datasets:[
-          {label:"הוצאה יומית",data:dayValues,borderColor:"#2f6f9f",backgroundColor:"rgba(47,111,159,.16)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
-          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#b23b30",backgroundColor:"rgba(178,59,48,.08)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
+          {label:"הוצאה יומית",data:dayValues,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.13)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
+          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#e11d48",backgroundColor:"rgba(225,29,72,.06)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
         ]
       },
       options:{
@@ -6390,15 +6418,13 @@ function renderChart(rows){
     : (isMobile ? 320 : 340);
   setChartBoxHeight(boxHeight);
   if(type === "bar"){
-    /* Stage 8 — Horizontal bar chart (indexAxis:"y") so Hebrew category names
-       have full width to breathe; vibrant multi-colour fill per bar. */
+    /* Vertical bar chart — vibrant multi-colour fill per bar */
     const barData = nonZero.length ? nonZero : labels.map((label,i)=>({label,value:values[i]})).filter(x=>x.value>0);
     const barPalette = [
       "#3b82f6","#10b981","#8b5cf6","#f97316","#f43f5e",
       "#06b6d4","#84cc16","#f59e0b","#6366f1","#ec4899","#14b8a6"
     ];
-    const bLen = barData.length;
-    setChartBoxHeight(isMobile ? Math.max(280, bLen*44+80) : Math.max(320, bLen*48+80));
+    setChartBoxHeight(isMobile ? 280 : 340);
     chartInstance = new Chart(ctx, {
       type:"bar",
       data:{
@@ -6417,24 +6443,31 @@ function renderChart(rows){
         responsive:true,
         maintainAspectRatio:false,
         resizeDelay:400,
-        indexAxis:"y",
         plugins:{
           legend:{ display:false },
           tooltip:{
             rtl:true,
-            callbacks:{ label: ctx=>`  ₪${Math.round(ctx.parsed.x).toLocaleString("he-IL")}` }
+            callbacks:{ label: ctx=>`  ₪${Math.round(ctx.parsed.y).toLocaleString("he-IL")}` }
           }
         },
         scales:{
           x:{
-            beginAtZero:true,
-            grid:{ color:"rgba(37,99,235,.06)" },
-            ticks:{ font:{size:isMobile?10:12}, color:"#64748b",
-              callback: v => "₪"+Math.round(v).toLocaleString("he-IL") }
+            grid:{ display:false },
+            ticks:{
+              font:{size:isMobile?9:11, weight:"700"},
+              color:"#1e293b",
+              maxRotation:40,
+              minRotation:0
+            }
           },
           y:{
-            grid:{ display:false },
-            ticks:{ font:{size:isMobile?10:12, weight:"700"}, color:"#1e293b" }
+            beginAtZero:true,
+            grid:{ color:"rgba(37,99,235,.07)" },
+            ticks:{
+              font:{size:isMobile?10:12},
+              color:"#64748b",
+              callback: v => "₪"+Math.round(v).toLocaleString("he-IL")
+            }
           }
         }
       }
