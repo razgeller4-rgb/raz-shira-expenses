@@ -4097,6 +4097,7 @@ const DEFAULT_CLOUD_SYNC_CONFIG = {
   disabled:false
 };
 const DEFAULT_CATEGORIES_TEMPLATE = [{"name":"מסחר","budget":1600},{"name":"קניות לבית","budget":null},{"name":"סופר","budget":1000},{"name":"רכב/דלק","budget":800},{"name":"הזמנות ואוכל בחוץ עם שירה","budget":1000},{"name":"ביטוחים","budget":null},{"name":"מנויים","budget":null},{"name":"לא רלוונטי","budget":null},{"name":"מותרות","budget":1000},{"name":"עישון","budget":600},{"name":"אין ברירה","budget":null}];
+const DEFAULT_CATEGORIES_SHIRA = DEFAULT_CATEGORIES_TEMPLATE;
 const DEFAULT_MANUAL_SETTINGS = {openingBalance:null, salary:null};
 const DEFAULT_PAYMENT_METHODS = {
   raz: [
@@ -6249,7 +6250,7 @@ function renderChart(rows){
   if(ctx) ctx.style.display="block";
   const _oldBullet = chartBox && chartBox.querySelector(".bullet-chart");
   if(_oldBullet) _oldBullet.remove();
-  const chartPalette=["#6b4530","#d4845a","#7a9a6a","#d4aa54","#c05a3a","#8c6a4a","#5a8a6a","#c47850","#a0c882","#e8b860","#a09080"];
+  const chartPalette=["#5b9f7d","#b7e4c7","#86caa9","#6ee7b7","#bef264","#c4b5fd","#f9a8d4","#fb7185","#a5b4fc","#bae6fd","#d8f3dc"];
   const isMobile = window.innerWidth <= 720;
   const setChartBoxHeight = (height)=>{
     if(!chartBox) return;
@@ -6276,8 +6277,8 @@ function renderChart(rows){
       data:{
         labels:dayLabels,
         datasets:[
-          {label:"הוצאה יומית",data:dayValues,borderColor:"#2f6f9f",backgroundColor:"rgba(47,111,159,.16)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
-          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#b23b30",backgroundColor:"rgba(178,59,48,.08)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
+          {label:"הוצאה יומית",data:dayValues,borderColor:"#5b9f7d",backgroundColor:"rgba(91,159,125,.14)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
+          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#be185d",backgroundColor:"rgba(190,24,93,.07)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
         ]
       },
       options:{
@@ -8316,7 +8317,7 @@ function buildCCImportTable(){
     // Auto-uncheck duplicates
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
-    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
+    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#9fb55a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
     html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
