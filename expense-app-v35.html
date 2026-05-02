@@ -8,20 +8,20 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#f0f4f8;
-  --bg-accent:#e4eaf3;
+  --bg:#eef6f0;
+  --bg-accent:#dfece4;
   --card:#ffffff;
-  --card-soft:#f7f9fc;
-  --text:#18243a;
-  --muted:#64748b;
-  --line:#e2e8f0;
-  --accent:#2563eb;
-  --accent-2:#4b8cf8;
-  --accent-3:#93c5fd;
-  --good:#059669;
-  --bad:#dc2626;
-  --warn:#d97706;
-  --shadow:0 18px 40px rgba(37,99,235,.08);
+  --card-soft:#f2f8f4;
+  --text:#1f2f2a;
+  --muted:#6f8077;
+  --line:#cfddd4;
+  --accent:#4f7f68;
+  --accent-2:#6fa58a;
+  --accent-3:#9dc7ae;
+  --good:#3f8f66;
+  --bad:#b85a52;
+  --warn:#8c8f3f;
+  --shadow:0 18px 40px rgba(55,94,75,.08);
   --radius:22px;
 }
 *{box-sizing:border-box}
@@ -31,22 +31,22 @@ body{
   font-family:Arial,sans-serif;
   color:var(--text);
   background:
-    radial-gradient(circle at top right, rgba(99,102,241,.10), transparent 28%),
+    radial-gradient(circle at top right, rgba(139,184,155,.10), transparent 28%),
     radial-gradient(circle at top left, rgba(255,255,255,.90), transparent 36%),
     linear-gradient(180deg, var(--bg-accent), var(--bg));
 }
 .container{max-width:1320px;margin:auto;padding:20px 16px 40px}
 .hero{
   background:
-    radial-gradient(circle at 16% 24%, rgba(147,197,253,.18), transparent 18%),
+    radial-gradient(circle at 16% 24%, rgba(125,174,146,.18), transparent 18%),
     radial-gradient(circle at 76% 12%, rgba(255,255,255,.12), transparent 16%),
-    linear-gradient(135deg, #0f172a 0%, #1e40af 48%, #3b82f6 100%);
+    linear-gradient(135deg, #355345 0%, #4f7f68 48%, #89b89b 100%);
   color:#fff;
   border:1px solid rgba(255,255,255,.20);
   border-radius:34px;
   padding:28px 30px;
   min-height:184px;
-  box-shadow:0 28px 62px rgba(45,22,8,.22);
+  box-shadow:0 28px 62px rgba(35,62,50,.22);
   position:sticky;
   top:12px;
   z-index:20;
@@ -59,24 +59,24 @@ body{
   height:72px;
   opacity:.34;
   background:
-    linear-gradient(180deg, transparent, rgba(20,8,2,.72)),
+    linear-gradient(180deg, transparent, rgba(23,47,38,.72)),
     repeating-linear-gradient(90deg,
       transparent 0 24px,
       rgba(255,255,255,.16) 24px 26px,
       transparent 26px 58px),
     linear-gradient(90deg,
       transparent 0 5%,
-      rgba(22,10,2,.90) 5% 12%,
+      rgba(26,55,44,.90) 5% 12%,
       transparent 12% 16%,
-      rgba(22,10,2,.78) 16% 24%,
+      rgba(26,55,44,.78) 16% 24%,
       transparent 24% 30%,
-      rgba(22,10,2,.90) 30% 36%,
+      rgba(26,55,44,.90) 30% 36%,
       transparent 36% 42%,
-      rgba(22,10,2,.72) 42% 51%,
+      rgba(26,55,44,.72) 42% 51%,
       transparent 51% 58%,
-      rgba(22,10,2,.86) 58% 66%,
+      rgba(26,55,44,.86) 58% 66%,
       transparent 66% 72%,
-      rgba(22,10,2,.78) 72% 84%,
+      rgba(26,55,44,.78) 72% 84%,
       transparent 84% 100%);
 }
 .hero::after{
@@ -151,7 +151,7 @@ h1{
   direction:rtl;
 }
 .hero-month-picker select option{
-  color:#2c1a0e;
+  color:#1f2f2a;
 }
 .hero-stat{
   background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.09));
@@ -163,7 +163,7 @@ h1{
   display:flex;
   flex-direction:column;
   justify-content:center;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 18px 34px rgba(45,22,8,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 18px 34px rgba(35,62,50,.10);
 }
 .hero-stat .label{font-size:12px;opacity:.82}
 .hero-stat .value{font-size:24px;font-weight:800;margin-top:8px}
@@ -177,20 +177,20 @@ h1{
   border:none;
   background:rgba(255,255,255,.72);
   color:var(--text);
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:999px;
   padding:12px 18px;
   font:inherit;
   font-weight:700;
   cursor:pointer;
-  box-shadow:0 8px 20px rgba(107,69,48,.06);
+  box-shadow:0 8px 20px rgba(55,94,75,.06);
   transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
 }
-.tab-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(107,69,48,.12)}
+.tab-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(55,94,75,.12)}
 .tab-btn.active{
   background:linear-gradient(135deg, var(--accent), var(--accent-2));
   color:#fff;
-  box-shadow:0 16px 30px rgba(107,69,48,.18);
+  box-shadow:0 16px 30px rgba(55,94,75,.18);
 }
 .tab-panel{display:none}
 .tab-panel.active{display:block}
@@ -200,7 +200,7 @@ h1{
   box-shadow:var(--shadow);
   overflow:hidden;
   margin-bottom:16px;
-  border:1px solid rgba(107,69,48,.06);
+  border:1px solid rgba(55,94,75,.06);
 }
 .header{
   padding:16px 18px;
@@ -217,7 +217,7 @@ h1{
 .content{display:none;padding:18px}
 .open .content{display:block}
 .pill{
-  background:rgba(37,99,235,.10);
+  background:rgba(55,94,75,.10);
   color:var(--accent);
   padding:6px 10px;
   border-radius:999px;
@@ -285,12 +285,12 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   gap:12px;
   margin:0;
   padding:16px;
-  border:1px solid rgba(107,69,48,.10);
+  border:1px solid rgba(55,94,75,.10);
   border-radius:22px;
   background:
-    radial-gradient(circle at top left, rgba(107,69,48,.08), transparent 34%),
-    linear-gradient(180deg,#ffffff,#faf6ef);
-  box-shadow:0 14px 30px rgba(107,69,48,.08);
+    radial-gradient(circle at top left, rgba(55,94,75,.08), transparent 34%),
+    linear-gradient(180deg,#ffffff,#f7fbf8);
+  box-shadow:0 14px 30px rgba(55,94,75,.08);
 }
 .summary-row.budget-card > div{padding:0}
 .budget-card-top{
@@ -314,8 +314,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   width:max-content;
   padding:6px 12px;
   border-radius:999px;
-  background:#f0e9de;
-  border:1px solid #dfd4c0;
+  background:#e7f1eb;
+  border:1px solid #cfddd4;
   color:var(--accent);
   font-size:12px;
   font-weight:700;
@@ -339,8 +339,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   position:relative;
   height:22px;
   border-radius:11px;
-  background:rgba(107,69,48,.09);
-  box-shadow:inset 0 2px 5px rgba(107,69,48,.12);
+  background:rgba(55,94,75,.09);
+  box-shadow:inset 0 2px 5px rgba(55,94,75,.12);
   overflow:hidden;
 }
 .budget-progress-fill{
@@ -360,7 +360,7 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
 }
 .budget-progress-fill.bad{
   background:linear-gradient(90deg,#7a1e14 0%,#b83428 50%,#e05840 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(178,59,48,.28);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(184,90,82,.28);
 }
 .budget-pct-label{
   position:absolute;
@@ -389,7 +389,7 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   gap:10px;
 }
 .budget-card-stat{
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:16px;
   background:#fff;
   padding:12px;
@@ -409,7 +409,7 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   grid-template-columns:minmax(210px,1.8fr) minmax(120px,.9fr) minmax(110px,.8fr) minmax(120px,.9fr) 78px;
   gap:10px;
   padding:10px 12px;
-  background:linear-gradient(180deg,#fdfaf5,#f8f3eb);
+  background:linear-gradient(180deg,#fbfdfb,#f2f8f4);
 }
 .summary-row.editing > div{padding:0}
 .summary-row.editing .summary-category,
@@ -459,15 +459,15 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
 .bullet-row{display:grid;grid-template-columns:110px 1fr 52px;align-items:center;gap:10px}
 .bullet-name{font-size:13px;font-weight:700;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bullet-track{position:relative;height:20px;border-radius:10px;background:var(--bg);overflow:visible}
-.bullet-budget-zone{position:absolute;top:0;right:0;height:100%;background:rgba(107,69,48,.13);border-radius:10px;width:100%}
+.bullet-budget-zone{position:absolute;top:0;right:0;height:100%;background:rgba(55,94,75,.13);border-radius:10px;width:100%}
 .bullet-bar{position:absolute;top:2px;right:0;height:calc(100% - 4px);border-radius:8px;transition:width .4s ease}
 .bullet-bar.ok{background:var(--good)}
-.bullet-bar.warn{background:#d4aa54}
+.bullet-bar.warn{background:#aeb85f}
 .bullet-bar.over{background:var(--bad)}
-.bullet-marker{position:absolute;top:-4px;height:calc(100% + 8px);width:3px;border-radius:2px;background:rgba(107,69,48,.55);pointer-events:none}
+.bullet-marker{position:absolute;top:-4px;height:calc(100% + 8px);width:3px;border-radius:2px;background:rgba(55,94,75,.55);pointer-events:none}
 .bullet-pct{font-size:13px;font-weight:800;text-align:left;white-space:nowrap}
 .bullet-pct.ok{color:var(--good)}
-.bullet-pct.warn{color:#b08a20}
+.bullet-pct.warn{color:#7d7f33}
 .bullet-pct.over{color:var(--bad)}
 
 .chart-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
@@ -527,18 +527,18 @@ button:hover{transform:translateY(-1px)}
   padding:11px 14px;
 }
 .secondary.active{
-  background:#6b4530;
+  background:#4f7f68;
   color:#fff;
-  border-color:#6b4530;
+  border-color:#4f7f68;
 }
 .success-btn{
-  background:linear-gradient(135deg, #5c3820, #9e6a42);
+  background:linear-gradient(135deg, #3f6f5b, #6fa58a);
   color:#fff;
   padding:11px 14px;
-  box-shadow:0 14px 30px rgba(92,56,32,.22);
+  box-shadow:0 14px 30px rgba(55,94,75,.22);
 }
 .primary-cta{
-  background:linear-gradient(135deg, #4a2e18, #9e6a42);
+  background:linear-gradient(135deg, #3f6f5b, #6fa58a);
   color:#fff;
   padding:14px 18px;
   font-weight:700;
@@ -576,9 +576,9 @@ button:hover{transform:translateY(-1px)}
   padding:12px 14px;
   border:1px solid var(--line);
   border-radius:18px;
-  background:linear-gradient(180deg,#fff,#f6fafe);
+  background:linear-gradient(180deg,#fff,#f6fbf8);
 }
-.edit-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fbfcfe;margin:8px 0}
+.edit-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fbfdfb;margin:8px 0}
 .edit-card-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .edit-card-title{font-weight:700}
 .edit-card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -620,8 +620,8 @@ body.edit-active .table-shell table{min-width:100%}
 body.edit-active .table-shell thead{display:none}
 body.edit-active .table-shell td{border:none;padding:0}
 body.edit-active .table-shell tr{border:none}
-#toggleEditBtn.active{background:#6b4530;color:#fff;border-color:#6b4530}
-.add-expense-form{display:none;border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:14px;margin-bottom:12px}
+#toggleEditBtn.active{background:#4f7f68;color:#fff;border-color:#4f7f68}
+.add-expense-form{display:none;border:1px solid var(--line);border-radius:18px;background:#fbfdfb;padding:14px;margin-bottom:12px}
 .add-expense-form.open{display:block}
 .settings-card,.debt-card,.year-card{padding:18px}
 .settings-card h3,.debt-card h3,.year-card h3{margin:0 0 6px;font-size:20px}
@@ -632,14 +632,14 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:22px;
   padding:16px;
-  background:linear-gradient(180deg,#ffffff,#f8f3eb);
-  box-shadow:0 14px 28px rgba(107,69,48,.08);
+  background:linear-gradient(180deg,#ffffff,#f2f8f4);
+  box-shadow:0 14px 28px rgba(55,94,75,.08);
 }
 .debt-highlight-bank{
-  background:radial-gradient(circle at top left, rgba(74,122,171,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f8f3eb);
+  background:radial-gradient(circle at top left, rgba(111,165,138,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f2f8f4);
 }
 .debt-highlight-father{
-  background:radial-gradient(circle at top left, rgba(120,160,112,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f8f3eb);
+  background:radial-gradient(circle at top left, rgba(120,160,112,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f2f8f4);
 }
 .debt-highlight-top{
   display:flex;
@@ -652,7 +652,7 @@ body.edit-active .table-shell tr{border:none}
 .debt-progress-shell{
   height:12px;
   border-radius:999px;
-  background:#e9eef6;
+  background:#e7f1eb;
   overflow:hidden;
   margin:14px 0 10px;
 }
@@ -660,7 +660,7 @@ body.edit-active .table-shell tr{border:none}
   height:100%;
   width:0;
   border-radius:999px;
-  background:linear-gradient(90deg,#5c3820,#9e6a42);
+  background:linear-gradient(90deg,#3f6f5b,#6fa58a);
   transition:width .28s ease;
 }
 .debt-empty-state{
@@ -668,7 +668,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px dashed var(--line);
   border-radius:22px;
   padding:20px;
-  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  background:linear-gradient(180deg,#ffffff,#f7fbf8);
 }
 .debt-empty-state h4{margin:0 0 8px;font-size:22px}
 .debt-empty-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
@@ -681,7 +681,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
 }
 .income-row.display-rich{
   grid-template-columns:minmax(220px,1.25fr) repeat(2,minmax(150px,.75fr));
@@ -714,7 +714,7 @@ body.edit-active .table-shell tr{border:none}
   max-width:100%;
   padding:6px 10px;
   border-radius:999px;
-  background:#edf3f9;
+  background:#e7f1eb;
   border:1px solid var(--line);
   color:var(--accent);
   font-size:12px;
@@ -731,8 +731,8 @@ body.edit-active .table-shell tr{border:none}
 .shared-expense-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f6f0e7);
-  box-shadow:0 12px 26px rgba(107,69,48,.08);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
+  box-shadow:0 12px 26px rgba(55,94,75,.08);
 }
 .shared-balance-card{padding:18px 20px}
 .shared-balance-card .value{
@@ -777,7 +777,7 @@ body.edit-active .table-shell tr{border:none}
   gap:6px;
   padding:7px 10px;
   border-radius:999px;
-  border:1px solid rgba(107,69,48,.12);
+  border:1px solid rgba(55,94,75,.12);
   background:#fff;
   font-size:12px;
   font-weight:700;
@@ -789,7 +789,7 @@ body.edit-active .table-shell tr{border:none}
   gap:10px;
 }
 .shared-expense-metric{
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:16px;
   background:#fff;
   padding:12px;
@@ -814,8 +814,8 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:20px;
   padding:16px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
-  box-shadow:0 10px 24px rgba(107,69,48,.06);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
+  box-shadow:0 10px 24px rgba(55,94,75,.06);
 }
 .card-method-top{
   display:flex;
@@ -880,7 +880,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px 16px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   margin:12px 0 0;
 }
 .income-summary .value{
@@ -908,12 +908,12 @@ body.edit-active .table-shell tr{border:none}
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  background:linear-gradient(135deg,#6b4530,#8c5a3a);
+  background:linear-gradient(135deg,#4f7f68,#5f9278);
   color:#fff;
   border-radius:16px;
   padding:14px 18px;
   margin:0 0 16px;
-  box-shadow:0 4px 16px rgba(107,69,48,.25);
+  box-shadow:0 4px 16px rgba(55,94,75,.25);
   animation:slideDown .35s ease;
 }
 @keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
@@ -948,7 +948,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   color:var(--muted);
   font-size:13px;
   line-height:1.7;
@@ -956,7 +956,7 @@ body.edit-active .table-shell tr{border:none}
 .sync-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   padding:16px;
   display:grid;
   gap:14px;
@@ -1039,7 +1039,7 @@ body.edit-active .table-shell tr{border:none}
   font-size:13px;
 }
 .debt-item{
-  background:linear-gradient(180deg, #fff, #f5efe4);
+  background:linear-gradient(180deg, #fff, #f2f8f4);
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
@@ -1049,7 +1049,7 @@ body.edit-active .table-shell tr{border:none}
 .dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;align-items:start}
 .dashboard-stack{display:grid;gap:16px}
 .dashboard-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.dashboard-note{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f5efe4)}
+.dashboard-note{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f2f8f4)}
 .dashboard-note-top{
   display:flex;
   align-items:flex-start;
@@ -1062,7 +1062,7 @@ body.edit-active .table-shell tr{border:none}
   margin-top:12px;
   border:1px solid var(--line);
   border-radius:18px;
-  background:linear-gradient(180deg,#fff,#faf6ef);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
   padding:14px;
   gap:14px;
 }
@@ -1098,7 +1098,7 @@ body.edit-active .table-shell tr{border:none}
   background:linear-gradient(135deg, var(--accent), var(--accent-2));
   color:#fff;
   border-color:transparent;
-  box-shadow:0 12px 24px rgba(107,69,48,.14);
+  box-shadow:0 12px 24px rgba(55,94,75,.14);
 }
 .prefs-chip.mandatory{
   opacity:.7;
@@ -1119,7 +1119,7 @@ body.edit-active .table-shell tr{border:none}
 .modal-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(45,22,8,.46);
+  background:rgba(35,62,50,.46);
   backdrop-filter:blur(4px);
   display:none;
   align-items:center;
@@ -1133,9 +1133,9 @@ body.edit-active .table-shell tr{border:none}
   max-height:min(88vh,900px);
   overflow:auto;
   border-radius:24px;
-  background:linear-gradient(180deg,#fff,#faf6ef);
-  box-shadow:0 28px 64px rgba(45,22,8,.26);
-  border:1px solid rgba(107,69,48,.12);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
+  box-shadow:0 28px 64px rgba(35,62,50,.26);
+  border:1px solid rgba(55,94,75,.12);
   padding:20px;
 }
 .modal-top{
@@ -1226,7 +1226,7 @@ body.edit-active .table-shell tr{border:none}
   display:inline-flex;
   align-items:center;
   gap:6px;
-  background:#edf3f9;
+  background:#e7f1eb;
   color:var(--accent);
   border:1px solid var(--line);
   border-radius:999px;
@@ -1241,9 +1241,9 @@ body.edit-active .table-shell tr{border:none}
   .category-filter-field{grid-column:1 / -1}
 }
 @media (max-width:720px){
-  body{background:linear-gradient(180deg,#dfe8f2,#f2f6fa)}
+  body{background:linear-gradient(180deg,#dfece4,#eef6f0)}
   .container{width:100%;padding:10px 8px 28px}
-  .hero{border-radius:24px;padding:16px 13px;min-height:auto;box-shadow:0 14px 30px rgba(107,69,48,.16)}
+  .hero{border-radius:24px;padding:16px 13px;min-height:auto;box-shadow:0 14px 30px rgba(55,94,75,.16)}
   .hero::before{height:44px;opacity:.22}
   .hero::after{width:170px;height:170px;inset:-70px auto auto -80px}
   .hero-top{display:grid;gap:10px}
@@ -1271,7 +1271,7 @@ body.edit-active .table-shell tr{border:none}
     scrollbar-width:none;
   }
   .tabbar::-webkit-scrollbar{display:none}
-  .tab-btn{flex:0 0 auto;padding:10px 14px;font-size:14px;box-shadow:0 6px 14px rgba(107,69,48,.06)}
+  .tab-btn{flex:0 0 auto;padding:10px 14px;font-size:14px;box-shadow:0 6px 14px rgba(55,94,75,.06)}
   .section{border-radius:20px;margin-bottom:12px}
   .header{padding:13px 14px;font-size:15px}
   .pill{display:none}
@@ -1309,7 +1309,7 @@ body.edit-active .table-shell tr{border:none}
   .income-row{
     padding:11px 12px;
     gap:8px;
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .income-cell{
     min-height:auto;
@@ -1348,8 +1348,8 @@ body.edit-active .table-shell tr{border:none}
     margin:8px 0;
     border:1px solid var(--line);
     border-radius:16px;
-    background:linear-gradient(180deg,#fff,#faf6ef);
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    background:linear-gradient(180deg,#fff,#f7fbf8);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .summary-row div{padding:0}
   .summary-category{grid-column:1 / -1;font-size:15px}
@@ -1376,7 +1376,7 @@ body.edit-active .table-shell tr{border:none}
   }
   .summary-metric{
     min-height:52px;
-    border:1px solid #e2e9f2;
+    border:1px solid #cfddd4;
     border-radius:13px;
     padding:8px !important;
     background:#fff;
@@ -1460,7 +1460,7 @@ body.edit-active .table-shell tr{border:none}
     margin-bottom:3px;
   }
   .mobile-metric{
-    border:1px solid #e2e9f2;
+    border:1px solid #cfddd4;
     border-radius:12px;
     padding:8px;
     background:#fff;
@@ -1477,7 +1477,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:18px;
     overflow:hidden;
     background:#fff;
-    box-shadow:0 8px 18px rgba(107,69,48,.06);
+    box-shadow:0 8px 18px rgba(55,94,75,.06);
     padding:10px;
   }
   .table-shell td{
@@ -1530,7 +1530,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:16px;
     padding:10px;
     background:#fff;
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .year-table td{
     display:flex;
@@ -1538,7 +1538,7 @@ body.edit-active .table-shell tr{border:none}
     gap:4px;
     border:none;
     border-radius:12px;
-    background:#f8fbff;
+    background:#f7fbf8;
     padding:8px;
     text-align:right;
   }
@@ -1564,14 +1564,14 @@ body.edit-active .table-shell tr{border:none}
   background:
     radial-gradient(circle at 14% 22%, rgba(167,243,208,.22), transparent 20%),
     radial-gradient(circle at 78% 10%, rgba(255,255,255,.12), transparent 18%),
-    linear-gradient(135deg, #022c22 0%, #065f46 48%, #10b981 100%);
+    linear-gradient(135deg, #022c22 0%, #065f46 48%, #6fa58a 100%);
   border-radius:28px;
   padding:24px 28px;
   color:#fff;
   margin-bottom:20px;
   display:grid;
   gap:18px;
-  box-shadow:0 24px 56px rgba(45,22,8,.22);
+  box-shadow:0 24px 56px rgba(35,62,50,.22);
   border:1px solid rgba(255,255,255,.14);
   position:relative;
   overflow:hidden;
@@ -1643,8 +1643,8 @@ body.edit-active .table-shell tr{border:none}
   background:linear-gradient(90deg,#5ecf92,#30a868);
   transition:width .35s cubic-bezier(.4,0,.2,1);
 }
-.budget-overview-fill.warn{background:linear-gradient(90deg,#f4c86a,#e09a30)}
-.budget-overview-fill.bad{background:linear-gradient(90deg,#e07a68,#b23b30)}
+.budget-overview-fill.warn{background:linear-gradient(90deg,#cbdc86,#9fb55a)}
+.budget-overview-fill.bad{background:linear-gradient(90deg,#c9857f,#b85a52)}
 .budget-overview-meta{
   display:flex;
   justify-content:space-between;
@@ -1658,11 +1658,11 @@ body.edit-active .table-shell tr{border:none}
   transition:box-shadow .18s ease, transform .18s ease;
 }
 .summary-row.budget-card:hover{
-  box-shadow:0 20px 40px rgba(107,69,48,.13);
+  box-shadow:0 20px 40px rgba(55,94,75,.13);
   transform:translateY(-2px);
 }
 .summary-row.budget-card.status-good{border-right-color:#2e9a60}
-.summary-row.budget-card.status-bad{border-right-color:#b23b30}
+.summary-row.budget-card.status-bad{border-right-color:#b85a52}
 .budget-card-title strong{font-size:17px}
 .budget-card-stat strong{font-size:16px}
 
@@ -1682,7 +1682,7 @@ body.edit-active .table-shell tr{border:none}
   border-radius:18px;
   background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
   backdrop-filter:blur(14px);
-  box-shadow:0 16px 28px rgba(45,22,8,.14);
+  box-shadow:0 16px 28px rgba(35,62,50,.14);
 }
 .mini-nav-label-group{
   display:flex;
@@ -1723,30 +1723,30 @@ body.edit-active .table-shell tr{border:none}
   align-items:center;
   justify-content:center;
   gap:8px;
-  background:linear-gradient(135deg, var(--accent), var(--accent-2));
-  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);
   color:#fff;
   border-radius:14px;
   padding:10px 14px;
   font-size:18px;
   font-weight:700;
-  box-shadow:0 12px 24px rgba(107,69,48,.16);
+  box-shadow:0 12px 24px rgba(35,62,50,.12);
   cursor:pointer;
   transition:background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
   flex-shrink:0;
 }
 .nav-menu-btn:hover{
-  background:linear-gradient(135deg, var(--accent-2), var(--accent));
+  background:rgba(255,255,255,.28);
   color:#fff;
-  border-color:rgba(255,255,255,.16);
-  box-shadow:0 10px 24px rgba(107,69,48,.18);
+  border-color:rgba(255,255,255,.34);
+  box-shadow:0 10px 24px rgba(35,62,50,.16);
 }
 
 /* ── Drawer backdrop ─────────────────────────────────── */
 .drawer-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(45,22,8,.46);
+  background:rgba(35,62,50,.46);
   backdrop-filter:blur(4px);
   z-index:40;
   opacity:0;
@@ -1766,40 +1766,40 @@ body.edit-active .table-shell tr{border:none}
   height:100vh;
   width:300px;
   max-width:88vw;
-  background:linear-gradient(180deg,#2d1608 0%,#4a2010 55%,#5c3018 100%);
+  background:linear-gradient(180deg,#fbfdfb 0%,#f2f8f4 58%,#e6f1ea 100%);
   z-index:50;
   transform:translateX(110%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
   display:flex;
   flex-direction:column;
-  box-shadow:-28px 0 70px rgba(45,22,8,.38);
-  border-left:1px solid rgba(255,255,255,.08);
+  box-shadow:-28px 0 70px rgba(35,62,50,.22);
+  border-left:1px solid rgba(55,94,75,.12);
 }
 .side-drawer.open{transform:translateX(0)}
 .drawer-top{
   padding:30px 20px 18px;
-  border-bottom:1px solid rgba(255,255,255,.10);
+  border-bottom:1px solid rgba(55,94,75,.12);
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 .drawer-title{
-  color:#fff;
+  color:var(--text);
   font-size:18px;
   font-weight:800;
   letter-spacing:-.3px;
 }
 .drawer-close-btn{
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
-  color:rgba(255,255,255,.8);
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--text);
   border-radius:10px;
   padding:8px 11px;
   font-size:16px;
   line-height:1;
   cursor:pointer;
 }
-.drawer-close-btn:hover{background:rgba(255,255,255,.20);color:#fff;transform:none}
+.drawer-close-btn:hover{background:var(--card-soft);color:var(--text);transform:none}
 .drawer-nav{
   flex:1;
   overflow-y:auto;
@@ -1814,30 +1814,30 @@ body.edit-active .table-shell tr{border:none}
   gap:12px;
   padding:13px 16px;
   border-radius:14px;
-  color:rgba(255,255,255,.68);
+  color:#587064;
   font-size:15px;
   font-weight:600;
   font-family:inherit;
   cursor:pointer;
   border:1px solid transparent;
-  background:none;
+  background:transparent;
   text-align:right;
   width:100%;
   transition:background .18s ease, color .18s ease;
 }
-.drawer-tab-btn:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.92);transform:none}
+.drawer-tab-btn:hover{background:rgba(79,127,104,.10);color:#27483b;transform:none}
 .drawer-tab-btn.active{
-  background:rgba(255,255,255,.16);
-  border-color:rgba(255,255,255,.18);
-  color:#fff;
+  background:#e3f0e8;
+  border-color:#b8d1c1;
+  color:#244236;
   font-weight:800;
 }
 .drawer-tab-icon{font-size:19px;width:26px;text-align:center;flex-shrink:0}
 .drawer-footer{
   padding:16px 20px 30px;
-  border-top:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(55,94,75,.10);
   font-size:12px;
-  color:rgba(255,255,255,.32);
+  color:var(--muted);
   text-align:center;
 }
 
@@ -1877,7 +1877,7 @@ body.edit-active .table-shell tr{border:none}
   overflow:hidden;
   transition:box-shadow .2s;
 }
-.mxp-item:active{ box-shadow:0 2px 8px rgba(107,69,48,.1) }
+.mxp-item:active{ box-shadow:0 2px 8px rgba(55,94,75,.1) }
 .mxp-row{
   display:grid;
   grid-template-columns:70px 1fr auto;
@@ -2440,20 +2440,20 @@ body.edit-active .table-shell tr{border:none}
   align-items:center;
   justify-content:center;
   gap:8px;
-  background:linear-gradient(90deg,#fde7a1,#f4cc55,#fde7a1);
-  color:#5b4515;
+  background:linear-gradient(90deg,#e7f1cf,#aeb85f,#e7f1cf);
+  color:#3d4d2f;
   text-align:center;
   font-size:12px;
   font-weight:800;
   padding:7px 12px;
-  border-bottom:1px solid #c89824;
+  border-bottom:1px solid #9fb55a;
   letter-spacing:.02em;
   box-shadow:0 2px 10px rgba(0,0,0,.06);
 }
 .demo-banner-dot{
   width:8px; height:8px; border-radius:50%;
-  background:#b07a06;
-  box-shadow:0 0 0 3px rgba(176,122,6,.18);
+  background:#7d7f33;
+  box-shadow:0 0 0 3px rgba(125,127,51,.18);
 }
 @media (max-width:720px){
   .demo-banner{ font-size:11px; padding:6px 10px }
@@ -2473,18 +2473,18 @@ body.edit-active .table-shell tr{border:none}
   --fs-body:    14px;
   --fs-micro:   11px;
   /* Semantic colors */
-  --good:       #059669;
+  --good:       #3f8f66;
   --good-soft:  #d1fae5;
   --good-line:  #6ee7b7;
-  --warn:       #d97706;
+  --warn:       #8c8f3f;
   --warn-soft:  #fef3c7;
   --warn-line:  #fcd34d;
-  --bad:        #dc2626;
+  --bad:        #b85a52;
   --bad-soft:   #fee2e2;
   --bad-line:   #fca5a5;
-  --info:       #2563eb;
-  --info-soft:  #dbeafe;
-  --info-line:  #93c5fd;
+  --info:       #4f7f68;
+  --info-soft:  #e7f1eb;
+  --info-line:  #9dc7ae;
   /* Motion */
   --ease-out:    cubic-bezier(.2,.7,.3,1);
   --ease-spring: cubic-bezier(.34,1.32,.64,1);
@@ -2523,14 +2523,14 @@ body.edit-active .table-shell tr{border:none}
    makes the per-tab identity unmistakable on real devices. */
 /* Per-tab: only the right-side accent stripe changes color.
    Background stays neutral (set on .header base rule). */
-.tab-panel[data-panel="dashboard"] .section > .header{ --header-accent:#3b82f6 }
-.tab-panel[data-panel="budget"]    .section > .header{ --header-accent:#10b981 }
+.tab-panel[data-panel="dashboard"] .section > .header{ --header-accent:#89b89b }
+.tab-panel[data-panel="budget"]    .section > .header{ --header-accent:#6fa58a }
 .tab-panel[data-panel="income"]    .section > .header{ --header-accent:#22c55e }
-.tab-panel[data-panel="cards"]     .section > .header{ --header-accent:#8b5cf6 }
-.tab-panel[data-panel="expenses"]  .section > .header{ --header-accent:#f97316 }
-.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#f43f5e }
+.tab-panel[data-panel="cards"]     .section > .header{ --header-accent:#8dbfa4 }
+.tab-panel[data-panel="expenses"]  .section > .header{ --header-accent:#9fb55a }
+.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#b85a52 }
 .tab-panel[data-panel="debts"]     .section > .header{ --header-accent:#ef4444 }
-.tab-panel[data-panel="yearly"]    .section > .header{ --header-accent:#6366f1 }
+.tab-panel[data-panel="yearly"]    .section > .header{ --header-accent:#8ba097 }
 .tab-panel[data-panel="backup"]    .section > .header{ --header-accent:#94a3b8 }
 /* Section header — accent stripe (RTL: right side) + inner highlight + tighter type */
 .section > .header{
@@ -2599,10 +2599,10 @@ body.edit-active .table-shell tr{border:none}
   .shared-balance-card:hover,
   .shared-stat-card:hover{
     transform: translateY(-2px);
-    box-shadow: 0 18px 36px rgba(107,69,48,.14);
+    box-shadow: 0 18px 36px rgba(55,94,75,.14);
   }
   .mxp-item:hover{
-    box-shadow: 0 8px 22px rgba(107,69,48,.10);
+    box-shadow: 0 8px 22px rgba(55,94,75,.10);
   }
 }
 
@@ -2753,7 +2753,7 @@ select:focus-visible{
 
 /* Tap-target shimmer when section header is pressed (mobile feedback) */
 .section > .header{
-  -webkit-tap-highlight-color: rgba(37,99,235,.08);
+  -webkit-tap-highlight-color: rgba(55,94,75,.08);
 }
 .section > .header:active{
   background: #f1f5f9;
@@ -2780,9 +2780,9 @@ select:focus-visible{
 .settings-card{
   box-shadow:
     0 1px 0 rgba(255,255,255,.7) inset,
-    0 4px 12px rgba(45,22,8,.06),
-    0 14px 30px rgba(45,22,8,.05);
-  border:1px solid rgba(107,69,48,.10);
+    0 4px 12px rgba(35,62,50,.06),
+    0 14px 30px rgba(35,62,50,.05);
+  border:1px solid rgba(55,94,75,.10);
 }
 
 /* KPI values — bigger, bolder, more contrast on mobile */
@@ -2792,18 +2792,18 @@ select:focus-visible{
     font-size:10px !important;
     text-transform:uppercase;
     letter-spacing:.06em;
-    color:#7a5040;
+    color:#5f7469;
     opacity:.85;
   }
   .kpi .value{
     font-size:22px !important;
     font-weight:800 !important;
     letter-spacing:-.015em !important;
-    color:#3a1f0d;
+    color:#1f2f2a;
   }
   .kpi-sub{
     font-size:11px !important;
-    color:#9a6a48;
+    color:#6f8077;
   }
 }
 
@@ -2818,7 +2818,7 @@ select:focus-visible{
   top:-30px; left:-30px;
   width:90px; height:90px;
   border-radius:50%;
-  background: radial-gradient(circle, rgba(107,69,48,.07), transparent 70%);
+  background: radial-gradient(circle, rgba(55,94,75,.07), transparent 70%);
   pointer-events:none;
 }
 
@@ -2826,7 +2826,7 @@ select:focus-visible{
 .hero{
   box-shadow:
     0 1px 0 rgba(255,255,255,.18) inset,
-    0 18px 40px rgba(45,22,8,.18);
+    0 18px 40px rgba(35,62,50,.18);
 }
 @media (max-width:720px){
   .hero h1{
@@ -2862,8 +2862,8 @@ select:focus-visible{
 .section{
   box-shadow:
     0 1px 0 rgba(255,255,255,.7) inset,
-    0 6px 18px rgba(45,22,8,.07),
-    0 18px 40px rgba(45,22,8,.05) !important;
+    0 6px 18px rgba(35,62,50,.07),
+    0 18px 40px rgba(35,62,50,.05) !important;
 }
 
 /* Budget card per-category — accent stripe by status (good/warn/bad) */
@@ -2876,7 +2876,7 @@ select:focus-visible{
   position:absolute;
   top:0; bottom:0; right:0;
   width:4px;
-  background: linear-gradient(180deg, var(--accent), #d4845a);
+  background: linear-gradient(180deg, var(--accent), #7fb69a);
   border-radius: 0 4px 4px 0;
 }
 .summary-row.budget-card:has(.budget-card-badge.good)::before{
@@ -2892,7 +2892,7 @@ select:focus-visible{
 /* Mobile expense card — a touch more elevation + tap shimmer */
 @media (max-width:720px){
   .mxp-item{
-    box-shadow: 0 2px 6px rgba(45,22,8,.06), 0 8px 18px rgba(45,22,8,.04);
+    box-shadow: 0 2px 6px rgba(35,62,50,.06), 0 8px 18px rgba(35,62,50,.04);
   }
   .mxp-amount{
     font-size:16px !important;
@@ -2926,7 +2926,7 @@ select:focus-visible{
 
 /* Stage 7 demo banner — slightly more refined */
 .demo-banner{
-  background: linear-gradient(90deg, #fde7a1 0%, #f4cc55 50%, #fde7a1 100%) !important;
+  background: linear-gradient(90deg, #e7f1cf 0%, #aeb85f 50%, #e7f1cf 100%) !important;
   font-weight:700;
 }
 
@@ -2939,7 +2939,7 @@ select:focus-visible{
 .hero{
   box-shadow:
     0 1px 0 rgba(255,255,255,.18) inset,
-    0 18px 40px rgba(15,23,42,.22) !important;
+    0 18px 40px rgba(35,62,50,.22) !important;
 }
 .kpi,
 .summary-row.budget-card,
@@ -2951,66 +2951,66 @@ select:focus-visible{
 .settings-card{
   box-shadow:
     0 1px 0 rgba(255,255,255,.8) inset,
-    0 4px 12px rgba(15,23,42,.05),
-    0 14px 30px rgba(15,23,42,.04) !important;
-  border:1px solid rgba(37,99,235,.08) !important;
+    0 4px 12px rgba(35,62,50,.05),
+    0 14px 30px rgba(35,62,50,.04) !important;
+  border:1px solid rgba(55,94,75,.08) !important;
 }
 .section{
   box-shadow:
     0 1px 0 rgba(255,255,255,.8) inset,
-    0 6px 18px rgba(15,23,42,.06),
-    0 18px 40px rgba(15,23,42,.04) !important;
+    0 6px 18px rgba(35,62,50,.06),
+    0 18px 40px rgba(35,62,50,.04) !important;
 }
 .card-method{
   box-shadow:
     0 2px 0 rgba(255,255,255,.8) inset,
-    0 8px 24px rgba(15,23,42,.08),
-    0 20px 40px rgba(15,23,42,.06) !important;
+    0 8px 24px rgba(35,62,50,.08),
+    0 20px 40px rgba(35,62,50,.06) !important;
 }
 .budget-overview-hero{
   box-shadow: 0 24px 56px rgba(2,44,34,.28) !important;
 }
 
-/* ── 9.B  Hero decorative circles — use blue tones now ──────────────────── */
+/* ── 9.B  Hero decorative circles — use sage tones now ──────────────────── */
 .hero::after{
-  background:rgba(147,197,253,.14) !important;
+  background:rgba(125,174,146,.14) !important;
 }
 .budget-overview-hero::after{
   background:rgba(167,243,208,.10) !important;
 }
-/* KPI orb: blue tint */
+/* KPI orb: sage tint */
 .kpi::after{
-  background: radial-gradient(circle, rgba(37,99,235,.07), transparent 70%) !important;
+  background: radial-gradient(circle, rgba(55,94,75,.07), transparent 70%) !important;
 }
 
-/* ── 9.C  Hero repeat-line pattern: blue instead of dark brown ──────────── */
+/* ── 9.C  Hero repeat-line pattern: sage instead of dark brown ──────────── */
 .hero::before{
   background:
-    linear-gradient(180deg, transparent, rgba(15,23,42,.60)),
+    linear-gradient(180deg, transparent, rgba(35,62,50,.60)),
     repeating-linear-gradient(90deg,
       transparent 0 24px,
       rgba(255,255,255,.14) 24px 26px,
       transparent 26px 58px),
     linear-gradient(90deg,
       transparent 0 5%,
-      rgba(15,23,42,.70) 5% 12%,
+      rgba(35,62,50,.70) 5% 12%,
       transparent 12% 16%,
-      rgba(15,23,42,.58) 16% 24%,
+      rgba(35,62,50,.58) 16% 24%,
       transparent 24% 30%,
-      rgba(15,23,42,.70) 30% 36%,
+      rgba(35,62,50,.70) 30% 36%,
       transparent 36% 42%,
-      rgba(15,23,42,.52) 42% 51%,
+      rgba(35,62,50,.52) 42% 51%,
       transparent 51% 58%,
-      rgba(15,23,42,.66) 58% 66%,
+      rgba(35,62,50,.66) 58% 66%,
       transparent 66% 72%,
-      rgba(15,23,42,.58) 72% 84%,
+      rgba(35,62,50,.58) 72% 84%,
       transparent 84% 100%) !important;
 }
 
 /* ── 9.D  Stage-7 KPI overrides: update warm-brown text to cool dark ─────── */
 @media (max-width:720px){
   .kpi .label{ color:#4a6080 !important }
-  .kpi .value{ color:#18243a !important }
+  .kpi .value{ color:#1f2f2a !important }
   .kpi-sub{ color:#5a78a0 !important }
   .hero-stat .label{ color:rgba(255,255,255,.72) !important }
   .mxp-amount{ color:var(--accent) !important }
@@ -3023,24 +3023,24 @@ select:focus-visible{
 }
 .income-summary .value{ color:#15803d !important }
 
-/* ── 9.F  nav-menu-btn + mini-nav: blue accent ───────────────────────────── */
+/* ── 9.F  nav-menu-btn + mini-nav: sage accent ───────────────────────────── */
 .nav-menu-btn{
-  background:linear-gradient(135deg, #1e40af, #3b82f6) !important;
+  background:linear-gradient(135deg, #4f7f68, #89b89b) !important;
 }
 .nav-menu-btn:hover{
-  background:linear-gradient(135deg, #2563eb, #1e40af) !important;
+  background:linear-gradient(135deg, #4f7f68, #4f7f68) !important;
 }
 .mini-nav{
   background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)) !important;
 }
 
-/* ── 9.G  Primary buttons: blue ─────────────────────────────────────────── */
+/* ── 9.G  Primary buttons: sage ─────────────────────────────────────────── */
 .success-btn,
 .primary,
 button[type="submit"],
 .mxp-edit-btn,
 .add-btn{
-  background: linear-gradient(135deg, #1e40af, #3b82f6) !important;
+  background: linear-gradient(135deg, #4f7f68, #89b89b) !important;
   color:#fff !important;
   border-color:transparent !important;
 }
@@ -3076,11 +3076,11 @@ button[type="submit"],
 
 /* ── 9.I  Card visual: update Stage-8 gradient shadow colors ────────────── */
 .card-stat{
-  border:1px solid rgba(37,99,235,.08) !important;
-  box-shadow: 0 2px 6px rgba(15,23,42,.04) !important;
+  border:1px solid rgba(55,94,75,.08) !important;
+  box-shadow: 0 2px 6px rgba(35,62,50,.04) !important;
 }
 
-/* ── 9.J  Stage-7 hero-stat glass: blue tint instead of brown ──────────── */
+/* ── 9.J  Stage-7 hero-stat glass: sage tint instead of brown ──────────── */
 @media (max-width:720px){
   .hero-stat{
     background: rgba(255,255,255,.12) !important;
@@ -3171,8 +3171,8 @@ button[type="submit"],
   border:none !important;
   box-shadow:
     0 2px 0 rgba(255,255,255,.7) inset,
-    0 8px 24px rgba(45,22,8,.10),
-    0 20px 40px rgba(45,22,8,.08) !important;
+    0 8px 24px rgba(35,62,50,.10),
+    0 20px 40px rgba(35,62,50,.08) !important;
 }
 .card-visual{
   background:
@@ -3257,7 +3257,7 @@ button[type="submit"],
 }
 .card-body{
   padding:14px 16px 16px;
-  background:linear-gradient(180deg,#fafaf8,#f5efe4);
+  background:linear-gradient(180deg,#fafaf8,#f2f8f4);
 }
 .card-method-grid{
   gap:8px !important;
@@ -3268,8 +3268,8 @@ button[type="submit"],
   padding:11px 13px !important;
   min-height:76px !important;
   background:linear-gradient(180deg,#fff,#faf5ee) !important;
-  border:1px solid rgba(107,69,48,.09) !important;
-  box-shadow: 0 2px 6px rgba(45,22,8,.04) !important;
+  border:1px solid rgba(55,94,75,.09) !important;
+  box-shadow: 0 2px 6px rgba(35,62,50,.04) !important;
 }
 .card-stat .label{
   font-size:11px !important;
@@ -3408,16 +3408,16 @@ button[type="submit"],
 .hero{
   background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%) !important;
   color: var(--text) !important;
-  border: 1px solid rgba(37,99,235,.10) !important;
+  border: 1px solid rgba(55,94,75,.10) !important;
   box-shadow:
     0 1px 0 rgba(255,255,255,.9) inset,
-    0 6px 18px rgba(15,23,42,.07),
-    0 24px 56px rgba(15,23,42,.06) !important;
+    0 6px 18px rgba(35,62,50,.07),
+    0 24px 56px rgba(35,62,50,.06) !important;
 }
 /* Disable dark-background decorative layers */
 .hero::before{ opacity:0 !important }
 .hero::after{
-  background: radial-gradient(circle, rgba(37,99,235,.06), transparent 68%) !important;
+  background: radial-gradient(circle, rgba(55,94,75,.06), transparent 68%) !important;
   top:-80px; left:-80px;
 }
 /* Title */
@@ -3439,12 +3439,12 @@ button[type="submit"],
   color: var(--text) !important;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2318243a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
 }
-/* Stat boxes: soft blue tint so they lift off the white card */
+/* Stat boxes: soft sage tint so they lift off the white card */
 .hero-stat{
-  background: rgba(37,99,235,.07) !important;
-  border: 1px solid rgba(37,99,235,.14) !important;
+  background: rgba(55,94,75,.07) !important;
+  border: 1px solid rgba(55,94,75,.14) !important;
   backdrop-filter: none !important;
-  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(37,99,235,.06) !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(55,94,75,.06) !important;
 }
 .hero-stat .label{
   color: var(--muted) !important;
@@ -3455,15 +3455,15 @@ button[type="submit"],
 }
 /* Collapse button: dark subtle circle on white */
 .hero-collapse-btn{
-  background: rgba(15,23,42,.07) !important;
-  border: 1px solid rgba(15,23,42,.09) !important;
+  background: rgba(35,62,50,.07) !important;
+  border: 1px solid rgba(35,62,50,.09) !important;
   color: var(--text) !important;
 }
-/* Mini-nav: bold blue strip anchors the bottom of the white card */
+/* Mini-nav: bold sage strip anchors the bottom of the white card */
 .mini-nav{
-  background: linear-gradient(135deg, #1e40af 0%, #3b82f6 100%) !important;
+  background: linear-gradient(135deg, #4f7f68 0%, #89b89b 100%) !important;
   border: none !important;
-  box-shadow: 0 8px 20px rgba(30,64,175,.22), 0 2px 0 rgba(255,255,255,.12) inset !important;
+  box-shadow: 0 8px 20px rgba(35,62,50,.22), 0 2px 0 rgba(255,255,255,.12) inset !important;
 }
 .mini-nav-label{ color: #fff !important }
 .mini-nav-kicker{ color: rgba(255,255,255,.82) !important }
@@ -3488,8 +3488,8 @@ button[type="submit"],
   }
   .hero-month-picker select{ color: var(--text) !important }
   .hero-stat{
-    background: rgba(37,99,235,.07) !important;
-    border: 1px solid rgba(37,99,235,.14) !important;
+    background: rgba(55,94,75,.07) !important;
+    border: 1px solid rgba(55,94,75,.14) !important;
     backdrop-filter: none !important;
     padding: 10px 12px !important;
   }
@@ -3510,18 +3510,18 @@ button[type="submit"],
 /* ── 10.B  Section headers: vivid per-tab gradient ───────────────────────── */
 /* Base fallback (unmatched tabs) */
 .header{
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%) !important;
+  background: linear-gradient(135deg, #355345 0%, #5f7469 100%) !important;
   color: #fff !important;
   border-bottom: none !important;
 }
 /* Per-tab distinct gradients */
 .tab-panel[data-panel="dashboard"] .section > .header{
-  background: linear-gradient(135deg, #0f172a 0%, #1d4ed8 100%) !important;
-  --header-accent: #93c5fd;
+  background: linear-gradient(135deg, #355345 0%, #4f7f68 100%) !important;
+  --header-accent: #9dc7ae;
   color: #fff !important;
 }
 .tab-panel[data-panel="budget"] .section > .header{
-  background: linear-gradient(135deg, #022c22 0%, #059669 100%) !important;
+  background: linear-gradient(135deg, #022c22 0%, #3f8f66 100%) !important;
   --header-accent: #6ee7b7;
   color: #fff !important;
 }
@@ -3546,7 +3546,7 @@ button[type="submit"],
   color: #fff !important;
 }
 .tab-panel[data-panel="debts"] .section > .header{
-  background: linear-gradient(135deg, #450a0a 0%, #dc2626 100%) !important;
+  background: linear-gradient(135deg, #450a0a 0%, #b85a52 100%) !important;
   --header-accent: #fca5a5;
   color: #fff !important;
 }
@@ -3556,7 +3556,7 @@ button[type="submit"],
   color: #fff !important;
 }
 .tab-panel[data-panel="backup"] .section > .header{
-  background: linear-gradient(135deg, #0f172a 0%, #475569 100%) !important;
+  background: linear-gradient(135deg, #355345 0%, #6f8077 100%) !important;
   --header-accent: #cbd5e1;
   color: #fff !important;
 }
@@ -3988,15 +3988,15 @@ button[type="submit"],
           <div class="sync-card">
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
               <div>
-                <h3 style="margin:0 0 4px">☁️ סנכרון ענן</h3>
-                <div class="small">האתר מחובר אוטומטית לענן המשותף של רז ושירה. כל שינוי נשמר ומסתנכרן בין המכשירים.</div>
+                <h3 style="margin:0 0 4px">☁️ מצב ענן ב־v35</h3>
+                <div class="small">גרסת v35 מבודדת מהענן האמיתי: הנתונים נשמרים בדפדפן עם prefix נפרד, וכתיבה/עדכון/מחיקה ב־Supabase חסומים.</div>
               </div>
               <div id="cloudSyncBadges"></div>
             </div>
             <div class="sync-status" id="cloudSyncStatus" style="margin-top:8px"></div>
             <div class="sync-actions" style="margin-top:12px">
-              <button id="pullCloudSyncBtn" class="secondary" type="button">משוך מהענן עכשיו</button>
-              <button id="pushCloudSyncBtn" class="secondary" type="button">דחוף לענן עכשיו</button>
+              <button id="pullCloudSyncBtn" class="secondary" type="button">משוך staging מהענן</button>
+              <button id="pushCloudSyncBtn" class="secondary" type="button">דחיפה חסומה ב־v35</button>
               <button id="clearCloudSyncBtn" class="secondary" type="button">נתק סנכרון במכשיר זה</button>
             </div>
             <!-- hidden inputs kept for internal use -->
@@ -4013,7 +4013,7 @@ button[type="submit"],
             <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
               <div>
                 <h3 style="margin:0 0 4px">🛟 נקודות שחזור</h3>
-                <div class="small">האתר ישמור נקודות שחזור אוטומטיות לפני משיכה מהענן, לפני ייבוא, וגם אחרי שמירה לענן. אם משהו נמחק, נוכל לחזור לנקודה קודמת מתוך האתר.</div>
+                <div class="small">ב־v35 נקודות השחזור נשמרות מקומית בלבד, כדי לא להשפיע על הנתונים האמיתיים בענן.</div>
               </div>
               <div class="sync-actions" style="margin-top:0">
                 <button id="createRecoveryPointBtn" class="secondary" type="button">צור נקודת שחזור עכשיו</button>
@@ -4085,23 +4085,32 @@ button[type="submit"],
      • A small banner is shown at top of page so the user always knows.
    Defined here (very top of script) so it's available before storage key constants.
 ═══════════════════════════════════════════════════════════════════════════ */
-const IS_LOCAL_DRAFT_FILE =
-  window.location.protocol === "file:" ||
-  /(?:expense-app-v35|demo)\.html$/i.test(window.location.pathname);
-const STORAGE_NS_PREFIX = IS_LOCAL_DRAFT_FILE ? "v35demo__" : "";
-function stripDemoPrefix(key){
-  return STORAGE_NS_PREFIX && typeof key === "string" && key.startsWith(STORAGE_NS_PREFIX)
-    ? key.slice(STORAGE_NS_PREFIX.length)
-    : key;
+const IS_STAGING_FILE = true;
+const STAGING_STORAGE_PREFIX = "v35_expense_";
+const IS_LOCAL_DRAFT_FILE = window.location.protocol === "file:";
+const STORAGE_NS_PREFIX = IS_STAGING_FILE ? STAGING_STORAGE_PREFIX : "";
+function getAppStorageKey(key){
+  const normalized = String(key || "");
+  if(!IS_STAGING_FILE || normalized.startsWith(STAGING_STORAGE_PREFIX)) return normalized;
+  return `${STAGING_STORAGE_PREFIX}${normalized}`;
 }
-/* Inject the demo banner once DOM is ready, only when in sandbox mode. */
-if(IS_LOCAL_DRAFT_FILE){
+function getOriginalStorageKey(key){
+  const normalized = String(key || "");
+  return IS_STAGING_FILE && normalized.startsWith(STAGING_STORAGE_PREFIX)
+    ? normalized.slice(STAGING_STORAGE_PREFIX.length)
+    : normalized;
+}
+function stripDemoPrefix(key){
+  return getOriginalStorageKey(key);
+}
+/* Inject the staging banner once DOM is ready, only when in sandbox mode. */
+if(IS_STAGING_FILE){
   document.addEventListener("DOMContentLoaded", () => {
     if(document.querySelector(".demo-banner")) return;
     const banner = document.createElement("div");
     banner.className = "demo-banner";
     banner.innerHTML = '<span class="demo-banner-dot" aria-hidden="true"></span>' +
-      '<span>מצב דמו · מבודד מהאתר החי · הסנכרון לענן כבוי</span>';
+      '<span>מצב v35 · מבודד מהאתר החי · כתיבה לענן חסומה</span>';
     document.body.insertBefore(banner, document.body.firstChild);
   });
 }
@@ -4113,12 +4122,12 @@ const MONTH_NAME_TO_NUMBER = {"ינואר":1,"פברואר":2,"מרץ":3,"אפר
 const BASE_SHEET_OPTIONS = ["אוקטובר 2025", "נובמבר 25", "דצמבר 25", "ינואר 26", "פברואר 26", "מרץ 26"];
 let SHEET_OPTIONS = [...BASE_SHEET_OPTIONS];
 const USERS = [{id:"raz", label:"רז"}, {id:"shira", label:"שירה"}];
-const ACTIVE_USER_STORAGE_KEY  = STORAGE_NS_PREFIX + "expense_app_active_user_v1";
-const CLOUD_SYNC_CONFIG_KEY    = STORAGE_NS_PREFIX + "expense_app_cloud_sync_config_v1";
-const CLOUD_SYNC_ROW_ID = "shared-expense-app";
-const CLOUD_BACKUP_PREFIX = "backup-snapshot-";
-const LOCAL_DATA_CHANGED_AT_KEY = STORAGE_NS_PREFIX + "expense_app_local_changed_at_v1";
-const LOCAL_RECOVERY_POINTS_KEY = STORAGE_NS_PREFIX + "expense_app_local_recovery_points_v1";
+const ACTIVE_USER_STORAGE_KEY = getAppStorageKey("expense_app_active_user_v1");
+const CLOUD_SYNC_CONFIG_KEY = getAppStorageKey("expense_app_cloud_sync_config_v1");
+const CLOUD_SYNC_ROW_ID = IS_STAGING_FILE ? "v35-shared-expense-app" : "shared-expense-app";
+const CLOUD_BACKUP_PREFIX = IS_STAGING_FILE ? "v35-backup-snapshot-" : "backup-snapshot-";
+const LOCAL_DATA_CHANGED_AT_KEY = getAppStorageKey("expense_app_local_changed_at_v1");
+const LOCAL_RECOVERY_POINTS_KEY = getAppStorageKey("expense_app_local_recovery_points_v1");
 const MAX_LOCAL_RECOVERY_POINTS = 12;
 const MAX_CLOUD_RECOVERY_POINTS = 20;
 const DEFAULT_CLOUD_SYNC_CONFIG = {
@@ -4266,7 +4275,7 @@ function getLoanPrincipalBase(){
 }
 function getScopedStorageKey(base, userId=currentUser){
   const key = userId === "raz" ? base : `${base}_${userId}`;
-  return STORAGE_NS_PREFIX + key;
+  return getAppStorageKey(key);
 }
 function getStorageKey(){ return getScopedStorageKey("expense_app_overrides_v29"); }
 function getManualStorageKey(){ return getScopedStorageKey("expense_app_manual_settings_v35"); }
@@ -4426,10 +4435,11 @@ function renderCloudSyncStatus(){
   if(urlInput && document.activeElement !== urlInput) urlInput.value = config.url || "";
   if(keyInput && document.activeElement !== keyInput) keyInput.value = config.anonKey || "";
   if(saveBtn) saveBtn.textContent = hasCloudSyncConfig() ? "עדכן חיבור ענן" : "שמור חיבור ענן";
-  if(badgesEl){
-    const badges = [];
-    if(config.disabled) badges.push(`<span class="tag">סנכרון כבוי במכשיר הזה</span>`);
-    else badges.push(`<span class="tag">${hasCloudSyncConfig() ? "מחובר ל־Supabase" : "לא מחובר"}</span>`);
+	  if(badgesEl){
+	    const badges = [];
+	    if(IS_STAGING_FILE) badges.push(`<span class="tag">v35 מבודד: כתיבה לענן חסומה</span>`);
+	    else if(config.disabled) badges.push(`<span class="tag">סנכרון כבוי במכשיר הזה</span>`);
+	    else badges.push(`<span class="tag">${hasCloudSyncConfig() ? "מחובר ל־Supabase" : "לא מחובר"}</span>`);
     if(cloudSyncState.lastPulledAt) badges.push(`<span class="tag">משיכה אחרונה: ${getReadableDateTime(cloudSyncState.lastPulledAt)}</span>`);
     if(cloudSyncState.lastPushedAt) badges.push(`<span class="tag">דחיפה אחרונה: ${getReadableDateTime(cloudSyncState.lastPushedAt)}</span>`);
     if(cloudSyncState.lastRemoteUpdatedAt) badges.push(`<span class="tag">עדכון ענן: ${getReadableDateTime(cloudSyncState.lastRemoteUpdatedAt)}</span>`);
@@ -4692,6 +4702,7 @@ async function fetchCloudRecoveryPoints(limit=8){
   return Array.isArray(rows) ? rows : [];
 }
 async function pruneCloudRecoveryPoints(){
+  if(IS_STAGING_FILE) return;
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) return;
   const rows = await fetchCloudRecoveryPoints(MAX_CLOUD_RECOVERY_POINTS + 10);
@@ -4710,6 +4721,7 @@ async function pruneCloudRecoveryPoints(){
   if(!response.ok) throw new Error(`ניקוי נקודות שחזור ישנות נכשל (${response.status})`);
 }
 async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומטית"){
+  if(IS_STAGING_FILE) return null;
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) return null;
   const recoverySnapshot = {
@@ -4736,7 +4748,7 @@ async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומט�
 }
 async function refreshRecoveryPoints(options={}){
   const localPoints = getLocalRecoveryPoints();
-  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE && !IS_STAGING_FILE){
     try {
       cloudRecoveryPoints = await fetchCloudRecoveryPoints(options.limit || 8);
     } catch(error){
@@ -4793,6 +4805,10 @@ function renderRecoveryPoints(localPoints=getLocalRecoveryPoints(), remotePoints
     : `<div class="recovery-empty">עדיין אין נקודות שחזור. אחרי כל שמירה לענן, משיכה, או ייבוא גיבוי תתחיל להופיע כאן היסטוריה.</div>`;
 }
 async function restoreCloudRecoveryPoint(id){
+  if(IS_STAGING_FILE){
+    setBackupStatus("מצב v35 מבודד: שחזור מהענן חסום כדי לא לגעת בנתונים אמיתיים.");
+    return;
+  }
   if(!id || !hasCloudSyncConfig()) return;
   if(!confirm("לשחזר את נקודת השחזור הזאת מהענן? המצב הנוכחי יישמר קודם כגיבוי מקומי.")) return;
   try {
@@ -4827,7 +4843,7 @@ async function restoreLocalRecoveryPoint(id){
   try {
     rememberLocalRecoveryPoint("לפני שחזור מקומי");
     applyCloudSnapshot(point.snapshot);
-    if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+    if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE && !IS_STAGING_FILE){
       await pushCloudSnapshot({message:"השחזור המקומי הוחל ונשמר גם בענן.", reason:"שחזור ידני מקומי"});
     }
     setBackupStatus("השחזור המקומי הוחל בהצלחה.");
@@ -4840,7 +4856,7 @@ async function restoreLocalRecoveryPoint(id){
 async function createManualRecoveryPoint(){
   const snapshot = collectCloudSnapshot();
   rememberLocalRecoveryPoint("נקודת שחזור ידנית", snapshot);
-  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+  if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE && !IS_STAGING_FILE){
     try {
       await saveCloudRecoveryPoint(snapshot, "נקודת שחזור ידנית");
       setBackupStatus("נשמרה נקודת שחזור ידנית גם מקומית וגם בענן.");
@@ -4866,6 +4882,7 @@ async function fetchCloudState(){
   return Array.isArray(rows) ? rows[0] || null : rows || null;
 }
 async function pushCloudSnapshot(options={}){
+  if(IS_STAGING_FILE) throw new Error("מצב v35 מבודד: כתיבה ל־Supabase חסומה.");
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
   const snapshot = collectCloudSnapshot();
@@ -4917,7 +4934,7 @@ async function pullCloudSnapshot(options={}){
   return remote;
 }
 function scheduleCloudSync(){
-  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
+  if(IS_STAGING_FILE || IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
   if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(async ()=>{
     try {
@@ -4936,6 +4953,35 @@ async function saveCloudSyncConnection(){
     return;
   }
   saveCloudSyncConfig({url, anonKey, disabled:false});
+  if(IS_STAGING_FILE){
+    setCloudSyncState({status:"syncing", message:"מצב v35 מבודד: בודק קריאת נתוני staging בלבד. כתיבה לענן חסומה."});
+    try {
+      const remote = await fetchCloudState();
+      if(remote && remote.payload){
+        rememberLocalRecoveryPoint("לפני משיכת נתוני staging מהענן");
+        applyCloudSnapshot(remote.payload);
+        setCloudSyncState({
+          status:"ok",
+          message:"נטענו נתוני staging מהענן. כתיבה/עדכון/מחיקה ב־Supabase עדיין חסומים.",
+          lastPulledAt:new Date().toISOString(),
+          lastRemoteUpdatedAt:remote.updated_at || null
+        });
+        render();
+      } else {
+        setCloudSyncState({
+          status:"idle",
+          message:"מצב v35 מבודד: לא נמצאו נתוני staging בענן. לא בוצעה כתיבה לענן.",
+          lastPulledAt:null,
+          lastPushedAt:null,
+          lastRemoteUpdatedAt:null
+        });
+      }
+      await refreshRecoveryPoints();
+    } catch(error){
+      setCloudSyncState({status:"error", message:`מצב v35 מבודד: קריאת נתוני staging נכשלה: ${error.message}`});
+    }
+    return;
+  }
   setCloudSyncState({status:"syncing", message:"בודק את חיבור הענן..."});
   try {
     const remote = await fetchCloudState();
@@ -4971,6 +5017,10 @@ async function pullCloudSyncNow(){
   }
 }
 async function pushCloudSyncNow(){
+  if(IS_STAGING_FILE){
+    setCloudSyncState({status:"idle", message:"מצב v35 מבודד: דחיפה לענן חסומה כדי לא לגעת בנתונים אמיתיים."});
+    return;
+  }
   if(!hasCloudSyncConfig()){
     alert("קודם שמור פרטי חיבור לענן.");
     return;
@@ -5002,6 +5052,23 @@ function hasAnyLocalExpenses(){
   });
 }
 async function bootstrapCloudSync(){
+  if(IS_STAGING_FILE){
+    if(IS_LOCAL_DRAFT_FILE){
+      ensureLocalDraftPreviewData();
+      appendLocalDraftDebug(`bootstrap v35 staging mode<br>currentUser=${currentUser}<br>seeded sheets=${Object.keys(getOverrides()).length}`);
+    }
+    if(!getLocalDataChangedAt()) markLocalDataChanged();
+    setCloudSyncState({
+      status:"idle",
+      message:"מצב v35 מבודד: localStorage משתמש ב־v35_expense_ וכתיבה/עדכון/מחיקה ב־Supabase חסומים.",
+      lastPulledAt:null,
+      lastPushedAt:null,
+      lastRemoteUpdatedAt:null
+    });
+    renderCloudSyncStatus();
+    renderRecoveryPoints();
+    return;
+  }
   if(IS_LOCAL_DRAFT_FILE){
     ensureLocalDraftPreviewData();
     appendLocalDraftDebug(`bootstrap local draft mode<br>currentUser=${currentUser}<br>seeded sheets=${Object.keys(getOverrides()).length}`);
@@ -6185,7 +6252,7 @@ function renderBudgetOverview(rows){
   /* Stage 8 — budget hero: radial SVG progress + 2-column layout on mobile */
   const circR = 52, circC = 60, circLen = +(2*Math.PI*circR).toFixed(1);
   const dashFill = hasBudget ? +(circLen*pct/100).toFixed(1) : 0;
-  const radialColor = tone==="bad" ? "#e07a68" : tone==="warn" ? "#f4c86a" : "#5ecf92";
+  const radialColor = tone==="bad" ? "#c9857f" : tone==="warn" ? "#cbdc86" : "#5ecf92";
   const statIcon = (t) => t==="bad" ? "🔴" : t==="warn" ? "🟡" : "🟢";
   el.innerHTML = `
     <div class="budget-overview-hero">
@@ -6328,7 +6395,7 @@ function renderChart(rows){
   if(ctx) ctx.style.display="block";
   const _oldBullet = chartBox && chartBox.querySelector(".bullet-chart");
   if(_oldBullet) _oldBullet.remove();
-  const chartPalette=["#3b82f6","#10b981","#8b5cf6","#f97316","#f43f5e","#06b6d4","#84cc16","#f59e0b","#6366f1","#ec4899","#14b8a6"];
+  const chartPalette=["#89b89b","#6fa58a","#8dbfa4","#9fb55a","#b85a52","#7fb69a","#aeb85f","#9fb55a","#8ba097","#b58da7","#5fa38c"];
   const isMobile = window.innerWidth <= 720;
   const setChartBoxHeight = (height)=>{
     if(!chartBox) return;
@@ -6355,7 +6422,7 @@ function renderChart(rows){
       data:{
         labels:dayLabels,
         datasets:[
-          {label:"הוצאה יומית",data:dayValues,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.13)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
+          {label:"הוצאה יומית",data:dayValues,borderColor:"#89b89b",backgroundColor:"rgba(79,127,104,.13)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
           {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#e11d48",backgroundColor:"rgba(225,29,72,.06)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
         ]
       },
@@ -6421,8 +6488,8 @@ function renderChart(rows){
     /* Vertical bar chart — vibrant multi-colour fill per bar */
     const barData = nonZero.length ? nonZero : labels.map((label,i)=>({label,value:values[i]})).filter(x=>x.value>0);
     const barPalette = [
-      "#3b82f6","#10b981","#8b5cf6","#f97316","#f43f5e",
-      "#06b6d4","#84cc16","#f59e0b","#6366f1","#ec4899","#14b8a6"
+      "#89b89b","#6fa58a","#8dbfa4","#9fb55a","#b85a52",
+      "#7fb69a","#aeb85f","#9fb55a","#8ba097","#b58da7","#5fa38c"
     ];
     setChartBoxHeight(isMobile ? 280 : 340);
     chartInstance = new Chart(ctx, {
@@ -6455,17 +6522,17 @@ function renderChart(rows){
             grid:{ display:false },
             ticks:{
               font:{size:isMobile?9:11, weight:"700"},
-              color:"#1e293b",
+              color:"#355345",
               maxRotation:40,
               minRotation:0
             }
           },
           y:{
             beginAtZero:true,
-            grid:{ color:"rgba(37,99,235,.07)" },
+            grid:{ color:"rgba(55,94,75,.07)" },
             ticks:{
               font:{size:isMobile?10:12},
-              color:"#64748b",
+              color:"#6f8077",
               callback: v => "₪"+Math.round(v).toLocaleString("he-IL")
             }
           }
@@ -7904,7 +7971,7 @@ window.addEventListener("resize", () => {
   _s8ResizeRaf = requestAnimationFrame(render);
 });
 
-const BACKUP_BANNER_KEY = "expense_app_last_backup_banner_v1";
+const BACKUP_BANNER_KEY = getAppStorageKey("expense_app_last_backup_banner_v1");
 function maybeShowBackupBanner(){
   if(!hasAnyLocalExpenses()) return;
   const lastShown = localStorage.getItem(BACKUP_BANNER_KEY) || "";
@@ -7937,7 +8004,7 @@ function exportBackupFromBanner(){
 
 
 /* ── Hero collapse ─────────────────────────── */
-const HERO_COLLAPSE_KEY = "expense_hero_collapsed_v1";
+const HERO_COLLAPSE_KEY = getAppStorageKey("expense_hero_collapsed_v1");
 function toggleHeroCollapse(){
   const hero = document.getElementById("heroCard");
   const btn  = document.getElementById("heroCollapseBtn");
@@ -7974,7 +8041,7 @@ function renderMobileExpenseList(rows){
       ? '<span style="font-size:10px;background:var(--accent);color:#fff;border-radius:6px;padding:1px 5px;margin-right:4px">מיידי</span>'
       : '';
     const sharedBadge = isSharedExpenseRow(e)
-      ? '<span style="font-size:10px;background:#7c9cbf;color:#fff;border-radius:6px;padding:1px 5px;margin-right:4px">משותף</span>'
+      ? '<span style="font-size:10px;background:#6fa58a;color:#fff;border-radius:6px;padding:1px 5px;margin-right:4px">משותף</span>'
       : '';
     return `<div class="mxp-item" id="mxp-${e.row}" onclick="toggleMxp(${e.row}, event)">
       <div class="mxp-row">
@@ -8525,7 +8592,7 @@ function buildCCImportTable(){
     // Auto-uncheck duplicates
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
-    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
+    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#9fb55a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
     html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
