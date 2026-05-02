@@ -8,20 +8,20 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#eef6f0;
-  --bg-accent:#dfece4;
+  --bg:#fbfdfc;
+  --bg-accent:#f4faf6;
   --card:#ffffff;
-  --card-soft:#f2f8f4;
+  --card-soft:#f7fbf8;
   --text:#1f2f2a;
   --muted:#6f8077;
-  --line:#cfddd4;
+  --line:#dce8df;
   --accent:#4f7f68;
   --accent-2:#6fa58a;
   --accent-3:#9dc7ae;
   --good:#3f8f66;
-  --bad:#b85a52;
+  --bad:#d95f63;
   --warn:#8c8f3f;
-  --shadow:0 18px 40px rgba(55,94,75,.08);
+  --shadow:0 18px 40px rgba(55,94,75,.07);
   --radius:22px;
 }
 *{box-sizing:border-box}
@@ -31,8 +31,8 @@ body{
   font-family:Arial,sans-serif;
   color:var(--text);
   background:
-    radial-gradient(circle at top right, rgba(139,184,155,.10), transparent 28%),
-    radial-gradient(circle at top left, rgba(255,255,255,.90), transparent 36%),
+    radial-gradient(circle at top right, rgba(137,184,155,.08), transparent 28%),
+    radial-gradient(circle at top left, rgba(255,255,255,.96), transparent 36%),
     linear-gradient(180deg, var(--bg-accent), var(--bg));
 }
 .container{max-width:1320px;margin:auto;padding:20px 16px 40px}
@@ -359,8 +359,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   border-radius:inherit;
 }
 .budget-progress-fill.bad{
-  background:linear-gradient(90deg,#7a1e14 0%,#b83428 50%,#e05840 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(184,90,82,.28);
+  background:linear-gradient(90deg,#dc2626 0%,#f43f5e 50%,#fb7185 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(244,63,94,.22);
 }
 .budget-pct-label{
   position:absolute;
@@ -992,7 +992,7 @@ body.edit-active .table-shell tr{border:none}
 .recovery-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f7f1e8);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
   padding:16px;
   display:grid;
   gap:14px;
@@ -1488,7 +1488,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:12px;
     padding:8px 9px;
     text-align:right;
-    background:#fcfaf7;
+    background:#f8fbf9;
     min-height:64px;
   }
   .table-shell td[colspan]{
@@ -1644,7 +1644,7 @@ body.edit-active .table-shell tr{border:none}
   transition:width .35s cubic-bezier(.4,0,.2,1);
 }
 .budget-overview-fill.warn{background:linear-gradient(90deg,#cbdc86,#9fb55a)}
-.budget-overview-fill.bad{background:linear-gradient(90deg,#c9857f,#b85a52)}
+.budget-overview-fill.bad{background:linear-gradient(90deg,#fb7185,#d95f63)}
 .budget-overview-meta{
   display:flex;
   justify-content:space-between;
@@ -1662,7 +1662,7 @@ body.edit-active .table-shell tr{border:none}
   transform:translateY(-2px);
 }
 .summary-row.budget-card.status-good{border-right-color:#2e9a60}
-.summary-row.budget-card.status-bad{border-right-color:#b85a52}
+.summary-row.budget-card.status-bad{border-right-color:#d95f63}
 .budget-card-title strong{font-size:17px}
 .budget-card-stat strong{font-size:16px}
 
@@ -2479,7 +2479,7 @@ body.edit-active .table-shell tr{border:none}
   --warn:       #8c8f3f;
   --warn-soft:  #fef3c7;
   --warn-line:  #fcd34d;
-  --bad:        #b85a52;
+  --bad:        #d95f63;
   --bad-soft:   #fee2e2;
   --bad-line:   #fca5a5;
   --info:       #4f7f68;
@@ -2528,7 +2528,7 @@ body.edit-active .table-shell tr{border:none}
 .tab-panel[data-panel="income"]    .section > .header{ --header-accent:#22c55e }
 .tab-panel[data-panel="cards"]     .section > .header{ --header-accent:#8dbfa4 }
 .tab-panel[data-panel="expenses"]  .section > .header{ --header-accent:#9fb55a }
-.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#b85a52 }
+.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#f9a8d4 }
 .tab-panel[data-panel="debts"]     .section > .header{ --header-accent:#ef4444 }
 .tab-panel[data-panel="yearly"]    .section > .header{ --header-accent:#8ba097 }
 .tab-panel[data-panel="backup"]    .section > .header{ --header-accent:#94a3b8 }
@@ -3267,7 +3267,7 @@ button[type="submit"],
   border-radius:14px !important;
   padding:11px 13px !important;
   min-height:76px !important;
-  background:linear-gradient(180deg,#fff,#faf5ee) !important;
+  background:linear-gradient(180deg,#fff,#f7fbf8) !important;
   border:1px solid rgba(55,94,75,.09) !important;
   box-shadow: 0 2px 6px rgba(35,62,50,.04) !important;
 }
@@ -3406,7 +3406,7 @@ button[type="submit"],
 
 /* ── 10.A  Hero: clean white card ─────────────────────────────────────────── */
 .hero{
-  background: linear-gradient(180deg, #ffffff 0%, #f5f8ff 100%) !important;
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%) !important;
   color: var(--text) !important;
   border: 1px solid rgba(55,94,75,.10) !important;
   box-shadow:
@@ -3510,54 +3510,54 @@ button[type="submit"],
 /* ── 10.B  Section headers: vivid per-tab gradient ───────────────────────── */
 /* Base fallback (unmatched tabs) */
 .header{
-  background: linear-gradient(135deg, #355345 0%, #5f7469 100%) !important;
+  background: linear-gradient(135deg, #3f7d66 0%, #86caa9 100%) !important;
   color: #fff !important;
   border-bottom: none !important;
 }
 /* Per-tab distinct gradients */
 .tab-panel[data-panel="dashboard"] .section > .header{
-  background: linear-gradient(135deg, #355345 0%, #4f7f68 100%) !important;
-  --header-accent: #9dc7ae;
+  background: linear-gradient(135deg, #3f7d66 0%, #9dc7ae 100%) !important;
+  --header-accent: #b7dcc7;
   color: #fff !important;
 }
 .tab-panel[data-panel="budget"] .section > .header{
-  background: linear-gradient(135deg, #022c22 0%, #3f8f66 100%) !important;
-  --header-accent: #6ee7b7;
+  background: linear-gradient(135deg, #047857 0%, #6ee7b7 100%) !important;
+  --header-accent: #99f6e4;
   color: #fff !important;
 }
 .tab-panel[data-panel="income"] .section > .header{
-  background: linear-gradient(135deg, #14532d 0%, #16a34a 100%) !important;
-  --header-accent: #86efac;
+  background: linear-gradient(135deg, #15803d 0%, #bef264 100%) !important;
+  --header-accent: #d9f99d;
   color: #fff !important;
 }
 .tab-panel[data-panel="cards"] .section > .header{
-  background: linear-gradient(135deg, #2e1065 0%, #7c3aed 100%) !important;
-  --header-accent: #c4b5fd;
+  background: linear-gradient(135deg, #6d28d9 0%, #c4b5fd 100%) !important;
+  --header-accent: #ddd6fe;
   color: #fff !important;
 }
 .tab-panel[data-panel="expenses"] .section > .header{
-  background: linear-gradient(135deg, #431407 0%, #ea580c 100%) !important;
-  --header-accent: #fdba74;
+  background: linear-gradient(135deg, #0891b2 0%, #67e8f9 100%) !important;
+  --header-accent: #a5f3fc;
   color: #fff !important;
 }
 .tab-panel[data-panel="shared"] .section > .header{
-  background: linear-gradient(135deg, #4c0519 0%, #e11d48 100%) !important;
-  --header-accent: #fda4af;
+  background: linear-gradient(135deg, #be185d 0%, #f9a8d4 100%) !important;
+  --header-accent: #fbcfe8;
   color: #fff !important;
 }
 .tab-panel[data-panel="debts"] .section > .header{
-  background: linear-gradient(135deg, #450a0a 0%, #b85a52 100%) !important;
-  --header-accent: #fca5a5;
+  background: linear-gradient(135deg, #dc2626 0%, #fb7185 100%) !important;
+  --header-accent: #fecdd3;
   color: #fff !important;
 }
 .tab-panel[data-panel="yearly"] .section > .header{
-  background: linear-gradient(135deg, #1e1b4b 0%, #4f46e5 100%) !important;
-  --header-accent: #a5b4fc;
+  background: linear-gradient(135deg, #4f46e5 0%, #a5b4fc 100%) !important;
+  --header-accent: #c7d2fe;
   color: #fff !important;
 }
 .tab-panel[data-panel="backup"] .section > .header{
-  background: linear-gradient(135deg, #355345 0%, #6f8077 100%) !important;
-  --header-accent: #cbd5e1;
+  background: linear-gradient(135deg, #475569 0%, #bae6fd 100%) !important;
+  --header-accent: #dbeafe;
   color: #fff !important;
 }
 /* Pill badges sit on dark gradient — white glass */
