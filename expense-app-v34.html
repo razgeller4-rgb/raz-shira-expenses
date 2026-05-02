@@ -8,20 +8,20 @@
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
 :root{
-  --bg:#f5f0e8;
-  --bg-accent:#ede5d5;
-  --card:#faf7f2;
-  --card-soft:#f5efe4;
-  --text:#2c1a0e;
-  --muted:#8c7b6a;
-  --line:#dfd4c0;
-  --accent:#6b4530;
-  --accent-2:#9e6e4a;
-  --accent-3:#c4a070;
-  --good:#4a7c56;
-  --bad:#b23b30;
-  --warn:#9a6c15;
-  --shadow:0 18px 40px rgba(107,69,48,.10);
+  --bg:#fbfdfc;
+  --bg-accent:#f4faf6;
+  --card:#ffffff;
+  --card-soft:#f7fbf8;
+  --text:#1f2f2a;
+  --muted:#6f8077;
+  --line:#dce8df;
+  --accent:#4f7f68;
+  --accent-2:#6fa58a;
+  --accent-3:#9dc7ae;
+  --good:#3f8f66;
+  --bad:#d95f63;
+  --warn:#8c8f3f;
+  --shadow:0 18px 40px rgba(55,94,75,.07);
   --radius:22px;
 }
 *{box-sizing:border-box}
@@ -31,22 +31,22 @@ body{
   font-family:Arial,sans-serif;
   color:var(--text);
   background:
-    radial-gradient(circle at top right, rgba(196,158,108,.26), transparent 28%),
-    radial-gradient(circle at top left, rgba(255,255,255,.85), transparent 36%),
+    radial-gradient(circle at top right, rgba(137,184,155,.08), transparent 28%),
+    radial-gradient(circle at top left, rgba(255,255,255,.96), transparent 36%),
     linear-gradient(180deg, var(--bg-accent), var(--bg));
 }
 .container{max-width:1320px;margin:auto;padding:20px 16px 40px}
 .hero{
   background:
-    radial-gradient(circle at 16% 24%, rgba(210,168,112,.22), transparent 18%),
-    radial-gradient(circle at 76% 12%, rgba(255,255,255,.16), transparent 16%),
-    linear-gradient(135deg, #2d1608 0%, #5c3018 48%, #a07848 100%);
+    radial-gradient(circle at 16% 24%, rgba(125,174,146,.18), transparent 18%),
+    radial-gradient(circle at 76% 12%, rgba(255,255,255,.12), transparent 16%),
+    linear-gradient(135deg, #355345 0%, #4f7f68 48%, #89b89b 100%);
   color:#fff;
   border:1px solid rgba(255,255,255,.20);
   border-radius:34px;
   padding:28px 30px;
   min-height:184px;
-  box-shadow:0 28px 62px rgba(45,22,8,.22);
+  box-shadow:0 28px 62px rgba(35,62,50,.22);
   position:sticky;
   top:12px;
   z-index:20;
@@ -59,24 +59,24 @@ body{
   height:72px;
   opacity:.34;
   background:
-    linear-gradient(180deg, transparent, rgba(20,8,2,.72)),
+    linear-gradient(180deg, transparent, rgba(23,47,38,.72)),
     repeating-linear-gradient(90deg,
       transparent 0 24px,
       rgba(255,255,255,.16) 24px 26px,
       transparent 26px 58px),
     linear-gradient(90deg,
       transparent 0 5%,
-      rgba(22,10,2,.90) 5% 12%,
+      rgba(26,55,44,.90) 5% 12%,
       transparent 12% 16%,
-      rgba(22,10,2,.78) 16% 24%,
+      rgba(26,55,44,.78) 16% 24%,
       transparent 24% 30%,
-      rgba(22,10,2,.90) 30% 36%,
+      rgba(26,55,44,.90) 30% 36%,
       transparent 36% 42%,
-      rgba(22,10,2,.72) 42% 51%,
+      rgba(26,55,44,.72) 42% 51%,
       transparent 51% 58%,
-      rgba(22,10,2,.86) 58% 66%,
+      rgba(26,55,44,.86) 58% 66%,
       transparent 66% 72%,
-      rgba(22,10,2,.78) 72% 84%,
+      rgba(26,55,44,.78) 72% 84%,
       transparent 84% 100%);
 }
 .hero::after{
@@ -151,7 +151,7 @@ h1{
   direction:rtl;
 }
 .hero-month-picker select option{
-  color:#2c1a0e;
+  color:#1f2f2a;
 }
 .hero-stat{
   background:linear-gradient(180deg, rgba(255,255,255,.18), rgba(255,255,255,.09));
@@ -163,7 +163,7 @@ h1{
   display:flex;
   flex-direction:column;
   justify-content:center;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 18px 34px rgba(45,22,8,.10);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.18), 0 18px 34px rgba(35,62,50,.10);
 }
 .hero-stat .label{font-size:12px;opacity:.82}
 .hero-stat .value{font-size:24px;font-weight:800;margin-top:8px}
@@ -177,20 +177,20 @@ h1{
   border:none;
   background:rgba(255,255,255,.72);
   color:var(--text);
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:999px;
   padding:12px 18px;
   font:inherit;
   font-weight:700;
   cursor:pointer;
-  box-shadow:0 8px 20px rgba(107,69,48,.06);
+  box-shadow:0 8px 20px rgba(55,94,75,.06);
   transition:transform .18s ease, box-shadow .18s ease, background .18s ease, color .18s ease;
 }
-.tab-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(107,69,48,.12)}
+.tab-btn:hover{transform:translateY(-1px);box-shadow:0 12px 24px rgba(55,94,75,.12)}
 .tab-btn.active{
   background:linear-gradient(135deg, var(--accent), var(--accent-2));
   color:#fff;
-  box-shadow:0 16px 30px rgba(107,69,48,.18);
+  box-shadow:0 16px 30px rgba(55,94,75,.18);
 }
 .tab-panel{display:none}
 .tab-panel.active{display:block}
@@ -200,27 +200,30 @@ h1{
   box-shadow:var(--shadow);
   overflow:hidden;
   margin-bottom:16px;
-  border:1px solid rgba(107,69,48,.06);
+  border:1px solid rgba(55,94,75,.06);
 }
 .header{
   padding:16px 18px;
-  background:linear-gradient(135deg, #4a2e18, #7a5038);
-  color:#fff;
+  background:#f8fafc;
+  color:var(--text);
   cursor:pointer;
   display:flex;
   justify-content:space-between;
   align-items:center;
   gap:10px;
   font-weight:700;
+  border-bottom:1px solid var(--line);
 }
 .content{display:none;padding:18px}
 .open .content{display:block}
 .pill{
-  background:rgba(255,255,255,.14);
+  background:rgba(55,94,75,.10);
+  color:var(--accent);
   padding:6px 10px;
   border-radius:999px;
   font-size:12px;
   white-space:nowrap;
+  font-weight:700;
 }
 .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-bottom:16px}
 .kpi{
@@ -282,12 +285,12 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   gap:12px;
   margin:0;
   padding:16px;
-  border:1px solid rgba(107,69,48,.10);
+  border:1px solid rgba(55,94,75,.10);
   border-radius:22px;
   background:
-    radial-gradient(circle at top left, rgba(107,69,48,.08), transparent 34%),
-    linear-gradient(180deg,#ffffff,#faf6ef);
-  box-shadow:0 14px 30px rgba(107,69,48,.08);
+    radial-gradient(circle at top left, rgba(55,94,75,.08), transparent 34%),
+    linear-gradient(180deg,#ffffff,#f7fbf8);
+  box-shadow:0 14px 30px rgba(55,94,75,.08);
 }
 .summary-row.budget-card > div{padding:0}
 .budget-card-top{
@@ -311,8 +314,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   width:max-content;
   padding:6px 12px;
   border-radius:999px;
-  background:#f0e9de;
-  border:1px solid #dfd4c0;
+  background:#e7f1eb;
+  border:1px solid #cfddd4;
   color:var(--accent);
   font-size:12px;
   font-weight:700;
@@ -336,8 +339,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   position:relative;
   height:22px;
   border-radius:11px;
-  background:rgba(107,69,48,.09);
-  box-shadow:inset 0 2px 5px rgba(107,69,48,.12);
+  background:rgba(55,94,75,.09);
+  box-shadow:inset 0 2px 5px rgba(55,94,75,.12);
   overflow:hidden;
 }
 .budget-progress-fill{
@@ -356,8 +359,8 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   border-radius:inherit;
 }
 .budget-progress-fill.bad{
-  background:linear-gradient(90deg,#7a1e14 0%,#b83428 50%,#e05840 100%);
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(178,59,48,.28);
+  background:linear-gradient(90deg,#dc2626 0%,#f43f5e 50%,#fb7185 100%);
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.25), 0 2px 8px rgba(244,63,94,.22);
 }
 .budget-pct-label{
   position:absolute;
@@ -386,7 +389,7 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   gap:10px;
 }
 .budget-card-stat{
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:16px;
   background:#fff;
   padding:12px;
@@ -406,7 +409,7 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
   grid-template-columns:minmax(210px,1.8fr) minmax(120px,.9fr) minmax(110px,.8fr) minmax(120px,.9fr) 78px;
   gap:10px;
   padding:10px 12px;
-  background:linear-gradient(180deg,#fdfaf5,#f8f3eb);
+  background:linear-gradient(180deg,#fbfdfb,#f2f8f4);
 }
 .summary-row.editing > div{padding:0}
 .summary-row.editing .summary-category,
@@ -456,15 +459,15 @@ th{background:var(--card-soft);color:var(--muted);font-size:13px;position:sticky
 .bullet-row{display:grid;grid-template-columns:110px 1fr 52px;align-items:center;gap:10px}
 .bullet-name{font-size:13px;font-weight:700;color:var(--text);text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .bullet-track{position:relative;height:20px;border-radius:10px;background:var(--bg);overflow:visible}
-.bullet-budget-zone{position:absolute;top:0;right:0;height:100%;background:rgba(107,69,48,.13);border-radius:10px;width:100%}
+.bullet-budget-zone{position:absolute;top:0;right:0;height:100%;background:rgba(55,94,75,.13);border-radius:10px;width:100%}
 .bullet-bar{position:absolute;top:2px;right:0;height:calc(100% - 4px);border-radius:8px;transition:width .4s ease}
 .bullet-bar.ok{background:var(--good)}
-.bullet-bar.warn{background:#d4aa54}
+.bullet-bar.warn{background:#aeb85f}
 .bullet-bar.over{background:var(--bad)}
-.bullet-marker{position:absolute;top:-4px;height:calc(100% + 8px);width:3px;border-radius:2px;background:rgba(107,69,48,.55);pointer-events:none}
+.bullet-marker{position:absolute;top:-4px;height:calc(100% + 8px);width:3px;border-radius:2px;background:rgba(55,94,75,.55);pointer-events:none}
 .bullet-pct{font-size:13px;font-weight:800;text-align:left;white-space:nowrap}
 .bullet-pct.ok{color:var(--good)}
-.bullet-pct.warn{color:#b08a20}
+.bullet-pct.warn{color:#7d7f33}
 .bullet-pct.over{color:var(--bad)}
 
 .chart-toolbar{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
@@ -524,18 +527,18 @@ button:hover{transform:translateY(-1px)}
   padding:11px 14px;
 }
 .secondary.active{
-  background:#6b4530;
+  background:#4f7f68;
   color:#fff;
-  border-color:#6b4530;
+  border-color:#4f7f68;
 }
 .success-btn{
-  background:linear-gradient(135deg, #5c3820, #9e6a42);
+  background:linear-gradient(135deg, #3f6f5b, #6fa58a);
   color:#fff;
   padding:11px 14px;
-  box-shadow:0 14px 30px rgba(92,56,32,.22);
+  box-shadow:0 14px 30px rgba(55,94,75,.22);
 }
 .primary-cta{
-  background:linear-gradient(135deg, #4a2e18, #9e6a42);
+  background:linear-gradient(135deg, #3f6f5b, #6fa58a);
   color:#fff;
   padding:14px 18px;
   font-weight:700;
@@ -573,9 +576,9 @@ button:hover{transform:translateY(-1px)}
   padding:12px 14px;
   border:1px solid var(--line);
   border-radius:18px;
-  background:linear-gradient(180deg,#fff,#f6fafe);
+  background:linear-gradient(180deg,#fff,#f6fbf8);
 }
-.edit-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fbfcfe;margin:8px 0}
+.edit-card{border:1px solid var(--line);border-radius:18px;padding:14px;background:#fbfdfb;margin:8px 0}
 .edit-card-top{display:flex;justify-content:space-between;gap:12px;align-items:center;margin-bottom:12px;flex-wrap:wrap}
 .edit-card-title{font-weight:700}
 .edit-card-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
@@ -617,8 +620,8 @@ body.edit-active .table-shell table{min-width:100%}
 body.edit-active .table-shell thead{display:none}
 body.edit-active .table-shell td{border:none;padding:0}
 body.edit-active .table-shell tr{border:none}
-#toggleEditBtn.active{background:#6b4530;color:#fff;border-color:#6b4530}
-.add-expense-form{display:none;border:1px solid var(--line);border-radius:18px;background:#fbfcfe;padding:14px;margin-bottom:12px}
+#toggleEditBtn.active{background:#4f7f68;color:#fff;border-color:#4f7f68}
+.add-expense-form{display:none;border:1px solid var(--line);border-radius:18px;background:#fbfdfb;padding:14px;margin-bottom:12px}
 .add-expense-form.open{display:block}
 .settings-card,.debt-card,.year-card{padding:18px}
 .settings-card h3,.debt-card h3,.year-card h3{margin:0 0 6px;font-size:20px}
@@ -629,14 +632,14 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:22px;
   padding:16px;
-  background:linear-gradient(180deg,#ffffff,#f8f3eb);
-  box-shadow:0 14px 28px rgba(107,69,48,.08);
+  background:linear-gradient(180deg,#ffffff,#f2f8f4);
+  box-shadow:0 14px 28px rgba(55,94,75,.08);
 }
 .debt-highlight-bank{
-  background:radial-gradient(circle at top left, rgba(74,122,171,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f8f3eb);
+  background:radial-gradient(circle at top left, rgba(111,165,138,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f2f8f4);
 }
 .debt-highlight-father{
-  background:radial-gradient(circle at top left, rgba(120,160,112,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f8f3eb);
+  background:radial-gradient(circle at top left, rgba(120,160,112,.12), transparent 36%), linear-gradient(180deg,#ffffff,#f2f8f4);
 }
 .debt-highlight-top{
   display:flex;
@@ -649,7 +652,7 @@ body.edit-active .table-shell tr{border:none}
 .debt-progress-shell{
   height:12px;
   border-radius:999px;
-  background:#e9eef6;
+  background:#e7f1eb;
   overflow:hidden;
   margin:14px 0 10px;
 }
@@ -657,7 +660,7 @@ body.edit-active .table-shell tr{border:none}
   height:100%;
   width:0;
   border-radius:999px;
-  background:linear-gradient(90deg,#5c3820,#9e6a42);
+  background:linear-gradient(90deg,#3f6f5b,#6fa58a);
   transition:width .28s ease;
 }
 .debt-empty-state{
@@ -665,7 +668,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px dashed var(--line);
   border-radius:22px;
   padding:20px;
-  background:linear-gradient(180deg,#ffffff,#f8fbff);
+  background:linear-gradient(180deg,#ffffff,#f7fbf8);
 }
 .debt-empty-state h4{margin:0 0 8px;font-size:22px}
 .debt-empty-actions{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
@@ -678,7 +681,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
 }
 .income-row.display-rich{
   grid-template-columns:minmax(220px,1.25fr) repeat(2,minmax(150px,.75fr));
@@ -711,7 +714,7 @@ body.edit-active .table-shell tr{border:none}
   max-width:100%;
   padding:6px 10px;
   border-radius:999px;
-  background:#edf3f9;
+  background:#e7f1eb;
   border:1px solid var(--line);
   color:var(--accent);
   font-size:12px;
@@ -728,8 +731,8 @@ body.edit-active .table-shell tr{border:none}
 .shared-expense-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f6f0e7);
-  box-shadow:0 12px 26px rgba(107,69,48,.08);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
+  box-shadow:0 12px 26px rgba(55,94,75,.08);
 }
 .shared-balance-card{padding:18px 20px}
 .shared-balance-card .value{
@@ -774,7 +777,7 @@ body.edit-active .table-shell tr{border:none}
   gap:6px;
   padding:7px 10px;
   border-radius:999px;
-  border:1px solid rgba(107,69,48,.12);
+  border:1px solid rgba(55,94,75,.12);
   background:#fff;
   font-size:12px;
   font-weight:700;
@@ -786,7 +789,7 @@ body.edit-active .table-shell tr{border:none}
   gap:10px;
 }
 .shared-expense-metric{
-  border:1px solid rgba(107,69,48,.08);
+  border:1px solid rgba(55,94,75,.08);
   border-radius:16px;
   background:#fff;
   padding:12px;
@@ -811,8 +814,8 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:20px;
   padding:16px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
-  box-shadow:0 10px 24px rgba(107,69,48,.06);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
+  box-shadow:0 10px 24px rgba(55,94,75,.06);
 }
 .card-method-top{
   display:flex;
@@ -877,7 +880,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px 16px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   margin:12px 0 0;
 }
 .income-summary .value{
@@ -905,12 +908,12 @@ body.edit-active .table-shell tr{border:none}
   align-items:center;
   justify-content:space-between;
   gap:12px;
-  background:linear-gradient(135deg,#6b4530,#8c5a3a);
+  background:linear-gradient(135deg,#4f7f68,#5f9278);
   color:#fff;
   border-radius:16px;
   padding:14px 18px;
   margin:0 0 16px;
-  box-shadow:0 4px 16px rgba(107,69,48,.25);
+  box-shadow:0 4px 16px rgba(55,94,75,.25);
   animation:slideDown .35s ease;
 }
 @keyframes slideDown{from{opacity:0;transform:translateY(-12px)}to{opacity:1;transform:translateY(0)}}
@@ -945,7 +948,7 @@ body.edit-active .table-shell tr{border:none}
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   color:var(--muted);
   font-size:13px;
   line-height:1.7;
@@ -953,7 +956,7 @@ body.edit-active .table-shell tr{border:none}
 .sync-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f5efe4);
+  background:linear-gradient(180deg,#fff,#f2f8f4);
   padding:16px;
   display:grid;
   gap:14px;
@@ -989,7 +992,7 @@ body.edit-active .table-shell tr{border:none}
 .recovery-card{
   border:1px solid var(--line);
   border-radius:20px;
-  background:linear-gradient(180deg,#fff,#f7f1e8);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
   padding:16px;
   display:grid;
   gap:14px;
@@ -1036,7 +1039,7 @@ body.edit-active .table-shell tr{border:none}
   font-size:13px;
 }
 .debt-item{
-  background:linear-gradient(180deg, #fff, #f5efe4);
+  background:linear-gradient(180deg, #fff, #f2f8f4);
   border:1px solid var(--line);
   border-radius:18px;
   padding:14px;
@@ -1046,7 +1049,7 @@ body.edit-active .table-shell tr{border:none}
 .dashboard-grid{display:grid;grid-template-columns:1.2fr .8fr;gap:16px;align-items:start}
 .dashboard-stack{display:grid;gap:16px}
 .dashboard-mini-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
-.dashboard-note{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f5efe4)}
+.dashboard-note{padding:14px 16px;border-radius:18px;border:1px solid var(--line);background:linear-gradient(180deg,#fff,#f2f8f4)}
 .dashboard-note-top{
   display:flex;
   align-items:flex-start;
@@ -1059,7 +1062,7 @@ body.edit-active .table-shell tr{border:none}
   margin-top:12px;
   border:1px solid var(--line);
   border-radius:18px;
-  background:linear-gradient(180deg,#fff,#faf6ef);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
   padding:14px;
   gap:14px;
 }
@@ -1095,7 +1098,7 @@ body.edit-active .table-shell tr{border:none}
   background:linear-gradient(135deg, var(--accent), var(--accent-2));
   color:#fff;
   border-color:transparent;
-  box-shadow:0 12px 24px rgba(107,69,48,.14);
+  box-shadow:0 12px 24px rgba(55,94,75,.14);
 }
 .prefs-chip.mandatory{
   opacity:.7;
@@ -1116,7 +1119,7 @@ body.edit-active .table-shell tr{border:none}
 .modal-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(45,22,8,.46);
+  background:rgba(35,62,50,.46);
   backdrop-filter:blur(4px);
   display:none;
   align-items:center;
@@ -1130,9 +1133,9 @@ body.edit-active .table-shell tr{border:none}
   max-height:min(88vh,900px);
   overflow:auto;
   border-radius:24px;
-  background:linear-gradient(180deg,#fff,#faf6ef);
-  box-shadow:0 28px 64px rgba(45,22,8,.26);
-  border:1px solid rgba(107,69,48,.12);
+  background:linear-gradient(180deg,#fff,#f7fbf8);
+  box-shadow:0 28px 64px rgba(35,62,50,.26);
+  border:1px solid rgba(55,94,75,.12);
   padding:20px;
 }
 .modal-top{
@@ -1223,7 +1226,7 @@ body.edit-active .table-shell tr{border:none}
   display:inline-flex;
   align-items:center;
   gap:6px;
-  background:#edf3f9;
+  background:#e7f1eb;
   color:var(--accent);
   border:1px solid var(--line);
   border-radius:999px;
@@ -1238,9 +1241,9 @@ body.edit-active .table-shell tr{border:none}
   .category-filter-field{grid-column:1 / -1}
 }
 @media (max-width:720px){
-  body{background:linear-gradient(180deg,#dfe8f2,#f2f6fa)}
+  body{background:linear-gradient(180deg,#dfece4,#eef6f0)}
   .container{width:100%;padding:10px 8px 28px}
-  .hero{border-radius:24px;padding:16px 13px;min-height:auto;box-shadow:0 14px 30px rgba(107,69,48,.16)}
+  .hero{border-radius:24px;padding:16px 13px;min-height:auto;box-shadow:0 14px 30px rgba(55,94,75,.16)}
   .hero::before{height:44px;opacity:.22}
   .hero::after{width:170px;height:170px;inset:-70px auto auto -80px}
   .hero-top{display:grid;gap:10px}
@@ -1268,7 +1271,7 @@ body.edit-active .table-shell tr{border:none}
     scrollbar-width:none;
   }
   .tabbar::-webkit-scrollbar{display:none}
-  .tab-btn{flex:0 0 auto;padding:10px 14px;font-size:14px;box-shadow:0 6px 14px rgba(107,69,48,.06)}
+  .tab-btn{flex:0 0 auto;padding:10px 14px;font-size:14px;box-shadow:0 6px 14px rgba(55,94,75,.06)}
   .section{border-radius:20px;margin-bottom:12px}
   .header{padding:13px 14px;font-size:15px}
   .pill{display:none}
@@ -1306,7 +1309,7 @@ body.edit-active .table-shell tr{border:none}
   .income-row{
     padding:11px 12px;
     gap:8px;
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .income-cell{
     min-height:auto;
@@ -1333,7 +1336,7 @@ body.edit-active .table-shell tr{border:none}
   .table-summary-bar{padding:11px 12px}
   .actions,.toolbar > div{width:100%}
   .actions button,.toolbar button{width:100%;justify-content:center}
-  .filter-chip-group{max-height:126px;overflow:auto;align-content:flex-start}
+  .filter-chip-group{max-height:50vh;overflow:auto;align-content:flex-start}
   .filter-chip{font-size:12px;padding:7px 10px}
   .summary-head{display:none}
   .summary-card{border-radius:18px;background:transparent;border:none}
@@ -1345,8 +1348,8 @@ body.edit-active .table-shell tr{border:none}
     margin:8px 0;
     border:1px solid var(--line);
     border-radius:16px;
-    background:linear-gradient(180deg,#fff,#faf6ef);
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    background:linear-gradient(180deg,#fff,#f7fbf8);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .summary-row div{padding:0}
   .summary-category{grid-column:1 / -1;font-size:15px}
@@ -1373,7 +1376,7 @@ body.edit-active .table-shell tr{border:none}
   }
   .summary-metric{
     min-height:52px;
-    border:1px solid #e2e9f2;
+    border:1px solid #cfddd4;
     border-radius:13px;
     padding:8px !important;
     background:#fff;
@@ -1457,7 +1460,7 @@ body.edit-active .table-shell tr{border:none}
     margin-bottom:3px;
   }
   .mobile-metric{
-    border:1px solid #e2e9f2;
+    border:1px solid #cfddd4;
     border-radius:12px;
     padding:8px;
     background:#fff;
@@ -1474,7 +1477,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:18px;
     overflow:hidden;
     background:#fff;
-    box-shadow:0 8px 18px rgba(107,69,48,.06);
+    box-shadow:0 8px 18px rgba(55,94,75,.06);
     padding:10px;
   }
   .table-shell td{
@@ -1485,7 +1488,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:12px;
     padding:8px 9px;
     text-align:right;
-    background:#fcfaf7;
+    background:#f8fbf9;
     min-height:64px;
   }
   .table-shell td[colspan]{
@@ -1527,7 +1530,7 @@ body.edit-active .table-shell tr{border:none}
     border-radius:16px;
     padding:10px;
     background:#fff;
-    box-shadow:0 8px 18px rgba(107,69,48,.05);
+    box-shadow:0 8px 18px rgba(55,94,75,.05);
   }
   .year-table td{
     display:flex;
@@ -1535,7 +1538,7 @@ body.edit-active .table-shell tr{border:none}
     gap:4px;
     border:none;
     border-radius:12px;
-    background:#f8fbff;
+    background:#f7fbf8;
     padding:8px;
     text-align:right;
   }
@@ -1559,16 +1562,16 @@ body.edit-active .table-shell tr{border:none}
 /* ── Budget Overview Hero ───────────────────────────── */
 .budget-overview-hero{
   background:
-    radial-gradient(circle at 14% 22%, rgba(210,168,112,.20), transparent 20%),
+    radial-gradient(circle at 14% 22%, rgba(167,243,208,.22), transparent 20%),
     radial-gradient(circle at 78% 10%, rgba(255,255,255,.12), transparent 18%),
-    linear-gradient(135deg, #2d1608 0%, #5c3018 48%, #a07848 100%);
+    linear-gradient(135deg, #022c22 0%, #065f46 48%, #6fa58a 100%);
   border-radius:28px;
   padding:24px 28px;
   color:#fff;
   margin-bottom:20px;
   display:grid;
   gap:18px;
-  box-shadow:0 24px 56px rgba(45,22,8,.22);
+  box-shadow:0 24px 56px rgba(35,62,50,.22);
   border:1px solid rgba(255,255,255,.14);
   position:relative;
   overflow:hidden;
@@ -1640,8 +1643,8 @@ body.edit-active .table-shell tr{border:none}
   background:linear-gradient(90deg,#5ecf92,#30a868);
   transition:width .35s cubic-bezier(.4,0,.2,1);
 }
-.budget-overview-fill.warn{background:linear-gradient(90deg,#f4c86a,#e09a30)}
-.budget-overview-fill.bad{background:linear-gradient(90deg,#e07a68,#b23b30)}
+.budget-overview-fill.warn{background:linear-gradient(90deg,#cbdc86,#9fb55a)}
+.budget-overview-fill.bad{background:linear-gradient(90deg,#fb7185,#d95f63)}
 .budget-overview-meta{
   display:flex;
   justify-content:space-between;
@@ -1655,11 +1658,11 @@ body.edit-active .table-shell tr{border:none}
   transition:box-shadow .18s ease, transform .18s ease;
 }
 .summary-row.budget-card:hover{
-  box-shadow:0 20px 40px rgba(107,69,48,.13);
+  box-shadow:0 20px 40px rgba(55,94,75,.13);
   transform:translateY(-2px);
 }
 .summary-row.budget-card.status-good{border-right-color:#2e9a60}
-.summary-row.budget-card.status-bad{border-right-color:#b23b30}
+.summary-row.budget-card.status-bad{border-right-color:#d95f63}
 .budget-card-title strong{font-size:17px}
 .budget-card-stat strong{font-size:16px}
 
@@ -1679,7 +1682,7 @@ body.edit-active .table-shell tr{border:none}
   border-radius:18px;
   background:linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,.06));
   backdrop-filter:blur(14px);
-  box-shadow:0 16px 28px rgba(45,22,8,.14);
+  box-shadow:0 16px 28px rgba(35,62,50,.14);
 }
 .mini-nav-label-group{
   display:flex;
@@ -1720,30 +1723,30 @@ body.edit-active .table-shell tr{border:none}
   align-items:center;
   justify-content:center;
   gap:8px;
-  background:linear-gradient(135deg, var(--accent), var(--accent-2));
-  border:1px solid rgba(255,255,255,.16);
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.28);
   color:#fff;
   border-radius:14px;
   padding:10px 14px;
   font-size:18px;
   font-weight:700;
-  box-shadow:0 12px 24px rgba(107,69,48,.16);
+  box-shadow:0 12px 24px rgba(35,62,50,.12);
   cursor:pointer;
   transition:background .18s ease, color .18s ease, transform .18s ease, box-shadow .18s ease;
   flex-shrink:0;
 }
 .nav-menu-btn:hover{
-  background:linear-gradient(135deg, var(--accent-2), var(--accent));
+  background:rgba(255,255,255,.28);
   color:#fff;
-  border-color:rgba(255,255,255,.16);
-  box-shadow:0 10px 24px rgba(107,69,48,.18);
+  border-color:rgba(255,255,255,.34);
+  box-shadow:0 10px 24px rgba(35,62,50,.16);
 }
 
 /* ── Drawer backdrop ─────────────────────────────────── */
 .drawer-backdrop{
   position:fixed;
   inset:0;
-  background:rgba(45,22,8,.46);
+  background:rgba(35,62,50,.46);
   backdrop-filter:blur(4px);
   z-index:40;
   opacity:0;
@@ -1763,40 +1766,40 @@ body.edit-active .table-shell tr{border:none}
   height:100vh;
   width:300px;
   max-width:88vw;
-  background:linear-gradient(180deg,#2d1608 0%,#4a2010 55%,#5c3018 100%);
+  background:linear-gradient(180deg,#fbfdfb 0%,#f2f8f4 58%,#e6f1ea 100%);
   z-index:50;
   transform:translateX(110%);
   transition:transform .32s cubic-bezier(.4,0,.2,1);
   display:flex;
   flex-direction:column;
-  box-shadow:-28px 0 70px rgba(45,22,8,.38);
-  border-left:1px solid rgba(255,255,255,.08);
+  box-shadow:-28px 0 70px rgba(35,62,50,.22);
+  border-left:1px solid rgba(55,94,75,.12);
 }
 .side-drawer.open{transform:translateX(0)}
 .drawer-top{
   padding:30px 20px 18px;
-  border-bottom:1px solid rgba(255,255,255,.10);
+  border-bottom:1px solid rgba(55,94,75,.12);
   display:flex;
   justify-content:space-between;
   align-items:center;
 }
 .drawer-title{
-  color:#fff;
+  color:var(--text);
   font-size:18px;
   font-weight:800;
   letter-spacing:-.3px;
 }
 .drawer-close-btn{
-  background:rgba(255,255,255,.10);
-  border:1px solid rgba(255,255,255,.14);
-  color:rgba(255,255,255,.8);
+  background:#fff;
+  border:1px solid var(--line);
+  color:var(--text);
   border-radius:10px;
   padding:8px 11px;
   font-size:16px;
   line-height:1;
   cursor:pointer;
 }
-.drawer-close-btn:hover{background:rgba(255,255,255,.20);color:#fff;transform:none}
+.drawer-close-btn:hover{background:var(--card-soft);color:var(--text);transform:none}
 .drawer-nav{
   flex:1;
   overflow-y:auto;
@@ -1811,30 +1814,30 @@ body.edit-active .table-shell tr{border:none}
   gap:12px;
   padding:13px 16px;
   border-radius:14px;
-  color:rgba(255,255,255,.68);
+  color:#587064;
   font-size:15px;
   font-weight:600;
   font-family:inherit;
   cursor:pointer;
   border:1px solid transparent;
-  background:none;
+  background:transparent;
   text-align:right;
   width:100%;
   transition:background .18s ease, color .18s ease;
 }
-.drawer-tab-btn:hover{background:rgba(255,255,255,.09);color:rgba(255,255,255,.92);transform:none}
+.drawer-tab-btn:hover{background:rgba(79,127,104,.10);color:#27483b;transform:none}
 .drawer-tab-btn.active{
-  background:rgba(255,255,255,.16);
-  border-color:rgba(255,255,255,.18);
-  color:#fff;
+  background:#e3f0e8;
+  border-color:#b8d1c1;
+  color:#244236;
   font-weight:800;
 }
 .drawer-tab-icon{font-size:19px;width:26px;text-align:center;flex-shrink:0}
 .drawer-footer{
   padding:16px 20px 30px;
-  border-top:1px solid rgba(255,255,255,.08);
+  border-top:1px solid rgba(55,94,75,.10);
   font-size:12px;
-  color:rgba(255,255,255,.32);
+  color:var(--muted);
   text-align:center;
 }
 
@@ -1874,7 +1877,7 @@ body.edit-active .table-shell tr{border:none}
   overflow:hidden;
   transition:box-shadow .2s;
 }
-.mxp-item:active{ box-shadow:0 2px 8px rgba(107,69,48,.1) }
+.mxp-item:active{ box-shadow:0 2px 8px rgba(55,94,75,.1) }
 .mxp-row{
   display:grid;
   grid-template-columns:70px 1fr auto;
@@ -2184,6 +2187,38 @@ body.edit-active .table-shell tr{border:none}
     padding:6px 3px !important;
     font-size:11px !important;
   }
+  /* Stage 5.2 — Restore single-column layout for budget cards on mobile.
+     The .summary-row override above was forcing the per-category budget cards
+     into a 4-col grid, which broke their internal layout (47% bar cut,
+     3 mini-stats stacked vertically on one side). */
+  .summary-row.budget-card{
+    grid-template-columns:1fr !important;
+    padding:14px !important;
+    gap:10px !important;
+  }
+  .summary-row.budget-card > div{
+    padding:0 !important;
+    font-size:inherit !important;
+  }
+  .budget-card-top{
+    flex-wrap:wrap !important;
+    gap:8px !important;
+  }
+  .budget-card-title strong{ font-size:17px !important }
+  .budget-card-badge{ font-size:11px !important; padding:5px 10px !important }
+  .budget-card-grid{
+    grid-template-columns:repeat(3,minmax(0,1fr)) !important;
+    gap:8px !important;
+  }
+  .budget-card-stat{
+    padding:9px !important;
+    border-radius:13px !important;
+    gap:3px !important;
+  }
+  .budget-card-stat span{ font-size:10px !important }
+  .budget-card-stat strong{ font-size:14px !important }
+  .budget-progress-track{ height:18px !important }
+  .budget-pct-label{ font-size:10px !important }
 
   /* ── Debts tab ── */
   .debt-topbar{
@@ -2308,8 +2343,1234 @@ body.edit-active .table-shell tr{border:none}
     font-size:12px !important;
   }
   .section.open > .content{ /* filter starts closed on mobile — handled by JS */ }
+
+  /* ═══ Stage 1 — ≥44px touch targets + iOS auto-zoom fix (mobile) ═══ */
+  .hero-collapse-btn{
+    width:44px !important; height:44px !important;
+    font-size:17px !important;
+    top:14px !important; left:14px !important;
+  }
+  .drawer-close-btn{
+    padding:11px 14px !important;
+    min-width:44px !important; min-height:44px !important;
+  }
+  .compact-action-btn{
+    padding:11px 14px !important; min-height:44px !important; font-size:12px !important;
+  }
+  .kpi-edit-btn{
+    padding:8px 12px !important; font-size:11px !important;
+    min-width:44px !important; min-height:36px !important;
+  }
+  .filter-chip{
+    padding:10px 12px !important; min-height:36px !important; font-size:12px !important;
+  }
+  .mxp-actions button{
+    padding:13px 12px !important; min-height:44px !important;
+  }
+  /* iOS auto-zoom prevention: input font-size must be ≥16px */
+  .filter-grid input, .filter-grid select{
+    padding:12px !important; font-size:16px !important; min-height:44px !important;
+  }
+  .add-expense-grid input, .add-expense-grid select{
+    padding:12px !important; font-size:16px !important; min-height:44px !important;
+  }
+  .backup-banner-btn{
+    padding:12px 16px !important; min-height:44px !important;
+  }
+  .nav-menu-btn{
+    padding:11px 14px !important; min-height:44px !important; min-width:44px !important;
+  }
 }
 /* END FULL MOBILE */
+
+/* ═══ Stage 2 — Mini-nav chevrons (mobile/tablet only) ═══ */
+@media (max-width:1080px){
+  .mini-nav{ cursor:pointer; justify-content:space-between }
+  .mini-nav:active{ transform:scale(.99) }
+  .mini-nav-chevrons{
+    display:flex; gap:6px; flex-shrink:0;
+  }
+  .mini-nav-chevron{
+    width:44px; height:44px; border-radius:12px;
+    background:rgba(255,255,255,.14);
+    border:1px solid rgba(255,255,255,.22);
+    color:#fff; font-size:22px; font-weight:700; line-height:1;
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; padding:0;
+    -webkit-tap-highlight-color:transparent;
+    transition:background .15s ease, transform .15s ease;
+  }
+  .mini-nav-chevron:active{ background:rgba(255,255,255,.32); transform:scale(.94) }
+  .mini-nav-chevron:hover{ background:rgba(255,255,255,.22) }
+}
+/* On wide desktop the mini-nav-chevrons are hidden (full tabbar serves the role) */
+@media (min-width:1081px){
+  .mini-nav-chevrons{ display:none }
+}
+
+/* ═══ Stage 3 — Density: iPhone SE (≤375px) breakpoint ═══ */
+@media (max-width:375px){
+  .hero h1{ font-size:18px !important }
+  .hero-stats{ grid-template-columns:1fr 1fr !important; gap:6px !important }
+  .hero-stat .label{ font-size:10px !important }
+  .hero-stat .value{ font-size:15px !important }
+  .budget-overview-stat .value{ font-size:15px !important }
+  .kpi .value{ font-size:14px !important }
+  .mini-nav-label-title{ font-size:13px !important }
+  .mini-nav-kicker{ display:none }
+  .filter-grid{ grid-template-columns:1fr !important }
+  .filter-chip-group{ max-height:40vh !important }
+  .mini-nav-chevron{ width:40px; height:40px; font-size:20px }
+}
+
+/* ═══ Stage 3 — Landscape collapse (phones, not iPad) ═══ */
+@media (max-height:500px) and (max-width:932px){
+  .hero-collapsible-body{ display:none }
+  .hero{ padding:8px 14px !important; min-height:auto !important }
+  .hero::before, .hero::after{ display:none }
+  .hero-utility-bar{ margin-top:0 !important }
+}
+
+/* ═══ Stage 4 — Demo Sandbox banner ═══ */
+.demo-banner{
+  position:sticky;
+  top:0;
+  z-index:80;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  background:linear-gradient(90deg,#e7f1cf,#aeb85f,#e7f1cf);
+  color:#3d4d2f;
+  text-align:center;
+  font-size:12px;
+  font-weight:800;
+  padding:7px 12px;
+  border-bottom:1px solid #9fb55a;
+  letter-spacing:.02em;
+  box-shadow:0 2px 10px rgba(0,0,0,.06);
+}
+.demo-banner-dot{
+  width:8px; height:8px; border-radius:50%;
+  background:#7d7f33;
+  box-shadow:0 0 0 3px rgba(125,127,51,.18);
+}
+@media (max-width:720px){
+  .demo-banner{ font-size:11px; padding:6px 10px }
+  .demo-banner-dot{ width:7px; height:7px }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 6 — Visual jump: typography, semantic colors, motion, polish.
+   Everything below is ADDITIVE. No selectors above this block were modified.
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 6.A Tokens: typography scale + semantic palette ─────────────────────── */
+:root{
+  /* Type scale */
+  --fs-display: clamp(22px, 2.4vw, 30px);
+  --fs-title:   clamp(15px, 1.6vw, 18px);
+  --fs-body:    14px;
+  --fs-micro:   11px;
+  /* Semantic colors */
+  --good:       #3f8f66;
+  --good-soft:  #d1fae5;
+  --good-line:  #6ee7b7;
+  --warn:       #8c8f3f;
+  --warn-soft:  #fef3c7;
+  --warn-line:  #fcd34d;
+  --bad:        #d95f63;
+  --bad-soft:   #fee2e2;
+  --bad-line:   #fca5a5;
+  --info:       #4f7f68;
+  --info-soft:  #e7f1eb;
+  --info-line:  #9dc7ae;
+  /* Motion */
+  --ease-out:    cubic-bezier(.2,.7,.3,1);
+  --ease-spring: cubic-bezier(.34,1.32,.64,1);
+}
+
+/* ── 6.B Tabular numerals on every currency-bearing element ──────────────── */
+.kpi .value,
+.kpi-sub,
+.budget-card-stat strong,
+.budget-card-title strong,
+.budget-card-badge,
+.budget-overview-stat .value,
+.budget-overview-stat .sub,
+.income-summary .value,
+.shared-balance-card .value,
+.shared-stat-card .value,
+.debt-highlight-value,
+.debt-item .big,
+.summary-metric strong,
+.summary-metric input,
+.hero-stat .value,
+.mxp-amount,
+.mxp-detail-cell .val,
+.bullet-pct,
+.budget-pct-label,
+.budget-progress-meta,
+.year-table td,
+.income-cell strong,
+.table-summary-bar{
+  font-feature-settings:"tnum" 1, "lnum" 1;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── 6.C Per-tab section-header accent (saturated, distinct, with stripe) ──
+   Each tab gets its own gradient + a 4px right-side accent stripe that
+   makes the per-tab identity unmistakable on real devices. */
+/* Per-tab: only the right-side accent stripe changes color.
+   Background stays neutral (set on .header base rule). */
+.tab-panel[data-panel="dashboard"] .section > .header{ --header-accent:#89b89b }
+.tab-panel[data-panel="budget"]    .section > .header{ --header-accent:#6fa58a }
+.tab-panel[data-panel="income"]    .section > .header{ --header-accent:#22c55e }
+.tab-panel[data-panel="cards"]     .section > .header{ --header-accent:#8dbfa4 }
+.tab-panel[data-panel="expenses"]  .section > .header{ --header-accent:#9fb55a }
+.tab-panel[data-panel="shared"]    .section > .header{ --header-accent:#f9a8d4 }
+.tab-panel[data-panel="debts"]     .section > .header{ --header-accent:#ef4444 }
+.tab-panel[data-panel="yearly"]    .section > .header{ --header-accent:#8ba097 }
+.tab-panel[data-panel="backup"]    .section > .header{ --header-accent:#94a3b8 }
+/* Section header — accent stripe (RTL: right side) + inner highlight + tighter type */
+.section > .header{
+  position:relative;
+  letter-spacing:.01em;
+  font-size:15px;
+  font-weight:800;
+  padding-right:22px !important;
+}
+.section > .header::before{
+  content:"";
+  position:absolute;
+  top:0; bottom:0; right:0;
+  width:4px;
+  border-radius:0 4px 4px 0;
+  background: var(--header-accent, var(--accent));
+  box-shadow: 2px 0 10px var(--header-accent, var(--accent));
+  opacity:.85;
+  pointer-events:none;
+}
+.section > .header::after{
+  content:"";
+  position:absolute;
+  inset:auto 0 0 0;
+  height:1px;
+  background:linear-gradient(90deg, transparent, var(--header-accent, var(--line)), transparent);
+  opacity:.4;
+  pointer-events:none;
+}
+
+/* ── 6.D Card mount: a single short fade — NO stagger (was too aggressive) ─
+   v1 had nth-child stagger replaying on every tab switch which made the app
+   feel "constantly loading". Replaced with a single 200ms fade on the panel
+   itself, no per-card reanimation. */
+@keyframes s6PanelFadeIn{
+  from{ opacity:.55; transform: translateY(4px); }
+  to  { opacity:1;   transform: translateY(0);   }
+}
+.tab-panel.active{
+  animation: s6PanelFadeIn .18s var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce){
+  .tab-panel.active{ animation:none !important }
+}
+
+/* ── 6.E Hover lift on cards (desktop only — never on touch) ─────────────── */
+.kpi,
+.summary-row.budget-card,
+.income-row,
+.debt-item,
+.debt-highlight,
+.mxp-item,
+.shared-balance-card,
+.shared-stat-card{
+  transition: transform .18s var(--ease-out),
+              box-shadow .22s var(--ease-out),
+              border-color .18s ease;
+  will-change: transform;
+}
+@media (hover:hover) and (pointer:fine){
+  .kpi:hover,
+  .summary-row.budget-card:hover,
+  .income-row:hover,
+  .debt-item:hover,
+  .debt-highlight:hover,
+  .shared-balance-card:hover,
+  .shared-stat-card:hover{
+    transform: translateY(-2px);
+    box-shadow: 0 18px 36px rgba(55,94,75,.14);
+  }
+  .mxp-item:hover{
+    box-shadow: 0 8px 22px rgba(55,94,75,.10);
+  }
+}
+
+/* ── 6.F Button press feedback + focus polish ────────────────────────────── */
+button:not([disabled]){
+  transition: background .15s ease,
+              color .15s ease,
+              border-color .15s ease,
+              transform .12s var(--ease-spring),
+              box-shadow .15s ease;
+}
+button:not([disabled]):active{ transform: scale(.97); }
+button:focus-visible,
+input:focus-visible,
+select:focus-visible{
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+  border-radius:8px;
+}
+
+/* ── 6.G Progress bar: rely on existing CSS width transition only.
+   The mount animation that used to live here was retriggering on every
+   tab switch (display:none → block restarts CSS animations) which
+   contributed to the "constantly loading" feel reported by the user. */
+
+/* ── 6.H Soften and harmonize the budget badge variants (semantic colors) ── */
+.budget-card-badge.good{
+  background:var(--good-soft);
+  border-color:var(--good-line);
+  color:var(--good);
+}
+.budget-card-badge.bad{
+  background:var(--bad-soft);
+  border-color:var(--bad-line);
+  color:var(--bad);
+}
+/* Add a "warn" variant for when usage is high but not over (used by JS later) */
+.budget-card-badge.warn{
+  background:var(--warn-soft);
+  border-color:var(--warn-line);
+  color:var(--warn);
+}
+
+/* ── 6.I KPI value semantic coloring (utility classes) ───────────────────── */
+.value-good { color: var(--good) !important; }
+.value-bad  { color: var(--bad) !important; }
+.value-warn { color: var(--warn) !important; }
+.value-info { color: var(--info) !important; }
+
+/* ── 6.J Polish the chevrons (Stage 2) — soft glass ──────────────────────── */
+.mini-nav-chevron{
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+}
+
+/* ── 6.K Hero polish: softer h1 weight, hero-stat number prominence ──────── */
+.hero h1{
+  letter-spacing:-.015em;
+  font-weight:800;
+}
+.hero-stat .value{
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.kpi .value{
+  font-weight:800;
+  letter-spacing:-.01em;
+}
+.kpi .label{
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  font-weight:700;
+  font-size:11px;
+}
+
+/* ── 6.L Currency suffix (₪) softening — applied via attribute selector ──── */
+/* Generic class that components can opt into for nicer ₪ rendering */
+.amount-fancy { font-feature-settings:"tnum" 1; font-variant-numeric: tabular-nums; }
+
+/* ── 6.M Section content: no animation. The .open class change is enough. ── */
+/* (Previous versions had a fade-in here that fired on every section toggle
+   and contributed to the "constantly loading" feeling reported by the user.) */
+
+/* ── 6.N Demo banner: skip animations on it ──────────────────────────────── */
+.demo-banner{ animation:none !important }
+/* Force-hide the file:// debug overlay even if a stale inline display sticks */
+#localDraftDebug{ display:none !important }
+
+/* ── 6.O Targeted polish from real-device screenshots ────────────────────── */
+
+/* Hero: tighter visual rhythm — less heavy on iPhone */
+.hero{ margin-bottom:14px }
+.hero-stat{
+  transition: transform .25s var(--ease-out), box-shadow .25s var(--ease-out);
+}
+@media (hover:hover) and (pointer:fine){
+  .hero-stat:hover{ transform: translateY(-1px) }
+}
+
+/* "מצב עריכה: כבוי" pill — looks like a real toggle, not dead text */
+.compact-action-btn{
+  background:var(--card-soft) !important;
+  border:1px solid var(--line) !important;
+  color:var(--text) !important;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.5);
+}
+.compact-action-btn:hover{
+  border-color:var(--accent) !important;
+  background:#fff !important;
+}
+.compact-action-btn::before{
+  content:"";
+  display:inline-block;
+  width:8px; height:8px;
+  border-radius:50%;
+  margin-left:6px;
+  background:var(--muted);
+  vertical-align:middle;
+  transition: background .2s ease;
+}
+.compact-action-btn.active::before,
+.compact-action-btn[aria-pressed="true"]::before{
+  background:var(--good);
+  box-shadow: 0 0 0 3px rgba(46,125,79,.18);
+}
+
+/* KPI edit button: less obstrusive, more "subtle pencil" */
+.kpi-edit-btn{
+  opacity:.55;
+  transition: opacity .18s ease, background .18s ease;
+}
+.kpi-edit-btn:hover, .kpi-edit-btn:focus-visible{
+  opacity:1;
+}
+
+/* Income summary: gentle green wash to suggest "positive flow" */
+.income-summary{
+  background: linear-gradient(180deg, #fafdf7, #eef7e7) !important;
+  border:1px solid #d2e4be !important;
+}
+.income-summary .value{ color:#3a6f29 }
+
+/* Subtle divider between the hero block and the rest of the page */
+.hero + .tabbar,
+.hero + .tab-panel{
+  position:relative;
+}
+
+/* Tap-target shimmer when section header is pressed (mobile feedback) */
+.section > .header{
+  -webkit-tap-highlight-color: rgba(55,94,75,.08);
+}
+.section > .header:active{
+  background: #f1f5f9;
+}
+
+/* Subtle outline on focused chevrons for keyboard users */
+.mini-nav-chevron:focus-visible{
+  outline:2px solid rgba(255,255,255,.7);
+  outline-offset:2px;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 7 — Bolder, more visible polish
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* Stronger, more distinct card elevation so each card "lifts" off the page */
+.kpi,
+.summary-row.budget-card,
+.debt-item,
+.debt-highlight,
+.shared-balance-card,
+.shared-stat-card,
+.year-card,
+.settings-card{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 4px 12px rgba(35,62,50,.06),
+    0 14px 30px rgba(35,62,50,.05);
+  border:1px solid rgba(55,94,75,.10);
+}
+
+/* KPI values — bigger, bolder, more contrast on mobile */
+@media (max-width:720px){
+  .kpi{ padding:14px 14px !important }
+  .kpi .label{
+    font-size:10px !important;
+    text-transform:uppercase;
+    letter-spacing:.06em;
+    color:#5f7469;
+    opacity:.85;
+  }
+  .kpi .value{
+    font-size:22px !important;
+    font-weight:800 !important;
+    letter-spacing:-.015em !important;
+    color:#1f2f2a;
+  }
+  .kpi-sub{
+    font-size:11px !important;
+    color:#6f8077;
+  }
+}
+
+/* KPI top-left subtle gradient orb for visual interest */
+.kpi{
+  position:relative;
+  overflow:hidden;
+}
+.kpi::after{
+  content:"";
+  position:absolute;
+  top:-30px; left:-30px;
+  width:90px; height:90px;
+  border-radius:50%;
+  background: radial-gradient(circle, rgba(55,94,75,.07), transparent 70%);
+  pointer-events:none;
+}
+
+/* Hero gets a bolder, warmer feel */
+.hero{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 18px 40px rgba(35,62,50,.18);
+}
+@media (max-width:720px){
+  .hero h1{
+    font-size:24px !important;
+    letter-spacing:-.02em !important;
+    line-height:1.05 !important;
+  }
+  .hero-stat{
+    background: rgba(255,255,255,.10) !important;
+    border:1px solid rgba(255,255,255,.14) !important;
+    border-radius:14px !important;
+    padding:10px 12px !important;
+    backdrop-filter: blur(8px);
+  }
+  .hero-stat .label{
+    font-size:10px !important;
+    text-transform:uppercase;
+    letter-spacing:.05em;
+    color:rgba(255,255,255,.7) !important;
+  }
+  .hero-stat .value{
+    font-size:18px !important;
+    font-weight:800 !important;
+    color:#fff !important;
+  }
+  .hero-month-picker select{
+    color:#fff !important;
+    font-weight:700 !important;
+  }
+}
+
+/* Section card — stronger elevation, slightly lifted feel */
+.section{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.7) inset,
+    0 6px 18px rgba(35,62,50,.07),
+    0 18px 40px rgba(35,62,50,.05) !important;
+}
+
+/* Budget card per-category — accent stripe by status (good/warn/bad) */
+.summary-row.budget-card{
+  position:relative;
+  overflow:hidden;
+}
+.summary-row.budget-card::before{
+  content:"";
+  position:absolute;
+  top:0; bottom:0; right:0;
+  width:4px;
+  background: linear-gradient(180deg, var(--accent), #7fb69a);
+  border-radius: 0 4px 4px 0;
+}
+.summary-row.budget-card:has(.budget-card-badge.good)::before{
+  background: linear-gradient(180deg, var(--good), #5fb274);
+}
+.summary-row.budget-card:has(.budget-card-badge.bad)::before{
+  background: linear-gradient(180deg, var(--bad), #d4604a);
+}
+.summary-row.budget-card:has(.budget-card-badge.warn)::before{
+  background: linear-gradient(180deg, var(--warn), #d4a030);
+}
+
+/* Mobile expense card — a touch more elevation + tap shimmer */
+@media (max-width:720px){
+  .mxp-item{
+    box-shadow: 0 2px 6px rgba(35,62,50,.06), 0 8px 18px rgba(35,62,50,.04);
+  }
+  .mxp-amount{
+    font-size:16px !important;
+    font-weight:800;
+    color:var(--accent);
+  }
+}
+
+/* Debt highlights — make the value monumental */
+@media (max-width:720px){
+  .debt-highlight{
+    padding:14px !important;
+  }
+  .debt-highlight-value{
+    font-size:24px !important;
+    font-weight:800 !important;
+    letter-spacing:-.02em;
+  }
+}
+
+/* Pie chart container — center the canvas, prevent it shrinking */
+.chart-box{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+}
+.chart-box canvas{
+  max-width:100% !important;
+}
+
+/* Stage 7 demo banner — slightly more refined */
+.demo-banner{
+  background: linear-gradient(90deg, #e7f1cf 0%, #aeb85f 50%, #e7f1cf 100%) !important;
+  font-weight:700;
+}
+
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 9 — Modern color scheme (no brown) + expense column alignment
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 9.A  Shadow colors: replace warm-brown with cool-navy ──────────────── */
+.hero{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.18) inset,
+    0 18px 40px rgba(35,62,50,.22) !important;
+}
+.kpi,
+.summary-row.budget-card,
+.debt-item,
+.debt-highlight,
+.shared-balance-card,
+.shared-stat-card,
+.year-card,
+.settings-card{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 4px 12px rgba(35,62,50,.05),
+    0 14px 30px rgba(35,62,50,.04) !important;
+  border:1px solid rgba(55,94,75,.08) !important;
+}
+.section{
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.8) inset,
+    0 6px 18px rgba(35,62,50,.06),
+    0 18px 40px rgba(35,62,50,.04) !important;
+}
+.card-method{
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.8) inset,
+    0 8px 24px rgba(35,62,50,.08),
+    0 20px 40px rgba(35,62,50,.06) !important;
+}
+.budget-overview-hero{
+  box-shadow: 0 24px 56px rgba(2,44,34,.28) !important;
+}
+
+/* ── 9.B  Hero decorative circles — use sage tones now ──────────────────── */
+.hero::after{
+  background:rgba(125,174,146,.14) !important;
+}
+.budget-overview-hero::after{
+  background:rgba(167,243,208,.10) !important;
+}
+/* KPI orb: sage tint */
+.kpi::after{
+  background: radial-gradient(circle, rgba(55,94,75,.07), transparent 70%) !important;
+}
+
+/* ── 9.C  Hero repeat-line pattern: sage instead of dark brown ──────────── */
+.hero::before{
+  background:
+    linear-gradient(180deg, transparent, rgba(35,62,50,.60)),
+    repeating-linear-gradient(90deg,
+      transparent 0 24px,
+      rgba(255,255,255,.14) 24px 26px,
+      transparent 26px 58px),
+    linear-gradient(90deg,
+      transparent 0 5%,
+      rgba(35,62,50,.70) 5% 12%,
+      transparent 12% 16%,
+      rgba(35,62,50,.58) 16% 24%,
+      transparent 24% 30%,
+      rgba(35,62,50,.70) 30% 36%,
+      transparent 36% 42%,
+      rgba(35,62,50,.52) 42% 51%,
+      transparent 51% 58%,
+      rgba(35,62,50,.66) 58% 66%,
+      transparent 66% 72%,
+      rgba(35,62,50,.58) 72% 84%,
+      transparent 84% 100%) !important;
+}
+
+/* ── 9.D  Stage-7 KPI overrides: update warm-brown text to cool dark ─────── */
+@media (max-width:720px){
+  .kpi .label{ color:#4a6080 !important }
+  .kpi .value{ color:#1f2f2a !important }
+  .kpi-sub{ color:#5a78a0 !important }
+  .hero-stat .label{ color:rgba(255,255,255,.72) !important }
+  .mxp-amount{ color:var(--accent) !important }
+}
+
+/* ── 9.E  income-summary: keep the green wash ───────────────────────────── */
+.income-summary{
+  background: linear-gradient(180deg, #f0fdf4, #dcfce7) !important;
+  border:1px solid #bbf7d0 !important;
+}
+.income-summary .value{ color:#15803d !important }
+
+/* ── 9.F  nav-menu-btn + mini-nav: sage accent ───────────────────────────── */
+.nav-menu-btn{
+  background:linear-gradient(135deg, #4f7f68, #89b89b) !important;
+}
+.nav-menu-btn:hover{
+  background:linear-gradient(135deg, #4f7f68, #4f7f68) !important;
+}
+.mini-nav{
+  background:linear-gradient(180deg, rgba(255,255,255,.12), rgba(255,255,255,.06)) !important;
+}
+
+/* ── 9.G  Primary buttons: sage ─────────────────────────────────────────── */
+.success-btn,
+.primary,
+button[type="submit"],
+.mxp-edit-btn,
+.add-btn{
+  background: linear-gradient(135deg, #4f7f68, #89b89b) !important;
+  color:#fff !important;
+  border-color:transparent !important;
+}
+
+/* ── 9.H  Expense list — table column alignment ──────────────────────────── */
+/* A sticky header row labels the 3 columns */
+.mxp-list-header{
+  display:grid;
+  grid-template-columns:52px 1fr 94px;
+  padding:6px 14px 5px;
+  font-size:10px;
+  font-weight:700;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.05em;
+  border-bottom:1px solid var(--line);
+  margin-bottom:6px;
+}
+.mxp-list-header span:last-child{ text-align:left }
+/* Every row uses the same column widths */
+.mxp-row{
+  grid-template-columns:52px 1fr 94px !important;
+}
+/* Amount column: right → left in RTL means visually right-aligned */
+.mxp-row > div:last-child{
+  justify-content:flex-end !important;
+}
+.mxp-amount{
+  min-width:0 !important;
+  text-align:left !important;
+  font-variant-numeric: tabular-nums lining-nums;
+}
+
+/* ── 9.I  Card visual: update Stage-8 gradient shadow colors ────────────── */
+.card-stat{
+  border:1px solid rgba(55,94,75,.08) !important;
+  box-shadow: 0 2px 6px rgba(35,62,50,.04) !important;
+}
+
+/* ── 9.J  Stage-7 hero-stat glass: sage tint instead of brown ──────────── */
+@media (max-width:720px){
+  .hero-stat{
+    background: rgba(255,255,255,.12) !important;
+    border:1px solid rgba(255,255,255,.16) !important;
+  }
+}
+
+/* ── 9.K  Budget card accent stripe: update warm colors ─────────────────── */
+.summary-row.budget-card::before{
+  background: linear-gradient(180deg, var(--accent), #60a5fa) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.good)::before{
+  background: linear-gradient(180deg, var(--good), #34d399) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.bad)::before{
+  background: linear-gradient(180deg, var(--bad), #f87171) !important;
+}
+.summary-row.budget-card:has(.budget-card-badge.warn)::before{
+  background: linear-gradient(180deg, var(--warn), #fbbf24) !important;
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 8 — Full UX package
+   A. Scroll-proof resize (JS only — see bottom of script)
+   B. Bar chart → horizontal (JS only)
+   C. Budget hero — radial progress + body layout
+   D. Cards tab redesign
+   E. Category cards compact redesign
+   F. Hero collapse button — no overflow when collapsed
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 8.C  Budget hero — radial + body layout ────────────────────────────── */
+.budget-overview-body{
+  display:grid;
+  grid-template-columns:130px 1fr;
+  gap:16px;
+  align-items:center;
+}
+.budget-radial-wrap{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex-shrink:0;
+}
+.budget-radial-svg{
+  width:120px;
+  height:120px;
+  filter: drop-shadow(0 4px 14px rgba(0,0,0,.22));
+}
+/* Status-tinted "remaining" stat box */
+.budget-overview-stat.good{ border-color:rgba(94,207,146,.35) !important }
+.budget-overview-stat.bad{  border-color:rgba(224,122,104,.35) !important }
+.budget-overview-stat.warn{ border-color:rgba(244,200,106,.35) !important }
+
+/* Mobile: stack radial on top of stats */
+@media (max-width:720px){
+  .budget-overview-body{
+    grid-template-columns:1fr !important;
+    gap:10px !important;
+  }
+  .budget-radial-wrap{
+    /* On mobile show a slimmer ring beside text in a row */
+    order:-1;
+  }
+  .budget-radial-svg{ width:90px !important; height:90px !important }
+  /* Inline radial + stats side-by-side on mobile */
+  .budget-overview-body{
+    display:flex !important;
+    flex-direction:row !important;
+    align-items:center !important;
+    gap:12px !important;
+  }
+  .budget-overview-stats{
+    flex:1 !important;
+    min-width:0 !important;
+  }
+}
+
+/* ── 8.D  Cards tab redesign ─────────────────────────────────────────────── */
+.card-list{ gap:16px }
+
+/* Physical-card visual header */
+.card-method{
+  border-radius:24px !important;
+  padding:0 !important;
+  overflow:hidden;
+  background:none !important;
+  border:none !important;
+  box-shadow:
+    0 2px 0 rgba(255,255,255,.7) inset,
+    0 8px 24px rgba(35,62,50,.10),
+    0 20px 40px rgba(35,62,50,.08) !important;
+}
+.card-visual{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.20), transparent 32%),
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,.12), transparent 22%),
+    linear-gradient(135deg, #3a2a6a 0%, #6a58b8 55%, #9880d8 100%);
+  padding:20px 20px 16px;
+  position:relative;
+  overflow:hidden;
+  color:#fff;
+  min-height:96px;
+}
+.card-visual.immediate{
+  background:
+    radial-gradient(circle at 18% 28%, rgba(255,255,255,.20), transparent 32%),
+    radial-gradient(circle at 80% 10%, rgba(255,255,255,.12), transparent 22%),
+    linear-gradient(135deg, #1a4a2e 0%, #3a8a58 55%, #60b878 100%);
+}
+.card-visual::before{
+  content:"";
+  position:absolute;
+  top:-60px; left:-60px;
+  width:200px; height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,.10);
+  pointer-events:none;
+}
+.card-visual::after{
+  content:"";
+  position:absolute;
+  bottom:-40px; right:-40px;
+  width:160px; height:160px;
+  border-radius:50%;
+  background:rgba(255,255,255,.07);
+  pointer-events:none;
+}
+.card-visual-top{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  position:relative;
+  z-index:1;
+}
+.card-visual-name{
+  font-size:20px;
+  font-weight:800;
+  letter-spacing:-.3px;
+  text-shadow: 0 2px 8px rgba(0,0,0,.18);
+}
+.card-visual-chip{
+  width:36px; height:26px;
+  border-radius:5px;
+  background:linear-gradient(135deg,rgba(255,215,100,.85),rgba(255,190,40,.55));
+  border:1px solid rgba(255,200,80,.5);
+  box-shadow: 0 2px 6px rgba(0,0,0,.20);
+}
+.card-visual-type{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  opacity:.80;
+  margin-top:28px;
+  position:relative;
+  z-index:1;
+}
+.card-visual-tags{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:6px;
+  position:relative;
+  z-index:1;
+}
+.card-visual-tag{
+  font-size:11px;
+  font-weight:700;
+  background:rgba(255,255,255,.18);
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:999px;
+  padding:3px 10px;
+}
+.card-body{
+  padding:14px 16px 16px;
+  background:linear-gradient(180deg,#fafaf8,#f2f8f4);
+}
+.card-method-grid{
+  gap:8px !important;
+  margin-top:0 !important;
+}
+.card-stat{
+  border-radius:14px !important;
+  padding:11px 13px !important;
+  min-height:76px !important;
+  background:linear-gradient(180deg,#fff,#f7fbf8) !important;
+  border:1px solid rgba(55,94,75,.09) !important;
+  box-shadow: 0 2px 6px rgba(35,62,50,.04) !important;
+}
+.card-stat .label{
+  font-size:11px !important;
+  font-weight:700 !important;
+  color:var(--muted) !important;
+  text-transform:uppercase !important;
+  letter-spacing:.04em !important;
+}
+.card-stat .value{
+  font-size:20px !important;
+  font-weight:800 !important;
+  color:var(--text) !important;
+  margin-top:4px !important;
+  font-feature-settings:"tnum" 1;
+}
+.card-stat .sub{
+  font-size:11px !important;
+  line-height:1.3 !important;
+  margin-top:3px !important;
+}
+
+/* month chip on card — moved into card visual */
+.card-method .income-source-chip{ display:none }
+
+/* Mobile: single-column stats */
+@media (max-width:720px){
+  .card-visual-name{ font-size:17px !important }
+  .card-body{ padding:12px 12px 14px !important }
+  .card-method-grid{ grid-template-columns:1fr 1fr !important }
+  .card-stat{ min-height:64px !important }
+  .card-stat .value{ font-size:16px !important }
+}
+
+/* ── 8.E  Category cards — compact, no-scroll redesign ──────────────────── */
+/* Replace the tall 3-stat card with a tight single-row format:
+   [Name badge] ────progress──── [₪ amount / % label] */
+.budget-card-grid{ display:none !important }  /* hide the 3-stat row */
+
+.summary-row.budget-card{
+  display:grid !important;
+  grid-template-columns:1fr !important;
+  gap:6px !important;
+  padding:12px 14px 12px 10px !important;
+}
+.budget-card-top{
+  display:flex !important;
+  justify-content:space-between !important;
+  align-items:center !important;
+  gap:8px !important;
+  flex-wrap:nowrap !important;
+}
+.budget-card-title{
+  display:flex !important;
+  align-items:center !important;
+  gap:8px !important;
+  min-width:0 !important;
+  flex:1 !important;
+}
+.budget-card-title strong{
+  font-size:14px !important;
+  white-space:nowrap !important;
+  overflow:hidden !important;
+  text-overflow:ellipsis !important;
+}
+.budget-card-badge{
+  font-size:11px !important;
+  padding:3px 9px !important;
+  white-space:nowrap !important;
+  flex-shrink:0 !important;
+}
+/* Progress row: track + amount label right-aligned */
+.budget-progress{
+  display:grid !important;
+  grid-template-columns:1fr auto !important;
+  align-items:center !important;
+  gap:8px !important;
+}
+.budget-progress-track{
+  height:10px !important;
+  border-radius:999px !important;
+}
+.budget-progress-meta{
+  display:none !important;  /* hidden to save space */
+}
+.budget-pct-label{
+  font-size:11px !important;
+  right:6px !important;
+}
+/* Amount shown beside the bar */
+.budget-card-amount-aside{
+  font-size:13px;
+  font-weight:800;
+  color:var(--text);
+  white-space:nowrap;
+  font-feature-settings:"tnum" 1;
+}
+/* On desktop keep the 3-stat grid (undo the hide) */
+@media (min-width:721px){
+  .budget-card-grid{ display:grid !important }
+  .budget-progress-meta{ display:flex !important }
+  .budget-card-amount-aside{ display:none }
+  .summary-row.budget-card{ padding:16px !important }
+  .budget-card-title strong{ font-size:16px !important }
+}
+
+/* ── 8.F  Hero collapse button — never overflows into section below ─────── */
+/* When hero is collapsed, the absolute-positioned button stays within hero
+   bounds because we ensure the hero itself has enough height to contain it. */
+.hero.hero-collapsed{
+  min-height:60px; /* guarantee the button has room */
+}
+/* On mobile (hero-collapsible-body hidden by default via display:none),
+   the collapse button should appear inside the mini-nav row, not float above it */
+@media (max-width:720px){
+  .hero-collapse-btn{
+    position:static !important;
+    width:36px !important; height:36px !important;
+    font-size:15px !important;
+    margin-left:auto !important;
+    flex-shrink:0 !important;
+  }
+  .hero-utility-bar{
+    display:flex !important;
+    align-items:center !important;
+    gap:8px !important;
+  }
+}
+
+/* ════════════════════════════════════════════════════════════════════════════
+   Stage 10 — Hero white card + colored section headers (FINAL POSITION)
+   Must stay at end of <style> to win over all earlier stage overrides.
+   iPhone 17 Pro (402px) | iPhone 15 (393px) | MacBook 1440px | Lenovo 1536px
+   ═══════════════════════════════════════════════════════════════════════════*/
+
+/* ── 10.A  Hero: clean white card ─────────────────────────────────────────── */
+.hero{
+  background: linear-gradient(180deg, #ffffff 0%, #f8fbf9 100%) !important;
+  color: var(--text) !important;
+  border: 1px solid rgba(55,94,75,.10) !important;
+  box-shadow:
+    0 1px 0 rgba(255,255,255,.9) inset,
+    0 6px 18px rgba(35,62,50,.07),
+    0 24px 56px rgba(35,62,50,.06) !important;
+}
+/* Disable dark-background decorative layers */
+.hero::before{ opacity:0 !important }
+.hero::after{
+  background: radial-gradient(circle, rgba(55,94,75,.06), transparent 68%) !important;
+  top:-80px; left:-80px;
+}
+/* Title */
+.hero h1{
+  color: var(--text) !important;
+  text-shadow: none !important;
+}
+/* Subtitle */
+.hero .subtitle{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+/* Month/account picker label + select */
+.hero-month-picker .label{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+.hero-month-picker select{
+  color: var(--text) !important;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='18' height='18' viewBox='0 0 24 24' fill='none' stroke='%2318243a' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") !important;
+}
+/* Stat boxes: soft sage tint so they lift off the white card */
+.hero-stat{
+  background: rgba(55,94,75,.07) !important;
+  border: 1px solid rgba(55,94,75,.14) !important;
+  backdrop-filter: none !important;
+  box-shadow: 0 1px 0 rgba(255,255,255,.9) inset, 0 2px 8px rgba(55,94,75,.06) !important;
+}
+.hero-stat .label{
+  color: var(--muted) !important;
+  opacity: 1 !important;
+}
+.hero-stat .value{
+  color: var(--text) !important;
+}
+/* Collapse button: dark subtle circle on white */
+.hero-collapse-btn{
+  background: rgba(35,62,50,.07) !important;
+  border: 1px solid rgba(35,62,50,.09) !important;
+  color: var(--text) !important;
+}
+/* Mini-nav: bold sage strip anchors the bottom of the white card */
+.mini-nav{
+  background: linear-gradient(135deg, #4f7f68 0%, #89b89b 100%) !important;
+  border: none !important;
+  box-shadow: 0 8px 20px rgba(35,62,50,.22), 0 2px 0 rgba(255,255,255,.12) inset !important;
+}
+.mini-nav-label{ color: #fff !important }
+.mini-nav-kicker{ color: rgba(255,255,255,.82) !important }
+.mini-nav-label-title{ color: #fff !important }
+#miniNavIcon{ color: #fff !important; opacity:1 !important }
+.nav-menu-btn{
+  background: rgba(255,255,255,.18) !important;
+  border: 1px solid rgba(255,255,255,.26) !important;
+  color: #fff !important;
+}
+.mini-nav-chevron{
+  background: rgba(255,255,255,.16) !important;
+  border-color: rgba(255,255,255,.24) !important;
+  color: #fff !important;
+}
+
+/* ── 10.A Mobile: override all earlier white-on-white hero text stages ───── */
+@media (max-width:720px){
+  .hero h1{
+    color: var(--text) !important;
+    text-shadow: none !important;
+  }
+  .hero-month-picker select{ color: var(--text) !important }
+  .hero-stat{
+    background: rgba(55,94,75,.07) !important;
+    border: 1px solid rgba(55,94,75,.14) !important;
+    backdrop-filter: none !important;
+    padding: 10px 12px !important;
+  }
+  .hero-stat .label{
+    font-size: 10px !important;
+    color: var(--muted) !important;
+    opacity: 1 !important;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+  .hero-stat .value{
+    font-size: 18px !important;
+    font-weight: 800 !important;
+    color: var(--text) !important;
+  }
+}
+
+/* ── 10.B  Section headers: vivid per-tab gradient ───────────────────────── */
+/* Base fallback (unmatched tabs) */
+.header{
+  background: linear-gradient(135deg, #3f7d66 0%, #86caa9 100%) !important;
+  color: #fff !important;
+  border-bottom: none !important;
+}
+/* Per-tab distinct gradients */
+.tab-panel[data-panel="dashboard"] .section > .header{
+  background: linear-gradient(135deg, #3f7d66 0%, #9dc7ae 100%) !important;
+  --header-accent: #b7dcc7;
+  color: #fff !important;
+}
+.tab-panel[data-panel="budget"] .section > .header{
+  background: linear-gradient(135deg, #047857 0%, #6ee7b7 100%) !important;
+  --header-accent: #99f6e4;
+  color: #fff !important;
+}
+.tab-panel[data-panel="income"] .section > .header{
+  background: linear-gradient(135deg, #15803d 0%, #bef264 100%) !important;
+  --header-accent: #d9f99d;
+  color: #fff !important;
+}
+.tab-panel[data-panel="cards"] .section > .header{
+  background: linear-gradient(135deg, #6d28d9 0%, #c4b5fd 100%) !important;
+  --header-accent: #ddd6fe;
+  color: #fff !important;
+}
+.tab-panel[data-panel="expenses"] .section > .header{
+  background: linear-gradient(135deg, #0891b2 0%, #67e8f9 100%) !important;
+  --header-accent: #a5f3fc;
+  color: #fff !important;
+}
+.tab-panel[data-panel="shared"] .section > .header{
+  background: linear-gradient(135deg, #be185d 0%, #f9a8d4 100%) !important;
+  --header-accent: #fbcfe8;
+  color: #fff !important;
+}
+.tab-panel[data-panel="debts"] .section > .header{
+  background: linear-gradient(135deg, #dc2626 0%, #fb7185 100%) !important;
+  --header-accent: #fecdd3;
+  color: #fff !important;
+}
+.tab-panel[data-panel="yearly"] .section > .header{
+  background: linear-gradient(135deg, #4f46e5 0%, #a5b4fc 100%) !important;
+  --header-accent: #c7d2fe;
+  color: #fff !important;
+}
+.tab-panel[data-panel="backup"] .section > .header{
+  background: linear-gradient(135deg, #475569 0%, #bae6fd 100%) !important;
+  --header-accent: #dbeafe;
+  color: #fff !important;
+}
+/* Pill badges sit on dark gradient — white glass */
+.pill{
+  background: rgba(255,255,255,.16) !important;
+  color: #fff !important;
+  border: 1px solid rgba(255,255,255,.22) !important;
+}
+/* Tap feedback on dark header */
+.section > .header:active{ filter: brightness(.90) !important }
+/* Accent stripe: visible on dark header */
+.section > .header::before{ opacity: .88 !important }
+
 </style>
 </head>
 <body>
@@ -2336,9 +3597,9 @@ body.edit-active .table-shell tr{border:none}
     </div>
     </div><!-- /hero-collapsible-body -->
     <div class="hero-utility-bar">
-      <div class="mini-nav">
+      <div class="mini-nav" onclick="openDrawer()">
         <div class="mini-nav-label-group">
-          <button class="nav-menu-btn" onclick="openDrawer()">☰</button>
+          <button class="nav-menu-btn" type="button" tabindex="-1" aria-hidden="true">☰</button>
           <div class="mini-nav-label">
             <span id="miniNavIcon">📊</span>
             <div class="mini-nav-label-text">
@@ -2346,6 +3607,10 @@ body.edit-active .table-shell tr{border:none}
               <div class="mini-nav-label-title" id="miniNavLabelTitle">דשבורד</div>
             </div>
           </div>
+        </div>
+        <div class="mini-nav-chevrons" onclick="event.stopPropagation()">
+          <button type="button" class="mini-nav-chevron" onclick="cycleMiniNavTab('prev')" aria-label="טאב קודם">‹</button>
+          <button type="button" class="mini-nav-chevron" onclick="cycleMiniNavTab('next')" aria-label="טאב הבא">›</button>
         </div>
       </div>
     </div>
@@ -5979,6 +7244,14 @@ function updateMiniNavLabel(){
   const title = document.getElementById("miniNavLabelTitle");
   if(icon && meta) icon.textContent = meta.icon;
   if(title && meta) title.textContent = meta.label;
+}
+function cycleMiniNavTab(dir){
+  const list = TAB_META.filter(t => t.id !== "debts" || isDebtTrackingEnabled());
+  const idx = list.findIndex(t => t.id === activeTab);
+  if(idx < 0) return;
+  const len = list.length;
+  const nextIdx = dir === "next" ? (idx + 1) % len : (idx - 1 + len) % len;
+  switchToTab(list[nextIdx].id);
 }
 function renderMiniNavMeta(){
   const userChip = document.getElementById("miniNavUserChip");
