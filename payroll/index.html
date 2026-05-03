@@ -1,0 +1,820 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>בודק תלוש שכר</title>
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    :root{
+      --bg:#f3f6fb; --card:#ffffff; --muted:#64748b; --text:#0f172a; --line:#dbe4f0;
+      --primary:#2563eb; --primary2:#1d4ed8; --good:#15803d; --warn:#b45309; --bad:#b91c1c;
+      --shadow:0 10px 30px rgba(15,23,42,.08); --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:var(--bg);color:var(--text)}
+    .shell{max-width:920px;margin:0 auto;padding:env(safe-area-inset-top) 14px calc(20px + env(safe-area-inset-bottom))}
+    .topbar{position:sticky;top:0;z-index:10;background:rgba(243,246,251,.92);backdrop-filter:blur(10px);padding:10px 0 12px}
+    .brand{display:flex;align-items:center;justify-content:space-between;gap:12px}
+    .brand h1{font-size:22px;margin:0}
+    .muted{color:var(--muted)}
+    .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px}
+    .tab{border:1px solid var(--line);background:#fff;padding:11px 8px;border-radius:14px;text-align:center;font-weight:700;font-size:14px}
+    .tab.active{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .view{display:none;gap:14px;margin-top:14px}
+    .view.active{display:grid}
+    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+    .row.between{justify-content:space-between}
+    .grid{display:grid;gap:12px}
+    .grid.two{grid-template-columns:repeat(2,minmax(0,1fr))}
+    .grid.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+    .field{display:grid;gap:6px}
+    .field label{font-size:13px;font-weight:700}
+    input, select, textarea, button{
+      font:inherit;border-radius:14px;border:1px solid var(--line);min-height:46px;padding:10px 12px;background:#fff;color:var(--text)
+    }
+    textarea{min-height:92px;resize:vertical}
+    button{cursor:pointer;font-weight:700}
+    .btn{background:var(--primary);color:#fff;border-color:var(--primary)}
+    .btn.secondary{background:#fff;color:var(--text)}
+    .btn.ghost{background:#eff6ff;color:var(--primary);border-color:#bfdbfe}
+    .btn.bad{background:#fff1f2;color:var(--bad);border-color:#fecdd3}
+    .kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+    .kpi{padding:14px;border:1px solid var(--line);border-radius:16px;background:#fff}
+    .kpi .t{font-size:13px;color:var(--muted)}
+    .kpi .v{font-size:24px;font-weight:800;margin-top:5px}
+    .badge{display:inline-flex;align-items:center;padding:6px 10px;border-radius:999px;font-weight:800;font-size:12px}
+    .badge.good{background:#dcfce7;color:var(--good)}
+    .badge.warn{background:#ffedd5;color:var(--warn)}
+    .badge.bad{background:#fee2e2;color:var(--bad)}
+    .month-list{display:grid;gap:10px}
+    .month-item{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+    .small{font-size:12px}
+    .hr{height:1px;background:var(--line);margin:12px 0}
+    .diff-card{border:1px solid var(--line);border-radius:16px;padding:12px;background:#fff}
+    .diff-head{display:flex;justify-content:space-between;gap:8px;align-items:center}
+    .mono{font-variant-numeric:tabular-nums}
+    .table-like{display:grid;gap:8px}
+    .line{display:grid;grid-template-columns:1.4fr .8fr .8fr .8fr;gap:8px;align-items:center;font-size:14px;padding:8px 0;border-bottom:1px solid #edf2f7}
+    .line:last-child{border-bottom:none}
+    .pill{padding:8px 10px;background:#f8fafc;border:1px solid var(--line);border-radius:999px;font-size:12px}
+    .note{background:#eff6ff;border:1px solid #bfdbfe;color:#1e3a8a;border-radius:14px;padding:12px}
+    .success{background:#ecfdf5;border-color:#bbf7d0;color:#166534}
+    .danger{background:#fef2f2;border-color:#fecaca;color:#991b1b}
+    .hidden{display:none!important}
+    @media (min-width:760px){
+      .kpis{grid-template-columns:repeat(4,minmax(0,1fr))}
+      .tabs{grid-template-columns:repeat(4,180px)}
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <div>
+          <h1>בודק תלוש שכר</h1>
+          <div class="muted small">מותאם לאייפון • עובד גם על מקבוק • נשמר בדפדפן</div>
+        </div>
+        <span id="syncBadge" class="badge warn">אחסון מקומי</span>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-tab="dashboard">דשבורד</button>
+        <button class="tab" data-tab="month">חודש</button>
+        <button class="tab" data-tab="payslip">תלוש</button>
+        <button class="tab" data-tab="backup">גיבוי</button>
+      </div>
+    </div>
+
+    <section id="dashboard" class="view active">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <h2 style="margin:0">חודשים שמורים</h2>
+            <div class="muted small">לחץ על חודש כדי לפתוח אותו</div>
+          </div>
+          <button class="btn" id="newMonthBtn">חודש חדש</button>
+        </div>
+        <div class="hr"></div>
+        <div class="month-list" id="monthList"></div>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="t">ברוטו נוכחי</div><div class="v mono" id="dashGross">₪0</div></div>
+        <div class="kpi"><div class="t">נטו צפוי</div><div class="v mono" id="dashNet">₪0</div></div>
+        <div class="kpi"><div class="t">נטו בפועל</div><div class="v mono" id="dashActualNet">₪0</div></div>
+        <div class="kpi"><div class="t">סטטוס תלוש</div><div class="v" id="dashStatus">—</div></div>
+      </div>
+      <div class="card note">
+        כרגע האתר חי ועובד מהאייפון, כולל חישוב שכר, שמירת חודשים, העלאת PDF של תלוש, חילוץ טקסט בדפדפן ובדיקת פערים.
+        סנכרון אוטומטי בין אייפון למקבוק עדיין דורש חיבור backend ייעודי.
+      </div>
+    </section>
+
+    <section id="month" class="view">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <h2 style="margin:0">חודש עבודה</h2>
+            <div class="muted small">הזנה מהירה ונוחה גם מהאייפון</div>
+          </div>
+          <div class="row">
+            <button class="btn secondary" id="resetMonthBtn">איפוס</button>
+            <button class="btn" id="saveMonthBtn">שמור חודש</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="grid two">
+          <div class="field"><label>שנה</label><input id="year" inputmode="numeric"></div>
+          <div class="field"><label>חודש</label><select id="monthNum"></select></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">שעות</h3>
+        <div class="grid two">
+          <div class="field"><label>שעות משרד 100%</label><input id="officeHours100" inputmode="decimal"></div>
+          <div class="field"><label>שעות שטח 100%</label><input id="fieldHours100" inputmode="decimal"></div>
+          <div class="field"><label>משרד 125%</label><input id="office125" inputmode="decimal"></div>
+          <div class="field"><label>משרד 150%</label><input id="office150" inputmode="decimal"></div>
+          <div class="field"><label>שטח 125%</label><input id="field125" inputmode="decimal"></div>
+          <div class="field"><label>שטח 150%</label><input id="field150" inputmode="decimal"></div>
+          <div class="field"><label>ימי עבודה</label><input id="workDays" inputmode="numeric"></div>
+          <div class="field"><label>סה"כ שעות עבודה</label><input id="totalWorkedHours" inputmode="decimal"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">הוצאות ושוויים</h3>
+        <div class="grid two">
+          <div class="field"><label>יחידות נסיעות</label><input id="travelUnits" inputmode="decimal"></div>
+          <div class="field"><label>יחידות ארוחות שטח</label><input id="fieldMealUnits" inputmode="decimal"></div>
+          <div class="field"><label>יחידות שווי ארוחות</label><input id="mealValueUnits" inputmode="decimal"></div>
+          <div class="field"><label>שווי מתנות</label><input id="giftValueAmount" inputmode="decimal"></div>
+          <div class="field"><label>גלום שווי מתנות</label><input id="grossedUpGiftAmount" inputmode="decimal"></div>
+          <div class="field"><label>רכיב חייב מס נוסף</label><input id="otherTaxableAmount" inputmode="decimal"></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">Overrides ידניים</h3>
+        <div class="grid two">
+          <div class="field"><label>משכורת בסיס</label><input id="salaryBaseAmount" inputmode="decimal"></div>
+          <div class="field"><label>נסיעות ידני</label><input id="travelAmount" inputmode="decimal"></div>
+          <div class="field"><label>ארוחות שטח ידני</label><input id="fieldMealsAmount" inputmode="decimal"></div>
+          <div class="field"><label>שווי ארוחות ידני</label><input id="mealValueAmount" inputmode="decimal"></div>
+          <div class="field"><label>רכיב לא חייב נוסף</label><input id="otherNonTaxableAmount" inputmode="decimal"></div>
+          <div class="field"><label>הערות</label><textarea id="notes"></textarea></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">ניכויי חובה משוערים</h3>
+        <div class="grid three">
+          <div class="field"><label>מס הכנסה</label><input id="incomeTax" inputmode="decimal"></div>
+          <div class="field"><label>ביטוח לאומי</label><input id="nationalInsurance" inputmode="decimal"></div>
+          <div class="field"><label>ביטוח בריאות</label><input id="healthInsurance" inputmode="decimal"></div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="t">ברוטו צפוי</div><div class="v mono" id="expectedGross">₪0</div></div>
+        <div class="kpi"><div class="t">נטו צפוי</div><div class="v mono" id="expectedNet">₪0</div></div>
+        <div class="kpi"><div class="t">בסיס פנסיה</div><div class="v mono" id="pensionBase">₪0</div></div>
+        <div class="kpi"><div class="t">ניכויי חיסכון</div><div class="v mono" id="savingsDeduction">₪0</div></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">פירוט רכיבים</h3>
+        <div id="lineItems" class="table-like"></div>
+      </div>
+    </section>
+
+    <section id="payslip" class="view">
+      <div class="card">
+        <div class="row between">
+          <div>
+            <h2 style="margin:0">בדיקת תלוש</h2>
+            <div class="muted small">אפשר להעלות PDF של תלוש ישירות מהאייפון</div>
+          </div>
+          <button class="btn" id="runValidationBtn">בדוק תלוש</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="grid">
+          <div class="field">
+            <label>העלה PDF של תלוש</label>
+            <input id="pdfFile" type="file" accept="application/pdf">
+          </div>
+          <div class="field">
+            <label>או הדבק טקסט גולמי</label>
+            <textarea id="rawPayslipText" placeholder="אפשר להדביק כאן טקסט גולמי של תלוש"></textarea>
+          </div>
+          <div class="row">
+            <button class="btn ghost" id="extractPdfBtn">חלץ טקסט מ-PDF</button>
+            <button class="btn secondary" id="parseTextBtn">נתח טקסט</button>
+          </div>
+          <div id="parseStatus" class="note hidden"></div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi"><div class="t">ברוטו בפועל</div><div class="v mono" id="actualGross">₪0</div></div>
+        <div class="kpi"><div class="t">נטו בפועל</div><div class="v mono" id="actualNet">₪0</div></div>
+        <div class="kpi"><div class="t">ניכויי חובה בפועל</div><div class="v mono" id="actualMandatory">₪0</div></div>
+        <div class="kpi"><div class="t">סטטוס</div><div class="v" id="validationStatus">—</div></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">פערים</h3>
+        <div id="diffList" class="grid"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-top:0">רכיבים שזוהו</h3>
+        <div id="parsedLineItems" class="table-like"></div>
+      </div>
+    </section>
+
+    <section id="backup" class="view">
+      <div class="card">
+        <h2 style="margin-top:0">גיבוי / העברה בין אייפון למקבוק</h2>
+        <p class="muted">עד שיחובר סנכרון ענן מלא, אפשר לייצא קובץ גיבוי ולהעביר דרך AirDrop, קבצים, מייל או וואטסאפ לעצמך.</p>
+        <div class="row">
+          <button class="btn" id="exportBtn">ייצא גיבוי JSON</button>
+          <label class="btn secondary" style="display:inline-flex;align-items:center;justify-content:center">
+            ייבא גיבוי
+            <input id="importFile" type="file" accept="application/json" class="hidden">
+          </label>
+        </div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">הגדרות פרופיל</h3>
+        <div class="grid two">
+          <div class="field"><label>שעת משרד</label><input id="profileOfficeRate" inputmode="decimal"></div>
+          <div class="field"><label>שעת שטח</label><input id="profileFieldRate" inputmode="decimal"></div>
+          <div class="field"><label>נסיעה ליחידה</label><input id="profileTravelRate" inputmode="decimal"></div>
+          <div class="field"><label>ארוחת שטח ליחידה</label><input id="profileMealRate" inputmode="decimal"></div>
+          <div class="field"><label>שווי ארוחה ליחידה</label><input id="profileMealValueRate" inputmode="decimal"></div>
+          <div class="field"><label>פנסיה עובד (%)</label><input id="profilePensionRate" inputmode="decimal"></div>
+          <div class="field"><label>קרן השתלמות עובד (%)</label><input id="profileTrainingRate" inputmode="decimal"></div>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <button class="btn" id="saveProfileBtn">שמור הגדרות</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs" type="module"></script>
+  <script type="module">
+    import * as pdfjsLib from 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.min.mjs';
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/pdf.worker.min.mjs';
+
+    const STORAGE_KEY = 'payroll_checker_live_v1';
+
+    const defaultProfile = {
+      officeHourlyRate: 80,
+      fieldHourlyRate: 100,
+      travelUnitRate: 50,
+      fieldMealUnitRate: 50,
+      mealValueUnitRate: 44.84,
+      pensionEmployeeRate: 0.07,
+      trainingFundEmployeeRate: 0.025
+    };
+
+    const blankMonth = () => ({
+      id: crypto.randomUUID(),
+      year: new Date().getFullYear(),
+      month: new Date().getMonth() + 1,
+      officeHours100: 0,
+      fieldHours100: 0,
+      office125: 0,
+      office150: 0,
+      field125: 0,
+      field150: 0,
+      workDays: 0,
+      travelUnits: 0,
+      fieldMealUnits: 0,
+      mealValueUnits: 0,
+      totalWorkedHours: 0,
+      salaryBaseAmount: 0,
+      travelAmount: 0,
+      fieldMealsAmount: 0,
+      mealValueAmount: 0,
+      giftValueAmount: 0,
+      grossedUpGiftAmount: 0,
+      otherTaxableAmount: 0,
+      otherNonTaxableAmount: 0,
+      notes: '',
+      incomeTax: 0,
+      nationalInsurance: 0,
+      healthInsurance: 0,
+      payslipRawText: '',
+      parsedPayslip: null,
+      validation: null,
+      updatedAt: Date.now()
+    });
+
+    const state = loadState();
+    let currentMonthId = state.currentMonthId || null;
+
+    function loadState() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return { profile: { ...defaultProfile }, months: [], currentMonthId: null };
+        const parsed = JSON.parse(raw);
+        return {
+          profile: { ...defaultProfile, ...(parsed.profile || {}) },
+          months: Array.isArray(parsed.months) ? parsed.months : [],
+          currentMonthId: parsed.currentMonthId || null
+        };
+      } catch {
+        return { profile: { ...defaultProfile }, months: [], currentMonthId: null };
+      }
+    }
+
+    function saveState() {
+      state.currentMonthId = currentMonthId;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      renderDashboard();
+      updateSyncBadge();
+    }
+
+    function updateSyncBadge() {
+      document.getElementById('syncBadge').textContent = 'אחסון מקומי';
+    }
+
+    function qs(id){ return document.getElementById(id); }
+    function num(v){ const n = Number(String(v).replace(/,/g,'')); return Number.isFinite(n) ? n : 0; }
+    function money(v){ return new Intl.NumberFormat('he-IL',{style:'currency',currency:'ILS',maximumFractionDigits:2}).format(num(v)); }
+    function dec(v){ return new Intl.NumberFormat('he-IL',{maximumFractionDigits:2}).format(num(v)); }
+    function monthLabel(m){ return ['ינואר','פברואר','מרץ','אפריל','מאי','יוני','יולי','אוגוסט','ספטמבר','אוקטובר','נובמבר','דצמבר'][m-1] || m; }
+
+    function getCurrentMonth() {
+      let month = state.months.find(m => m.id === currentMonthId);
+      if (!month) {
+        month = blankMonth();
+        state.months.unshift(month);
+        currentMonthId = month.id;
+        saveState();
+      }
+      return month;
+    }
+
+    function setTab(tabId) {
+      document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === tabId));
+      document.querySelectorAll('.view').forEach(el => el.classList.toggle('active', el.id === tabId));
+    }
+
+    function computeMonth(month) {
+      const officePay = num(month.officeHours100) * num(state.profile.officeHourlyRate);
+      const fieldPay = num(month.fieldHours100) * num(state.profile.fieldHourlyRate);
+      const baseSalary = num(month.salaryBaseAmount);
+
+      const overtimeItems = [
+        { label:'משרד 125%', qty:num(month.office125), rate:100, key:'overtime.office_125' },
+        { label:'משרד 150%', qty:num(month.office150), rate:120, key:'overtime.office_150' },
+        { label:'שטח 125%', qty:num(month.field125), rate:125, key:'overtime.field_125' },
+        { label:'שטח 150%', qty:num(month.field150), rate:150, key:'overtime.field_150' }
+      ].filter(x => x.qty > 0);
+
+      const overtimeTotal = overtimeItems.reduce((s,x)=>s + x.qty*x.rate,0);
+
+      const travelAmount = num(month.travelAmount) !== 0 ? num(month.travelAmount) : num(month.travelUnits) * num(state.profile.travelUnitRate);
+      const fieldMealsAmount = num(month.fieldMealsAmount) !== 0 ? num(month.fieldMealsAmount) : num(month.fieldMealUnits) * num(state.profile.fieldMealUnitRate);
+      const mealValueAmount = num(month.mealValueAmount) !== 0 ? num(month.mealValueAmount) : num(month.mealValueUnits) * num(state.profile.mealValueUnitRate);
+
+      const expensesTotal = travelAmount + fieldMealsAmount + num(month.otherNonTaxableAmount);
+      const benefitValuesTotal = mealValueAmount + num(month.giftValueAmount) + num(month.grossedUpGiftAmount) + num(month.otherTaxableAmount);
+      const baseEarningsTotal = officePay + fieldPay + baseSalary;
+      const grossPayments = baseEarningsTotal + overtimeTotal + expensesTotal + benefitValuesTotal;
+
+      const pensionBase = officePay + fieldPay + baseSalary;
+      const trainingFundBase = pensionBase;
+      const pensionEmployee = pensionBase * num(state.profile.pensionEmployeeRate);
+      const trainingFundEmployee = trainingFundBase * num(state.profile.trainingFundEmployeeRate);
+      const employeeSavingsDeductions = pensionEmployee + trainingFundEmployee;
+      const mandatoryDeductions = num(month.incomeTax) + num(month.nationalInsurance) + num(month.healthInsurance);
+      const expectedNet = grossPayments - employeeSavingsDeductions - mandatoryDeductions;
+
+      const lineItems = [
+        { label:'שעות משרד 100%', qty:month.officeHours100, rate:state.profile.officeHourlyRate, amount:officePay },
+        { label:'שעות שטח 100%', qty:month.fieldHours100, rate:state.profile.fieldHourlyRate, amount:fieldPay },
+        ...(baseSalary ? [{ label:'משכורת בסיס', qty:'—', rate:'—', amount:baseSalary }] : []),
+        ...overtimeItems.map(x => ({ label:'שעות נוספות ' + x.label, qty:x.qty, rate:x.rate, amount:x.qty*x.rate })),
+        ...(travelAmount ? [{ label:'נסיעות', qty:month.travelUnits, rate:state.profile.travelUnitRate, amount:travelAmount }] : []),
+        ...(fieldMealsAmount ? [{ label:'ארוחות שטח', qty:month.fieldMealUnits, rate:state.profile.fieldMealUnitRate, amount:fieldMealsAmount }] : []),
+        ...(mealValueAmount ? [{ label:'שווי ארוחות', qty:month.mealValueUnits, rate:state.profile.mealValueUnitRate, amount:mealValueAmount }] : []),
+        ...(num(month.giftValueAmount) ? [{ label:'שווי מתנות', qty:'—', rate:'—', amount:num(month.giftValueAmount) }] : []),
+        ...(num(month.grossedUpGiftAmount) ? [{ label:'גלום שווי מתנות', qty:'—', rate:'—', amount:num(month.grossedUpGiftAmount) }] : [])
+      ];
+
+      return {
+        officePay, fieldPay, baseSalary, overtimeTotal, expensesTotal, benefitValuesTotal,
+        baseEarningsTotal, grossPayments, pensionBase, trainingFundBase, pensionEmployee,
+        trainingFundEmployee, employeeSavingsDeductions, mandatoryDeductions, expectedNet, lineItems
+      };
+    }
+
+    function parseCurrencyFromLabel(text, label) {
+      const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const regex = new RegExp(`${escaped}\\s+([\\d,]+(?:\\.\\d{1,2})?)`);
+      const match = text.match(regex);
+      return match ? num(match[1]) : 0;
+    }
+
+    function normalizeDescription(description){ return String(description).replace(/\s+/g,' ').trim(); }
+
+    function inferLineType(description) {
+      const d = normalizeDescription(description);
+      const rules = [
+        [/^משכורת$/, 'base.salary', 'earnings'],
+        [/שעות\s*משרד/, 'earnings.office_100', 'earnings'],
+        [/שעות\s*שטח/, 'earnings.field_100', 'earnings'],
+        [/ש\.נ\s*שטח.*125%/, 'overtime.field_125', 'overtime'],
+        [/ש\.נ\s*שטח.*150%/, 'overtime.field_150', 'overtime'],
+        [/שע\.משרד.*125%/, 'overtime.office_125', 'overtime'],
+        [/שע\.משרד.*150%/, 'overtime.office_150', 'overtime'],
+        [/נסיעות/, 'expense.travel', 'expenses'],
+        [/ארוחות\s*שטח/, 'expense.field_meals', 'expenses'],
+        [/שווי\s*ארוחות/, 'benefit.meal_value', 'benefits'],
+        [/שווי\s*מתנות/, 'benefit.gift_value', 'benefits'],
+        [/גלום\s*שווי\s*מתנ/, 'benefit.grossed_up_gift', 'benefits'],
+        [/מס\s*הכנסה/, 'deduction.income_tax', 'deductions'],
+        [/ביטוח\s*לאומי/, 'deduction.national_insurance', 'deductions'],
+        [/ביטוח\s*בריאות/, 'deduction.health_insurance', 'deductions']
+      ];
+      for (const [regex,key,category] of rules) {
+        if (regex.test(d)) return { normalizedKey:key, category };
+      }
+      return { normalizedKey:'', category:'earnings' };
+    }
+
+    function parsePayslipText(rawText) {
+      const grossPayments = parseCurrencyFromLabel(rawText, 'סה"כ תשלומים');
+      const mandatoryDeductions = parseCurrencyFromLabel(rawText, 'סה"כ ניכויי חובה');
+      const pensionDeductions = parseCurrencyFromLabel(rawText, 'סה"כ קופות גמל');
+      const netPayable = parseCurrencyFromLabel(rawText, 'נטו לתשלום') || parseCurrencyFromLabel(rawText, 'שכר נטו');
+
+      const incomeTax = parseCurrencyFromLabel(rawText, 'מס הכנסה');
+      const nationalInsurance = parseCurrencyFromLabel(rawText, 'ביטוח לאומי');
+      const healthInsurance = parseCurrencyFromLabel(rawText, 'ביטוח בריאות');
+
+      const lines = rawText.split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+      const items = [];
+
+      for (const line of lines) {
+        const compact = normalizeDescription(line);
+        if (!/^\d+\s+/.test(compact)) continue;
+        if (compact.includes('תשלומים בגין') || compact.includes('סה"כ') || compact.includes('סמל תאור')) continue;
+        const nums = compact.match(/-?[\d,.]+(?:\.\d+)?/g) || [];
+        if (!nums.length) continue;
+        const amount = num(nums[nums.length-1]);
+        if (!amount) continue;
+
+        const codeMatch = compact.match(/^(\d+)\s+/);
+        const symbolCode = codeMatch ? codeMatch[1] : '';
+        const descStart = codeMatch ? codeMatch[0].length : 0;
+        const descEnd = compact.length - String(nums[nums.length-1]).length;
+        const rawDescription = compact.slice(descStart, descEnd).replace(/[\d.,%-]+/g,' ').trim();
+        const description = normalizeDescription(rawDescription);
+        if (!description) continue;
+        const quantity = nums.length >= 3 ? num(nums[0]) : null;
+        const rate = nums.length >= 2 ? num(nums[nums.length-2]) : null;
+        const inferred = inferLineType(description);
+
+        items.push({ symbolCode, description, quantity, rate, amount, ...inferred });
+      }
+
+      return {
+        summary: {
+          grossPayments, mandatoryDeductions, pensionDeductions, netPayable,
+          incomeTax, nationalInsurance, healthInsurance
+        },
+        lineItems: items
+      };
+    }
+
+    function validateMonth(month) {
+      if (!month.parsedPayslip) return null;
+      const expected = computeMonth(month);
+      const actual = month.parsedPayslip.summary;
+      const diffs = [
+        {
+          label:'ברוטו',
+          expected: expected.grossPayments,
+          actual: actual.grossPayments,
+          difference: actual.grossPayments - expected.grossPayments,
+          tolerance: 1
+        },
+        {
+          label:'נטו',
+          expected: expected.expectedNet,
+          actual: actual.netPayable,
+          difference: actual.netPayable - expected.expectedNet,
+          tolerance: 3
+        },
+        {
+          label:'ניכויי חובה',
+          expected: expected.mandatoryDeductions,
+          actual: actual.incomeTax + actual.nationalInsurance + actual.healthInsurance,
+          difference: (actual.incomeTax + actual.nationalInsurance + actual.healthInsurance) - expected.mandatoryDeductions,
+          tolerance: 3
+        }
+      ].map(item => ({
+        ...item,
+        status: Math.abs(item.difference) <= item.tolerance ? 'good' : Math.abs(item.difference) <= item.tolerance * 3 ? 'warn' : 'bad'
+      }));
+
+      const overall = diffs.some(x=>x.status==='bad') ? 'דורש בדיקה' : diffs.some(x=>x.status==='warn') ? 'כמעט תקין' : 'תקין';
+      return { overall, diffs };
+    }
+
+    function renderMonthForm() {
+      const month = getCurrentMonth();
+      const fields = ['year','month','officeHours100','fieldHours100','office125','office150','field125','field150','workDays','travelUnits','fieldMealUnits','mealValueUnits','totalWorkedHours','salaryBaseAmount','travelAmount','fieldMealsAmount','mealValueAmount','giftValueAmount','grossedUpGiftAmount','otherTaxableAmount','otherNonTaxableAmount','incomeTax','nationalInsurance','healthInsurance','notes'];
+      fields.forEach(id => {
+        if (id === 'month') return;
+        qs(id).value = month[id] ?? '';
+      });
+      qs('monthNum').value = month.month;
+
+      const calc = computeMonth(month);
+      qs('expectedGross').textContent = money(calc.grossPayments);
+      qs('expectedNet').textContent = money(calc.expectedNet);
+      qs('pensionBase').textContent = money(calc.pensionBase);
+      qs('savingsDeduction').textContent = money(calc.employeeSavingsDeductions);
+      qs('lineItems').innerHTML = calc.lineItems.length ? calc.lineItems.map(item => `
+        <div class="line">
+          <div>${item.label}</div>
+          <div class="mono">${item.qty === '—' ? '—' : dec(item.qty)}</div>
+          <div class="mono">${item.rate === '—' ? '—' : money(item.rate)}</div>
+          <div class="mono"><strong>${money(item.amount)}</strong></div>
+        </div>
+      `).join('') : '<div class="muted">אין עדיין רכיבים</div>';
+    }
+
+    function renderPayslip() {
+      const month = getCurrentMonth();
+      qs('rawPayslipText').value = month.payslipRawText || '';
+      const parsed = month.parsedPayslip;
+      qs('actualGross').textContent = money(parsed?.summary?.grossPayments || 0);
+      qs('actualNet').textContent = money(parsed?.summary?.netPayable || 0);
+      qs('actualMandatory').textContent = money((parsed?.summary?.incomeTax || 0) + (parsed?.summary?.nationalInsurance || 0) + (parsed?.summary?.healthInsurance || 0));
+
+      const validation = month.validation || validateMonth(month);
+      qs('validationStatus').innerHTML = validation ? badgeHtml(validation.overall) : '—';
+
+      qs('diffList').innerHTML = validation ? validation.diffs.map(diff => `
+        <div class="diff-card">
+          <div class="diff-head">
+            <strong>${diff.label}</strong>
+            ${badgeHtml(diff.status === 'good' ? 'תקין' : diff.status === 'warn' ? 'פער קטן' : 'פער משמעותי')}
+          </div>
+          <div class="grid two" style="margin-top:10px">
+            <div class="pill">צפוי: <strong class="mono">${money(diff.expected)}</strong></div>
+            <div class="pill">בפועל: <strong class="mono">${money(diff.actual)}</strong></div>
+            <div class="pill">הפרש: <strong class="mono">${money(diff.difference)}</strong></div>
+            <div class="pill">טולרנס: <strong class="mono">${money(diff.tolerance)}</strong></div>
+          </div>
+        </div>
+      `).join('') : '<div class="muted">עדיין לא בוצעה בדיקה</div>';
+
+      qs('parsedLineItems').innerHTML = parsed?.lineItems?.length ? parsed.lineItems.map(item => `
+        <div class="line">
+          <div>${item.description}</div>
+          <div class="mono">${item.quantity ? dec(item.quantity) : '—'}</div>
+          <div class="mono">${item.rate ? money(item.rate) : '—'}</div>
+          <div class="mono"><strong>${money(item.amount)}</strong></div>
+        </div>
+      `).join('') : '<div class="muted">עדיין לא זוהו רכיבים</div>';
+    }
+
+    function badgeHtml(status) {
+      if (status === 'תקין') return '<span class="badge good">תקין</span>';
+      if (status === 'כמעט תקין' || status === 'פער קטן') return '<span class="badge warn">כמעט תקין</span>';
+      if (status === 'דורש בדיקה' || status === 'פער משמעותי') return '<span class="badge bad">דורש בדיקה</span>';
+      return '<span class="badge warn">'+status+'</span>';
+    }
+
+    function renderDashboard() {
+      const list = qs('monthList');
+      if (!state.months.length) {
+        list.innerHTML = '<div class="muted">אין עדיין חודשים שמורים</div>';
+      } else {
+        const sorted = [...state.months].sort((a,b)=> (b.year*100+b.month) - (a.year*100+a.month));
+        list.innerHTML = sorted.map(month => {
+          const calc = computeMonth(month);
+          const validation = month.validation || validateMonth(month);
+          return `
+            <button class="month-item" data-open-month="${month.id}" style="text-align:right">
+              <div class="row between">
+                <strong>${monthLabel(month.month)} ${month.year}</strong>
+                ${validation ? badgeHtml(validation.overall) : '<span class="badge warn">ללא בדיקה</span>'}
+              </div>
+              <div class="row small muted" style="margin-top:8px">
+                <span>ברוטו: ${money(calc.grossPayments)}</span>
+                <span>נטו צפוי: ${money(calc.expectedNet)}</span>
+              </div>
+            </button>
+          `;
+        }).join('');
+      }
+
+      const month = currentMonthId ? getCurrentMonth() : null;
+      const calc = month ? computeMonth(month) : null;
+      const validation = month ? month.validation || validateMonth(month) : null;
+      qs('dashGross').textContent = money(calc?.grossPayments || 0);
+      qs('dashNet').textContent = money(calc?.expectedNet || 0);
+      qs('dashActualNet').textContent = money(month?.parsedPayslip?.summary?.netPayable || 0);
+      qs('dashStatus').innerHTML = validation ? badgeHtml(validation.overall) : '—';
+
+      document.querySelectorAll('[data-open-month]').forEach(btn => {
+        btn.onclick = () => {
+          currentMonthId = btn.dataset.openMonth;
+          saveState();
+          renderAll();
+          setTab('month');
+        };
+      });
+    }
+
+    function renderProfile() {
+      qs('profileOfficeRate').value = state.profile.officeHourlyRate;
+      qs('profileFieldRate').value = state.profile.fieldHourlyRate;
+      qs('profileTravelRate').value = state.profile.travelUnitRate;
+      qs('profileMealRate').value = state.profile.fieldMealUnitRate;
+      qs('profileMealValueRate').value = state.profile.mealValueUnitRate;
+      qs('profilePensionRate').value = state.profile.pensionEmployeeRate * 100;
+      qs('profileTrainingRate').value = state.profile.trainingFundEmployeeRate * 100;
+    }
+
+    function renderAll() {
+      renderMonthForm();
+      renderPayslip();
+      renderDashboard();
+      renderProfile();
+    }
+
+    async function extractTextFromPdf(file) {
+      const data = new Uint8Array(await file.arrayBuffer());
+      const pdf = await pdfjsLib.getDocument({ data }).promise;
+      let text = '';
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const content = await page.getTextContent();
+        const pageText = content.items.map(item => item.str).join(' ');
+        text += pageText + '\n';
+      }
+      return text;
+    }
+
+    function wireEvents() {
+      document.querySelectorAll('.tab').forEach(btn => btn.addEventListener('click', () => setTab(btn.dataset.tab)));
+
+      qs('newMonthBtn').onclick = () => {
+        const month = blankMonth();
+        state.months.unshift(month);
+        currentMonthId = month.id;
+        saveState();
+        renderAll();
+        setTab('month');
+      };
+
+      qs('saveMonthBtn').onclick = () => {
+        const month = getCurrentMonth();
+        month.year = num(qs('year').value) || new Date().getFullYear();
+        month.month = num(qs('monthNum').value) || 1;
+        [
+          'officeHours100','fieldHours100','office125','office150','field125','field150','workDays','travelUnits',
+          'fieldMealUnits','mealValueUnits','totalWorkedHours','salaryBaseAmount','travelAmount','fieldMealsAmount',
+          'mealValueAmount','giftValueAmount','grossedUpGiftAmount','otherTaxableAmount','otherNonTaxableAmount',
+          'incomeTax','nationalInsurance','healthInsurance'
+        ].forEach(id => month[id] = num(qs(id).value));
+        month.notes = qs('notes').value || '';
+        month.updatedAt = Date.now();
+        month.validation = validateMonth(month);
+        saveState();
+        renderAll();
+        setTab('dashboard');
+      };
+
+      qs('resetMonthBtn').onclick = () => {
+        const fresh = blankMonth();
+        fresh.id = getCurrentMonth().id;
+        const idx = state.months.findIndex(m => m.id === fresh.id);
+        state.months[idx] = fresh;
+        saveState();
+        renderAll();
+      };
+
+      qs('extractPdfBtn').onclick = async () => {
+        const file = qs('pdfFile').files?.[0];
+        const status = qs('parseStatus');
+        if (!file) {
+          status.className = 'note danger';
+          status.textContent = 'לא נבחר קובץ PDF.';
+          return;
+        }
+        try {
+          status.className = 'note';
+          status.textContent = 'מחלץ טקסט מה-PDF...';
+          status.classList.remove('hidden');
+          const text = await extractTextFromPdf(file);
+          qs('rawPayslipText').value = text;
+          const month = getCurrentMonth();
+          month.payslipRawText = text;
+          saveState();
+          status.className = 'note success';
+          status.textContent = 'החילוץ הצליח. עכשיו אפשר ללחוץ "נתח טקסט" או "בדוק תלוש".';
+        } catch (err) {
+          status.className = 'note danger';
+          status.textContent = 'החילוץ נכשל. אפשר להדביק טקסט ידנית.';
+        }
+      };
+
+      qs('parseTextBtn').onclick = () => {
+        const text = qs('rawPayslipText').value.trim();
+        const status = qs('parseStatus');
+        if (!text) {
+          status.className = 'note danger';
+          status.textContent = 'אין טקסט לניתוח.';
+          status.classList.remove('hidden');
+          return;
+        }
+        const parsed = parsePayslipText(text);
+        const month = getCurrentMonth();
+        month.payslipRawText = text;
+        month.parsedPayslip = parsed;
+        month.validation = validateMonth(month);
+        month.updatedAt = Date.now();
+        saveState();
+        renderPayslip();
+        renderDashboard();
+        status.className = 'note success';
+        status.textContent = 'הטקסט נותח ונשמר לחודש הנוכחי.';
+        status.classList.remove('hidden');
+      };
+
+      qs('runValidationBtn').onclick = () => {
+        const month = getCurrentMonth();
+        if (!month.parsedPayslip && qs('rawPayslipText').value.trim()) {
+          month.parsedPayslip = parsePayslipText(qs('rawPayslipText').value.trim());
+        }
+        month.validation = validateMonth(month);
+        month.updatedAt = Date.now();
+        saveState();
+        renderPayslip();
+        renderDashboard();
+      };
+
+      qs('exportBtn').onclick = () => {
+        const blob = new Blob([JSON.stringify(state, null, 2)], { type:'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'payroll-backup.json';
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      qs('importFile').addEventListener('change', async (event) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+        const text = await file.text();
+        const imported = JSON.parse(text);
+        state.profile = { ...defaultProfile, ...(imported.profile || {}) };
+        state.months = Array.isArray(imported.months) ? imported.months : [];
+        currentMonthId = imported.currentMonthId || state.months[0]?.id || null;
+        saveState();
+        renderAll();
+        setTab('dashboard');
+      });
+
+      qs('saveProfileBtn').onclick = () => {
+        state.profile.officeHourlyRate = num(qs('profileOfficeRate').value);
+        state.profile.fieldHourlyRate = num(qs('profileFieldRate').value);
+        state.profile.travelUnitRate = num(qs('profileTravelRate').value);
+        state.profile.fieldMealUnitRate = num(qs('profileMealRate').value);
+        state.profile.mealValueUnitRate = num(qs('profileMealValueRate').value);
+        state.profile.pensionEmployeeRate = num(qs('profilePensionRate').value) / 100;
+        state.profile.trainingFundEmployeeRate = num(qs('profileTrainingRate').value) / 100;
+        saveState();
+        renderAll();
+      };
+    }
+
+    function populateMonthSelect() {
+      qs('monthNum').innerHTML = Array.from({length:12},(_,i)=> `<option value="${i+1}">${monthLabel(i+1)}</option>`).join('');
+    }
+
+    populateMonthSelect();
+    wireEvents();
+    renderAll();
+  </script>
+</body>
+</html>
