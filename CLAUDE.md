@@ -18,6 +18,7 @@
 ### 2. בדיקות תמיד מהאייפון, ותמיד קודם על v35
 - **v34** = production, מחובר ל-Supabase, נתונים אמיתיים
 - **v35** = sandbox, מנותק מ-Supabase, בטוח לבדיקות
+- **v36** = redesign sandbox (חדש) — עיצוב Clean & Minimal לחלוטין, namespace מבודד (`v36demo__`), demo בלבד. JS זהה ל-v35 verbatim. לא לערבב נתונים בין v35 ל-v36.
 
 זרימה:
 1. שינוי על v35
@@ -31,12 +32,23 @@
 ### 3. אין `git push` אוטומטית
 תמיד אישור ידני לפני push.
 
+## מרחבי שמירה (localStorage namespaces)
+
+| גרסה | prefix | מטרה |
+|-------|--------|-------|
+| v34 production | (אין prefix) | נתונים אמיתיים של רז ושירה |
+| v35 sandbox | `v35demo__` | בדיקות לפני העלאה ל-v34 |
+| v36 redesign | `v36demo__` | עיצוב חדש — מבודד לחלוטין, demo בלבד |
+
+כל גרסה רואה רק את ה-localStorage שלה — אין דליפה בין גרסאות.
+
 ## מבנה הגרסאות
 
 | קובץ | תפקיד | חיבור Supabase |
 |-------|--------|------------------|
 | `expense-app-v34.html` | production — הגרסה החיה | ✅ |
 | `expense-app-v35.html` | sandbox — בודקים פה קודם | ❌ |
+| `expense-app-v36.html` | redesign experimental — Clean & Minimal | ❌ |
 | `expense-app-demo.html` | דמו | — |
 | `demo.html` | דמו נוסף | — |
 | `expense-app-v34-local-draft.html` | draft מקומי, לא לעריכה | — |
@@ -59,3 +71,10 @@ cp "FILE.json" "FILE.backup-$(date +%Y-%m-%d_%H-%M).json"
 - בעבודה נוכחית בתוך worktree (`.claude/worktrees/<name>/`)
 - שינויים מקומיים → commit ב-worktree → merge ל-main
 - אסור push בלי אישור
+
+## תכנון פעיל
+**נכון ל-2026-05-02:** עיצוב מחדש v36 הושלם ועבר smoke test.
+- קובץ יעד: `expense-app-v36.html` (Clean & Minimal sidebar layout)
+- v35 לא נגוע — נשאר כ-fallback לשינויים
+- כשהמשתמש מאשר — push ל-GitHub Pages, בדיקה מאייפון
+- תכנון מפורט: `/Users/mac/.claude/plans/cozy-growing-stallman.md`
