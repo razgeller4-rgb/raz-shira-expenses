@@ -223,7 +223,7 @@ input, select, textarea { font: inherit; }
 .tab-panel .section > .header { background: none; color: var(--text); }
 
 /* ── Charts ───────────────────────────────────────────────────── */
-.chart-wrap { width: 100%; min-height: 280px; }
+.chart-wrap { width: 100%; }
 .chart-toolbar { display: flex; justify-content: space-between; align-items: center;
   margin-bottom: 14px; flex-wrap: wrap; gap: 8px; }
 .chart-outer { position: relative; height: 260px; }
@@ -808,6 +808,89 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .debt-empty { text-align:center; padding:18px; color:var(--muted); font-size:13px; }
 .debt-empty-actions { display:flex; gap:7px; flex-wrap:wrap; margin-top:10px; justify-content:center; }
 .debt-meta-editor { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:12px; margin-bottom:10px; }
+
+/* ── Info Box ─────────────────────────────────────────────────── */
+.info-box {
+  display:flex; align-items:flex-start; gap:9px;
+  background:rgba(99,102,241,.06); border:1px solid rgba(99,102,241,.15);
+  border-radius:var(--r-md); padding:10px 14px;
+  font-size:12px; color:var(--text-2); line-height:1.55; margin-bottom:14px;
+}
+.info-box::before { content:"ℹ️"; font-size:13px; flex-shrink:0; margin-top:1px; }
+@media (max-width:600px) { .info-box { display:none; } }
+
+/* ── Income Topbar ────────────────────────────────────────────── */
+.income-topbar {
+  display:flex; justify-content:space-between; align-items:center;
+  gap:12px; margin-bottom:14px; padding:14px 16px;
+  background:linear-gradient(135deg,rgba(34,197,94,.07),rgba(34,197,94,.02));
+  border:1px solid rgba(34,197,94,.18); border-radius:var(--r-xl);
+}
+.income-summary .label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.income-summary .value { font-size:22px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--good); letter-spacing:-.5px; margin-top:2px; }
+.income-summary .micro { font-size:11px; color:var(--muted); margin-top:2px; }
+.income-source-chip { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; background:rgba(34,197,94,.12); color:var(--c-income); }
+@media (max-width:600px) {
+  .income-topbar { flex-direction:column; align-items:flex-start; gap:10px; padding:12px 14px; }
+  .income-topbar .actions { flex-wrap:wrap; }
+}
+
+/* ── Income Row redesign ──────────────────────────────────────── */
+.income-row.display-rich {
+  grid-template-columns: 1fr auto auto auto;
+  background:var(--surface); padding:13px 16px;
+}
+.income-cell { display:flex; flex-direction:column; gap:2px; }
+.income-cell strong { font-size:14px; font-weight:800; color:var(--text); }
+.income-cell.amount strong { color:var(--good); font-size:15px; }
+.income-cell .tiny { font-size:10px; color:var(--muted); }
+.income-cell .mobile-label { display:none; }
+@media (max-width:600px) {
+  .income-row.display-rich { grid-template-columns:1fr auto; }
+  .income-row.display-rich .income-cell:nth-child(3) { display:none; }
+  .income-row.editing { display:flex; flex-direction:column; gap:8px; }
+}
+
+/* ── Filter Redesign ──────────────────────────────────────────── */
+.filter-body { display:flex; flex-direction:column; gap:10px; }
+.filter-search-row { display:flex; gap:8px; align-items:center; }
+.filter-search-input {
+  flex:1; height:40px; padding:0 14px;
+  border:1.5px solid var(--border); border-radius:var(--r-lg);
+  background:var(--surface); color:var(--text); font-size:14px;
+  outline:none; transition:border-color .12s;
+}
+.filter-search-input:focus { border-color:var(--c-expenses); box-shadow:0 0 0 3px rgba(249,115,22,.08); }
+.filter-search-input::placeholder { color:var(--muted); }
+.filter-cats-row { display:flex; align-items:center; gap:10px; min-height:30px; }
+.filter-cats-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; white-space:nowrap; flex-shrink:0; }
+.filter-chip-scroll { overflow-x:auto; scrollbar-width:none; flex-wrap:nowrap !important; -webkit-overflow-scrolling:touch; }
+.filter-chip-scroll::-webkit-scrollbar { display:none; }
+.filter-selects-row { display:flex; flex-wrap:wrap; gap:7px; align-items:flex-end; }
+.filter-select-item { display:flex; flex-direction:column; gap:3px; }
+.filter-select-item label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
+.filter-select-item select {
+  height:34px; padding:0 8px; min-width:88px;
+  border:1.5px solid var(--border); border-radius:var(--r-md);
+  background:var(--surface); color:var(--text);
+  font-size:13px; font-weight:600; cursor:pointer; outline:none;
+}
+.filter-select-item select:focus { border-color:var(--c-expenses); }
+.filter-reset-btn { height:34px; align-self:flex-end; padding:0 12px; font-size:12px; }
+@media (max-width:600px) {
+  .filter-selects-row { gap:6px; }
+  .filter-select-item select { min-width:76px; font-size:12px; height:32px; }
+  .filter-reset-btn { height:32px; }
+}
+
+/* ── Section accent border per-tab ───────────────────────────── */
+[data-panel="budget"]   .section { border-right:3px solid rgba(16,185,129,.3); }
+[data-panel="income"]   .section { border-right:3px solid rgba(34,197,94,.3); }
+[data-panel="cards"]    .section { border-right:3px solid rgba(139,92,246,.3); }
+[data-panel="expenses"] .section { border-right:3px solid rgba(249,115,22,.3); }
+[data-panel="shared"]   .section { border-right:3px solid rgba(244,63,94,.3); }
+[data-panel="debts"]    .section { border-right:3px solid rgba(239,68,68,.3); }
+[data-panel="yearly"]   .section { border-right:3px solid rgba(59,130,246,.3); }
 </style>
 </head>
 <body>
@@ -963,16 +1046,15 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
           <span>💸 הכנסות חודשיות</span>
         </div>
         <div class="content">
-          <div class="info-box">אפשר להזין כאן את כל ההכנסות של חלון החיוב של החודש הנבחר, כולל משכורת, משיכות ביט והעברות נוספות. ברירת המחדל היא חלון מה־10 בחודש ועד ה־9 בחודש הבא, כדי להתיישר עם חיובי האשראי.</div>
           <div class="income-topbar">
             <div class="income-summary">
-              <div class="small">סה״כ הכנסות לחודש</div>
+              <div class="label">סה״כ הכנסות</div>
               <div class="value" id="incomeMonthTotal">—</div>
               <div class="micro" id="incomeWindowRange">—</div>
             </div>
             <div class="actions" style="margin-top:0">
-              <button id="toggleIncomeEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
-              <button id="addIncomeBtn" class="success-btn" type="button">הכנסה חדשה +</button>
+              <button id="toggleIncomeEditBtn" class="secondary" type="button">עריכה</button>
+              <button id="addIncomeBtn" class="success-btn" type="button">+ הכנסה</button>
             </div>
           </div>
           <div id="incomeList" class="income-list"></div>
@@ -987,15 +1069,14 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
           <span>💳 אשראיים ומחזורי חיוב</span>
         </div>
         <div class="content">
-          <div class="info-box">כאן מגדירים לכל חשבון את הכרטיסים שלו, את יום תחילת מחזור החיוב, ואם הכרטיס הוא דיירקט/מיידי. כרטיס מיידי יורד ישר מהעו״ש ולכן לא ייכנס לחישובי תאריך החיוב העתידי.</div>
-          <div class="income-topbar">
+          <div class="income-topbar" style="border-color:rgba(139,92,246,.2);background:linear-gradient(135deg,rgba(139,92,246,.07),rgba(139,92,246,.02))">
             <div class="income-summary">
-              <div class="small">כרטיסים פעילים בחשבון</div>
-              <div class="value" id="paymentMethodCount">—</div>
+              <div class="label">כרטיסים פעילים</div>
+              <div class="value" style="color:var(--c-cards)" id="paymentMethodCount">—</div>
             </div>
             <div class="actions" style="margin-top:0">
-              <button id="toggleCardEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
-              <button id="addCardBtn" class="success-btn" type="button">כרטיס חדש +</button>
+              <button id="toggleCardEditBtn" class="secondary" type="button">עריכה</button>
+              <button id="addCardBtn" class="success-btn" type="button">+ כרטיס</button>
             </div>
           </div>
           <div id="paymentMethodList" class="income-list"></div>
@@ -1010,16 +1091,23 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
           <span>🔎 סינון ומיון</span>
         </div>
         <div class="content">
-          <div class="filter-grid">
-            <div><div class="small" style="margin-bottom:5px">חיפוש בית עסק / הערות</div><input id="searchInput" placeholder="חיפוש חופשי"></div>
-            <div class="category-filter-field"><div class="small" style="margin-bottom:5px">קטגוריות</div><div id="filterCategoryChips" class="filter-chip-group"></div><div class="micro" style="margin-top:5px">אפשר לבחור כמה קטגוריות. בלי בחירה = הכל.</div></div>
-            <div><div class="small" style="margin-bottom:5px">אשראי</div><select id="filterPayment"><option value="">הכל</option></select></div>
-            <div><div class="small" style="margin-bottom:5px">סוג</div><select id="filterType"><option value="">הכל</option><option value="קבועה">קבועה</option><option value="משתנה">משתנה</option></select></div>
-            <div><div class="small" style="margin-bottom:5px">מיידי</div><select id="filterImmediate"><option value="">הכל</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
-            <div><div class="small" style="margin-bottom:5px">מיון לפי</div><select id="sortBy"><option value="date">תאריך</option><option value="amount">סכום</option><option value="merchant">בית עסק</option><option value="category">קטגוריה</option></select></div>
-            <div><div class="small" style="margin-bottom:5px">כיוון מיון</div><select id="sortDir"><option value="asc">עולה</option><option value="desc">יורד</option></select></div>
+          <div class="filter-body">
+            <div class="filter-search-row">
+              <input id="searchInput" class="filter-search-input" placeholder="🔎  חיפוש בית עסק, הערות...">
+            </div>
+            <div class="filter-cats-row">
+              <span class="filter-cats-label">קטגוריה</span>
+              <div id="filterCategoryChips" class="filter-chip-group filter-chip-scroll"></div>
+            </div>
+            <div class="filter-selects-row">
+              <div class="filter-select-item"><label>אשראי</label><select id="filterPayment"><option value="">הכל</option></select></div>
+              <div class="filter-select-item"><label>סוג</label><select id="filterType"><option value="">הכל</option><option value="קבועה">קבועה</option><option value="משתנה">משתנה</option></select></div>
+              <div class="filter-select-item"><label>מיידי</label><select id="filterImmediate"><option value="">הכל</option><option value="כן">כן</option><option value="לא">לא</option></select></div>
+              <div class="filter-select-item"><label>מיון לפי</label><select id="sortBy"><option value="date">תאריך</option><option value="amount">סכום</option><option value="merchant">בית עסק</option><option value="category">קטגוריה</option></select></div>
+              <div class="filter-select-item"><label>כיוון</label><select id="sortDir"><option value="asc">עולה</option><option value="desc">יורד</option></select></div>
+              <button class="secondary filter-reset-btn" onclick="resetFilters()">נקה ✕</button>
+            </div>
           </div>
-          <div class="actions"><button class="secondary" onclick="resetFilters()">נקה סינון</button></div>
         </div>
       </div>
 
