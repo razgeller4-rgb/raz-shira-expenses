@@ -209,7 +209,8 @@ input, select, textarea { font: inherit; }
 .dashboard-note { display: flex; justify-content: space-between; align-items: flex-start;
   gap: 16px; flex-wrap: wrap; margin-bottom: 16px; }
 .dashboard-note-top { flex: 1; }
-.prefs-panel { margin-top: 12px; }
+.prefs-panel { margin-top: 12px; display: none; }
+.prefs-panel.open { display: block; }
 
 /* ── Sections ─────────────────────────────────────────────────── */
 .section { background: var(--surface); border-radius: var(--r-xl); margin-bottom: 14px;
