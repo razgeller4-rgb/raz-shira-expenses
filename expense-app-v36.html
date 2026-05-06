@@ -2,7 +2,7 @@
 <html lang="he" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Expense App V36</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
@@ -46,14 +46,15 @@
 
 /* ── Reset ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { max-width: 100%; overflow-x: clip; }
+html, body { max-width: 100%; overflow-x: clip; height: 100%; }
 body { font-family: 'Inter', system-ui, Arial, sans-serif; font-size: 14px;
   line-height: 1.5; color: var(--text); background: var(--bg); }
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; }
 
 /* ── App Shell ────────────────────────────────────────────────── */
-.app { display: flex; flex-direction: column; min-height: 100vh; }
+/* 100dvh = dynamic viewport height — adjusts as iOS Safari chrome shows/hides */
+.app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 
 /* ── Topbar ───────────────────────────────────────────────────── */
 .topbar {
@@ -125,7 +126,7 @@ input, select, textarea { font: inherit; }
 .pill-btn[data-tab="backup"].active    { background: var(--c-backup);    color:#fff; box-shadow:0 2px 10px rgba(100,116,139,.4); }
 
 /* ── Main Content ─────────────────────────────────────────────── */
-.main { flex: 1; padding: 20px 16px 40px; }
+.main { flex: 1; padding: 20px 16px 40px; padding-bottom: max(40px, calc(40px + env(safe-area-inset-bottom, 0px))); }
 .content-inner { max-width: var(--content-max); margin: 0 auto; }
 
 /* ── Panels ───────────────────────────────────────────────────── */
@@ -665,7 +666,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── Mobile Responsive (iPhone-first pass) ──────────────────── */
 @media (max-width:600px) {
-  .main { padding: 14px 12px 32px; }
+  .main { padding: 14px 12px 32px; padding-bottom: calc(88px + env(safe-area-inset-bottom, 0px)); }
   .panel-hero { padding: 16px 18px; margin-bottom: 14px; }
   .panel-hero-title { font-size: 18px; }
   .panel-hero-sub   { font-size: 12px; }
@@ -773,7 +774,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── FAB (Floating Action Button) ────────────────────────────── */
 .fab {
-  position:fixed; bottom:24px; left:20px; z-index:45;
+  position:fixed; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); left:20px; z-index:45;
   width:54px; height:54px; border-radius:50%;
   background:linear-gradient(135deg,#f97316,#fb923c);
   color:#fff; border:none; font-size:26px; font-weight:400; line-height:1;
