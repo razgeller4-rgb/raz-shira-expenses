@@ -621,7 +621,8 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   font-variant-numeric: tabular-nums; text-align: right; font-size: 12px; }
 .year-table tr:last-child td { border-bottom: none; }
 .year-table tr:hover td { background: var(--bg); }
-.yearly-config { display: flex; flex-wrap: wrap; gap: 7px; }
+.yearly-config { flex-wrap: wrap; gap: 7px; }
+.prefs-panel.yearly-config.open { display: flex; }
 .yearly-config label { display: flex; align-items: center; gap: 5px; font-size: 12px;
   font-weight: 600; cursor: pointer; padding: 4px 8px;
   border: 1px solid var(--border); border-radius: 999px; background: var(--bg); transition: all .1s; }
