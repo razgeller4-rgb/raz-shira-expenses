@@ -4932,6 +4932,7 @@ function renderTable(rows){
           </div>
         </div>
         <div class="edit-card-grid">
+          <div class="field"><label>תאריך</label><input type="date" value="${toIsoDate(draft.date_raw)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'date_raw', formatDateForStorage(this.value))` : `updateRow(${rowId}, 'date_raw', formatDateForStorage(this.value))`}"></div>
           <div class="field"><label>בית עסק</label><input value="${String(draft.merchant || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
           <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
           <div class="field"><label>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
