@@ -559,8 +559,8 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   border-radius: var(--r-lg); padding: 13px 15px; box-shadow: var(--shadow-sm); }
 .shared-expense-list { display: flex; flex-direction: column; gap: 7px; }
 .shared-expense-card { background: var(--surface); border: 1px solid var(--border);
-  border-radius: var(--r-lg); padding: 13px 16px; box-shadow: var(--shadow-xs); transition: box-shadow .1s; }
-.shared-expense-card:hover { box-shadow: var(--shadow-sm); }
+  border-radius: var(--r-xl); overflow: hidden; box-shadow: var(--shadow-sm); transition: box-shadow .15s; }
+.shared-expense-card:hover { box-shadow: var(--shadow-md); }
 
 /* ── Debts ────────────────────────────────────────────────────── */
 .debt-card { background: var(--surface); border: 1px solid var(--border);
@@ -774,7 +774,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── FAB (Floating Action Button) ────────────────────────────── */
 .fab {
-  position:fixed; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); left:20px; z-index:45;
+  position:fixed; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); right:20px; z-index:45;
   width:54px; height:54px; border-radius:50%;
   background:linear-gradient(135deg,#f97316,#fb923c);
   color:#fff; border:none; font-size:26px; font-weight:400; line-height:1;
@@ -866,12 +866,25 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .recovery-item-meta .tag { background:rgba(99,102,241,.1); color:var(--accent); }
 .recovery-item-actions { display:flex; gap:6px; flex-wrap:wrap; margin-top:6px; }
 .recovery-empty { text-align:center; padding:20px; color:var(--muted); font-size:13px; background:var(--bg); border:1px dashed var(--border); border-radius:var(--r-md); }
-.shared-expense-top { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; margin-bottom:6px; }
-.shared-expense-title { font-size:13px; font-weight:700; color:var(--text); }
-.shared-expense-meta { display:flex; gap:5px; flex-wrap:wrap; margin-bottom:7px; }
-.shared-chip { display:inline-block; padding:2px 8px; border-radius:999px; font-size:10px; font-weight:700; background:rgba(244,63,94,.1); color:var(--c-shared); margin-inline-end:3px; }
-.shared-expense-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(110px,1fr)); gap:7px; }
-.shared-expense-metric { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-sm); padding:8px 10px; }
+/* shared expense card — redesigned */
+.sec-header { background:linear-gradient(135deg,#881337,#f43f5e,#fb7185); padding:14px 16px;
+  display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
+.sec-header-info { flex:1; min-width:0; }
+.sec-header-name { font-size:15px; font-weight:800; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.sec-header-date { font-size:11px; color:rgba(255,255,255,.75); margin-top:2px; }
+.sec-header-amount { font-size:22px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; flex-shrink:0; }
+.sec-body { padding:12px 14px; }
+.sec-split-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:10px; }
+.sec-split-item { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:9px 11px; }
+.sec-split-item.mine { border-color:rgba(244,63,94,.3); background:rgba(244,63,94,.05); }
+.sec-split-label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:3px; }
+.sec-split-value { font-size:17px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--text); }
+.sec-split-item.mine .sec-split-value { color:var(--c-shared); }
+.sec-footer { display:flex; align-items:center; gap:5px; flex-wrap:wrap; padding-top:8px; border-top:1px solid var(--border); }
+.sec-footer-chip { display:inline-flex; align-items:center; padding:3px 9px; border-radius:999px;
+  font-size:10px; font-weight:700; background:rgba(244,63,94,.09); color:var(--c-shared); }
+.sec-footer-chip.payer { background:rgba(244,63,94,.16); }
+.sec-footer-notes { font-size:11px; color:var(--muted); font-style:italic; margin-inline-start:auto; max-width:50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .modal-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
 @media (max-width:480px) { .modal-grid { grid-template-columns:1fr 1fr; } }
 .modal-stat { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 13px; text-align:center; }
@@ -5064,36 +5077,33 @@ function renderSharedExpensesTab(){
   list.innerHTML = entries.map(entry => {
     const payerLabel = getUserLabel(entry.payerId);
     const partnerRowLabel = getUserLabel(entry.partnerId);
+    const myShare = entry.payerId === currentUser ? entry.yourShare : entry.partnerShare;
+    const theirShare = entry.payerId === currentUser ? entry.partnerShare : entry.yourShare;
     return `
       <div class="shared-expense-card">
-        <div class="shared-expense-top">
-          <div class="shared-expense-title">
-            <strong>${entry.merchant}</strong>
-            <div class="small">${entry.date_raw || "ללא תאריך"} · ${formatSheetLabel(entry.sheet)}</div>
+        <div class="sec-header">
+          <div class="sec-header-info">
+            <div class="sec-header-name">${entry.merchant}</div>
+            <div class="sec-header-date">${entry.date_raw || "ללא תאריך"} · ${formatSheetLabel(entry.sheet)}</div>
           </div>
-          <div class="shared-expense-meta">
-            <span class="shared-chip">שילם: ${payerLabel}</span>
-            <span class="shared-chip">חלוקה: ${entry.sharedLabel}</span>
-            <span class="shared-chip">${entry.splitMode === "amount" ? "חלוקה לפי סכום" : "חלוקה לפי אחוזים"}</span>
-            <span class="shared-chip">${entry.payment || "העברה בנקאית"}</span>
-          </div>
+          <div class="sec-header-amount">${fmt(entry.amount)}</div>
         </div>
-        <div class="shared-expense-grid">
-          <div class="shared-expense-metric">
-            <div class="label">סכום העסקה</div>
-            <strong>${fmt(entry.amount)}</strong>
+        <div class="sec-body">
+          <div class="sec-split-row">
+            <div class="sec-split-item mine">
+              <div class="sec-split-label">החלק שלי</div>
+              <div class="sec-split-value">${fmt(myShare)}</div>
+            </div>
+            <div class="sec-split-item">
+              <div class="sec-split-label">של ${partnerRowLabel}</div>
+              <div class="sec-split-value">${fmt(theirShare)}</div>
+            </div>
           </div>
-          <div class="shared-expense-metric">
-            <div class="label">החלק שלי</div>
-            <strong>${fmt(entry.payerId === currentUser ? entry.yourShare : entry.partnerShare)}</strong>
-          </div>
-          <div class="shared-expense-metric">
-            <div class="label">החלק של ${partnerRowLabel}</div>
-            <strong>${fmt(entry.payerId === currentUser ? entry.partnerShare : entry.yourShare)}</strong>
-          </div>
-          <div class="shared-expense-metric">
-            <div class="label">הערות</div>
-            <strong>${entry.notes || "ללא הערה"}</strong>
+          <div class="sec-footer">
+            <span class="sec-footer-chip payer">שילם: ${payerLabel}</span>
+            <span class="sec-footer-chip">${entry.sharedLabel}</span>
+            ${entry.payment ? `<span class="sec-footer-chip">${entry.payment}</span>` : ""}
+            ${entry.notes ? `<span class="sec-footer-notes">${entry.notes}</span>` : ""}
           </div>
         </div>
       </div>
