@@ -1535,8 +1535,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   </div>
 </div>
 
-<!-- ── Debug box ──────────────────────────────────────────────── -->
-<div id="localDraftDebug" style="display:none;position:fixed;left:12px;bottom:12px;z-index:9999;max-width:min(560px,calc(100vw - 24px));background:rgba(114,35,28,.96);color:#fff;border-radius:14px;padding:12px 14px;box-shadow:0 18px 34px rgba(0,0,0,.24);font-size:13px;line-height:1.55;text-align:left;direction:ltr"></div>
+<!-- debug box removed in v37 (production) -->
 
 <!-- Pre-script error handler -->
 <script>
@@ -1814,8 +1813,15 @@ function getTimeMs(value){
 function getLocalDataChangedAt(){
   return localStorage.getItem(LOCAL_DATA_CHANGED_AT_KEY) || "";
 }
+let autoRecoveryTimer = null;
+function scheduleAutoRecoveryPoint(){
+  if(IS_LOCAL_DRAFT_FILE) return;
+  clearTimeout(autoRecoveryTimer);
+  autoRecoveryTimer = setTimeout(() => rememberLocalRecoveryPoint("שינוי נתונים"), 30000);
+}
 function markLocalDataChanged(timestamp=getIsoNow()){
   localStorage.setItem(LOCAL_DATA_CHANGED_AT_KEY, timestamp);
+  scheduleAutoRecoveryPoint();
   return timestamp;
 }
 function buildRecoveryPointId(prefix="local"){
