@@ -5741,10 +5741,27 @@ function initMobileFilterState(){
   });
 }
 
+/* ── Keep Supabase project alive (ping every 3 days) ── */
+async function keepSupabaseAlive(){
+  if(IS_LOCAL_DRAFT_FILE) return;
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) return;
+  const PING_KEY = "expense_app_supabase_last_ping";
+  const lastPing = Number(localStorage.getItem(PING_KEY) || 0);
+  if(Date.now() - lastPing < 3 * 24 * 60 * 60 * 1000) return; // once per 3 days
+  try {
+    await fetch(`${config.url}/rest/v1/`, {
+      headers:{ apikey:config.anonKey, Authorization:`Bearer ${config.anonKey}` }
+    });
+    localStorage.setItem(PING_KEY, String(Date.now()));
+  } catch(e){ /* silent */ }
+}
+
 bootstrapCloudSync().finally(() => {
   if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
   render(); initHeroCollapse(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
+  setTimeout(keepSupabaseAlive, 3000);
 });
 
 
