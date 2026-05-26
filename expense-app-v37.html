@@ -1712,7 +1712,8 @@ const LOAN_SCHEDULE = [
   {installment:35, dueDate:"23/04/2028", total:948.20, interest:13.29, principal:934.91},
   {installment:36, dueDate:"22/05/2028", total:948.20, interest:6.65, principal:941.55}
 ];
-let selectedSheet = "מרץ 26";
+const _initNow = new Date();
+let selectedSheet = formatSheetFromMonth(_initNow.getFullYear(), _initNow.getMonth() + 1);
 let chartInstance = null;
 let editMode = false;
 let addExpenseOpen = false;
