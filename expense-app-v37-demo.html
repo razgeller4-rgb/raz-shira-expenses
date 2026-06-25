@@ -4338,6 +4338,10 @@ function renderPaymentMethodTab(){
               <input type="number" min="1" max="31" value="${Number(method.cycleDay || 10)}" onchange="updatePaymentMethodRow('${method.id}', 'cycleDay', this.value)">
             </div>
             <div class="field">
+              <label>4 ספרות אחרונות (לזיהוי בייבוא)</label>
+              <input type="text" inputmode="numeric" maxlength="4" placeholder="למשל 8251" value="${String(method.last4 || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'last4', this.value)">
+            </div>
+            <div class="field">
               <label>סוג חיוב</label>
               <select onchange="updatePaymentMethodRow('${method.id}', 'isImmediate', this.value)">
                 <option value="delayed" ${method.isImmediate ? "" : "selected"}>לפי תאריך חיוב</option>
@@ -4417,6 +4421,8 @@ function updatePaymentMethodRow(id, field, value){
     methods[index].cycleDay = Number(value || 10);
   } else if(field === "isImmediate"){
     methods[index].isImmediate = value === "immediate";
+  } else if(field === "last4"){
+    methods[index].last4 = String(value || "").replace(/\D/g, "").slice(-4);
   } else {
     methods[index].name = String(value || "").trim() || oldName;
   }
@@ -6012,11 +6018,19 @@ function excelSerialToDisplayDate(value){
   const year = String(dateInfo.getUTCFullYear());
   return `${day}/${month}/${year}`;
 }
+function extractLast4(value){
+  const matches = String(value == null ? "" : value).match(/\d{4,}/g);
+  if(!matches) return "";
+  return matches[matches.length - 1].slice(-4);
+}
+function normalizeMatchText(value){
+  return normalizeStatementCell(value).toLowerCase().replace(/\s+/g, "");
+}
 function guessPaymentMethodForImport(cardLabel="", cardLast4="", cardBrand="", statementType=""){
-  const label = normalizeStatementCell(cardLabel).toLowerCase();
-  const last4 = String(cardLast4 || "").trim();
-  const brand = normalizeStatementCell(cardBrand).toLowerCase();
-  const type = normalizeStatementCell(statementType).toLowerCase();
+  const label = normalizeMatchText(cardLabel);
+  const last4 = extractLast4(cardLast4) || extractLast4(cardLabel);
+  const brand = normalizeMatchText(cardBrand);
+  const type = normalizeMatchText(statementType);
   const knownShiraMap = {
     "9886":"דיסקונט מיידי",
     "3411":"דיסקונט ויזה",
@@ -6026,15 +6040,19 @@ function guessPaymentMethodForImport(cardLabel="", cardLast4="", cardBrand="", s
     return knownShiraMap[last4];
   }
   const methods = getPaymentMethods();
-  const byLast4 = methods.find(method => last4 && String(method.last4 || "").trim() === last4);
+  // 1) Strongest signal: exact last-4 match against a configured card.
+  const byLast4 = methods.find(method => last4 && extractLast4(method.last4) === last4);
   if(byLast4) return byLast4.name;
+  // 2) Name / brand match — whitespace & case insensitive, Hebrew-aware.
   const candidates = methods.filter(method => {
-    const name = String(method.name || "").toLowerCase();
+    const name = normalizeMatchText(method.name);
     if(label && name && (label.includes(name) || name.includes(label))) return true;
+    if(brand && name && (brand.includes(name) || name.includes(brand))) return true;
     if(brand){
       if(brand.includes("ויזה") && name.includes("ויזה")) return true;
       if(brand.includes("מאסטר") && (name.includes("הייטקזון") || name.includes("מאסטר"))) return true;
       if(brand.includes("אמריקן") && name.includes("אמריקן")) return true;
+      if((brand.includes("מקס") || brand.includes("max")) && name.includes("מקס")) return true;
     }
     if(type.includes("מייד") && name.includes("מייד")) return true;
     return false;
@@ -6205,12 +6223,16 @@ function parseCCStatement(rows, filename){
 
 
 function showCCImportModal(result, filename){
-  ccImportRows = result.txns.map(t => Object.assign({}, t, {
-    category: "",
-    type: "\u05de\u05e9\u05ea\u05e0\u05d4",
-    payment: t.payment || "",
-    immediate: ""
-  }));
+  const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
+  ccImportRows = result.txns.map(t => {
+    const inferred = normalizeCategory(inferCategoryForMerchant(t.merchant));
+    return Object.assign({}, t, {
+      category: knownCategories.has(inferred) ? inferred : "",
+      type: "\u05de\u05e9\u05ea\u05e0\u05d4",
+      payment: t.payment || "",
+      immediate: ""
+    });
+  });
 
   // Mark duplicates
   refreshCCImportDuplicateState();
@@ -6221,22 +6243,9 @@ function showCCImportModal(result, filename){
     "<option value=\""+o.value+"\">"+o.label+"</option>"
   ).join("");
 
-  // Auto-guess payment from card name + last4 digits
-  const cn = (result.cardName||"").toLowerCase();
-  const l4 = (result.last4||"").trim();
-  const methods = getPaymentMethods();
-  const guess = methods.find(m => {
-    const mn = m.name.toLowerCase();
-    const mid = (m.id||"").toLowerCase();
-    // Match by last 4 digits (most reliable for Max)
-    if(l4 && (mid.includes(l4) || (m.last4 && m.last4 === l4))) return true;
-    // Match by name keywords
-    if(cn.includes("\u05de\u05e1\u05d8\u05e8\u05e7\u05d0\u05e8\u05d3") && mn.includes("\u05d7\u05d1\u05e8")) return true;
-    if((cn.includes("max") || cn.includes("\u05dc\u05d0\u05d5\u05de\u05d9") || cn.includes("\u05de\u05e7\u05e1")) && mn.includes("\u05de\u05e7\u05e1")) return true;
-    if(cn.includes("\u05de\u05d6\u05e8\u05d7\u05d9") && mn.includes("\u05de\u05d6\u05e8\u05d7\u05d9")) return true;
-    return false;
-  });
-  if(guess) paySel.value = guess.name;
+  // Auto-guess the default card for unmatched rows, using the robust matcher.
+  const guessName = guessPaymentMethodForImport(result.cardName || "", result.last4 || "", result.cardName || "", "");
+  if(guessName) paySel.value = guessName;
 
   // Populate sheet selector
   const sheetSel = document.getElementById("ccImportSheet");
