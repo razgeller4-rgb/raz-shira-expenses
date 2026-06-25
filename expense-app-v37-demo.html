@@ -4,6 +4,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Expense App V36</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -42,12 +45,32 @@
   /* V35 compat */
   --card: var(--surface); --line: var(--border);
   --radius: var(--r-xl); --shadow: var(--shadow-sm);
+
+  /* ── Phase 1 design-upgrade additions (additive, keeps old names) ── */
+  --surface-3: #eef1f8;
+  --border-3: #cdd3e3;
+  --accent-strong: #4140d6;
+  --accent-ring: rgba(99,102,241,.32);
+  --income: var(--good); --income-light: var(--good-light);
+  --expense: var(--bad); --expense-light: var(--bad-light);
+  --shadow-accent: 0 6px 20px rgba(99,102,241,.28);
+  --font-sans: 'Heebo','Rubik',system-ui,'Segoe UI',Arial,sans-serif;
+  --font-num: 'Heebo','Rubik',system-ui,Arial,sans-serif;
+  --fs-display: clamp(40px, 11vw, 64px);
+  --fs-sm: 13px;
+  --fw-semi: 600; --fw-bold: 700; --fw-black: 800;
+  --lh-tight: 1.05;
+  --ls-display: -.022em;
+  --ease-out: cubic-bezier(.22,.61,.36,1);
+  --ease-spring: cubic-bezier(.34,1.56,.64,1);
+  --dur-fast: .14s; --dur-med: .24s; --dur-slow: .42s;
+  --r-2xl: 26px;
 }
 
 /* ── Reset ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { max-width: 100%; overflow-x: clip; height: 100%; }
-body { font-family: 'Inter', system-ui, Arial, sans-serif; font-size: 14px;
+body { font-family: var(--font-sans); font-size: 14px;
   line-height: 1.5; color: var(--text); background: var(--bg); }
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; }
@@ -165,6 +188,45 @@ input, select, textarea { font: inherit; }
 [data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#991b1b,#ef4444,#f87171); }
 [data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#1e40af,#3b82f6,#60a5fa); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#334155,#64748b,#94a3b8); }
+
+/* ── Phase 1: Hero balance + sparkline (design upgrade) ─────────── */
+.hero{
+  position:relative; overflow:hidden; color:#fff;
+  border-radius:var(--r-2xl); padding:var(--sp-6) var(--sp-6) var(--sp-4);
+  margin-bottom:16px;
+  background:
+    radial-gradient(120% 120% at 100% 0, rgba(255,255,255,.14), transparent 55%),
+    linear-gradient(135deg, var(--accent-strong), var(--accent) 55%, var(--accent-2));
+  box-shadow:var(--shadow-accent), var(--shadow-md);
+}
+.hero-top{ display:flex; align-items:center; justify-content:space-between; gap:var(--sp-3); }
+.hero-label{ font-size:var(--fs-sm); font-weight:var(--fw-semi); opacity:.86; letter-spacing:-.01em; }
+.hero-cfg{ background:rgba(255,255,255,.16); border:0; color:#fff; width:32px; height:32px;
+  border-radius:999px; font-size:15px; line-height:1; transition:background var(--dur-fast); cursor:pointer; }
+.hero-cfg:hover{ background:rgba(255,255,255,.28); }
+.hero-balance{
+  margin:10px 0 8px; display:flex; align-items:baseline; gap:.12em;
+  direction:ltr; justify-content:flex-end;
+  font-family:var(--font-num); font-weight:var(--fw-black);
+  font-size:var(--fs-display); line-height:var(--lh-tight); letter-spacing:var(--ls-display);
+  font-variant-numeric:tabular-nums; text-shadow:0 1px 0 rgba(0,0,0,.08);
+}
+.hero-cur{ font-size:.46em; font-weight:var(--fw-bold); opacity:.78; align-self:center; }
+.hero-delta{ display:inline-flex; align-items:center; gap:6px; font-size:var(--fs-sm);
+  font-weight:var(--fw-semi); padding:4px 10px; border-radius:999px;
+  background:rgba(255,255,255,.16); width:max-content; }
+.hero-delta.up::before{ content:"▲"; color:#bbf7d0; }
+.hero-delta.down::before{ content:"▼"; color:#fecaca; }
+.hero-spark{ margin-top:14px; height:48px; }
+.hero-spark canvas{ width:100% !important; height:48px !important; }
+.hero.is-negative{ background:
+  radial-gradient(120% 120% at 100% 0, rgba(255,255,255,.12), transparent 55%),
+  linear-gradient(135deg,#9f1239,#c0354f 55%,#e0457b); }
+.visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
+    transition-duration:.001ms!important; scroll-behavior:auto!important; }
+}
 
 /* ── KPI Grid ─────────────────────────────────────────────────── */
 .kpi-grid, .dashboard-mini-grid {
@@ -730,6 +792,13 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   --shadow-sm:0 1px 3px rgba(0,0,0,.3),0 4px 8px rgba(0,0,0,.25);
   --shadow-md:0 4px 16px rgba(0,0,0,.4);
   --shadow-lg:0 8px 30px rgba(0,0,0,.5);
+
+  /* Phase 1 additions — dark */
+  --surface-3:#0f1830;
+  --border-3:#3a4670;
+  --accent-strong:#6a6af5;
+  --accent-ring:rgba(99,102,241,.42);
+  --shadow-accent:0 6px 22px rgba(99,102,241,.4);
 }
 [data-theme="dark"] body { background:var(--bg); color:var(--text); }
 [data-theme="dark"] .topbar { background:rgba(15,23,42,.97); border-color:var(--border); }
@@ -1099,6 +1168,18 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
     <!-- ── Dashboard ── -->
     <section class="tab-panel active" data-panel="dashboard">
       <div class="dashboard-clean">
+        <section class="hero" aria-labelledby="heroLabel" id="dashboardHero">
+          <div class="hero-top">
+            <span class="hero-label" id="heroLabel">יתרת סגירה — <span id="heroMonthName">—</span></span>
+            <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
+          </div>
+          <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
+            <span class="hero-int">0</span><span class="hero-cur">₪</span>
+          </div>
+          <div class="hero-delta" id="heroDelta" style="display:none"></div>
+          <div class="hero-spark"><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
+          <span class="visually-hidden" id="heroSparkAlt"></span>
+        </section>
         <div class="dashboard-note">
           <div class="dashboard-note-top">
             <div>
@@ -1638,7 +1719,11 @@ let SHEET_OPTIONS = [...BASE_SHEET_OPTIONS];
 const USERS = [{id:"raz", label:"רז"}, {id:"shira", label:"שירה"}];
 const ACTIVE_USER_STORAGE_KEY  = STORAGE_NS_PREFIX + "expense_app_active_user_v1";
 const CLOUD_SYNC_CONFIG_KEY    = STORAGE_NS_PREFIX + "expense_app_cloud_sync_config_v1";
-const CLOUD_SYNC_ROW_ID = "shared-expense-app";
+const CLOUD_SYNC_ROW_ID = "shared-expense-app";        // legacy single blob — kept frozen, read by migration only
+const CLOUD_SYNC_ROW_PREFIX = "user-";                  // → user-raz / user-shira (per-device write target)
+const CLOUD_SETTLEMENTS_ROW_ID = "shared-settlements"; // co-edited settlements row (guarded + append-merge)
+const CLOUD_SPLIT_MIGRATION_FLAG = STORAGE_NS_PREFIX + "cloud_split_migration_v1";
+const CLOUD_PULL_ON_FOCUS_MIN_MS = 30000;              // pull-on-focus throttle
 const CLOUD_BACKUP_PREFIX = "backup-snapshot-";
 const LOCAL_DATA_CHANGED_AT_KEY = STORAGE_NS_PREFIX + "expense_app_local_changed_at_v1";
 const LOCAL_RECOVERY_POINTS_KEY = STORAGE_NS_PREFIX + "expense_app_local_recovery_points_v1";
@@ -1746,6 +1831,9 @@ let cloudSyncTimer = null;
 let cloudSyncState = {status:"idle", message:"עדיין לא הוגדר חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null};
 let cloudRecoveryPoints = [];
 let suppressCloudSync = false;
+let lastCloudPullAt = 0;
+let settlementsDirty = false;
+let lastSettlementsUpdatedAt = null;
 /* IS_LOCAL_DRAFT_FILE moved to top of script (line ~2904) so it can be used
    to namespace localStorage keys before they are declared. */
 
@@ -1816,6 +1904,12 @@ function getBackupKeys(){
 }
 function getCloudSyncKeys(){
   return USERS.flatMap(user => getAllUserStorageKeys(user.id));
+}
+/* Per-user key set — the only keys a device writes to its own cloud row.
+   getSharedSettlementsKey() is deliberately NOT here: settlements live in the
+   shared CLOUD_SETTLEMENTS_ROW_ID row, not in either user row. */
+function getCloudSyncKeysForUser(userId){
+  return getAllUserStorageKeys(userId);
 }
 function getIsoNow(){
   return new Date().toISOString();
@@ -2171,9 +2265,12 @@ function getDebtData(){
   }
 }
 function saveDebtData(data){ localStorage.setItem(getDebtStorageKey(), JSON.stringify(normalizeDebtData(data))); markLocalDataChanged(); scheduleCloudSync(); }
-function collectCloudSnapshot(){
+/* Build a snapshot of the given keys (defaults to the full set, used by
+   recovery points & backups). Pass getCloudSyncKeysForUser(id) for a per-user
+   cloud row. The "user" field tags which user a per-user snapshot belongs to. */
+function collectCloudSnapshot(keys=getCloudSyncKeys(), meta={}){
   const data = {};
-  getCloudSyncKeys().forEach(key => {
+  keys.forEach(key => {
     try {
       data[key] = JSON.parse(localStorage.getItem(key) || "null");
     } catch(e){
@@ -2185,21 +2282,38 @@ function collectCloudSnapshot(){
     version:"cloud-v1",
     exportedAt:new Date().toISOString(),
     changedAt:getLocalDataChangedAt() || getIsoNow(),
+    ...meta,
     data
   };
 }
-function applyCloudSnapshot(snapshot){
+/* Apply a snapshot back to localStorage. By default touches every key present
+   in snapshot.data (full snapshot). Pass a `keys` array to restrict which keys
+   may be written (e.g. only the other user's keys), so one user's row can never
+   overwrite the other user's local keys.
+   IMPORTANT: this device's "last local edit" timestamp (LOCAL_DATA_CHANGED_AT_KEY)
+   must only reflect genuine local mutations made on this device, never data
+   absorbed from the cloud — otherwise the self-row freshness guard in
+   assembleFromCloudRows() can be clobbered by the partner's changedAt and then
+   wrongly accept a stale self-row, overwriting unsynced local edits.
+   Pass `touchLocalChangedAt=true` only for call sites that represent a genuine
+   full local restore of THIS device's own state (manual recovery-point restore),
+   never for applying the partner's row. */
+function applyCloudSnapshot(snapshot, keys=null, touchLocalChangedAt=false){
   if(!snapshot || !snapshot.data) return;
+  const allowed = keys
+    ? new Set(keys)
+    : null;
   suppressCloudSync = true;
   try {
-    getCloudSyncKeys().forEach(key => {
-      if(Object.prototype.hasOwnProperty.call(snapshot.data, key)){
-        const value = snapshot.data[key];
-        if(value == null) localStorage.removeItem(key);
-        else localStorage.setItem(key, JSON.stringify(value));
-      }
+    Object.keys(snapshot.data).forEach(key => {
+      if(allowed && !allowed.has(key)) return;
+      const value = snapshot.data[key];
+      if(value == null) localStorage.removeItem(key);
+      else localStorage.setItem(key, JSON.stringify(value));
     });
-    markLocalDataChanged(snapshot.changedAt || snapshot.exportedAt || getIsoNow());
+    if(touchLocalChangedAt){
+      markLocalDataChanged(snapshot.changedAt || snapshot.exportedAt || getIsoNow());
+    }
   } finally {
     suppressCloudSync = false;
   }
@@ -2342,8 +2456,8 @@ async function restoreCloudRecoveryPoint(id){
     if(!point || !point.payload){
       throw new Error("לא נמצאה נקודת שחזור תקינה בענן.");
     }
-    applyCloudSnapshot(point.payload);
-    await pushCloudSnapshot({message:"השחזור מהענן הוחל ונשמר כמצב הפעיל.", reason:"שחזור ידני מהענן"});
+    applyCloudSnapshot(point.payload, null, true);
+    await pushAllRowsFromLocal({message:"השחזור מהענן הוחל ונשמר כמצב הפעיל.", reason:"שחזור ידני מהענן"});
     setBackupStatus("השחזור מהענן הצליח והמצב החדש נשמר גם כמצב הפעיל.");
     render();
     await refreshRecoveryPoints();
@@ -2358,9 +2472,9 @@ async function restoreLocalRecoveryPoint(id){
   if(!confirm("לשחזר את נקודת השחזור המקומית הזאת? המצב הנוכחי יישמר קודם כגיבוי מקומי נוסף.")) return;
   try {
     rememberLocalRecoveryPoint("לפני שחזור מקומי");
-    applyCloudSnapshot(point.snapshot);
+    applyCloudSnapshot(point.snapshot, null, true);
     if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
-      await pushCloudSnapshot({message:"השחזור המקומי הוחל ונשמר גם בענן.", reason:"שחזור ידני מקומי"});
+      await pushAllRowsFromLocal({message:"השחזור המקומי הוחל ונשמר גם בענן.", reason:"שחזור ידני מקומי"});
     }
     setBackupStatus("השחזור המקומי הוחל בהצלחה.");
     render();
@@ -2384,10 +2498,11 @@ async function createManualRecoveryPoint(){
   }
   await refreshRecoveryPoints();
 }
-async function fetchCloudState(){
+/* Fetch a single app_state row by id (defaults to legacy blob for back-compat). */
+async function fetchCloudState(rowId=CLOUD_SYNC_ROW_ID){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(CLOUD_SYNC_ROW_ID)}&select=id,payload,updated_at`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
     headers:{
       apikey:config.anonKey,
       Authorization:`Bearer ${config.anonKey}`
@@ -2397,10 +2512,32 @@ async function fetchCloudState(){
   const rows = await response.json();
   return Array.isArray(rows) ? rows[0] || null : rows || null;
 }
-async function pushCloudSnapshot(options={}){
+/* Fetch both user rows + the settlements row in one request. Returns a map
+   keyed by row id: {"user-raz":row|null, "user-shira":row|null, "shared-settlements":row|null}. */
+async function fetchCloudUserRows(){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const snapshot = collectCloudSnapshot();
+  const ids = [
+    ...USERS.map(u => `${CLOUD_SYNC_ROW_PREFIX}${u.id}`),
+    CLOUD_SETTLEMENTS_ROW_ID
+  ];
+  const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
+  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
+    headers:{
+      apikey:config.anonKey,
+      Authorization:`Bearer ${config.anonKey}`
+    }
+  });
+  if(!response.ok) throw new Error(`קריאת ענן נכשלה (${response.status})`);
+  const rows = await response.json();
+  const byId = {};
+  (Array.isArray(rows) ? rows : []).forEach(row => { if(row && row.id) byId[row.id] = row; });
+  return byId;
+}
+/* Upsert a single row's payload to app_state. Returns the stored row. */
+async function upsertCloudRow(rowId, payload){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
   const response = await fetch(`${config.url}/rest/v1/app_state?on_conflict=id`, {
     method:"POST",
     headers:{
@@ -2409,13 +2546,96 @@ async function pushCloudSnapshot(options={}){
       Authorization:`Bearer ${config.anonKey}`,
       Prefer:"resolution=merge-duplicates,return=representation"
     },
-    body:JSON.stringify([{id:CLOUD_SYNC_ROW_ID, payload:snapshot}])
+    body:JSON.stringify([{id:rowId, payload}])
   });
   if(!response.ok) throw new Error(`שמירה לענן נכשלה (${response.status})`);
   const rows = await response.json();
-  const remote = Array.isArray(rows) ? rows[0] || null : rows || null;
+  return Array.isArray(rows) ? rows[0] || null : rows || null;
+}
+/* Push the shared settlements row with an optimistic-concurrency guard.
+   Re-reads the remote settlements, append-merges by id (union, keep both),
+   and writes the merged list. Guards against clobbering a concurrent partner
+   settlement: if the remote moved since we last saw it, we merge rather than
+   overwrite. Retries once on a late conflict. */
+async function pushSettlementsRow(retry=true){
+  const localList = getSharedSettlements();
+  const localTombstones = getSharedSettlementTombstones();
+  const settlKey = getSharedSettlementsKey();
+  let remoteRow = null;
   try {
-    await saveCloudRecoveryPoint(snapshot, options.reason || "שמירה אוטומטית");
+    remoteRow = await fetchCloudState(CLOUD_SETTLEMENTS_ROW_ID);
+  } catch(e){ remoteRow = null; }
+  const remotePayload = remoteRow && remoteRow.payload ? remoteRow.payload : null;
+  const remoteList = remotePayload && Array.isArray(remotePayload.data) ? remotePayload.data : [];
+  const remoteTombstones = remotePayload && remotePayload.deletedIds && typeof remotePayload.deletedIds === "object" ? remotePayload.deletedIds : {};
+  // merge tombstones first (union of both sides) so we know which ids to exclude below
+  const mergedTombstones = {...remoteTombstones, ...localTombstones};
+  // append-merge by id: union of remote + local, local wins on a shared id (latest edit),
+  // but never resurrect an id recorded as deleted in either side's tombstones
+  const merged = [];
+  const seen = new Set();
+  localList.forEach(item => { if(item && item.id && !seen.has(item.id) && !mergedTombstones[item.id]){ merged.push(item); seen.add(item.id); } });
+  remoteList.forEach(item => { if(item && item.id && !seen.has(item.id) && !mergedTombstones[item.id]){ merged.push(item); seen.add(item.id); } });
+  // if remote moved under us since we read it for this push, retry once
+  const payload = {
+    app:"raz-expenses-local",
+    version:"settlements-v1",
+    exportedAt:getIsoNow(),
+    updatedBy:currentUser,
+    data:merged,
+    deletedIds:mergedTombstones
+  };
+  const stored = await upsertCloudRow(CLOUD_SETTLEMENTS_ROW_ID, payload);
+  // write merged list + tombstones back locally so this device matches the cloud
+  suppressCloudSync = true;
+  try {
+    localStorage.setItem(settlKey, JSON.stringify(merged));
+    saveSharedSettlementTombstones(mergedTombstones);
+  } finally { suppressCloudSync = false; }
+  lastSettlementsUpdatedAt = stored?.updated_at || getIsoNow();
+  settlementsDirty = false;
+  return stored;
+}
+/* Apply a remote settlements row into local storage with append-merge (never
+   drop a local-only settlement). Tombstones are merged the same union way, and
+   any id present in either side's tombstones is excluded from the result so a
+   deletion recorded on one device can't be resurrected by a stale device. */
+function applySettlementsRow(remoteRow){
+  if(!remoteRow || !remoteRow.payload || !Array.isArray(remoteRow.payload.data)) return;
+  const remotePayload = remoteRow.payload;
+  const remoteList = remotePayload.data;
+  const remoteTombstones = remotePayload.deletedIds && typeof remotePayload.deletedIds === "object" ? remotePayload.deletedIds : {};
+  const localList = getSharedSettlements();
+  const localTombstones = getSharedSettlementTombstones();
+  const mergedTombstones = {...remoteTombstones, ...localTombstones};
+  const merged = [];
+  const seen = new Set();
+  remoteList.forEach(item => { if(item && item.id && !seen.has(item.id) && !mergedTombstones[item.id]){ merged.push(item); seen.add(item.id); } });
+  localList.forEach(item => { if(item && item.id && !seen.has(item.id) && !mergedTombstones[item.id]){ merged.push(item); seen.add(item.id); } });
+  suppressCloudSync = true;
+  try {
+    localStorage.setItem(getSharedSettlementsKey(), JSON.stringify(merged));
+    saveSharedSettlementTombstones(mergedTombstones);
+  } finally { suppressCloudSync = false; }
+  lastSettlementsUpdatedAt = remoteRow.updated_at || lastSettlementsUpdatedAt;
+}
+async function pushCloudSnapshot(options={}){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
+  // Per-user push: write ONLY the current user's row. Two devices use two
+  // different primary keys (user-raz / user-shira) so they can never overwrite
+  // each other's data.
+  const userSnapshot = collectCloudSnapshot(getCloudSyncKeysForUser(currentUser), {user:currentUser});
+  const remote = await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${currentUser}`, userSnapshot);
+  // Settlements live in their own shared, guarded row (fixes B1). Push it when
+  // it has pending local changes (or when caller forces a full push).
+  if(settlementsDirty || options.forceSettlements){
+    try { await pushSettlementsRow(); }
+    catch(error){ console.warn("Settlements push failed", error); }
+  }
+  // Recovery point stays a FULL snapshot (both users) so restore points remain complete.
+  try {
+    await saveCloudRecoveryPoint(collectCloudSnapshot(), options.reason || "שמירה אוטומטית");
   } catch(error){
     console.warn("Cloud recovery point failed", error);
   }
@@ -2428,9 +2648,58 @@ async function pushCloudSnapshot(options={}){
   await refreshRecoveryPoints();
   return remote;
 }
+/* Push BOTH user rows + the settlements row from current local state.
+   Used after a full-snapshot restore (recovery point / backup import), where
+   the restored state spans both users and we want all rows to reflect it. */
+async function pushAllRowsFromLocal(options={}){
+  for(const u of USERS){
+    const snap = collectCloudSnapshot(getCloudSyncKeysForUser(u.id), {user:u.id});
+    await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${u.id}`, snap);
+  }
+  try { await pushSettlementsRow(); } catch(e){ console.warn("Settlements push failed", e); }
+  try { await saveCloudRecoveryPoint(collectCloudSnapshot(), options.reason || "שמירה אוטומטית"); }
+  catch(e){ console.warn("Cloud recovery point failed", e); }
+  setCloudSyncState({
+    status:"ok",
+    message:options.message || "הנתונים נדחפו לענן בהצלחה.",
+    lastPushedAt:new Date().toISOString(),
+    lastRemoteUpdatedAt:new Date().toISOString()
+  });
+  await refreshRecoveryPoints();
+}
+/* Assemble local state from BOTH user rows + the settlements row.
+   - Other user's row: always authoritative (we never write it).
+   - Own row: applied only if remote is at least as fresh as local, so a stale
+     self-row can't clobber unsynced local edits.
+   - Settlements: append-merged (never drop a local-only settlement). */
+function assembleFromCloudRows(byId, options={}){
+  const partnerId = getPartnerUserId(currentUser);
+  const selfRow = byId[`${CLOUD_SYNC_ROW_PREFIX}${currentUser}`] || null;
+  const partnerRow = byId[`${CLOUD_SYNC_ROW_PREFIX}${partnerId}`] || null;
+  const settlRow = byId[CLOUD_SETTLEMENTS_ROW_ID] || null;
+  let applied = false;
+  // other user's row — always take remote
+  if(partnerRow && partnerRow.payload){
+    applyCloudSnapshot(partnerRow.payload, getCloudSyncKeysForUser(partnerId));
+    applied = true;
+  }
+  // own row — apply only if remote is not older than local (protect unsynced edits)
+  if(selfRow && selfRow.payload){
+    const remoteChangedAt = getTimeMs(selfRow.payload.changedAt || selfRow.updated_at);
+    const localChangedAt = getTimeMs(getLocalDataChangedAt());
+    if(options.forceSelf || remoteChangedAt >= localChangedAt){
+      applyCloudSnapshot(selfRow.payload, getCloudSyncKeysForUser(currentUser));
+      applied = true;
+    }
+  }
+  // settlements — append-merge
+  if(settlRow){ applySettlementsRow(settlRow); applied = true; }
+  return applied;
+}
 async function pullCloudSnapshot(options={}){
-  const remote = await fetchCloudState();
-  if(!remote || !remote.payload){
+  const byId = await fetchCloudUserRows();
+  const hasAny = USERS.some(u => byId[`${CLOUD_SYNC_ROW_PREFIX}${u.id}`]) || byId[CLOUD_SETTLEMENTS_ROW_ID];
+  if(!hasAny){
     setCloudSyncState({
       status:"idle",
       message:options.emptyMessage || "עדיין אין נתונים בענן. אפשר להתחיל מדחיפה ידנית ראשונה."
@@ -2438,15 +2707,21 @@ async function pullCloudSnapshot(options={}){
     return null;
   }
   rememberLocalRecoveryPoint(options.localReason || "לפני משיכה מהענן");
-  applyCloudSnapshot(remote.payload);
+  assembleFromCloudRows(byId, options);
+  lastCloudPullAt = Date.now();
+  const newestUpdatedAt = Object.values(byId)
+    .map(row => row && row.updated_at)
+    .filter(Boolean)
+    .sort()
+    .pop() || null;
   setCloudSyncState({
     status:"ok",
     message:options.message || "הנתונים נמשכו מהענן בהצלחה.",
     lastPulledAt:new Date().toISOString(),
-    lastRemoteUpdatedAt:remote.updated_at || null
+    lastRemoteUpdatedAt:newestUpdatedAt
   });
   renderRecoveryPoints();
-  return remote;
+  return byId;
 }
 function scheduleCloudSync(){
   if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
@@ -2470,18 +2745,24 @@ async function saveCloudSyncConnection(){
   saveCloudSyncConfig({url, anonKey, disabled:false});
   setCloudSyncState({status:"syncing", message:"בודק את חיבור הענן..."});
   try {
-    const remote = await fetchCloudState();
-    if(remote && remote.payload){
+    await migrateBlobToPerUserRows();
+    const byId = await fetchCloudUserRows();
+    const remoteHasData = USERS.some(u => byId[`${CLOUD_SYNC_ROW_PREFIX}${u.id}`]?.payload?.data)
+      || Boolean(byId[CLOUD_SETTLEMENTS_ROW_ID]);
+    if(remoteHasData){
       rememberLocalRecoveryPoint("לפני חיבור לענן");
-      applyCloudSnapshot(remote.payload);
+      assembleFromCloudRows(byId);
+      lastCloudPullAt = Date.now();
+      const newestUpdatedAt = Object.values(byId)
+        .map(row => row && row.updated_at).filter(Boolean).sort().pop() || null;
       setCloudSyncState({
         status:"ok",
         message:"החיבור נשמר, והנתונים העדכניים נמשכו מהענן.",
         lastPulledAt:new Date().toISOString(),
-        lastRemoteUpdatedAt:remote.updated_at || null
+        lastRemoteUpdatedAt:newestUpdatedAt
       });
     } else {
-      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה.", reason:"חיבור ראשוני"});
+      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה.", reason:"חיבור ראשוני", forceSettlements:true});
     }
     await refreshRecoveryPoints();
     render();
@@ -2509,7 +2790,8 @@ async function pushCloudSyncNow(){
   }
   try {
     setCloudSyncState({status:"syncing", message:"דוחף נתונים לענן..."});
-    await pushCloudSnapshot();
+    // explicit manual push = "send my entire local state up" → write both user rows + settlements
+    await pushAllRowsFromLocal();
     renderCloudSyncStatus();
   } catch(error){
     setCloudSyncState({status:"error", message:`דחיפה לענן נכשלה: ${error.message}`});
@@ -2532,6 +2814,65 @@ function hasAnyLocalExpenses(){
       return Object.values(data).some(arr => Array.isArray(arr) && arr.length > 0);
     } catch(e){ return false; }
   });
+}
+/* One-time, additive, reversible migration: read the legacy single blob row
+   (shared-expense-app) and split it into per-user rows (user-raz / user-shira)
+   plus the shared settlements row. The legacy row is READ ONLY — never modified,
+   never deleted — so rolling back to the previous HTML just works.
+   Idempotent: guarded by a localStorage flag AND by "don't overwrite existing
+   user rows", so whichever device opens first migrates and the other is a no-op. */
+async function migrateBlobToPerUserRows(){
+  if(localStorage.getItem(CLOUD_SPLIT_MIGRATION_FLAG)) return;
+  let legacy = null;
+  try { legacy = await fetchCloudState(CLOUD_SYNC_ROW_ID); }
+  catch(e){ return; } // can't read legacy — leave flag unset, retry next load
+  let existing = {};
+  try { existing = await fetchCloudUserRows(); }
+  catch(e){ existing = {}; }
+  const legacyData = legacy && legacy.payload && legacy.payload.data ? legacy.payload.data : null;
+  if(legacyData){
+    // safety: snapshot the pre-migration state as a cloud recovery point
+    try { await saveCloudRecoveryPoint(legacy.payload, "לפני פיצול ענן לפי משתמש"); }
+    catch(e){ /* non-fatal */ }
+    // create each user's row from the legacy blob, ONLY if it doesn't exist yet
+    for(const u of USERS){
+      const rowId = `${CLOUD_SYNC_ROW_PREFIX}${u.id}`;
+      if(existing[rowId]) continue; // already migrated by the other device
+      const userKeys = getCloudSyncKeysForUser(u.id);
+      const data = {};
+      userKeys.forEach(key => {
+        if(Object.prototype.hasOwnProperty.call(legacyData, key)) data[key] = legacyData[key];
+      });
+      const payload = {
+        app:"raz-expenses-local",
+        version:"cloud-v1",
+        exportedAt:getIsoNow(),
+        changedAt:legacy.payload.changedAt || legacy.payload.exportedAt || getIsoNow(),
+        user:u.id,
+        data
+      };
+      try { await upsertCloudRow(rowId, payload); }
+      catch(e){ return; } // bail without setting flag — retry next load
+    }
+    // split out settlements into the shared row, if any legacy device had them
+    if(!existing[CLOUD_SETTLEMENTS_ROW_ID]){
+      const settlKey = getSharedSettlementsKey();
+      const legacySettlements = Array.isArray(legacyData[settlKey]) ? legacyData[settlKey] : [];
+      if(legacySettlements.length){
+        try {
+          await upsertCloudRow(CLOUD_SETTLEMENTS_ROW_ID, {
+            app:"raz-expenses-local",
+            version:"settlements-v1",
+            exportedAt:getIsoNow(),
+            updatedBy:"migration",
+            data:legacySettlements
+          });
+        } catch(e){ /* non-fatal — settlements can re-sync from a device */ }
+      }
+    }
+  }
+  // mark done so it never re-runs on this device. Legacy row stays frozen.
+  localStorage.setItem(CLOUD_SPLIT_MIGRATION_FLAG, "done");
 }
 async function bootstrapCloudSync(){
   if(IS_LOCAL_DRAFT_FILE){
@@ -2559,23 +2900,29 @@ async function bootstrapCloudSync(){
   if(!hasCloudSyncConfig()) return;
   try {
     setCloudSyncState({status:"syncing", message:"מתחבר לענן..."});
-    const remote = await fetchCloudState();
-    const remoteSnapshot = remote && remote.payload ? remote.payload : null;
+    // one-time, additive migration: split legacy blob → per-user + settlements rows
+    await migrateBlobToPerUserRows();
+    const byId = await fetchCloudUserRows();
+    const remoteHasData = USERS.some(u => byId[`${CLOUD_SYNC_ROW_PREFIX}${u.id}`]?.payload?.data)
+      || Boolean(byId[CLOUD_SETTLEMENTS_ROW_ID]);
     const localHasData = hasAnyLocalExpenses();
-    const remoteHasData = Boolean(remoteSnapshot && remoteSnapshot.data);
-    const localChangedAt = getTimeMs(getLocalDataChangedAt());
-    const remoteChangedAt = getTimeMs(remoteSnapshot?.changedAt || remote?.updated_at);
-    if(remoteHasData && (!localHasData || remoteChangedAt >= localChangedAt)){
+    if(remoteHasData){
       rememberLocalRecoveryPoint("לפני משיכה אוטומטית מהענן");
-      applyCloudSnapshot(remoteSnapshot);
+      // self-row freshness rule protects unsynced local edits; partner row + settlements always merge
+      assembleFromCloudRows(byId);
+      lastCloudPullAt = Date.now();
+      const newestUpdatedAt = Object.values(byId)
+        .map(row => row && row.updated_at).filter(Boolean).sort().pop() || null;
       setCloudSyncState({
         status:"ok",
-        message:localHasData ? "הענן היה חדש יותר, ולכן הנתונים נטענו ממנו אוטומטית." : "החיבור קיים, והנתונים נטענו מהענן.",
+        message:"החיבור קיים, והנתונים סונכרנו מהענן.",
         lastPulledAt:getIsoNow(),
-        lastRemoteUpdatedAt:remote.updated_at || null
+        lastRemoteUpdatedAt:newestUpdatedAt
       });
+      // if this device had local data newer than its own cloud row, push it back up
+      if(localHasData) await pushCloudSnapshot({message:"מחובר לענן — הנתונים המקומיים סונכרנו.", reason:"אתחול"});
     } else if(localHasData){
-      await pushCloudSnapshot({message:"מחובר לענן — הנתונים המקומיים חדשים יותר ונשמרו.", reason:"אתחול עם מקומי עדכני"});
+      await pushCloudSnapshot({message:"מחובר לענן — הנתונים המקומיים חדשים יותר ונשמרו.", reason:"אתחול עם מקומי עדכני", forceSettlements:true});
     } else {
       setCloudSyncState({status:"idle", message:"החיבור קיים, אבל עדיין אין נתונים בענן או במכשיר הזה."});
     }
@@ -2750,18 +3097,35 @@ function getSharedExpenseSummary(){
 function getSharedSettlementsKey(){
   return STORAGE_NS_PREFIX + "expense_app_shared_settlements_v1";
 }
+function getSharedSettlementsTombstonesKey(){
+  return STORAGE_NS_PREFIX + "expense_app_shared_settlements_tombstones_v1";
+}
 function getSharedSettlements(){
-  try{ return JSON.parse(localStorage.getItem(getSharedSettlementsKey())||"[]"); }catch(e){ return []; }
+  try{
+    const raw = JSON.parse(localStorage.getItem(getSharedSettlementsKey())||"[]");
+    const tombstones = getSharedSettlementTombstones();
+    return raw.filter(s => s && s.id && !tombstones[s.id]);
+  }catch(e){ return []; }
+}
+/* Tombstones: { [id]: deletedAt } — lightweight record of intentionally
+   deleted settlement ids, so a union-merge with another device never
+   resurrects a settlement that was deleted before the other device synced. */
+function getSharedSettlementTombstones(){
+  try{ return JSON.parse(localStorage.getItem(getSharedSettlementsTombstonesKey())||"{}"); }catch(e){ return {}; }
+}
+function saveSharedSettlementTombstones(tombstones){
+  localStorage.setItem(getSharedSettlementsTombstonesKey(), JSON.stringify(tombstones));
 }
 function saveSharedSettlements(settlements){
   localStorage.setItem(getSharedSettlementsKey(), JSON.stringify(settlements));
   markLocalDataChanged();
+  settlementsDirty = true;   // ensure the shared settlements row gets pushed (fixes B1)
   scheduleCloudSync();
 }
 function addSharedSettlement(data){
   const list = getSharedSettlements();
   list.unshift({
-    id:`settle-${Date.now()}`,
+    id:`settle-${currentUser}-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
     date_raw:String(data.date_raw||""),
     amount:Number(data.amount||0),
     paidById:String(data.paidById||""),
@@ -2771,6 +3135,9 @@ function addSharedSettlement(data){
   saveSharedSettlements(list);
 }
 function deleteSharedSettlement(id){
+  const tombstones = getSharedSettlementTombstones();
+  tombstones[id] = getIsoNow();
+  saveSharedSettlementTombstones(tombstones);
   saveSharedSettlements(getSharedSettlements().filter(s=>s.id!==id));
 }
 function toggleSettlementForm(){
@@ -3830,6 +4197,91 @@ function renderExcelKpis(){
     </div>`;
   }).join("") || `<div class="info-box">לא נבחרו כרגע כרטיסיות לדשבורד. אפשר ללחוץ על "התאם כרטיסיות" ולבחור מה יוצג.</div>`;
 }
+
+/* ── Phase 1: Dashboard hero — balance + sparkline + count-up ───── */
+let heroSparkInstance = null;
+function countUp(el, target, {dur=700, fmt=v=>Math.round(v).toLocaleString('he-IL')}={}){
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const intEl = el.querySelector('.hero-int') || el;
+  if (reduce){ intEl.textContent = fmt(target); el.dataset.target = String(target); return; }
+  const start = Number(el.dataset.target || 0), t0 = performance.now();
+  const ease = p => 1 - Math.pow(1 - p, 3); // easeOutCubic
+  (function step(now){
+    const p = Math.min((now - t0) / dur, 1);
+    intEl.textContent = fmt(start + (target - start) * ease(p));
+    if (p < 1) requestAnimationFrame(step); else el.dataset.target = String(target);
+  })(performance.now());
+}
+function getHeroSparkData(){
+  /* Reuse existing yearly running-balance data (getYearlyRowsData) — last up-to-6 months
+     of cumulativeBalance, spanning year boundary by combining current + previous year if needed. */
+  const {year: curYear} = getSheetMonthYear(selectedSheet);
+  let rows = getYearlyRowsData(curYear).filter(r => getSheetSortValue(r.sheet) <= getSheetSortValue(selectedSheet));
+  if(rows.length < 6){
+    const prevRows = getYearlyRowsData(curYear - 1);
+    rows = [...prevRows, ...rows];
+  }
+  rows = rows.slice(-6);
+  return {
+    labels: rows.map(r => formatSheetLabel(r.sheet)),
+    values: rows.map(r => r.cumulativeBalance)
+  };
+}
+function renderDashboardHero(){
+  const heroEl = document.getElementById("dashboardHero");
+  const balEl = document.getElementById("heroBalance");
+  if(!heroEl || !balEl) return;
+  const closing = getDisplayedClosingBalance(selectedSheet);
+  const value = closing == null ? 0 : closing;
+  document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
+  heroEl.classList.toggle("is-negative", value < 0);
+  const prevTarget = Number(balEl.dataset.target || 0);
+  if(prevTarget !== value || !balEl.dataset.initialized){
+    countUp(balEl, value);
+    balEl.dataset.initialized = "1";
+  }
+  /* delta vs previous month */
+  const prevSheet = getPrevSheet(selectedSheet);
+  const deltaEl = document.getElementById("heroDelta");
+  if(prevSheet && deltaEl){
+    const prevClosing = getDisplayedClosingBalance(prevSheet);
+    if(prevClosing != null && prevClosing !== 0){
+      const pct = ((value - prevClosing) / Math.abs(prevClosing)) * 100;
+      deltaEl.style.display = "inline-flex";
+      deltaEl.className = "hero-delta " + (pct >= 0 ? "up" : "down");
+      deltaEl.textContent = `${Math.abs(pct).toFixed(1)}% מהחודש שעבר`;
+    } else {
+      deltaEl.style.display = "none";
+    }
+  } else if(deltaEl){
+    deltaEl.style.display = "none";
+  }
+  /* sparkline */
+  const spark = getHeroSparkData();
+  const sparkCanvas = document.getElementById("heroSpark");
+  const sparkAlt = document.getElementById("heroSparkAlt");
+  if(sparkAlt){
+    const trend = spark.values.length > 1 && spark.values[spark.values.length - 1] >= spark.values[0] ? "עלייה" : "ירידה";
+    sparkAlt.textContent = `מגמה: ${spark.values.length} חודשים, ${trend}`;
+  }
+  if(sparkCanvas && typeof Chart !== "undefined"){
+    if(heroSparkInstance) heroSparkInstance.destroy();
+    heroSparkInstance = new Chart(sparkCanvas, {
+      type: "line",
+      data: { labels: spark.labels, datasets: [{
+        data: spark.values, borderColor: "#fff", borderWidth: 2,
+        fill: true, backgroundColor: "rgba(255,255,255,.18)",
+        tension: .4, pointRadius: 0, pointHoverRadius: 4
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false, animation: { duration: 500 },
+        plugins: { legend: { display: false }, tooltip: { enabled: true, rtl: true } },
+        scales: { x: { display: false }, y: { display: false } }
+      }
+    });
+  }
+}
+
 function renderBudgetOverview(rows){
   const el = document.getElementById("budgetOverviewHero");
   if(!el) return;
@@ -5545,6 +5997,7 @@ function render(){
     const baseRows = getSheetRows();
     const rows = getFilteredRows(baseRows);
     renderHero(baseRows);
+    renderDashboardHero();
     renderExcelKpis();
     renderBudgetOverview(baseRows);
     renderCategorySummary(baseRows);
@@ -5934,6 +6387,21 @@ bootstrapCloudSync().finally(() => {
   setTimeout(maybeShowBackupBanner, 1200);
   setTimeout(keepSupabaseAlive, 3000);
 });
+
+/* Pull-on-focus: when the user returns to the tab (iOS Safari fires this), pull
+   the partner's latest if it's been a while since our last pull. Cheap substitute
+   for a websocket at 2-user scale. Gated exactly like scheduleCloudSync. */
+async function maybePullOnFocus(){
+  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
+  if(document.visibilityState !== "visible") return;
+  if(Date.now() - lastCloudPullAt < CLOUD_PULL_ON_FOCUS_MIN_MS) return;
+  try {
+    await pullCloudSnapshot({message:"עודכן מהענן."});
+    render();
+  } catch(e){ /* silent — next focus will retry */ }
+}
+document.addEventListener("visibilitychange", maybePullOnFocus);
+window.addEventListener("focus", maybePullOnFocus);
 
 
 // ── Credit Card Import ────────────────────────────────
