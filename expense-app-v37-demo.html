@@ -29,7 +29,7 @@
   --surface-3: #EAE1CD; --border: #E6DCC8; --border-2: #D8CBB0;
   --border-3: #D8CBB0;
   /* Text — walnut ink */
-  --text: #2E2A22; --text-2: #5C5446; --muted: #8A8170;
+  --text: #2E2A22; --text-2: #5C5446; --muted: #8A8170; --c-text-sub: var(--muted);
   /* Brand accent — sage / forest */
   --accent: #7E9B6E; --accent-2: #9DB68F; --accent-strong: #5E7A50;
   --accent-light: rgba(126,155,110,.14); --accent-ring: rgba(94,122,80,.34);
@@ -48,6 +48,7 @@
   --dv-1:#7E9B6E; --dv-2:#B07D56; --dv-3:#D9A441; --dv-4:#C16A4F;
   --dv-5:#6E8B8A; --dv-6:#9D8AA8; --dv-7:#8AA088; --dv-8:#C9A86B;
   --dv-1-soft:rgba(126,155,110,.18); --dv-2-soft:rgba(176,125,86,.18);
+  --gold:#C9A227;
   /* Per-tab palette — calm botanical */
   --c-dashboard: #7E9B6E; --c-budget: #6E8B4F; --c-income: #4E7A4A;
   --c-cards: #6E8B8A; --c-expenses: #C16A4F; --c-shared: #C77B8B;
@@ -417,10 +418,17 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── Edit Card (inline) ───────────────────────────────────────── */
 .edit-card {
-  background: linear-gradient(135deg,rgba(99,102,241,.05),rgba(99,102,241,.01));
-  border: 1.5px solid rgba(99,102,241,.22); border-radius: var(--r-xl); padding: 16px; margin: 4px 0;
+  background: var(--surface);
+  border: 1.5px solid var(--border); border-radius: var(--r-xl); padding: 18px; margin: 4px 0;
+  box-shadow: var(--shadow-md);
 }
-.edit-card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 12px; margin-top: 12px; }
+.edit-card-top { padding-bottom: 10px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.edit-card-title { font-weight: 800; font-size: 14px; color: var(--text); margin-bottom: 8px; }
+.edit-card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 14px; margin-top: 14px; }
+.edit-card-grid .field input,
+.edit-card-grid .field select { height: 42px; }
+.edit-card-grid .field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+.category-field-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
 
 /* ── Table Shell (yearly, CC import, etc.) ───────────────────── */
 .table-shell { overflow-x: auto; }
@@ -803,7 +811,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   /* Night Garden — forest floor at night */
   --bg:#1A1E17; --surface:#232820; --surface-2:#2C322A; --surface-3:#1F231C;
   --border:#3A4136; --border-2:#4A5244; --border-3:#4A5244;
-  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#9A9382;
+  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#9A9382; --c-text-sub: var(--muted);
   --accent:#A6C08F; --accent-2:#BFD4AC; --accent-strong:#8AAA72;
   --accent-light:rgba(166,192,143,.16); --accent-ring:rgba(166,192,143,.42);
   --wood:#C99B72; --wood-strong:#A6764C; --wood-light:rgba(201,155,114,.16);
@@ -817,6 +825,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   --dv-1:#A6C08F; --dv-2:#C99B72; --dv-3:#E6B85C; --dv-4:#E08A6E;
   --dv-5:#8FB0AE; --dv-6:#B3A3BD; --dv-7:#A3B8A0; --dv-8:#D8BC84;
   --dv-1-soft:rgba(166,192,143,.20); --dv-2-soft:rgba(201,155,114,.20);
+  --gold:#D9B84A;
   --c-dashboard:#A6C08F; --c-budget:#9FB877; --c-income:#7FB276;
   --c-cards:#8FB0AE; --c-expenses:#E08A6E; --c-shared:#D593A1;
   --c-debts:#D98B6E; --c-yearly:#8AAA72; --c-backup:#C99B72; --c-sand:#D8BC84;
@@ -991,6 +1000,14 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   font-size:10px; font-weight:700; background:rgba(244,63,94,.09); color:var(--c-shared); }
 .sec-footer-chip.payer { background:rgba(244,63,94,.16); }
 .sec-footer-notes { font-size:11px; color:var(--muted); font-style:italic; margin-inline-start:auto; max-width:50%; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+/* ── User avatar bubbles (shared expenses) ──────────────────────── */
+.user-avatar {
+  display:inline-flex; align-items:center; justify-content:center;
+  width:18px; height:18px; border-radius:50%; font-size:9px; font-weight:800;
+  color:#fff; flex-shrink:0; margin-left:4px; vertical-align:middle;
+}
+.user-avatar.me { background: var(--accent-strong); }
+.user-avatar.partner { background: var(--wood-strong); }
 .modal-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; margin-bottom:14px; }
 @media (max-width:480px) { .modal-grid { grid-template-columns:1fr 1fr; } }
 .modal-stat { background:var(--bg); border:1px solid var(--border); border-radius:var(--r-md); padding:10px 13px; text-align:center; }
@@ -1058,6 +1075,62 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   .income-row.display-rich .income-cell:nth-child(3) { display:none; }
   .income-row.editing { display:flex; flex-direction:column; gap:8px; }
 }
+
+/* ── Income Edit Card (redesign) ─────────────────────────────── */
+.income-edit-card {
+  position: relative; background: var(--surface); border: 1.5px solid var(--border);
+  border-radius: var(--r-xl); padding: 18px 20px; margin: 4px 0;
+  box-shadow: var(--shadow-md);
+}
+.income-edit-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px;
+}
+.income-edit-grid .field input,
+.income-edit-grid .field select {
+  height: 44px; font-size: 14px;
+}
+.income-edit-card .field label {
+  font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
+}
+@media (max-width:600px) {
+  .income-edit-grid { grid-template-columns: 1fr; }
+}
+.income-type-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.income-type-pill {
+  display: inline-flex; align-items: center; padding: 7px 14px; border-radius: var(--r-pill);
+  border: 1.5px solid var(--border); background: var(--surface-2); color: var(--text-2);
+  font-size: 12px; font-weight: 700; cursor: pointer; transition: all .12s;
+}
+.income-type-pill.active {
+  background: var(--accent-light); border-color: var(--accent-strong); color: var(--accent-strong);
+}
+.income-recurring-row {
+  display: flex; align-items: center; gap: 10px; margin-top: 4px; grid-column: 1 / -1;
+}
+.income-recurring-switch {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0;
+}
+.income-recurring-switch input { position: absolute; opacity: 0; width: 100%; height: 100%; margin: 0; cursor: pointer; }
+.income-recurring-switch .track {
+  position: absolute; inset: 0; background: var(--border-2); border-radius: var(--r-pill); transition: background .15s;
+}
+.income-recurring-switch .thumb {
+  position: absolute; top: 2px; right: 2px; width: 18px; height: 18px; border-radius: 50%;
+  background: var(--surface); box-shadow: var(--shadow-xs); transition: transform .15s;
+}
+.income-recurring-switch input:checked + .track { background: var(--accent-strong); }
+.income-recurring-switch input:checked ~ .thumb { transform: translateX(-18px); }
+.income-recurring-day {
+  width: 64px; height: 32px; padding: 0 8px; border: 1.5px solid var(--border); border-radius: var(--r-md);
+  background: var(--surface); color: var(--text); font-size: 13px;
+}
+.income-edit-delete {
+  position: absolute; top: 12px; left: 12px; width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid var(--border); background: var(--surface); color: var(--bad);
+  display: flex; align-items: center; justify-content: center; cursor: pointer; font-size: 14px; line-height: 1;
+  transition: background .12s, border-color .12s;
+}
+.income-edit-delete:hover { background: var(--bad-light); border-color: var(--bad); }
 
 /* ── Filter Redesign ──────────────────────────────────────────── */
 .filter-body { display:flex; flex-direction:column; gap:10px; }
@@ -3208,6 +3281,12 @@ function getUserLabel(userId){
   const meta = USERS.find(user => user.id === userId);
   return meta ? meta.label : userId;
 }
+function getUserAvatarHTML(userId){
+  const label = getUserLabel(userId);
+  const initial = String(label || "?").trim().charAt(0);
+  const cls = userId === currentUser ? "me" : "partner";
+  return `<span class="user-avatar ${cls}" title="${label}">${initial}</span>`;
+}
 function isSharedExpenseRow(row){
   return Boolean(row && (row.sharedExpense === true || row.sharedExpense === "true"));
 }
@@ -4750,7 +4829,6 @@ function renderChart(rows){
   if(ctx) ctx.style.display="block";
   const _oldBullet = chartBox && chartBox.querySelector(".bullet-chart");
   if(_oldBullet) _oldBullet.remove();
-  const chartPalette=["#3b82f6","#10b981","#8b5cf6","#f97316","#f43f5e","#06b6d4","#84cc16","#f59e0b","#6366f1","#ec4899","#14b8a6"];
   const isMobile = window.innerWidth <= 720;
   const setChartBoxHeight = (height)=>{
     if(!chartBox) return;
@@ -4758,6 +4836,12 @@ function renderChart(rows){
     chartBox.style.minHeight = `${height}px`;
   };
   const _css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#7E9B6E";
+  const chartPalette=[
+    _css("--gold")||"#C9A227", _css("--dv-1")||"#7E9B6E", _css("--dv-2")||"#B07D56",
+    _css("--dv-3")||"#D9A441", _css("--dv-4")||"#C16A4F", _css("--dv-5")||"#6E8B8A",
+    _css("--dv-6")||"#9D8AA8", _css("--dv-7")||"#8AA088", _css("--dv-8")||"#C9A86B",
+    _css("--accent-strong")||"#5E7A50", _css("--wood-strong")||"#8A5E3C"
+  ];
   if(type === "forecast"){
     const fc = buildForecast();
     const monthInfo=getSheetMonthYear(selectedSheet);
@@ -4908,10 +4992,7 @@ function renderChart(rows){
   if(type === "bar"){
     /* Vertical bar chart — vibrant multi-colour fill per bar */
     const barData = nonZero.length ? nonZero : labels.map((label,i)=>({label,value:values[i]})).filter(x=>x.value>0);
-    const barPalette = [
-      "#3b82f6","#10b981","#8b5cf6","#f97316","#f43f5e",
-      "#06b6d4","#84cc16","#f59e0b","#6366f1","#ec4899","#14b8a6"
-    ];
+    const barPalette = chartPalette;
     setChartBoxHeight(isMobile ? 280 : 340);
     chartInstance = new Chart(ctx, {
       type:"bar",
@@ -4943,7 +5024,7 @@ function renderChart(rows){
             grid:{ display:false },
             ticks:{
               font:{size:isMobile?9:11, weight:"700"},
-              color:"#1e293b",
+              color:_css("--text"),
               maxRotation:40,
               minRotation:0
             }
@@ -4953,7 +5034,7 @@ function renderChart(rows){
             grid:{ color:"rgba(37,99,235,.07)" },
             ticks:{
               font:{size:isMobile?10:12},
-              color:"#64748b",
+              color:_css("--muted"),
               callback: v => "₪"+Math.round(v).toLocaleString("he-IL")
             }
           }
@@ -5298,34 +5379,40 @@ function renderIncomeTab(){
     return;
   }
   list.innerHTML = rows.map(row => incomeEditMode ? `
-    <div class="income-row editing">
-      <div class="field">
-        <label>מקור הכנסה</label>
-        <input value="${String(row.source || "").replace(/"/g,"&quot;")}" placeholder="משכורת / ביט / העברה" onchange="updateIncomeRow('${row.id}', 'source', this.value)">
+    <div class="income-row editing income-edit-card">
+      <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">✕</button>
+      <div class="income-edit-grid">
+        <div class="field">
+          <label>מקור הכנסה</label>
+          <input value="${String(row.source || "").replace(/"/g,"&quot;")}" placeholder="משכורת / ביט / העברה" onchange="updateIncomeRow('${row.id}', 'source', this.value)">
+        </div>
+        <div class="field">
+          <label>סכום</label>
+          <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)">
+        </div>
+        <div class="field">
+          <label>תאריך</label>
+          <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateIncomeRow('${row.id}', 'date_raw', formatDateForStorage(this.value))">
+        </div>
+        <div class="field">
+          <label>סוג</label>
+          <select onchange="updateIncomeRow('${row.id}', 'type', this.value)">
+            <option value="salary"${row.type==="salary"?" selected":""}>משכורת</option>
+            <option value="bitpay"${row.type==="bitpay"?" selected":""}>ביט / פיי</option>
+            <option value="transfer"${row.type==="transfer"?" selected":""}>העברה</option>
+            <option value="refund"${row.type==="refund"?" selected":""}>החזר</option>
+            <option value="other"${row.type==="other"?" selected":""}>אחר</option>
+          </select>
+        </div>
+        <div class="income-recurring-row">
+          <label class="income-recurring-switch">
+            <input type="checkbox" ${row.recurring?"checked":""} onchange="updateIncomeRow('${row.id}', 'recurring', this.checked)">
+            <span class="track"></span><span class="thumb"></span>
+          </label>
+          <span style="font-size:13px;font-weight:600;color:var(--text-2)">חוזר מדי חודש</span>
+          ${row.recurring ? `<input type="number" min="1" max="31" placeholder="יום" class="income-recurring-day" value="${row.recurringDay||10}" onchange="updateIncomeRow('${row.id}', 'recurringDay', Number(this.value))">` : ""}
+        </div>
       </div>
-      <div class="field">
-        <label>סכום</label>
-        <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)">
-      </div>
-      <div class="field">
-        <label>תאריך</label>
-        <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateIncomeRow('${row.id}', 'date_raw', formatDateForStorage(this.value))">
-      </div>
-      <div class="field">
-        <label>סוג</label>
-        <select onchange="updateIncomeRow('${row.id}', 'type', this.value)">
-          <option value="salary"${row.type==="salary"?" selected":""}>משכורת</option>
-          <option value="bitpay"${row.type==="bitpay"?" selected":""}>ביט / פיי</option>
-          <option value="transfer"${row.type==="transfer"?" selected":""}>העברה</option>
-          <option value="refund"${row.type==="refund"?" selected":""}>החזר</option>
-          <option value="other"${row.type==="other"?" selected":""}>אחר</option>
-        </select>
-      </div>
-      <div class="field">
-        <label><input type="checkbox" ${row.recurring?"checked":""} onchange="updateIncomeRow('${row.id}', 'recurring', this.checked)"> חוזר מדי חודש</label>
-        ${row.recurring ? `<input type="number" min="1" max="31" placeholder="ביום" value="${row.recurringDay||10}" onchange="updateIncomeRow('${row.id}', 'recurringDay', Number(this.value))" style="width:4rem;margin-top:4px">` : ""}
-      </div>
-      <button class="secondary" type="button" onclick="deleteIncomeRow('${row.id}')">מחק</button>
     </div>
   ` : `
     <div class="income-row display-rich">
@@ -5939,7 +6026,7 @@ function renderTable(rows){
           <div class="field"><label>תאריך</label><input type="date" value="${toIsoDate(draft.date_raw)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'date_raw', formatDateForStorage(this.value))` : `updateRow(${rowId}, 'date_raw', formatDateForStorage(this.value))`}"></div>
           <div class="field"><label>בית עסק</label><input value="${String(draft.merchant || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
           <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
-          <div class="field"><label>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
+          <div class="field"><label><span class="category-field-swatch" style="background:${getCategoryColor(normalizeCategory(draft.category)||draft.category)}"></span>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
           <div class="field"><label>סוג</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'type', this.value)` : `updateRow(${rowId}, 'type', this.value)`}"><option value="" ${!draft.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${draft.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${draft.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
           <div class="field"><label>אשראי</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'payment', this.value)` : `updateRow(${rowId}, 'payment', this.value)`}">${paymentOptions.map(opt=>`<option value="${opt.value}" ${draft.payment===opt.value || (!draft.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
           <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'immediate', this.value)` : `updateRow(${rowId}, 'immediate', this.value)`}"><option value="" ${!isRowImmediate(draft) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(draft) ? "selected" : ""}>כן</option></select></div>
@@ -6100,7 +6187,7 @@ function renderSharedExpensesTab(){
       </div>
       <div id="settlementAddForm" style="display:none" class="settlement-form">
         <div class="field"><label>סכום (₪)</label><input id="settlAmt" type="number" step="0.01" min="0" placeholder="0"></div>
-        <div class="field"><label>מי שילם</label>
+        <div class="field"><label>${getUserAvatarHTML(partnerId)}${getUserAvatarHTML(currentUser)} מי שילם</label>
           <select id="settlPayer">
             <option value="${partnerId}">${partnerLabel}</option>
             <option value="${currentUser}">${getUserLabel(currentUser)}</option>
@@ -6113,7 +6200,7 @@ function renderSharedExpensesTab(){
       ${summary.settlements.length ? summary.settlements.map(s => `
         <div class="settlement-row">
           <div class="settlement-info">
-            <span class="settlement-chip">שילם: ${getUserLabel(s.paidById)}</span>
+            <span class="settlement-chip">${getUserAvatarHTML(s.paidById)}שילם: ${getUserLabel(s.paidById)}</span>
             <strong class="settlement-amount">${fmt(s.amount)}</strong>
             ${s.date_raw ? `<span class="settlement-date">${s.date_raw}</span>` : ""}
             ${s.notes ? `<span class="settlement-notes">${s.notes}</span>` : ""}
@@ -6166,7 +6253,7 @@ function renderSharedExpensesTab(){
             </div>
           </div>
           <div class="sec-footer">
-            <span class="sec-footer-chip payer">שילם: ${payerLabel}</span>
+            <span class="sec-footer-chip payer">${getUserAvatarHTML(entry.payerId)}שילם: ${payerLabel}</span>
             <span class="sec-footer-chip">${entry.sharedLabel}</span>
             ${entry.payment ? `<span class="sec-footer-chip">${entry.payment}</span>` : ""}
             ${entry.notes ? `<span class="sec-footer-notes">${entry.notes}</span>` : ""}
