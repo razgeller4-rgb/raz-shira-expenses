@@ -2327,7 +2327,7 @@ async function fetchCloudRecoveryPoints(limit=8){
     limit:String(limit)
   });
   params.append("id", `like.${CLOUD_BACKUP_PREFIX}*`);
-  const response = await fetch(`${config.url}/rest/v1/app_state?${params.toString()}`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo?${params.toString()}`, {
     headers:{
       apikey:config.anonKey,
       Authorization:`Bearer ${config.anonKey}`
@@ -2346,7 +2346,7 @@ async function pruneCloudRecoveryPoints(){
   const ids = extra.map(row => row.id).filter(Boolean);
   if(!ids.length) return;
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=${encodeURIComponent(idFilter)}`, {
     method:"DELETE",
     headers:{
       apikey:config.anonKey,
@@ -2366,7 +2366,7 @@ async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומט�
       source:"cloud"
     }
   };
-  const response = await fetch(`${config.url}/rest/v1/app_state`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo`, {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -2444,7 +2444,7 @@ async function restoreCloudRecoveryPoint(id){
   try {
     rememberLocalRecoveryPoint("לפני שחזור מהענן");
     const config = getCloudSyncConfig();
-    const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
+    const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
       headers:{
         apikey:config.anonKey,
         Authorization:`Bearer ${config.anonKey}`
@@ -2502,7 +2502,7 @@ async function createManualRecoveryPoint(){
 async function fetchCloudState(rowId=CLOUD_SYNC_ROW_ID){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
     headers:{
       apikey:config.anonKey,
       Authorization:`Bearer ${config.anonKey}`
@@ -2522,7 +2522,7 @@ async function fetchCloudUserRows(){
     CLOUD_SETTLEMENTS_ROW_ID
   ];
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
     headers:{
       apikey:config.anonKey,
       Authorization:`Bearer ${config.anonKey}`
@@ -2538,7 +2538,7 @@ async function fetchCloudUserRows(){
 async function upsertCloudRow(rowId, payload){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const response = await fetch(`${config.url}/rest/v1/app_state?on_conflict=id`, {
+  const response = await fetch(`${config.url}/rest/v1/app_state_demo?on_conflict=id`, {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
