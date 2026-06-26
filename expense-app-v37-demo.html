@@ -50,9 +50,9 @@
   --dv-1-soft:rgba(126,155,110,.18); --dv-2-soft:rgba(176,125,86,.18);
   --gold:#C9A227;
   /* Per-tab palette — calm botanical */
-  --c-dashboard: #7E9B6E; --c-budget: #6E8B4F; --c-income: #4E7A4A;
-  --c-cards: #6E8B8A; --c-expenses: #C16A4F; --c-shared: #C77B8B;
-  --c-debts: #B5654A; --c-yearly: #5E7A50; --c-backup: #B07D56;
+  --c-dashboard: #6B5848; --c-budget: #B0894F; --c-income: #4E7A4A;
+  --c-cards: #7D4B38; --c-expenses: #9C6347; --c-shared: #C77B8B;
+  --c-debts: #8E7A66; --c-yearly: #C2A579; --c-backup: #B07D56;
   --c-sand: #C9A86B;
   /* Layout */
   --topbar-h: 56px; --pillnav-h: 52px; --content-max: 1100px;
@@ -155,14 +155,14 @@ input, select, textarea { font: inherit; }
 }
 .pill-btn:hover { background: var(--bg); color: var(--text); }
 .pill-btn .pill-icon { font-size: 15px; }
-.pill-btn[data-tab="dashboard"].active { background: var(--c-dashboard); color:#fff; box-shadow:0 2px 10px rgba(126,155,110,.4); }
-.pill-btn[data-tab="budget"].active    { background: var(--c-budget);    color:#fff; box-shadow:0 2px 10px rgba(110,139,79,.4); }
+.pill-btn[data-tab="dashboard"].active { background: var(--c-dashboard); color:#fff; box-shadow:0 2px 10px rgba(107,88,72,.4); }
+.pill-btn[data-tab="budget"].active    { background: var(--c-budget);    color:#fff; box-shadow:0 2px 10px rgba(176,137,79,.4); }
 .pill-btn[data-tab="income"].active    { background: var(--c-income);    color:#fff; box-shadow:0 2px 10px rgba(78,122,74,.4); }
-.pill-btn[data-tab="cards"].active     { background: var(--c-cards);     color:#fff; box-shadow:0 2px 10px rgba(110,139,138,.4); }
-.pill-btn[data-tab="expenses"].active  { background: var(--c-expenses);  color:#fff; box-shadow:0 2px 10px rgba(193,106,79,.4); }
+.pill-btn[data-tab="cards"].active     { background: var(--c-cards);     color:#fff; box-shadow:0 2px 10px rgba(125,75,56,.4); }
+.pill-btn[data-tab="expenses"].active  { background: var(--c-expenses);  color:#fff; box-shadow:0 2px 10px rgba(156,99,71,.4); }
 .pill-btn[data-tab="shared"].active    { background: var(--c-shared);    color:#fff; box-shadow:0 2px 10px rgba(199,123,139,.4); }
-.pill-btn[data-tab="debts"].active     { background: var(--c-debts);     color:#fff; box-shadow:0 2px 10px rgba(181,101,74,.4); }
-.pill-btn[data-tab="yearly"].active    { background: var(--c-yearly);    color:#fff; box-shadow:0 2px 10px rgba(94,122,80,.4); }
+.pill-btn[data-tab="debts"].active     { background: var(--c-debts);     color:#fff; box-shadow:0 2px 10px rgba(142,122,102,.4); }
+.pill-btn[data-tab="yearly"].active    { background: var(--c-yearly);    color:#fff; box-shadow:0 2px 10px rgba(194,165,121,.4); }
 .pill-btn[data-tab="backup"].active    { background: var(--c-backup);    color:#fff; box-shadow:0 2px 10px rgba(176,125,86,.4); }
 
 /* ── Main Content ─────────────────────────────────────────────── */
@@ -196,14 +196,14 @@ input, select, textarea { font: inherit; }
 .panel-hero-value { font-size: clamp(26px,4vw,40px); font-weight: 900;
   font-variant-numeric: tabular-nums; letter-spacing: -1px; }
 .panel-hero-label { font-size: 12px; opacity: .75; margin-top: 2px; }
-[data-panel="dashboard"] .panel-hero { background: linear-gradient(135deg,#5E7A50,#7E9B6E,#9DB68F); }
-[data-panel="budget"]    .panel-hero { background: linear-gradient(135deg,#566E3C,#6E8B4F,#8BA56A); }
+[data-panel="dashboard"] .panel-hero { background: linear-gradient(135deg,#4F3F35,#6B5848,#8C7765); }
+[data-panel="budget"]    .panel-hero { background: linear-gradient(135deg,#8B6B3D,#B0894F,#D1AC73); }
 [data-panel="income"]    .panel-hero { background: linear-gradient(135deg,#3C5E3A,#4E7A4A,#6E9A66); }
-[data-panel="cards"]     .panel-hero { background: linear-gradient(135deg,#52706E,#6E8B8A,#92ABAA); }
-[data-panel="expenses"]  .panel-hero { background: linear-gradient(135deg,#9A4E36,#C16A4F,#D4906F); }
+[data-panel="cards"]     .panel-hero { background: linear-gradient(135deg,#5E3528,#7D4B38,#A06F55); }
+[data-panel="expenses"]  .panel-hero { background: linear-gradient(135deg,#7A4A35,#9C6347,#C28A68); }
 [data-panel="shared"]    .panel-hero { background: linear-gradient(135deg,#9E5A68,#C77B8B,#DAA2AE); }
-[data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#8E4A34,#B5654A,#CC8A6E); }
-[data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#46603C,#5E7A50,#83A074); }
+[data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#6E5C4D,#8E7A66,#B3A085); }
+[data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#A8895C,#C2A579,#DDC79E); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#8A5E3C,#B07D56,#CCA079); }
 
 /* ── Phase 1: Hero balance + sparkline (design upgrade) ─────────── */
@@ -846,9 +846,9 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   --dv-5:#8FB0AE; --dv-6:#B3A3BD; --dv-7:#A3B8A0; --dv-8:#D8BC84;
   --dv-1-soft:rgba(166,192,143,.20); --dv-2-soft:rgba(201,155,114,.20);
   --gold:#D9B84A;
-  --c-dashboard:#A6C08F; --c-budget:#9FB877; --c-income:#7FB276;
-  --c-cards:#8FB0AE; --c-expenses:#E08A6E; --c-shared:#D593A1;
-  --c-debts:#D98B6E; --c-yearly:#8AAA72; --c-backup:#C99B72; --c-sand:#D8BC84;
+  --c-dashboard:#8C7866; --c-budget:#CDA868; --c-income:#7FB276;
+  --c-cards:#A06F55; --c-expenses:#BF8568; --c-shared:#D593A1;
+  --c-debts:#AC9985; --c-yearly:#D9C09A; --c-backup:#C99B72; --c-sand:#D8BC84;
   --shadow-xs:0 1px 2px rgba(0,0,0,.4);
   --shadow-sm:0 1px 3px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.35);
   --shadow-md:0 4px 16px rgba(0,0,0,.5);
