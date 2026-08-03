@@ -2,3 +2,5 @@
 ~$*
 *.xlsx
 *.json
+.claude/worktrees/
+.claude/settings.local.json

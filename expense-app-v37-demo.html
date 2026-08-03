@@ -1081,17 +1081,18 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── Income Row redesign ──────────────────────────────────────── */
 .income-row.display-rich {
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto;
+  align-items:center;
   background:var(--surface); padding:13px 16px;
 }
-.income-cell { display:flex; flex-direction:column; gap:2px; }
+.income-cell { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .income-cell strong { font-size:14px; font-weight:800; color:var(--text); }
-.income-cell.amount strong { color:var(--good); font-size:15px; }
-.income-cell .tiny { font-size:10px; color:var(--muted); }
+.income-cell.amount { align-items:flex-start; text-align:left; }
+.income-cell.amount strong { color:var(--good); font-size:16px; font-variant-numeric:tabular-nums; }
+.income-cell .tiny { font-size:11px; color:var(--muted); }
 .income-cell .mobile-label { display:none; }
+.income-chips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:2px; }
 @media (max-width:600px) {
-  .income-row.display-rich { grid-template-columns:1fr auto; }
-  .income-row.display-rich .income-cell:nth-child(3) { display:none; }
   .income-row.editing { display:flex; flex-direction:column; gap:8px; }
 }
 
@@ -2121,6 +2122,7 @@ let addExpenseOpen = false;
 let activeTab = "dashboard";
 let selectedYear = 2026;
 let incomeEditMode = false;
+const INCOME_TYPE_LABELS = { salary:"משכורת", bitpay:"ביט / פיי", transfer:"העברה", refund:"החזר", other:"אחר" };
 let debtEditMode = false;
 let categoryEditMode = false;
 let cardEditMode = false;
@@ -3563,9 +3565,13 @@ function getFatherHistory(){
 }
 function addIncomeRow(){
   const rows = getIncomeRows(selectedSheet);
-  rows.push({id:`income-${Date.now()}`, source:"", amount:0, date_raw:""});
+  const id = `income-${Date.now()}`;
+  rows.push({id, source:"", amount:0, date_raw:formatDateForStorage(new Date().toISOString().slice(0,10)), type:"other", recurring:false});
   saveIncomeRows(selectedSheet, rows);
+  incomeEditMode = true;   // אחרת השורה החדשה מרונדרת כתצוגה בלבד ואי אפשר למלא אותה
   render();
+  const card = document.querySelector(`.income-edit-card[data-income-id="${id}"]`);
+  if(card){ card.scrollIntoView({behavior:"smooth", block:"center"}); card.querySelector("input")?.focus(); }
 }
 function updateIncomeRow(id, field, value){
   const coerce = field === "amount" ? Number(value || 0)
@@ -3577,6 +3583,9 @@ function updateIncomeRow(id, field, value){
   render();
 }
 function deleteIncomeRow(id){
+  const target = getIncomeRows(selectedSheet).find(row => row.id === id);
+  const label = target && target.source ? `"${target.source}"` : "ההכנסה הזו";
+  if(!confirm(`למחוק את ${label}? הפעולה לא הפיכה.`)) return;
   const rows = getIncomeRows(selectedSheet).filter(row => row.id !== id);
   saveIncomeRows(selectedSheet, rows);
   render();
@@ -5374,7 +5383,8 @@ function renderIncomeTab(){
   const list = document.getElementById("incomeList");
   const rows = getIncomeRows(selectedSheet);
   const incomeWindow = getIncomeWindowForSheet(selectedSheet);
-  document.getElementById("incomeMonthTotal").textContent = fmtOrDash(getIncomeTotal(selectedSheet));
+  const incomeTotal = getIncomeTotal(selectedSheet);
+  document.getElementById("incomeMonthTotal").textContent = fmtOrDash(incomeTotal);
   document.getElementById("incomeWindowRange").textContent = `חלון הכנסות: ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}`;
   if(!rows.length){
     list.innerHTML = `<div class="empty-state">
@@ -5386,11 +5396,12 @@ function renderIncomeTab(){
       </svg>
       <div class="empty-title">עדיין אין הכנסות מתועדות החודש</div>
       <div class="empty-sub">אפשר להתחיל עם משכורת, ביט או כל הכנסה אחרת — לחלון ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}.</div>
+      <button class="success-btn" type="button" onclick="addIncomeRow()">+ הוסף הכנסה ראשונה</button>
     </div>`;
     return;
   }
   list.innerHTML = rows.map(row => incomeEditMode ? `
-    <div class="income-row editing income-edit-card">
+    <div class="income-row editing income-edit-card" data-income-id="${row.id}">
       <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">✕</button>
       <div class="income-edit-grid">
         <div class="field">
@@ -5428,21 +5439,16 @@ function renderIncomeTab(){
   ` : `
     <div class="income-row display-rich">
       <div class="income-cell">
-        <span class="mobile-label">מקור</span>
-        <span class="income-source-chip">${row.source || "ללא מקור"}</span>
-        <strong>${row.source || "ללא מקור"}</strong>
-        ${row.recurring ? `<span class="income-recurring-chip">חוזר</span>` : ""}
-        <div class="tiny">שויכה לחלון ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}</div>
+        <div class="income-chips">
+          <span class="income-source-chip">${INCOME_TYPE_LABELS[row.type] || INCOME_TYPE_LABELS.other}</span>
+          ${row.recurring ? `<span class="income-recurring-chip">חוזר · ${row.recurringDay || 10} בחודש</span>` : ""}
+        </div>
+        <strong>${escapeHtmlAttr(row.source) || "ללא מקור"}</strong>
+        <div class="tiny">${row.date_raw || "ללא תאריך"}</div>
       </div>
       <div class="income-cell amount">
-        <span class="mobile-label">סכום</span>
-        <div class="tiny">סכום שנכנס</div>
         <strong>${fmt(row.amount)}</strong>
-      </div>
-      <div class="income-cell">
-        <span class="mobile-label">תאריך וחלק יחסי</span>
-        <div class="tiny">${row.date_raw || "אין תאריך מדויק"}</div>
-        <strong>${getIncomeTotal(selectedSheet) ? `${Math.round((Number(row.amount || 0) / getIncomeTotal(selectedSheet)) * 100)}%` : "—"}</strong>
+        <div class="tiny">${incomeTotal ? `${Math.round((Number(row.amount || 0) / incomeTotal) * 100)}% מההכנסות` : ""}</div>
       </div>
     </div>
   `).join("");
@@ -6547,9 +6553,9 @@ function render(){
       copySelectedBtn.textContent = selectedExpenseRows.size ? `העתק מסומנות (${selectedExpenseRows.size}) לחודש הבא` : "העתק מסומנות לחודש הבא";
     }
     const incomeBtn = document.getElementById("toggleIncomeEditBtn");
-    incomeBtn.textContent = `מצב עריכה: ${incomeEditMode ? "פעיל" : "כבוי"}`;
+    incomeBtn.textContent = incomeEditMode ? "סיום עריכה" : "עריכה";
     incomeBtn.classList.toggle("active", incomeEditMode);
-    document.getElementById("addIncomeBtn").style.display = incomeEditMode ? "inline-flex" : "none";
+    document.getElementById("addIncomeBtn").style.display = "inline-flex";
     const debtBtn = document.getElementById("toggleDebtEditBtn");
     debtBtn.textContent = `מצב עריכה: ${debtEditMode ? "פעיל" : "כבוי"}`;
     debtBtn.classList.toggle("active", debtEditMode);

@@ -1,0 +1,1 @@
+- [Sync concurrency fix](project_sync_concurrency.md) — per-user Supabase rows + guarded settlements row; built on demo, not yet promoted to v37
