@@ -1169,6 +1169,15 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   transition: background .12s, border-color .12s;
 }
 .income-edit-delete:hover { background: var(--bad-light); border-color: var(--bad); }
+.income-edit-card.is-increase { border-color: rgba(220,38,38,.3); background: var(--bad-light); }
+.debt-direction-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r-pill);
+  font-size: 10px; font-weight: 700; margin-right: 6px;
+  background: var(--good-light); color: var(--good);
+}
+.debt-direction-badge.increase { background: var(--bad-light); color: var(--bad); }
+.debt-amount-increase { color: var(--bad) !important; }
+.debt-row.is-increase { border-color: rgba(220,38,38,.25); }
 
 /* ── Filter Redesign ──────────────────────────────────────────── */
 .filter-body { display:flex; flex-direction:column; gap:10px; }
@@ -1767,6 +1776,7 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
             <button id="toggleDebtEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
             <button id="addDebtLoanBtn" class="success-btn" type="button" style="display:none">תשלום בנק +</button>
             <button id="addDebtFatherBtn" class="success-btn" type="button" style="display:none">החזר לאבא +</button>
+            <button id="addDebtFatherIncreaseBtn" class="secondary" type="button" style="display:none">תוספת הלוואה +</button>
             <button id="toggleDebtVisibilityBtn" class="secondary" type="button" style="opacity:.7">הסתר טאב חובות</button>
           </div>
         </div>
@@ -2517,8 +2527,11 @@ function normalizeDebtData(data){
     fatherDebtStart: Number(next.fatherDebtStart != null ? next.fatherDebtStart : defaults.fatherDebtStart) || 0,
     // כל שורה חייבת id יציב. בעבר המפתח נגזר מהתוכן (תאריך-סכום-תיאור),
     // כך ששתי שורות זהות נחשבו לישות אחת — עריכה/מחיקה פגעו בשתיהן.
+    // direction: 'repayment' (מקטין את היתרה, ברירת מחדל) או 'increase'
+    // (הלוואה נוספת מאבא, מגדיל את היתרה). שורות ישנות/מסונכרנות מהוצאות
+    // הן תמיד repayment — זה בדיוק ההתנהגות שהייתה קודם, בלי direction בכלל.
     fatherHistory: (Array.isArray(next.fatherHistory) ? next.fatherHistory : clone(defaults.fatherHistory))
-      .map((row, i) => row && row.id ? row : {...row, id:`father-legacy-${i}`}),
+      .map((row, i) => ({...row, id: row && row.id ? row.id : `father-legacy-${i}`, direction: row && row.direction === "increase" ? "increase" : "repayment"})),
     loanSchedule: Array.isArray(next.loanSchedule) ? next.loanSchedule : clone(defaults.loanSchedule)
   };
 }
@@ -3615,10 +3628,12 @@ function deleteIncomeRow(id){
   saveIncomeRows(selectedSheet, rows);
   render();
 }
-function addFatherHistoryRow(){
+function addFatherHistoryRow(direction="repayment"){
   const data = getDebtData();
-  data.fatherHistory.push({id:`father-${Date.now()}`, date_raw:"", amount:0, description:"", source:"ידני"});
+  data.fatherHistory.push({id:`father-${Date.now()}`, date_raw:formatDateForStorage(new Date().toISOString().slice(0,10)), amount:0, description:"", source:"ידני", direction});
+  data.enabled = true;
   saveDebtData(data);
+  debtEditMode = true;
   render();
 }
 function updateFatherHistoryRow(id, field, value){
@@ -4114,7 +4129,7 @@ function getYearlySummaryData(year=selectedYear){
   const todayIso = getTodayIso();
   const fatherRemaining = debtEnabled ? Math.max(0, getFatherDebtStart() - getCombinedFatherRepayments()
     .filter(item => toIsoDate(item.date_raw) && toIsoDate(item.date_raw) <= todayIso)
-    .reduce((sum,row)=>sum + Number(row.amount || 0),0)) : 0;
+    .reduce((sum,row)=>sum + getFatherNetAmount(row),0)) : 0;
   const bankRemaining = debtEnabled ? Math.max(0, getLoanPrincipalBase() - getLoanSchedule()
     .filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso)
     .reduce((sum,entry)=>sum + Number(entry.principal || 0),0)) : 0;
@@ -4434,6 +4449,10 @@ function getFatherRows(sheet){
     .filter(isFatherRepayment)
     .map(row => ({...row, source:"מהוצאות"}));
 }
+function getFatherNetAmount(row){
+  // repayment מקטין את היתרה (חיובי), increase מגדיל אותה (שלילי בסכימה).
+  return row && row.direction === "increase" ? -Number(row.amount || 0) : Number(row && row.amount || 0);
+}
 function getCombinedFatherRepayments(){
   const historical = getFatherHistory().map(item => ({...item, source:item.source || "היסטורי"}));
   const existingKeys = new Set(historical.map(item => normalizeRepaymentKey(item.date_raw, item.amount)));
@@ -4450,7 +4469,7 @@ function getFatherRepaymentTotal(sheet){
       const iso = toIsoDate(item.date_raw);
       return iso && Number(iso.slice(0,4)) === year && Number(iso.slice(5,7)) === month;
     })
-    .reduce((sum,row)=>sum + Number(row.amount || 0),0);
+    .reduce((sum,row)=>sum + getFatherNetAmount(row),0);
 }
 function getFatherRepaymentRowsForSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
@@ -4460,7 +4479,7 @@ function getFatherRepaymentRowsForSheet(sheet){
   });
 }
 function getTotalFatherRepayments(){
-  return getCombinedFatherRepayments().reduce((sum,row)=>sum + Number(row.amount || 0),0);
+  return getCombinedFatherRepayments().reduce((sum,row)=>sum + getFatherNetAmount(row),0);
 }
 function getFilteredRows(baseRows){
   let rows=[...baseRows],
@@ -6379,9 +6398,11 @@ function renderDebts(){
   const visibilityBtn = document.getElementById("toggleDebtVisibilityBtn");
   const addLoanBtn = document.getElementById("addDebtLoanBtn");
   const addFatherBtn = document.getElementById("addDebtFatherBtn");
+  const addFatherIncreaseBtn = document.getElementById("addDebtFatherIncreaseBtn");
   if(visibilityBtn) visibilityBtn.textContent = enabled ? "הסתר טאב חובות" : "הפעל טאב חובות";
   if(addLoanBtn) addLoanBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
   if(addFatherBtn) addFatherBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
+  if(addFatherIncreaseBtn) addFatherIncreaseBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
   if(!enabled){
     if(debtDisabledState){
       debtDisabledState.style.display = "block";
@@ -6458,30 +6479,57 @@ function renderDebts(){
   document.getElementById("debtFatherRows").innerHTML = `
     ${debtEditMode ? `<div class="debt-meta-editor">
       <div class="field">
-        <label>חוב פתיחה לאבא</label>
+        <label>יתרת פתיחה היסטורית (לא לעדכן עבור הלוואה חדשה!)</label>
         <input type="number" step="0.01" value="${Number(getFatherDebtStart() || 0)}" onchange="updateDebtSetting('fatherDebtStart', this.value)">
+        <div class="micro" style="margin-top:4px">לקחת הלוואה נוספת? השתמש ב"תוספת הלוואה +" למטה — היתרה תתעדכן לבד, בלי לחשב בראש.</div>
       </div>
       <div class="field">
-        <label>החזר ידני</label>
-        <button class="success-btn" type="button" onclick="addFatherHistoryRow()">החזר ידני לאבא +</button>
+        <label>רישום ידני</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="success-btn" type="button" onclick="addFatherHistoryRow('repayment')">החזר ידני +</button>
+          <button class="secondary" type="button" onclick="addFatherHistoryRow('increase')" style="border-color:var(--bad);color:var(--bad)">תוספת הלוואה +</button>
+        </div>
       </div>
     </div>` : ""}
     ${allFatherRows.length ? allFatherRows.map(row => {
       const rowId = row.id;
       const editable = row.source !== "מהוצאות" && rowId;
+      const isIncrease = row.direction === "increase";
       if(debtEditMode && editable){
-        return `<div class="debt-row">
-          <div><input type="text" value="${escapeHtmlAttr(row.description || row.merchant)}" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)"></div>
-          <div><input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))"></div>
-          <div><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"></div>
-          <div><button class="secondary" type="button" onclick="deleteFatherHistoryRow('${rowId}')">מחק</button></div>
+        return `<div class="income-edit-card${isIncrease ? " is-increase" : ""}">
+          <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">✕</button>
+          <div class="income-edit-grid">
+            <div class="field">
+              <label>תיאור</label>
+              <input value="${escapeHtmlAttr(row.description || row.merchant)}" placeholder="למה זה קשור" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)">
+            </div>
+            <div class="field">
+              <label>סכום</label>
+              <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)">
+            </div>
+            <div class="field">
+              <label>תאריך</label>
+              <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))">
+            </div>
+            <div class="field">
+              <label>סוג</label>
+              <select onchange="updateFatherHistoryRow('${rowId}', 'direction', this.value)">
+                <option value="repayment"${!isIncrease ? " selected" : ""}>החזר (מקטין את היתרה)</option>
+                <option value="increase"${isIncrease ? " selected" : ""}>תוספת הלוואה (מגדיל את היתרה)</option>
+              </select>
+            </div>
+          </div>
         </div>`;
       }
-      return `<div class="debt-row">
-        <div><strong>${escapeHtmlAttr(row.merchant || row.description) || "ללא שם"}</strong><div class="micro">${escapeHtmlAttr(row.notes || row.description) || "ללא הערה"} · ${escapeHtmlAttr(row.source) || "מערכת"}${toIsoDate(row.date_raw).slice(0,7) === currentMonthKey ? " · החודש הנוכחי" : ""}</div></div>
+      return `<div class="debt-row${isIncrease ? " is-increase" : ""}">
+        <div>
+          <strong>${escapeHtmlAttr(row.merchant || row.description) || "ללא שם"}</strong>
+          <span class="debt-direction-badge${isIncrease ? " increase" : ""}">${isIncrease ? "הלוואה נוספה" : "הוחזר"}</span>
+          <div class="micro">${escapeHtmlAttr(row.notes || row.description) || "ללא הערה"} · ${escapeHtmlAttr(row.source) || "מערכת"}${toIsoDate(row.date_raw).slice(0,7) === currentMonthKey ? " · החודש הנוכחי" : ""}</div>
+        </div>
         <div class="mobile-metric"><span class="mobile-label">תאריך</span>${row.date_raw || "—"}</div>
         <div class="mobile-metric"><span class="mobile-label">אמצעי</span>${row.payment || "העברה"}</div>
-        <div class="mobile-metric"><span class="mobile-label">סכום</span><strong>${fmt(row.amount)}</strong></div>
+        <div class="mobile-metric"><span class="mobile-label">סכום</span><strong class="${isIncrease ? "debt-amount-increase" : ""}">${isIncrease ? "+" : ""}${fmt(row.amount)}</strong></div>
       </div>`;
     }).join("") : `<div class="info-box" style="margin-top:14px">עדיין לא נמצאו החזרים לאבא.</div>`}
   `;
@@ -6684,7 +6732,8 @@ document.getElementById("toggleDebtVisibilityBtn").onclick=()=>{
   render();
 };
 document.getElementById("addDebtLoanBtn").onclick=addLoanScheduleRow;
-document.getElementById("addDebtFatherBtn").onclick=addFatherHistoryRow;
+document.getElementById("addDebtFatherBtn").onclick=()=>addFatherHistoryRow("repayment");
+document.getElementById("addDebtFatherIncreaseBtn").onclick=()=>addFatherHistoryRow("increase");
 document.getElementById("toggleCategoryEditBtn").onclick=()=>{ categoryEditMode=!categoryEditMode; render(); };
 document.getElementById("toggleDashboardPrefsBtn").onclick=()=>{ dashboardPrefsOpen=!dashboardPrefsOpen; render(); };
 document.getElementById("toggleYearlyPrefsBtn").onclick=()=>{ yearlyPrefsOpen=!yearlyPrefsOpen; render(); };
