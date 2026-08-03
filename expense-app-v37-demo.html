@@ -8,7 +8,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%237E9B6E'/%3E%3Cpath d='M90 134c0-30 14-48 38-54-6 26-20 42-38 54zm0 0c0-30-14-48-38-54 6 26 20 42 38 54zm0 0V70' fill='none' stroke='%23FFFDF8' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<title>Expense App V36</title>
+<title>מנהל הוצאות — רז ושירה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2497,7 +2497,10 @@ function normalizeDebtData(data){
   return {
     enabled: next.enabled == null ? defaults.enabled : Boolean(next.enabled),
     fatherDebtStart: Number(next.fatherDebtStart != null ? next.fatherDebtStart : defaults.fatherDebtStart) || 0,
-    fatherHistory: Array.isArray(next.fatherHistory) ? next.fatherHistory : clone(defaults.fatherHistory),
+    // כל שורה חייבת id יציב. בעבר המפתח נגזר מהתוכן (תאריך-סכום-תיאור),
+    // כך ששתי שורות זהות נחשבו לישות אחת — עריכה/מחיקה פגעו בשתיהן.
+    fatherHistory: (Array.isArray(next.fatherHistory) ? next.fatherHistory : clone(defaults.fatherHistory))
+      .map((row, i) => row && row.id ? row : {...row, id:`father-legacy-${i}`}),
     loanSchedule: Array.isArray(next.loanSchedule) ? next.loanSchedule : clone(defaults.loanSchedule)
   };
 }
@@ -3448,6 +3451,10 @@ function addSharedSettlement(data){
   saveSharedSettlements(list);
 }
 function deleteSharedSettlement(id){
+  const target = getSharedSettlements().find(s => s.id === id);
+  if(!target) return;
+  // מחיקת איזון כותבת tombstone שמסתנכרן גם לצד השני — לכן אישור מפורש.
+  if(!confirm(`למחוק את האיזון של ${fmt(target.amount)} (${getUserLabel(target.paidById)})? המחיקה תחול גם על הצד השני ואינה הפיכה.`)) return;
   const tombstones = getSharedSettlementTombstones();
   tombstones[id] = getIsoNow();
   saveSharedSettlementTombstones(tombstones);
@@ -3598,17 +3605,18 @@ function addFatherHistoryRow(){
 }
 function updateFatherHistoryRow(id, field, value){
   const data = getDebtData();
-  data.fatherHistory = data.fatherHistory.map(row => {
-    const rowId = row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`;
-    if(rowId !== id) return row;
-    return {...row, [field]: field === "amount" ? Number(value || 0) : value};
-  });
+  data.fatherHistory = data.fatherHistory.map(row =>
+    row.id === id ? {...row, [field]: field === "amount" ? Number(value || 0) : value} : row);
   saveDebtData(data);
   render();
 }
 function deleteFatherHistoryRow(id){
   const data = getDebtData();
-  data.fatherHistory = data.fatherHistory.filter(row => (row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`) !== id);
+  const target = data.fatherHistory.find(row => row.id === id);
+  if(!target) return;
+  const label = [target.date_raw, target.amount ? fmt(target.amount) : null].filter(Boolean).join(" · ") || "השורה הזו";
+  if(!confirm(`למחוק את ההחזר ${label}? הפעולה לא הפיכה.`)) return;
+  data.fatherHistory = data.fatherHistory.filter(row => row.id !== id);
   saveDebtData(data);
   render();
 }
@@ -3628,6 +3636,9 @@ function updateLoanScheduleRow(installment, field, value){
 }
 function deleteLoanScheduleRow(installment){
   const data = getDebtData();
+  const target = data.loanSchedule.find(row => row.installment === installment);
+  if(!target) return;
+  if(!confirm(`למחוק את תשלום ${installment}${target.dueDate ? ` (${target.dueDate})` : ""}? הפעולה לא הפיכה.`)) return;
   data.loanSchedule = data.loanSchedule.filter(row => row.installment !== installment);
   saveDebtData(data);
   render();
@@ -4642,10 +4653,14 @@ function renderDashboardHero(){
   if(prevSheet && deltaEl){
     const prevClosing = getDisplayedClosingBalance(prevSheet);
     if(prevClosing != null && prevClosing !== 0){
-      const pct = ((value - prevClosing) / Math.abs(prevClosing)) * 100;
+      const diff = value - prevClosing;
+      const pct = (diff / Math.abs(prevClosing)) * 100;
       deltaEl.style.display = "inline-flex";
-      deltaEl.className = "hero-delta " + (pct >= 0 ? "up" : "down");
-      deltaEl.textContent = `${Math.abs(pct).toFixed(1)}% מהחודש שעבר`;
+      deltaEl.className = "hero-delta " + (diff >= 0 ? "up" : "down");
+      // אחוז על בסיס קטן יוצא חסר משמעות (למשל "692.9%") — מעל 200% מציגים רק את ההפרש בשקלים.
+      deltaEl.textContent = Math.abs(pct) > 200
+        ? `${fmtIls(Math.abs(diff))} מהחודש שעבר`
+        : `${Math.abs(pct).toFixed(1)}% מהחודש שעבר`;
     } else {
       deltaEl.style.display = "none";
     }
@@ -6389,7 +6404,7 @@ function renderDebts(){
           <strong>תשלום ${entry.installment}</strong>
           <div class="micro">${toIsoDate(entry.dueDate).slice(0,7) === currentMonthKey ? "החודש הנוכחי" : "לוח סילוקין"}</div>
         </div>
-        <div><input type="text" value="${entry.dueDate}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', this.value)"></div>
+        <div><input type="date" value="${toIsoDate(entry.dueDate)}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', formatDateForStorage(this.value))"></div>
         <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
         <div><button class="secondary" type="button" onclick="deleteLoanScheduleRow(${entry.installment})">מחק</button></div>
       </div>
@@ -6417,12 +6432,12 @@ function renderDebts(){
       </div>
     </div>` : ""}
     ${allFatherRows.length ? allFatherRows.map(row => {
-      const rowId = row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`;
-      const editable = row.source !== "מהוצאות";
+      const rowId = row.id;
+      const editable = row.source !== "מהוצאות" && rowId;
       if(debtEditMode && editable){
         return `<div class="debt-row">
-          <div><input type="text" value="${String(row.description || row.merchant || "").replace(/"/g,"&quot;")}" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)"></div>
-          <div><input type="text" value="${row.date_raw || ""}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', this.value)"></div>
+          <div><input type="text" value="${escapeHtmlAttr(row.description || row.merchant)}" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)"></div>
+          <div><input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))"></div>
           <div><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"></div>
           <div><button class="secondary" type="button" onclick="deleteFatherHistoryRow('${rowId}')">מחק</button></div>
         </div>`;
@@ -6870,7 +6885,13 @@ function saveMobileEdit(rowId){
   const pay      = document.getElementById("mxpEditPay").value;
   const type     = document.getElementById("mxpEditType").value;
   const notes    = document.getElementById("mxpEditNotes").value.trim();
-  if(!merchant || isNaN(amount)) return;
+  if(!merchant || isNaN(amount)){
+    // בעבר הפונקציה עשתה return שקט — "שמור" פשוט לא עשה כלום ללא הסבר.
+    const missing = [!merchant ? "שם בית עסק" : null, isNaN(amount) ? "סכום" : null].filter(Boolean).join(" ו");
+    alert(`חסר ${missing}. יש למלא לפני שמירה.`);
+    (document.getElementById(!merchant ? "mxpEditMerchant" : "mxpEditAmount") || {focus(){}}).focus();
+    return;
+  }
   // Convert date
   const parts = dateVal.split("-");
   const date_raw = parts.length === 3 ? parts[2]+"/"+parts[1]+"/"+parts[0] : dateVal;
@@ -6889,8 +6910,7 @@ function saveMobileEdit(rowId){
 }
 function deleteRowFromMobile(rowId, e){
   if(e) e.stopPropagation();
-  if(!confirm("למחוק הוצאה זו?")) return;
-  deleteRow(rowId);
+  deleteRow(rowId); // deleteRow כבר מבקש אישור — אין צורך ב-confirm שני
 }
 
 
