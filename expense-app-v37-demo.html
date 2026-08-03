@@ -1204,7 +1204,7 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .row-delete-btn:hover { background: var(--bad-light); border-color: var(--bad); }
 
 /* ── מיקרו-אנימציה לכניסת שורות/כרטיסים (גל 7.5) — משתמש ב-panelEnter הקיים ── */
-.income-edit-card, .income-row, .debt-row, .kpi-yearly, .card-method {
+.income-edit-card, .income-row, .debt-row, .kpi-yearly, .card-method, .summary-row {
   animation: panelEnter .2s ease-out;
 }
 
@@ -4415,35 +4415,6 @@ function getCategoryOptionsForEditing(){
   if(!options.includes("דלק")) options.push("דלק");
   return options;
 }
-function renderCategoryManager(){
-  const list = document.getElementById("categoryManagerList");
-  if(!list) return;
-  const categories = getCategoryDefinitions();
-  if(!categories.length){
-    list.innerHTML = `<div class="debt-empty">עדיין אין קטגוריות לחשבון הזה.</div>`;
-    return;
-  }
-  list.innerHTML = categories.map((category, index) => categoryEditMode ? `
-    <div class="income-edit-card">
-      <button class="income-edit-delete" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
-      <div class="income-edit-grid">
-        <div class="field">
-          <label>שם קטגוריה</label>
-          <input value="${escapeHtmlAttr(category.name)}" onchange="updateCategoryRow(${index}, 'name', this.value)">
-        </div>
-        <div class="field">
-          <label>תקציב</label>
-          <input value="${category.budget == null ? "" : Number(category.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
-        </div>
-      </div>
-    </div>
-  ` : `
-    <div class="income-row">
-      <div><span class="mobile-label">קטגוריה</span><strong>${category.name}</strong></div>
-      <div class="amount"><span class="mobile-label">תקציב</span><strong>${category.budget == null ? "ללא תקציב" : fmt(category.budget)}</strong></div>
-    </div>
-  `).join("");
-}
 function addCategoryRow(){
   const categories = getCategoryDefinitions();
   categories.push({name:"קטגוריה חדשה", budget:null});
@@ -4869,18 +4840,18 @@ function renderCategorySummary(rows){
       return `<div class="summary-row editing">
         <div class="summary-category">
           <span>קטגוריה</span>
-          <input value="${String(c.name || "").replace(/"/g,"&quot;")}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
+          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
         </div>
         <div class="summary-metric">
           <span>תקציב</span>
-          <input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
+          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"></div>
         </div>
         <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
         <div class="summary-metric summary-actions">
           <span>נשאר</span><strong class="${cls}">${remainText}</strong>
         </div>
         <div class="summary-delete">
-          <button class="secondary" type="button" onclick="deleteCategoryRow(${index})">מחק</button>
+          <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
         </div>
       </div>`;
     }
