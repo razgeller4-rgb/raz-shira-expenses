@@ -288,6 +288,15 @@ input, select, textarea { font: inherit; }
 .kpi .value.kpi-value.good { color: var(--good); }
 .kpi .value.kpi-value.bad  { color: var(--bad); }
 
+/* ── Yearly KPI cards — icon + tone tint (גל 7.3, טאב שנתי היה מגדל כרטיסים לבנים זהים) ── */
+.kpi-yearly { padding-top: 16px; }
+.kpi-icon { font-size: 20px; line-height: 1; margin-bottom: 2px; opacity: .9; }
+.kpi-yearly.tone-good { background: var(--good-light); border-color: rgba(5,150,105,.25); }
+.kpi-yearly.tone-good::before { background: var(--good); }
+.kpi-yearly.tone-bad  { background: var(--bad-light); border-color: rgba(220,38,38,.25); }
+.kpi-yearly.tone-bad::before { background: var(--bad); }
+.kpi-yearly.tone-warn { background: var(--warn-light, #fef3c7); border-color: rgba(217,119,6,.25); }
+
 /* ── Dashboard ────────────────────────────────────────────────── */
 .dashboard-clean { }
 .dashboard-note { display: flex; justify-content: space-between; align-items: flex-start;
@@ -1127,6 +1136,13 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .income-edit-grid .field select {
   height: 44px; font-size: 14px;
 }
+/* עוטף רק את ה-input (לא את הלייבל) כדי שהמיקום היחסי יהיה מדויק בלי מספרי-קסם */
+.field-currency-wrap { position: relative; }
+.field-currency-wrap input { padding-inline-start: 26px !important; }
+.field-currency-wrap::after {
+  content: "₪"; position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--muted); pointer-events: none;
+}
 .income-edit-card .field label {
   font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
 }
@@ -1178,6 +1194,19 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .debt-direction-badge.increase { background: var(--bad-light); color: var(--bad); }
 .debt-amount-increase { color: var(--bad) !important; }
 .debt-row.is-increase { border-color: rgba(220,38,38,.25); }
+
+/* ── רכיב מחיקה אחיד לשורות טבלה קומפקטיות (גל 7.4) ── */
+.row-delete-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background .12s, border-color .12s;
+}
+.row-delete-btn:hover { background: var(--bad-light); border-color: var(--bad); }
+
+/* ── מיקרו-אנימציה לכניסת שורות/כרטיסים (גל 7.5) — משתמש ב-panelEnter הקיים ── */
+.income-edit-card, .income-row, .debt-row, .kpi-yearly, .card-method {
+  animation: panelEnter .2s ease-out;
+}
 
 /* ── Filter Redesign ──────────────────────────────────────────── */
 .filter-body { display:flex; flex-direction:column; gap:10px; }
@@ -4167,23 +4196,23 @@ function getYearlySummaryData(year=selectedYear){
 function getYearlyWidgetCatalog(year=selectedYear){
   const summary = getYearlySummaryData(year);
   const widgets = [
-    {id:"avg_expense", label:"ממוצע הוצאות חודשי", value:summary.averageExpense, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
-    {id:"avg_income", label:"ממוצע הכנסות חודשי", value:summary.averageIncome, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
-    {id:"avg_balance", label:"ממוצע מאזן חודשי", value:summary.averageBalance, sub:"הכנסות פחות הוצאות בממוצע", tone:getMetricTone(summary.averageBalance)},
-    {id:"year_to_date_savings", label:"חיסכון מתחילת השנה", value:summary.yearToDateSavings, sub:"המאזן המצטבר של כל החודשים שנרשמו", tone:getMetricTone(summary.yearToDateSavings)},
-    {id:"rolling_three_balance", label:"מאזן 3 חודשים אחרונים", value:summary.rollingThreeBalance, sub:"שלושת החודשים האחרונים יחד", tone:getMetricTone(summary.rollingThreeBalance)},
-    {id:"annual_expense_total", label:"סה״כ הוצאות שנתיות", value:summary.totalExpense, sub:"כל ההוצאות לאורך השנה"},
-    {id:"annual_income_total", label:"סה״כ הכנסות שנתיות", value:summary.totalIncome, sub:"כל ההכנסות לאורך השנה"},
-    {id:"annual_fixed_total", label:"סה״כ קבועות", value:summary.totalFixed, sub:"כל ההוצאות הקבועות בשנה"},
-    {id:"annual_variable_total", label:"סה״כ משתנות", value:summary.totalVariable, sub:"כל ההוצאות המשתנות בשנה"},
-    {id:"best_balance_month", label:"החודש הכי חזק", value:summary.bestBalanceMonth?.monthlyBalance ?? null, sub:summary.bestBalanceMonth ? formatSheetLabel(summary.bestBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.bestBalanceMonth?.monthlyBalance)},
-    {id:"worst_balance_month", label:"החודש הכי חלש", value:summary.worstBalanceMonth?.monthlyBalance ?? null, sub:summary.worstBalanceMonth ? formatSheetLabel(summary.worstBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.worstBalanceMonth?.monthlyBalance)}
+    {id:"avg_expense", icon:"📉", label:"ממוצע הוצאות חודשי", value:summary.averageExpense, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
+    {id:"avg_income", icon:"📈", label:"ממוצע הכנסות חודשי", value:summary.averageIncome, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
+    {id:"avg_balance", icon:"⚖️", label:"ממוצע מאזן חודשי", value:summary.averageBalance, sub:"הכנסות פחות הוצאות בממוצע", tone:getMetricTone(summary.averageBalance)},
+    {id:"year_to_date_savings", icon:"💰", label:"חיסכון מתחילת השנה", value:summary.yearToDateSavings, sub:"המאזן המצטבר של כל החודשים שנרשמו", tone:getMetricTone(summary.yearToDateSavings)},
+    {id:"rolling_three_balance", icon:"📊", label:"מאזן 3 חודשים אחרונים", value:summary.rollingThreeBalance, sub:"שלושת החודשים האחרונים יחד", tone:getMetricTone(summary.rollingThreeBalance)},
+    {id:"annual_expense_total", icon:"🧾", label:"סה״כ הוצאות שנתיות", value:summary.totalExpense, sub:"כל ההוצאות לאורך השנה"},
+    {id:"annual_income_total", icon:"💵", label:"סה״כ הכנסות שנתיות", value:summary.totalIncome, sub:"כל ההכנסות לאורך השנה"},
+    {id:"annual_fixed_total", icon:"📌", label:"סה״כ קבועות", value:summary.totalFixed, sub:"כל ההוצאות הקבועות בשנה"},
+    {id:"annual_variable_total", icon:"🔄", label:"סה״כ משתנות", value:summary.totalVariable, sub:"כל ההוצאות המשתנות בשנה"},
+    {id:"best_balance_month", icon:"🏆", label:"החודש הכי חזק", value:summary.bestBalanceMonth?.monthlyBalance ?? null, sub:summary.bestBalanceMonth ? formatSheetLabel(summary.bestBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.bestBalanceMonth?.monthlyBalance)},
+    {id:"worst_balance_month", icon:"⚠️", label:"החודש הכי חלש", value:summary.worstBalanceMonth?.monthlyBalance ?? null, sub:summary.worstBalanceMonth ? formatSheetLabel(summary.worstBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.worstBalanceMonth?.monthlyBalance)}
   ];
   if(isDebtTrackingEnabled()){
     widgets.splice(7, 0,
-      {id:"total_debt_remaining", label:"סך כל חובות פתוחים", value:summary.totalDebtRemaining || null, sub:"בנק ואבא יחד נכון להיום", action:"openDebtDetailsModal()", actionLabel:"פירוט"},
-      {id:"bank_remaining", label:"יתרת חוב לבנק", value:summary.bankRemaining || null, sub:"קרן נותרת לפי לוח הסילוקין"},
-      {id:"father_remaining", label:"יתרת חוב לאבא", value:summary.fatherRemaining || null, sub:"לאחר כל ההחזרים שנרשמו"}
+      {id:"total_debt_remaining", icon:"🏦", label:"סך כל חובות פתוחים", value:summary.totalDebtRemaining || null, sub:"בנק ואבא יחד נכון להיום", action:"openDebtDetailsModal()", actionLabel:"פירוט"},
+      {id:"bank_remaining", icon:"🏛️", label:"יתרת חוב לבנק", value:summary.bankRemaining || null, sub:"קרן נותרת לפי לוח הסילוקין"},
+      {id:"father_remaining", icon:"👨‍👦", label:"יתרת חוב לאבא", value:summary.fatherRemaining || null, sub:"לאחר כל ההחזרים שנרשמו"}
     );
   }
   return widgets;
@@ -4395,16 +4424,18 @@ function renderCategoryManager(){
     return;
   }
   list.innerHTML = categories.map((category, index) => categoryEditMode ? `
-    <div class="income-row editing">
-      <div class="field">
-        <label>שם קטגוריה</label>
-        <input value="${String(category.name || "").replace(/"/g,"&quot;")}" onchange="updateCategoryRow(${index}, 'name', this.value)">
+    <div class="income-edit-card">
+      <button class="income-edit-delete" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
+      <div class="income-edit-grid">
+        <div class="field">
+          <label>שם קטגוריה</label>
+          <input value="${escapeHtmlAttr(category.name)}" onchange="updateCategoryRow(${index}, 'name', this.value)">
+        </div>
+        <div class="field">
+          <label>תקציב</label>
+          <input value="${category.budget == null ? "" : Number(category.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
+        </div>
       </div>
-      <div class="field">
-        <label>תקציב</label>
-        <input value="${category.budget == null ? "" : Number(category.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
-      </div>
-      <button class="secondary" type="button" onclick="deleteCategoryRow(${index})">מחק</button>
     </div>
   ` : `
     <div class="income-row">
@@ -5290,10 +5321,11 @@ function renderPaymentMethodTab(){
     const cardAmt = method.isImmediate ? monthlyCharge : scheduledCharge;
     const cardCnt = method.isImmediate ? monthlyCount : scheduledCount;
     return cardEditMode ? `
-      <div class="card-method">
+      <div class="card-method" style="position:relative">
+        <button class="income-edit-delete" type="button" onclick="deletePaymentMethodRow('${method.id}')" title="מחק כרטיס" aria-label="מחק כרטיס" style="position:absolute;top:12px;left:12px;z-index:2">🗑️</button>
         <div class="card-visual${method.isImmediate?" immediate":""}">
           <div class="card-visual-top">
-            <div class="card-visual-name">${method.name}</div>
+            <div class="card-visual-name">${escapeHtmlAttr(method.name)}</div>
             <div class="card-visual-chip"></div>
           </div>
           <div class="card-visual-type">${method.isImmediate ? "דיירקט / מיידי" : "כרטיס אשראי"}</div>
@@ -5302,7 +5334,7 @@ function renderPaymentMethodTab(){
           <div class="card-method-edit">
             <div class="field">
               <label>שם הכרטיס</label>
-              <input value="${String(method.name || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
+              <input value="${escapeHtmlAttr(method.name)}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
             </div>
             <div class="field">
               <label>יום תחילת מחזור</label>
@@ -5310,7 +5342,7 @@ function renderPaymentMethodTab(){
             </div>
             <div class="field">
               <label>4 ספרות אחרונות (לזיהוי בייבוא)</label>
-              <input type="text" inputmode="numeric" maxlength="4" placeholder="למשל 8251" value="${String(method.last4 || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'last4', this.value)">
+              <input type="text" inputmode="numeric" maxlength="4" placeholder="למשל 8251" value="${escapeHtmlAttr(method.last4)}" onchange="updatePaymentMethodRow('${method.id}', 'last4', this.value)">
             </div>
             <div class="field">
               <label>סוג חיוב</label>
@@ -5319,7 +5351,6 @@ function renderPaymentMethodTab(){
                 <option value="immediate" ${method.isImmediate ? "selected" : ""}>מיידי / דיירקט</option>
               </select>
             </div>
-            <button class="secondary" type="button" onclick="deletePaymentMethodRow('${method.id}')">מחק</button>
           </div>
           <div class="card-method-grid" style="margin-top:12px">
             <div class="card-stat">
@@ -5454,7 +5485,7 @@ function renderIncomeTab(){
   }
   list.innerHTML = rows.map(row => incomeEditMode ? `
     <div class="income-row editing income-edit-card" data-income-id="${row.id}">
-      <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">✕</button>
+      <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">🗑️</button>
       <div class="income-edit-grid">
         <div class="field">
           <label>מקור הכנסה</label>
@@ -5462,7 +5493,7 @@ function renderIncomeTab(){
         </div>
         <div class="field">
           <label>סכום</label>
-          <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)">
+          <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)"></div>
         </div>
         <div class="field">
           <label>תאריך</label>
@@ -6371,7 +6402,7 @@ function renderLoanScheduleRows(rows, currentMonthKey, todayIso){
         </div>
         <div><input type="date" value="${iso}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', formatDateForStorage(this.value))"></div>
         <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
-        <div><button class="secondary" type="button" onclick="deleteLoanScheduleRow(${entry.installment})">מחק</button></div>
+        <div><button class="row-delete-btn" type="button" onclick="deleteLoanScheduleRow(${entry.installment})" title="מחק תשלום" aria-label="מחק תשלום">🗑️</button></div>
       </div>
     ` : `
       <div class="debt-row bank-debt-row${stateClass}">
@@ -6497,7 +6528,7 @@ function renderDebts(){
       const isIncrease = row.direction === "increase";
       if(debtEditMode && editable){
         return `<div class="income-edit-card${isIncrease ? " is-increase" : ""}">
-          <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">✕</button>
+          <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">🗑️</button>
           <div class="income-edit-grid">
             <div class="field">
               <label>תיאור</label>
@@ -6505,7 +6536,7 @@ function renderDebts(){
             </div>
             <div class="field">
               <label>סכום</label>
-              <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)">
+              <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"></div>
             </div>
             <div class="field">
               <label>תאריך</label>
@@ -6543,7 +6574,8 @@ function renderYearly(){
   const visibleWidgetIds = selectedWidgetIds.length ? selectedWidgetIds : fallbackWidgetIds;
   const visibleWidgets = visibleWidgetIds.map(id => widgetCatalog.find(item => item.id === id)).filter(Boolean);
   document.getElementById("yearlyKpis").innerHTML = visibleWidgets.map(item => `
-    <div class="kpi">
+    <div class="kpi kpi-yearly${item.tone ? ` tone-${item.tone}` : ""}">
+      <div class="kpi-icon">${item.icon || "📅"}</div>
       ${item.action ? `<button class="kpi-edit-btn" type="button" onclick="${item.action}">${item.actionLabel || "פירוט"}</button>` : ""}
       <div class="label">${item.label}</div>
       <div class="value kpi-value ${item.tone || ""}">${formatMetricValue(item.value, item.format)}</div>
