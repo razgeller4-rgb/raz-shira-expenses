@@ -1138,11 +1138,18 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 }
 /* עוטף רק את ה-input (לא את הלייבל) כדי שהמיקום היחסי יהיה מדויק בלי מספרי-קסם */
 .field-currency-wrap { position: relative; }
-.field-currency-wrap input { padding-inline-start: 26px !important; }
+.field-currency-wrap input { padding-inline-start: 26px !important; padding-inline-end: 26px !important; }
 .field-currency-wrap::after {
   content: "₪"; position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%);
   font-size: 13px; color: var(--muted); pointer-events: none;
 }
+.field-clear-btn {
+  position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--surface-2);
+  color: var(--muted); font-size: 12px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.field-clear-btn:hover { background: var(--bad-light); color: var(--bad); }
 .income-edit-card .field label {
   font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
 }
@@ -4658,6 +4665,24 @@ function countUp(el, target, {dur=700, fmt=v=>Math.round(v).toLocaleString('he-I
     if (p < 1) requestAnimationFrame(step); else el.dataset.target = String(target);
   })(performance.now());
 }
+// עוטף countUp עם אותה הגנה שיש כבר על ה-hero: לא להריץ הנפשה מחדש אם הערך לא השתנה,
+// כי render() רץ הרבה יותר תכוף מהשינויים בפועל (כל onchange בטופס אחר).
+// מנקה שדה סכום בלחיצה אחת במקום למחוק ספרה-ספרה, ומפעיל את ה-onchange הקיים של השדה כרגיל.
+function clearCurrencyField(btn){
+  const input = btn.previousElementSibling;
+  if(!input) return;
+  input.value = "";
+  input.dispatchEvent(new Event("change", {bubbles:true}));
+  input.focus();
+}
+function countUpIfChanged(el, value){
+  if(!el) return;
+  const prevTarget = Number(el.dataset.target || 0);
+  if(prevTarget !== value || !el.dataset.initialized){
+    countUp(el, value, {fmt});
+    el.dataset.initialized = "1";
+  }
+}
 function getHeroSparkData(){
   /* Reuse existing yearly running-balance data (getYearlyRowsData) — last up-to-6 months
      of cumulativeBalance, spanning year boundary by combining current + previous year if needed. */
@@ -4844,7 +4869,7 @@ function renderCategorySummary(rows){
         </div>
         <div class="summary-metric">
           <span>תקציב</span>
-          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"></div>
+          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
         </div>
         <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
         <div class="summary-metric summary-actions">
@@ -5464,7 +5489,7 @@ function renderIncomeTab(){
         </div>
         <div class="field">
           <label>סכום</label>
-          <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)"></div>
+          <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
         </div>
         <div class="field">
           <label>תאריך</label>
@@ -6445,8 +6470,8 @@ function renderDebts(){
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
   document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal);
   document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
-  document.getElementById("debtBankRemainingHero").textContent = fmt(bankRemaining);
-  document.getElementById("debtFatherRemainingHero").textContent = fmt(fatherRemaining);
+  countUpIfChanged(document.getElementById("debtBankRemainingHero"), bankRemaining);
+  countUpIfChanged(document.getElementById("debtFatherRemainingHero"), fatherRemaining);
   document.getElementById("debtBankProgressBar").style.width = `${bankProgress}%`;
   document.getElementById("debtFatherProgressBar").style.width = `${fatherProgress}%`;
   document.getElementById("debtBankProgressTag").textContent = bankRemaining ? `${bankProgress}% נפרע` : "ללא יתרה";
@@ -6507,7 +6532,7 @@ function renderDebts(){
             </div>
             <div class="field">
               <label>סכום</label>
-              <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"></div>
+              <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
             </div>
             <div class="field">
               <label>תאריך</label>
@@ -6533,7 +6558,15 @@ function renderDebts(){
         <div class="mobile-metric"><span class="mobile-label">אמצעי</span>${row.payment || "העברה"}</div>
         <div class="mobile-metric"><span class="mobile-label">סכום</span><strong class="${isIncrease ? "debt-amount-increase" : ""}">${isIncrease ? "+" : ""}${fmt(row.amount)}</strong></div>
       </div>`;
-    }).join("") : `<div class="info-box" style="margin-top:14px">עדיין לא נמצאו החזרים לאבא.</div>`}
+    }).join("") : `<div class="empty-state" style="margin-top:14px">
+      <svg class="empty-art neutral" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M16 46h32"/>
+        <path d="M22 46V28l10-10 10 10v18"/>
+        <path d="M28 46v-10h8v10"/>
+      </svg>
+      <div class="empty-title">עדיין אין רישום להחזרים או להלוואות מאבא</div>
+      <div class="empty-sub">ברגע שתוסיפו החזר ידני או תוספת הלוואה, הן יופיעו כאן עם היתרה המעודכנת.</div>
+    </div>`}
   `;
 }
 function renderYearly(){
@@ -6565,7 +6598,7 @@ function renderYearly(){
       <td data-label="חודש">${formatSheetLabel(row.sheet)}</td>
       ${visibleColumns.map(column => `<td data-label="${column.label}">${fmtOrDash(row[column.id])}</td>`).join("")}
     </tr>
-  `).join("") || `<tr><td colspan="${visibleColumns.length + 1}">אין כרגע חודשים זמינים לשנה הזאת.</td></tr>`;
+  `).join("") || `<tr><td colspan="${visibleColumns.length + 1}" style="text-align:center;padding:24px;color:var(--muted)">🌱 עדיין אין חודשים מתועדים בשנה הזאת — הם יופיעו כאן ברגע שיהיו נתונים.</td></tr>`;
 }
 function renderHero(baseRows){
   const total = baseRows.reduce((sum,row)=>sum + Number(row.amount || 0),0);
