@@ -703,6 +703,24 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   align-items: center; background: var(--bg); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; }
 .debt-row .lbl { font-size: 9px; color: var(--muted); }
+.debt-row.is-current { border-color: var(--accent-strong, #b0894f); box-shadow: 0 0 0 1px var(--accent-strong, #b0894f) inset; }
+.debt-row.is-future { opacity: .6; }
+.debt-year-group { border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; margin-bottom: 6px; }
+.debt-year-group[open] { overflow: visible; }
+.debt-year-summary { display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding: 9px 12px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--surface-2);
+  list-style: none; }
+.debt-year-summary::-webkit-details-marker { display: none; }
+.debt-year-summary::before { content: "▸"; font-size: 10px; color: var(--muted); transition: transform .15s; }
+.debt-year-group[open] > .debt-year-summary::before { transform: rotate(90deg); }
+.debt-year-summary .muted { font-weight: 500; color: var(--muted); font-size: 11px; }
+.debt-year-body { padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.debt-col-header { display: none; grid-template-columns: 1fr auto auto auto auto; gap: 7px;
+  font-size: 10px; color: var(--muted); font-weight: 600; padding: 4px 11px; }
+@media (min-width:601px) {
+  .debt-col-header { display: grid; }
+  .bank-debt-row .mobile-label, .father-debt-row .mobile-label { display: none; }
+}
 @media (max-width:720px) { .debt-highlight-value { font-size: 24px; } }
 
 /* ── Yearly ───────────────────────────────────────────────────── */
@@ -1746,10 +1764,10 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
             <div class="small">הטאב הזה מציג את תמונת החוב הכוללת ולא משתנה לפי בחירת החודש. רק הכרטיסים של "החודש" מבוססים על החודש הנוכחי בפועל.</div>
           </div>
           <div class="actions" style="margin-top:0">
-            <button id="toggleDebtVisibilityBtn" class="secondary" type="button">הסתר טאב חובות</button>
             <button id="toggleDebtEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
             <button id="addDebtLoanBtn" class="success-btn" type="button" style="display:none">תשלום בנק +</button>
             <button id="addDebtFatherBtn" class="success-btn" type="button" style="display:none">החזר לאבא +</button>
+            <button id="toggleDebtVisibilityBtn" class="secondary" type="button" style="opacity:.7">הסתר טאב חובות</button>
           </div>
         </div>
 
@@ -1783,9 +1801,9 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
         <div class="debt-grid">
           <div class="debt-item"><div class="title">החזר בנק בחודש</div><div class="big" id="debtMonthlyLoan">—</div></div>
           <div class="debt-item"><div class="title">החזר לאבא החודש</div><div class="big" id="debtFatherThisMonth">—</div></div>
-          <div class="debt-item"><div class="title">יתרת חוב לבנק</div><div class="big" id="debtBankRemaining">—</div></div>
-          <div class="debt-item"><div class="title">יתרת חוב לאבא</div><div class="big" id="debtFatherRemaining">—</div></div>
         </div>
+        <!-- שני כרטיסי "יתרת חוב" הוסרו — היו כפילות מדויקת של הכרטיסים
+             העליונים (debtBankRemainingHero/debtFatherRemainingHero). -->
 
         <div class="debt-sections">
           <div class="debt-section open" id="bankDebtSection">
@@ -6316,6 +6334,51 @@ function renderTabs(){
   updateMiniNavLabel();
   renderMiniNavMeta();
 }
+function renderLoanScheduleRows(rows, currentMonthKey, todayIso){
+  if(!rows.length) return `<div class="debt-empty">עדיין לא ירד חיוב מהלוואת הבנק לפי לוח הסילוקין.</div>`;
+  const header = `<div class="debt-col-header"><span>תשלום</span><span>תאריך חיוב</span><span>קרן</span>${debtEditMode ? "<span></span>" : ""}</div>`;
+  const groups = new Map();
+  rows.forEach(entry => {
+    const year = toIsoDate(entry.dueDate).slice(0,4) || "ללא תאריך";
+    if(!groups.has(year)) groups.set(year, []);
+    groups.get(year).push(entry);
+  });
+  const years = [...groups.keys()].sort((a,b)=>b.localeCompare(a));
+  const currentYear = currentMonthKey.slice(0,4);
+  const body = years.map(year => {
+    const yearRows = groups.get(year);
+    const yearTotal = yearRows.reduce((sum,r)=>sum+Number(r.principal||0),0);
+    const isCurrentYear = year === currentYear;
+    const rowsHtml = yearRows.map(entry => {
+      const iso = toIsoDate(entry.dueDate);
+      const isCurrent = iso.slice(0,7) === currentMonthKey;
+      const isFuture = iso && iso > todayIso;
+      const stateClass = isCurrent ? " is-current" : (isFuture ? " is-future" : "");
+      return debtEditMode ? `
+      <div class="debt-row bank-debt-row editing${stateClass}">
+        <div>
+          <strong>תשלום ${entry.installment}</strong>
+          <div class="micro">${isCurrent ? "החודש הנוכחי" : (isFuture ? "עתידי" : "שולם")}</div>
+        </div>
+        <div><input type="date" value="${iso}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', formatDateForStorage(this.value))"></div>
+        <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
+        <div><button class="secondary" type="button" onclick="deleteLoanScheduleRow(${entry.installment})">מחק</button></div>
+      </div>
+    ` : `
+      <div class="debt-row bank-debt-row${stateClass}">
+        <div><strong>תשלום ${entry.installment}</strong><div class="micro">${isCurrent ? "החודש הנוכחי" : "שולם"}</div></div>
+        <div class="mobile-metric"><span class="mobile-label">תאריך חיוב</span>${entry.dueDate}</div>
+        <div class="mobile-metric"><span class="mobile-label">קרן</span><strong>${fmt(entry.principal)}</strong></div>
+      </div>
+    `;
+    }).join("");
+    return `<details class="debt-year-group"${isCurrentYear ? " open" : ""}>
+      <summary class="debt-year-summary"><span>${year}</span><span class="muted">${yearRows.length} תשלומים · ${fmt(yearTotal)}</span></summary>
+      <div class="debt-year-body">${rowsHtml}</div>
+    </details>`;
+  }).join("");
+  return header + body;
+}
 function renderDebts(){
   const debtData = getDebtData();
   const enabled = Boolean(debtData.enabled);
@@ -6368,9 +6431,7 @@ function renderDebts(){
   const bankProgress = getLoanPrincipalBase() ? Math.max(0, Math.min(100, Math.round((bankPaidPrincipal / getLoanPrincipalBase()) * 100))) : 0;
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
   document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal);
-  document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : "—";
-  document.getElementById("debtBankRemaining").textContent = fmt(bankRemaining);
-  document.getElementById("debtFatherRemaining").textContent = fmt(fatherRemaining);
+  document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
   document.getElementById("debtBankRemainingHero").textContent = fmt(bankRemaining);
   document.getElementById("debtFatherRemainingHero").textContent = fmt(fatherRemaining);
   document.getElementById("debtBankProgressBar").style.width = `${bankProgress}%`;
@@ -6398,23 +6459,7 @@ function renderDebts(){
     <span class="tag">קרן שנפרעה: ${fmt(bankPaidPrincipal)}</span>
     <span class="tag">יתרת קרן משוערת: ${fmt(bankRemaining)}</span>
   `;
-  document.getElementById("bankDebtRows").innerHTML = chargedLoanRows.length ? chargedLoanRows.map(entry => debtEditMode ? `
-      <div class="debt-row bank-debt-row editing">
-        <div>
-          <strong>תשלום ${entry.installment}</strong>
-          <div class="micro">${toIsoDate(entry.dueDate).slice(0,7) === currentMonthKey ? "החודש הנוכחי" : "לוח סילוקין"}</div>
-        </div>
-        <div><input type="date" value="${toIsoDate(entry.dueDate)}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', formatDateForStorage(this.value))"></div>
-        <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
-        <div><button class="secondary" type="button" onclick="deleteLoanScheduleRow(${entry.installment})">מחק</button></div>
-      </div>
-    ` : `
-      <div class="debt-row bank-debt-row">
-        <div><strong>תשלום ${entry.installment}</strong><div class="micro">${toIsoDate(entry.dueDate).slice(0,7) === currentMonthKey ? "החודש הנוכחי" : "לוח סילוקין"}</div></div>
-        <div class="mobile-metric"><span class="mobile-label">תאריך חיוב</span>${entry.dueDate}</div>
-        <div class="mobile-metric"><span class="mobile-label">קרן</span><strong>${fmt(entry.principal)}</strong></div>
-      </div>
-    `).join("") : `<div class="debt-empty">עדיין לא ירד חיוב מהלוואת הבנק לפי לוח הסילוקין.</div>`;
+  document.getElementById("bankDebtRows").innerHTML = renderLoanScheduleRows(chargedLoanRows, currentMonthKey, todayIso);
   document.getElementById("fatherDebtMeta").innerHTML = `
     <span class="tag">חוב פתיחה: ${fmt(getFatherDebtStart())}</span>
     <span class="tag">שולם עד כה: ${fmt(getTotalFatherRepayments())}</span>
