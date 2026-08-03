@@ -6163,16 +6163,6 @@ function updateMiniNavLabel(){
   if(icon && meta) icon.textContent = meta.icon;
   if(title && meta) title.textContent = meta.label;
 }
-/* Stage 2: cycle to prev/next tab via mini-nav chevrons (mobile-only navigation aid).
-   Reuses existing switchToTab() and TAB_META — does not modify any state logic. */
-function cycleMiniNavTab(dir){
-  const list = TAB_META.filter(t => t.id !== "debts" || isDebtTrackingEnabled());
-  const idx = list.findIndex(t => t.id === activeTab);
-  if(idx < 0) return;
-  const len = list.length;
-  const nextIdx = dir === "next" ? (idx + 1) % len : (idx - 1 + len) % len;
-  switchToTab(list[nextIdx].id);
-}
 function renderMiniNavMeta(){
   const userChip = document.getElementById("miniNavUserChip");
   const sheetChip = document.getElementById("miniNavSheetChip");
@@ -6768,26 +6758,6 @@ function exportBackupFromBanner(){
 }
 
 
-/* ── Hero collapse ─────────────────────────── */
-const HERO_COLLAPSE_KEY = "expense_hero_collapsed_v1";
-function toggleHeroCollapse(){
-  const hero = document.getElementById("heroCard");
-  const btn  = document.getElementById("heroCollapseBtn");
-  if(!hero) return;
-  const isNowCollapsed = !hero.classList.contains("hero-collapsed");
-  hero.classList.toggle("hero-collapsed", isNowCollapsed);
-  if(btn) btn.classList.toggle("rotated", isNowCollapsed);
-  localStorage.setItem(HERO_COLLAPSE_KEY, isNowCollapsed ? "1" : "0");
-}
-function initHeroCollapse(){
-  if(localStorage.getItem(HERO_COLLAPSE_KEY) === "1"){
-    const hero = document.getElementById("heroCard");
-    const btn  = document.getElementById("heroCollapseBtn");
-    if(hero){ hero.classList.add("hero-collapsed"); }
-    if(btn)  { btn.classList.add("rotated"); }
-  }
-}
-
 /* ── Mobile expense list ─────────────────────── */
 let mxpOpenRow = null;
 function renderMobileExpenseList(rows){
@@ -6896,7 +6866,7 @@ function showMobileEditSheet(rowId, row){
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
         <div class="field" style="grid-column:1/-1"><label>בית עסק</label><input id="mxpEditMerchant" value="${(row.merchant||"").replace(/"/g,'&quot;')}"></div>
         <div class="field"><label>סכום</label><input id="mxpEditAmount" type="number" step="0.01" value="${row.amount||""}"></div>
-        <div class="field"><label>תאריך</label><input id="mxpEditDate" type="date" value="${dateRawToISO(row.date_raw||"")}"></div>
+        <div class="field"><label>תאריך</label><input id="mxpEditDate" type="date" value="${toIsoDate(row.date_raw||"")}"></div>
         <div class="field"><label>קטגוריה</label><select id="mxpEditCat">${cats}</select></div>
         <div class="field"><label>אשראי</label><select id="mxpEditPay"><option value="">העברה בנקאית</option>${pays}</select></div>
         <div class="field"><label>סוג</label><select id="mxpEditType">
@@ -6911,12 +6881,6 @@ function showMobileEditSheet(rowId, row){
       </div>
     </div>`;
   modal.style.display = "flex";
-}
-function dateRawToISO(dr){
-  if(!dr) return "";
-  const p = dr.split("/");
-  if(p.length === 3) return p[2]+"-"+p[1]+"-"+p[0];
-  return "";
 }
 function closeMobileEditSheet(){
   const m = document.getElementById("mobileEditModal");
@@ -6999,7 +6963,7 @@ async function keepSupabaseAlive(){
 
 bootstrapCloudSync().finally(() => {
   if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
-  render(); initHeroCollapse(); initMobileFilterState();
+  render(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
   setTimeout(keepSupabaseAlive, 3000);
 });
