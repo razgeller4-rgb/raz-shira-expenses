@@ -1212,6 +1212,31 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 }
 .row-delete-btn:hover { background: var(--bad-light); border-color: var(--bad); }
 
+/* ── Toast — גל 8.2.2, מחליף alert() חוסם ── */
+.toast-container {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none; width: min(92vw, 420px);
+}
+.toast {
+  pointer-events: auto; width: 100%; box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,.18));
+  background: var(--surface); border: 1.5px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text);
+  animation: toastIn .22s ease-out;
+}
+.toast.leaving { animation: toastOut .18s ease-in forwards; }
+.toast .toast-icon { font-size: 15px; flex-shrink: 0; }
+.toast.success { border-color: rgba(5,150,105,.35); background: var(--good-light); color: var(--good); }
+.toast.error   { border-color: rgba(220,38,38,.35);  background: var(--bad-light);  color: var(--bad); }
+.toast .toast-action {
+  margin-inline-start: auto; background: none; border: none; font-weight: 800; font-size: 13px;
+  color: inherit; text-decoration: underline; cursor: pointer; padding: 2px 4px; flex-shrink: 0;
+}
+@keyframes toastIn { from{ opacity:0; transform:translateY(10px) scale(.96); } to{ opacity:1; transform:translateY(0) scale(1); } }
+@keyframes toastOut { from{ opacity:1; transform:translateY(0) scale(1); } to{ opacity:0; transform:translateY(6px) scale(.96); } }
+
 /* ── מיקרו-אנימציה לכניסת שורות/כרטיסים (גל 7.5) — משתמש ב-panelEnter הקיים ── */
 .income-edit-card, .income-row, .debt-row, .kpi-yearly, .card-method, .summary-row {
   animation: panelEnter .2s ease-out;
@@ -1443,6 +1468,9 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 </style>
 </head>
 <body>
+
+<!-- מכל הודעות Toast — גל 8.2.2, מחליף alert() חוסם -->
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
 <!-- Backup banner (shown by JS) -->
 <div id="backupBanner" style="display:none" class="backup-banner">
@@ -3118,7 +3146,7 @@ async function saveCloudSyncConnection(){
   const url = (document.getElementById("cloudSyncUrl").value || "").trim().replace(/\/+$/,"");
   const anonKey = (document.getElementById("cloudSyncAnonKey").value || "").trim();
   if(!url || !anonKey){
-    alert("צריך להזין גם Project URL וגם Anon Key.");
+    showToast("צריך להזין גם Project URL וגם Anon Key.", "error");
     return;
   }
   saveCloudSyncConfig({url, anonKey, disabled:false});
@@ -3151,7 +3179,7 @@ async function saveCloudSyncConnection(){
 }
 async function pullCloudSyncNow(){
   if(!hasCloudSyncConfig()){
-    alert("קודם שמור פרטי חיבור לענן.");
+    showToast("קודם שמור פרטי חיבור לענן.", "error");
     return;
   }
   try {
@@ -3164,7 +3192,7 @@ async function pullCloudSyncNow(){
 }
 async function pushCloudSyncNow(){
   if(!hasCloudSyncConfig()){
-    alert("קודם שמור פרטי חיבור לענן.");
+    showToast("קודם שמור פרטי חיבור לענן.", "error");
     return;
   }
   try {
@@ -3535,7 +3563,7 @@ function toggleSettlementForm(){
 }
 function submitSettlement(){
   const amt = Number(document.getElementById("settlAmt")?.value||0);
-  if(!amt||amt<=0){ alert("יש להזין סכום חיובי"); return; }
+  if(!amt||amt<=0){ showToast("יש להזין סכום חיובי", "error"); return; }
   const paidById = document.getElementById("settlPayer")?.value||currentUser;
   const partnerId = getPartnerUserId(currentUser);
   const receivedById = paidById===currentUser ? partnerId : currentUser;
@@ -3777,7 +3805,7 @@ function importBackupFile(file){
     try {
       const backup = JSON.parse(String(reader.result || "{}"));
       if(!backup || backup.app !== "raz-expenses-local" || !backup.data){
-        alert("קובץ הגיבוי לא נראה כמו גיבוי תקין של האתר הזה.");
+        showToast("קובץ הגיבוי לא נראה כמו גיבוי תקין של האתר הזה.", "error");
         return;
       }
       const ok = confirm("ייבוא הגיבוי יחליף את הנתונים המקומיים ששמורים בדפדפן. להמשיך?");
@@ -3808,7 +3836,7 @@ function importBackupFile(file){
       refreshRecoveryPoints();
       render();
     } catch(e){
-      alert("לא הצלחתי לקרוא את קובץ הגיבוי. ודא שזה קובץ JSON תקין.");
+      showToast("לא הצלחתי לקרוא את קובץ הגיבוי. ודא שזה קובץ JSON תקין.", "error");
     }
   };
   reader.readAsText(file);
@@ -4669,6 +4697,32 @@ function countUp(el, target, {dur=700, fmt=v=>Math.round(v).toLocaleString('he-I
 }
 // עוטף countUp עם אותה הגנה שיש כבר על ה-hero: לא להריץ הנפשה מחדש אם הערך לא השתנה,
 // כי render() רץ הרבה יותר תכוף מהשינויים בפועל (כל onchange בטופס אחר).
+// הודעת toast שנעלמת לבד, במקום alert() חוסם. type: "info"|"success"|"error".
+// actionLabel+onAction אופציונליים — מאפשר שימוש חוזר לרכיב "בטל" בעתיד (גל 8.2.3) בלי לבנות מכל שני.
+function showToast(message, type="info", {duration=4200, actionLabel, onAction}={}){
+  const container = document.getElementById("toastContainer");
+  if(!container){ if(type === "error") console.error(message); return; }
+  const icon = type === "success" ? "✓" : type === "error" ? "⚠" : "ℹ";
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${escapeHtmlAttr(message)}</span>`;
+  if(actionLabel && onAction){
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "toast-action"; btn.textContent = actionLabel;
+    btn.onclick = () => { onAction(); dismiss(); };
+    toast.appendChild(btn);
+  }
+  container.appendChild(toast);
+  let dismissed = false;
+  function dismiss(){
+    if(dismissed) return;
+    dismissed = true;
+    toast.classList.add("leaving");
+    setTimeout(() => toast.remove(), 180);
+  }
+  setTimeout(dismiss, duration);
+  return dismiss;
+}
 // מנקה שדה סכום בלחיצה אחת במקום למחוק ספרה-ספרה, ומפעיל את ה-onchange הקיים של השדה כרגיל.
 function clearCurrencyField(btn){
   const input = btn.previousElementSibling;
@@ -5453,7 +5507,7 @@ function deletePaymentMethodRow(id){
   if(!target) return;
   const isUsed = SHEET_OPTIONS.some(sheet => getEditableRows(sheet).some(row => row.payment === target.name));
   if(isUsed){
-    alert("אי אפשר למחוק כרטיס שכבר משויך להוצאות קיימות. אפשר קודם לשנות אותן לכרטיס אחר.");
+    showToast("אי אפשר למחוק כרטיס שכבר משויך להוצאות קיימות. אפשר קודם לשנות אותן לכרטיס אחר.", "error");
     return;
   }
   if(!confirm("למחוק את הכרטיס הזה?")) return;
@@ -5702,7 +5756,7 @@ function copyRowToNextMonth(rowNumber){
   if(!sourceRow) return;
   const {year, month} = getSheetMonthYear(selectedSheet);
   if(!year || !month){
-    alert("לא הצלחתי לזהות את החודש הנוכחי.");
+    showToast("לא הצלחתי לזהות את החודש הנוכחי.", "error");
     return;
   }
   const nextMonth = shiftMonth(year, month, 1);
@@ -5721,7 +5775,7 @@ function copyRowToNextMonth(rowNumber){
     String(row.notes || "").trim() === String(sourceRow.notes || "").trim()
   );
   if(alreadyExists){
-    alert(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)}.`);
+    showToast(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)}.`, "error");
     return;
   }
   const nextRow = targetRows.length ? Math.max(...targetRows.map(r => Number(r.row) || 0)) + 1 : 1;
@@ -5735,14 +5789,14 @@ function copyRowToNextMonth(rowNumber){
   saveOverrides(o);
   selectedSheet = targetSheet;
   render();
-  setTimeout(()=>alert(`ההוצאה הועתקה ל-${formatSheetLabel(targetSheet)}.`), 0);
+  showToast(`ההוצאה הועתקה ל-${formatSheetLabel(targetSheet)}.`, "success");
 }
 function updateRowBillingShift(rowNumber, nextShiftValue){
   const sourceRows = getEditableRows(selectedSheet);
   const sourceRow = sourceRows.find(r => Number(r.row) === Number(rowNumber));
   if(!sourceRow) return;
   if(isRowImmediate(sourceRow) || !sourceRow.payment){
-    alert("שיוך חריג לחודש הבא רלוונטי רק לחיובים שנכנסים למחזור אשראי.");
+    showToast("שיוך חריג לחודש הבא רלוונטי רק לחיובים שנכנסים למחזור אשראי.", "error");
     return;
   }
   const desiredShift = Math.max(0, Number(nextShiftValue || 0));
@@ -5753,7 +5807,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     desiredShift
   );
   if(!targetSheet){
-    alert("לא הצלחתי לחשב את חודש החיוב החדש של ההוצאה.");
+    showToast("לא הצלחתי לחשב את חודש החיוב החדש של ההוצאה.", "error");
     return;
   }
   const targetRows = targetSheet === selectedSheet ? sourceRows : getEditableRows(targetSheet);
@@ -5770,7 +5824,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     Number(row.billingShiftMonths || 0) === desiredShift
   );
   if(alreadyExists){
-    alert(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)} עם אותו שיוך חיוב.`);
+    showToast(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)} עם אותו שיוך חיוב.`, "error");
     return;
   }
   const movedRow = {
@@ -5782,7 +5836,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     overrides[selectedSheet] = sourceRows.map(row => Number(row.row) === Number(rowNumber) ? movedRow : row);
     saveOverrides(overrides);
     render();
-    setTimeout(()=>alert(desiredShift ? "ההוצאה סומנה כחריג ותיכנס לחודש הבא." : "ההוצאה חזרה לשיוך החיוב האוטומטי."), 0);
+    showToast(desiredShift ? "ההוצאה סומנה כחריג ותיכנס לחודש הבא." : "ההוצאה חזרה לשיוך החיוב האוטומטי.", "success");
     return;
   }
   const nextRow = targetRows.length ? Math.max(...targetRows.map(r => Number(r.row) || 0)) + 1 : 1;
@@ -5793,7 +5847,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
   selectedSheet = targetSheet;
   selectedExpenseRows.delete(Number(rowNumber));
   render();
-  setTimeout(()=>alert(desiredShift ? `ההוצאה הועברה ל-${formatSheetLabel(targetSheet)} כחריג חיוב.` : `ההוצאה חזרה ל-${formatSheetLabel(targetSheet)} לפי החיוב האוטומטי.`), 0);
+  showToast(desiredShift ? `ההוצאה הועברה ל-${formatSheetLabel(targetSheet)} כחריג חיוב.` : `ההוצאה חזרה ל-${formatSheetLabel(targetSheet)} לפי החיוב האוטומטי.`, "success");
 }
 function moveRowToNextMonth(rowNumber){
   updateRowBillingShift(rowNumber, Math.max(1, Number((getEditableRows(selectedSheet).find(r => Number(r.row) === Number(rowNumber)) || {}).billingShiftMonths || 0) + 1));
@@ -5804,18 +5858,18 @@ function resetRowBillingShift(rowNumber){
 function copySelectedRowsToNextMonth(){
   const selectedRows = getSelectedExpenseRowNumbers();
   if(!selectedRows.length){
-    alert("לא נבחרו הוצאות להעתקה.");
+    showToast("לא נבחרו הוצאות להעתקה.", "error");
     return;
   }
   const sourceRows = getEditableRows(selectedSheet);
   const rowsToCopy = sourceRows.filter(row => selectedRows.includes(Number(row.row)));
   if(!rowsToCopy.length){
-    alert("לא נבחרו הוצאות תקינות להעתקה.");
+    showToast("לא נבחרו הוצאות תקינות להעתקה.", "error");
     return;
   }
   const {year, month} = getSheetMonthYear(selectedSheet);
   if(!year || !month){
-    alert("לא הצלחתי לזהות את החודש הנוכחי.");
+    showToast("לא הצלחתי לזהות את החודש הנוכחי.", "error");
     return;
   }
   const nextMonth = shiftMonth(year, month, 1);
@@ -5855,7 +5909,7 @@ function copySelectedRowsToNextMonth(){
   });
 
   if(!copiedRows.length){
-    alert("כל ההוצאות המסומנות כבר קיימות בחודש הבא.");
+    showToast("כל ההוצאות המסומנות כבר קיימות בחודש הבא.", "error");
     return;
   }
 
@@ -5867,7 +5921,7 @@ function copySelectedRowsToNextMonth(){
   render();
   const copiedCount = copiedRows.length;
   const skippedText = skipped ? `, ו-${skipped} כבר היו קיימות` : "";
-  setTimeout(()=>alert(`הועתקו ${copiedCount} הוצאות ל-${formatSheetLabel(targetSheet)}${skippedText}.`), 0);
+  showToast(`הועתקו ${copiedCount} הוצאות ל-${formatSheetLabel(targetSheet)}${skippedText}.`, "success");
 }
 function sproutConfirm(){
   const el = document.createElement("div");
@@ -5902,13 +5956,13 @@ function addNewExpense(){
   const amount = Number(document.getElementById("newAmount").value || 0);
   const merchant = (document.getElementById("newMerchant").value || "").trim();
   if(!merchant || !amount){
-    alert("צריך לפחות בית עסק וסכום.");
+    showToast("צריך לפחות בית עסק וסכום.", "error");
     return;
   }
   const dateValue = document.getElementById("newDate").value || "";
   const rawPayment = document.getElementById("newPayment").value || "";
   if(rawPayment === "__unset__"){
-    alert("צריך לבחור אמצעי תשלום או העברה בנקאית.");
+    showToast("צריך לבחור אמצעי תשלום או העברה בנקאית.", "error");
     return;
   }
   const payment = rawPayment;
@@ -5954,7 +6008,7 @@ function addNewExpense(){
   render();
   sproutConfirm();
   if(createdSheet || previousSheet !== targetSheet){
-    setTimeout(()=>alert(`ההוצאה נשמרה בגיליון ${formatSheetLabel(targetSheet)} לפי מחזור החיוב.`), 0);
+    showToast(`ההוצאה נשמרה בגיליון ${formatSheetLabel(targetSheet)} לפי מחזור החיוב.`, "success");
   }
 }
 function updateRow(rowNumber, field, value){
@@ -6984,7 +7038,7 @@ function saveMobileEdit(rowId){
   if(!merchant || isNaN(amount)){
     // בעבר הפונקציה עשתה return שקט — "שמור" פשוט לא עשה כלום ללא הסבר.
     const missing = [!merchant ? "שם בית עסק" : null, isNaN(amount) ? "סכום" : null].filter(Boolean).join(" ו");
-    alert(`חסר ${missing}. יש למלא לפני שמירה.`);
+    showToast(`חסר ${missing}. יש למלא לפני שמירה.`, "error");
     (document.getElementById(!merchant ? "mxpEditMerchant" : "mxpEditAmount") || {focus(){}}).focus();
     return;
   }
@@ -7214,7 +7268,7 @@ function handleCCFile(e){
       const result = parseCCStatement(raw, file.name);
       showCCImportModal(result, file.name);
     } catch(err){
-      alert("לא הצלחתי לקרוא את הקובץ: " + err.message);
+      showToast("לא הצלחתי לקרוא את הקובץ: " + err.message, "error");
     }
   };
   reader.readAsArrayBuffer(file);
@@ -7486,10 +7540,10 @@ function confirmCCImport(){
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
   const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
-  if(!toImport.length){ alert("\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d9\u05d9\u05d1\u05d5\u05d0."); return; }
+  if(!toImport.length){ showToast("אין עסקאות לייבוא.", "error"); return; }
   const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
   if(unresolved.length){
-    alert("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.");
+    showToast("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.", "error");
     return;
   }
   const overrides = getOverrides();
@@ -7521,7 +7575,7 @@ function confirmCCImport(){
   // Switch to the imported sheet
   selectedSheet = sheet;
   render();
-  alert("\u05d9\u05d5\u05d9\u05d1\u05d0\u05d5 " + toImport.length + " \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d2\u05d9\u05dc\u05d9\u05d5\u05df " + sheet + " \u05d1\u05d4\u05e6\u05dc\u05d7\u05d4!");
+  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success");
 }
 
 </script>
