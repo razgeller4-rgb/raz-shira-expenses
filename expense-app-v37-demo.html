@@ -3687,12 +3687,25 @@ function updateIncomeRow(id, field, value){
   render();
 }
 function deleteIncomeRow(id){
-  const target = getIncomeRows(selectedSheet).find(row => row.id === id);
-  const label = target && target.source ? `"${target.source}"` : "ההכנסה הזו";
-  if(!confirm(`למחוק את ${label}? הפעולה לא הפיכה.`)) return;
-  const rows = getIncomeRows(selectedSheet).filter(row => row.id !== id);
-  saveIncomeRows(selectedSheet, rows);
+  const sheet = selectedSheet;
+  const allRows = getIncomeRows(sheet);
+  const index = allRows.findIndex(row => row.id === id);
+  if(index === -1) return;
+  const target = allRows[index];
+  const label = target.source ? `"${target.source}"` : "ההכנסה הזו";
+  saveIncomeRows(sheet, allRows.filter(row => row.id !== id));
   render();
+  showToast(`${label} נמחקה`, "info", {
+    actionLabel: "בטל",
+    onAction: () => {
+      const current = getIncomeRows(sheet);
+      if(current.some(row => row.id === id)) return; // כבר הוחזרה, לא לשכפל
+      const restored = [...current];
+      restored.splice(Math.min(index, restored.length), 0, target);
+      saveIncomeRows(sheet, restored);
+      render();
+    }
+  });
 }
 function addFatherHistoryRow(direction="repayment"){
   const data = getDebtData();
