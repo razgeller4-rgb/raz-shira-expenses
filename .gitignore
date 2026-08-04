@@ -2,5 +2,7 @@
 ~$*
 *.xlsx
 *.json
+!manifest-demo.json
+!manifest.json
 .claude/worktrees/
 .claude/settings.local.json

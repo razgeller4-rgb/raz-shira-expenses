@@ -1,0 +1,16 @@
+{
+  "name": "מנהל הוצאות — רז ושירה (דמו)",
+  "short_name": "הוצאות דמו",
+  "description": "ניהול הוצאות והכנסות משפחתי",
+  "start_url": "expense-app-v37-demo.html",
+  "scope": ".",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FFFDF8",
+  "theme_color": "#7E9B6E",
+  "lang": "he",
+  "dir": "rtl",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ]
+}
