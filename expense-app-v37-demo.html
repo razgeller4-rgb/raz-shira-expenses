@@ -3246,13 +3246,18 @@ async function pushCloudSnapshot(options={}){
   await refreshRecoveryPoints();
   return remote;
 }
-/* Push BOTH user rows + the settlements row from current local state.
-   Used after a full-snapshot restore (recovery point / backup import), where
-   the restored state spans both users and we want all rows to reflect it. */
+/* Push local state to the cloud after a full-snapshot restore (recovery point
+   or backup import). Under real per-user auth, a logged-in session can only
+   write its OWN row (RLS enforces this) — it can no longer write the
+   partner's row on their behalf, even though the restored local snapshot
+   spans both users. So this pushes only the current user's own row; the
+   partner's half of the restored data stays local until they log in on
+   their own device and push it themselves. */
 async function pushAllRowsFromLocal(options={}){
-  for(const u of USERS){
-    const snap = collectCloudSnapshot(getCloudSyncKeysForUser(u.id), {user:u.id});
-    await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${u.id}`, snap);
+  const ownRow = USERS.find(u => u.id === currentUser);
+  if(ownRow){
+    const snap = collectCloudSnapshot(getCloudSyncKeysForUser(ownRow.id), {user:ownRow.id});
+    await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${ownRow.id}`, snap);
   }
   try { await pushSettlementsRow(); } catch(e){ console.warn("Settlements push failed", e); }
   try { await saveCloudRecoveryPoint(collectCloudSnapshot(), options.reason || "שמירה אוטומטית"); }
