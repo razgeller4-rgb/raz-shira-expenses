@@ -1945,6 +1945,19 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
                 <div id="cloudSyncBadges"></div>
               </div>
               <div class="sync-status" id="cloudSyncStatus" style="margin-top:7px"></div>
+              <div id="authLoginBox" style="display:none;margin-top:10px;padding:10px;border:1px solid var(--border,#ddd);border-radius:8px">
+                <div class="small" style="margin-bottom:6px">צריך להתחבר כדי לסנכרן עם הענן (auth אמיתי — לא סתם מפתח פתוח).</div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:flex-end">
+                  <div class="field"><label>אימייל</label><input id="authEmailInput" type="email" autocomplete="username"></div>
+                  <div class="field"><label>סיסמה</label><input id="authPasswordInput" type="password" autocomplete="current-password"></div>
+                  <button id="authLoginBtn" class="success-btn" type="button">התחבר</button>
+                </div>
+                <div class="small" id="authLoginError" style="color:#c0392b;margin-top:6px"></div>
+              </div>
+              <div id="authLoggedInBox" style="display:none;margin-top:10px;font-size:13px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+                <span>מחובר כ־<strong id="authLoggedInEmail"></strong></span>
+                <button id="authLogoutBtn" class="secondary" type="button">התנתק</button>
+              </div>
               <div class="sync-actions" style="margin-top:10px">
                 <button id="pullCloudSyncBtn" class="secondary" type="button">משוך מהענן עכשיו</button>
                 <button id="pushCloudSyncBtn" class="secondary" type="button">דחוף לענן עכשיו</button>
@@ -2131,7 +2144,7 @@ const MAX_CLOUD_RECOVERY_POINTS = 20;
 const DEFAULT_CLOUD_SYNC_CONFIG = {
   url:"https://otfrgdwrdfmwcrlntfkv.supabase.co",
   anonKey:"sb_publishable_47PInnWFqJK13lXJyzBL6Q_3IqOjbPH",
-  disabled:true  // demo file — no cloud sync
+  disabled:false  // demo file — sync ON, but only against the isolated app_state_demo table (locked to real login)
 };
 const DEFAULT_CATEGORIES_TEMPLATE = [{"name":"מסחר","budget":1600},{"name":"קניות לבית","budget":null},{"name":"סופר","budget":1000},{"name":"רכב/דלק","budget":800},{"name":"הזמנות ואוכל בחוץ עם שירה","budget":1000},{"name":"ביטוחים","budget":null},{"name":"מנויים","budget":null},{"name":"לא רלוונטי","budget":null},{"name":"מותרות","budget":1000},{"name":"עישון","budget":600},{"name":"אין ברירה","budget":null}];
 const DEFAULT_CATEGORIES_SHIRA = DEFAULT_CATEGORIES_TEMPLATE;
@@ -2433,6 +2446,122 @@ function hasCloudSyncConfig(){
   const config = getCloudSyncConfig();
   return Boolean(!config.disabled && config.url && config.anonKey);
 }
+
+/* ── Supabase Auth (email/password) ──
+   Real login gating access to app_state_demo, on top of RLS enforced
+   server-side. Session is stored per-namespace (demo__) so it never mixes
+   with a future production session. Each Supabase auth user must carry
+   app_metadata.app_user_key = "raz" | "shira" (set once via SQL/dashboard)
+   so the client knows which local identity a login maps to. */
+const SUPABASE_AUTH_SESSION_KEY = STORAGE_NS_PREFIX + "expense_app_supabase_session_v1";
+let supabaseAuthSession = null; // {access_token, refresh_token, expires_at, appUserKey, email}
+
+function loadSupabaseAuthSession(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(SUPABASE_AUTH_SESSION_KEY) || "null");
+    supabaseAuthSession = (parsed && typeof parsed === "object") ? parsed : null;
+  } catch(e){ supabaseAuthSession = null; }
+  return supabaseAuthSession;
+}
+function saveSupabaseAuthSession(session){
+  supabaseAuthSession = session || null;
+  if(session){
+    localStorage.setItem(SUPABASE_AUTH_SESSION_KEY, JSON.stringify(session));
+  } else {
+    localStorage.removeItem(SUPABASE_AUTH_SESSION_KEY);
+  }
+}
+function isSupabaseSessionValid(session){
+  if(!session || !session.access_token) return false;
+  if(!session.expires_at) return true;
+  return Date.now() < (Number(session.expires_at) * 1000) - 30000; // 30s safety margin
+}
+/* Sign in with email+password against Supabase Auth's password grant.
+   Direct fetch (no supabase-js) to match this file's existing style. */
+async function supabaseSignIn(email, password){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
+  const response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", apikey:config.anonKey },
+    body:JSON.stringify({email, password})
+  });
+  const data = await response.json().catch(() => null);
+  if(!response.ok){
+    throw new Error((data && (data.error_description || data.msg || data.message)) || `התחברות נכשלה (${response.status})`);
+  }
+  const appUserKey = data?.user?.app_metadata?.app_user_key || null;
+  const session = {
+    access_token:data.access_token,
+    refresh_token:data.refresh_token,
+    expires_at:data.expires_at,
+    email:data?.user?.email || email,
+    appUserKey
+  };
+  saveSupabaseAuthSession(session);
+  return session;
+}
+async function supabaseRefreshSession(){
+  const config = getCloudSyncConfig();
+  const session = loadSupabaseAuthSession();
+  if(!config.url || !config.anonKey || !session || !session.refresh_token) return null;
+  const response = await fetch(`${config.url}/auth/v1/token?grant_type=refresh_token`, {
+    method:"POST",
+    headers:{ "Content-Type":"application/json", apikey:config.anonKey },
+    body:JSON.stringify({refresh_token:session.refresh_token})
+  });
+  if(!response.ok){
+    saveSupabaseAuthSession(null);
+    return null;
+  }
+  const data = await response.json().catch(() => null);
+  if(!data || !data.access_token) { saveSupabaseAuthSession(null); return null; }
+  const next = {
+    access_token:data.access_token,
+    refresh_token:data.refresh_token || session.refresh_token,
+    expires_at:data.expires_at,
+    email:data?.user?.email || session.email,
+    appUserKey:data?.user?.app_metadata?.app_user_key || session.appUserKey
+  };
+  saveSupabaseAuthSession(next);
+  return next;
+}
+async function supabaseSignOut(){
+  const config = getCloudSyncConfig();
+  const session = loadSupabaseAuthSession();
+  saveSupabaseAuthSession(null);
+  if(config.url && config.anonKey && session && session.access_token){
+    try {
+      await fetch(`${config.url}/auth/v1/logout`, {
+        method:"POST",
+        headers:{ apikey:config.anonKey, Authorization:`Bearer ${session.access_token}` }
+      });
+    } catch(e){ /* ignore — local session already cleared */ }
+  }
+}
+/* Ensure we have a usable access token before a Supabase REST call, refreshing
+   once if it's expired. Returns null if the user needs to log in again. */
+async function ensureSupabaseAccessToken(){
+  let session = loadSupabaseAuthSession();
+  if(isSupabaseSessionValid(session)) return session.access_token;
+  session = await supabaseRefreshSession();
+  return isSupabaseSessionValid(session) ? session.access_token : null;
+}
+/* Auth headers for app_state_demo REST calls: apikey stays the publishable
+   key (required by the gateway); Authorization carries the logged-in user's
+   JWT so RLS (auth.uid()) applies. Falls back to the anon key only if no
+   session exists yet, in which case RLS will simply reject the request. */
+async function getCloudAuthHeaders(){
+  const config = getCloudSyncConfig();
+  const token = await ensureSupabaseAccessToken();
+  return {
+    apikey:config.anonKey,
+    Authorization:`Bearer ${token || config.anonKey}`
+  };
+}
+function requiresSupabaseLogin(){
+  return hasCloudSyncConfig() && !isSupabaseSessionValid(loadSupabaseAuthSession());
+}
 function setCloudSyncState(next){
   cloudSyncState = {...cloudSyncState, ...next};
   renderCloudSyncStatus();
@@ -2463,6 +2592,67 @@ function renderCloudSyncStatus(){
     badgesEl.innerHTML = badges.join("");
   }
   if(statusEl) statusEl.textContent = cloudSyncState.message;
+  renderAuthLoginState();
+}
+function renderAuthLoginState(){
+  const loginBox = document.getElementById("authLoginBox");
+  const loggedInBox = document.getElementById("authLoggedInBox");
+  const emailEl = document.getElementById("authLoggedInEmail");
+  if(!loginBox || !loggedInBox) return;
+  const config = getCloudSyncConfig();
+  if(!hasCloudSyncConfig()){
+    loginBox.style.display = "none";
+    loggedInBox.style.display = "none";
+    return;
+  }
+  const session = loadSupabaseAuthSession();
+  if(isSupabaseSessionValid(session)){
+    loginBox.style.display = "none";
+    loggedInBox.style.display = "flex";
+    if(emailEl) emailEl.textContent = session.email || "(מחובר)";
+  } else {
+    loginBox.style.display = "block";
+    loggedInBox.style.display = "none";
+  }
+}
+async function handleAuthLoginClick(){
+  const emailInput = document.getElementById("authEmailInput");
+  const passwordInput = document.getElementById("authPasswordInput");
+  const errorEl = document.getElementById("authLoginError");
+  if(errorEl) errorEl.textContent = "";
+  const email = (emailInput?.value || "").trim();
+  const password = passwordInput?.value || "";
+  if(!email || !password){
+    if(errorEl) errorEl.textContent = "יש להזין אימייל וסיסמה.";
+    return;
+  }
+  try {
+    const session = await supabaseSignIn(email, password);
+    if(!session.appUserKey){
+      if(errorEl) errorEl.textContent = "המשתמש הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.";
+      return;
+    }
+    // Lock the local identity to whoever actually logged in — no more free
+    // switching between raz/shira once real auth is on.
+    if(USERS.some(u => u.id === session.appUserKey) && currentUser !== session.appUserKey){
+      currentUser = session.appUserKey;
+      localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+    }
+    if(passwordInput) passwordInput.value = "";
+    renderCloudSyncStatus();
+    setBackupStatus(`התחברת בהצלחה כ־${session.email}.`);
+    if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+      try { await pullCloudSnapshot({showErrors:true}); } catch(e){ /* surfaced via cloudSyncState */ }
+    }
+    render();
+  } catch(error){
+    if(errorEl) errorEl.textContent = error.message || "התחברות נכשלה.";
+  }
+}
+async function handleAuthLogoutClick(){
+  await supabaseSignOut();
+  renderCloudSyncStatus();
+  setBackupStatus("התנתקת. הנתונים המקומיים נשארים במכשיר אבל סנכרון הענן חסום עד התחברות מחדש.");
 }
 function getDefaultPaymentMethods(userId=currentUser){
   return clone(DEFAULT_PAYMENT_METHODS[userId] || []);
@@ -2735,10 +2925,7 @@ async function fetchCloudRecoveryPoints(limit=8){
   });
   params.append("id", `like.${CLOUD_BACKUP_PREFIX}*`);
   const response = await fetch(`${config.url}/rest/v1/app_state_demo?${params.toString()}`, {
-    headers:{
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`
-    }
+    headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת נקודות שחזור נכשלה (${response.status})`);
   const rows = await response.json();
@@ -2755,10 +2942,7 @@ async function pruneCloudRecoveryPoints(){
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
   const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=${encodeURIComponent(idFilter)}`, {
     method:"DELETE",
-    headers:{
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`
-    }
+    headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`ניקוי נקודות שחזור ישנות נכשל (${response.status})`);
 }
@@ -2777,11 +2961,10 @@ async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומט�
     method:"POST",
     headers:{
       "Content-Type":"application/json",
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`,
+      ...(await getCloudAuthHeaders()),
       Prefer:"return=representation"
     },
-    body:JSON.stringify([{id:`${CLOUD_BACKUP_PREFIX}${Date.now()}`, payload:recoverySnapshot}])
+    body:JSON.stringify([{id:`${CLOUD_BACKUP_PREFIX}${Date.now()}`, payload:recoverySnapshot, owner_id:null}])
   });
   if(!response.ok) throw new Error(`שמירת נקודת שחזור לענן נכשלה (${response.status})`);
   await pruneCloudRecoveryPoints();
@@ -2852,10 +3035,7 @@ async function restoreCloudRecoveryPoint(id){
     rememberLocalRecoveryPoint("לפני שחזור מהענן");
     const config = getCloudSyncConfig();
     const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
-      headers:{
-        apikey:config.anonKey,
-        Authorization:`Bearer ${config.anonKey}`
-      }
+      headers: await getCloudAuthHeaders()
     });
     if(!response.ok) throw new Error(`טעינת נקודת שחזור מהענן נכשלה (${response.status})`);
     const rows = await response.json();
@@ -2910,10 +3090,7 @@ async function fetchCloudState(rowId=CLOUD_SYNC_ROW_ID){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
   const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
-    headers:{
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`
-    }
+    headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת ענן נכשלה (${response.status})`);
   const rows = await response.json();
@@ -2930,10 +3107,7 @@ async function fetchCloudUserRows(){
   ];
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
   const response = await fetch(`${config.url}/rest/v1/app_state_demo?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
-    headers:{
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`
-    }
+    headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת ענן נכשלה (${response.status})`);
   const rows = await response.json();
@@ -2941,19 +3115,36 @@ async function fetchCloudUserRows(){
   (Array.isArray(rows) ? rows : []).forEach(row => { if(row && row.id) byId[row.id] = row; });
   return byId;
 }
-/* Upsert a single row's payload to app_state. Returns the stored row. */
+/* Decode the "sub" claim (auth.users.id) out of a Supabase JWT without any
+   library — used only to stamp owner_id on rows we create. Never trust this
+   for authorization; the server-side RLS policy is the real gate. */
+function getAuthUserIdFromSession(session){
+  try {
+    const token = session && session.access_token;
+    if(!token) return null;
+    const payload = token.split(".")[1];
+    const json = JSON.parse(decodeURIComponent(atob(payload.replace(/-/g,"+").replace(/_/g,"/")).split("").map(c => "%" + c.charCodeAt(0).toString(16).padStart(2,"0")).join("")));
+    return json && json.sub ? json.sub : null;
+  } catch(e){ return null; }
+}
+/* Upsert a single row's payload to app_state_demo. Returns the stored row.
+   owner_id is stamped from the logged-in session: per-user rows (user-raz /
+   user-shira) get the caller's own auth uid so RLS ties them to that login;
+   shared rows (settlements / legacy blob / recovery snapshots) get NULL,
+   which the RLS policy treats as "shared between the two known app users". */
 async function upsertCloudRow(rowId, payload){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
+  const isOwnedRow = rowId.startsWith(CLOUD_SYNC_ROW_PREFIX);
+  const ownerId = isOwnedRow ? getAuthUserIdFromSession(loadSupabaseAuthSession()) : null;
   const response = await fetch(`${config.url}/rest/v1/app_state_demo?on_conflict=id`, {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
-      apikey:config.anonKey,
-      Authorization:`Bearer ${config.anonKey}`,
+      ...(await getCloudAuthHeaders()),
       Prefer:"resolution=merge-duplicates,return=representation"
     },
-    body:JSON.stringify([{id:rowId, payload}])
+    body:JSON.stringify([{id:rowId, payload, ...(isOwnedRow ? {owner_id:ownerId} : {})}])
   });
   if(!response.ok) throw new Error(`שמירה לענן נכשלה (${response.status})`);
   const rows = await response.json();
@@ -3305,6 +3496,10 @@ async function bootstrapCloudSync(){
   if(!getLocalDataChangedAt()) markLocalDataChanged();
   renderCloudSyncStatus();
   if(!hasCloudSyncConfig()) return;
+  if(requiresSupabaseLogin()){
+    setCloudSyncState({status:"idle", message:"צריך להתחבר (אימייל+סיסמה) כדי לסנכרן עם הענן."});
+    return;
+  }
   try {
     setCloudSyncState({status:"syncing", message:"מתחבר לענן..."});
     // one-time, additive migration: split legacy blob → per-user + settlements rows
@@ -6849,6 +7044,8 @@ document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
 document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
 document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
 document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
+document.getElementById("authLoginBtn").onclick=handleAuthLoginClick;
+document.getElementById("authLogoutBtn").onclick=handleAuthLogoutClick;
 document.getElementById("createRecoveryPointBtn").onclick=()=>createManualRecoveryPoint();
 document.getElementById("refreshRecoveryPointsBtn").onclick=()=>refreshRecoveryPoints({showErrors:true});
 document.getElementById("exportBackupBtn").onclick=exportBackup;
