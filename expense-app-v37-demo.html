@@ -1550,6 +1550,26 @@ body { background:var(--bg); }
 .edit-safety-banner[hidden] { display:none; }
 .main { padding-top:16px; }
 
+/* Quiet light-oak tab headers: the panel title should orient, not compete with the numbers. */
+.panel-hero,
+[data-panel="dashboard"] .panel-hero,
+[data-panel="budget"] .panel-hero,
+[data-panel="income"] .panel-hero,
+[data-panel="cards"] .panel-hero,
+[data-panel="expenses"] .panel-hero,
+[data-panel="shared"] .panel-hero,
+[data-panel="debts"] .panel-hero,
+[data-panel="yearly"] .panel-hero,
+[data-panel="backup"] .panel-hero {
+  color:var(--text);
+  background:linear-gradient(135deg,#F4E9D8 0%,#FFFDF9 56%,#E6F0E1 100%);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-xs);
+}
+.panel-hero::before { background:var(--wood); opacity:.13; }
+.panel-hero::after { background:var(--accent); opacity:.10; }
+.panel-hero-sub { color:var(--text-2); opacity:1; }
+
 /* Selected dashboard direction: quiet monthly status + review inbox. */
 .hero.monthly-status-card {
   color:var(--text); background:var(--surface); border:1px solid var(--border);
