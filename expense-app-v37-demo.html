@@ -1465,12 +1465,270 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 .modal-card{ border-radius:var(--r-2xl); box-shadow:var(--shadow-lg); }
 
 /* Forecast chart wrap height handled inline by JS */
+
+/* ═══════════ V38 DEMO — LIGHT WOOD SAFETY SYSTEM ═══════════
+   One visual language for every tab, form, table and edit state.
+   This layer is intentionally demo-only until mobile review is approved. */
+:root {
+  --bg:#FAF7F2; --surface:#FFFDF9; --surface-2:#F7F0E7; --surface-3:#E8D7C1;
+  --border:#E9D8C4; --border-2:#D8C2A6; --border-3:#CDAE89;
+  --text:#30271F; --text-2:#665649; --muted:#887568;
+  --accent:#5F7F56; --accent-2:#7E9B6E; --accent-strong:#456640;
+  --accent-light:rgba(95,127,86,.12); --accent-ring:rgba(95,127,86,.30);
+  --wood:#C89B68; --wood-strong:#8E6747; --wood-light:rgba(216,194,166,.30);
+  --income:#4E7449; --income-light:#EBF2E8;
+  --expense:#A86349; --expense-light:#F8ECE5;
+  --warn:#B88127; --warn-light:#FBF0D9;
+  --info:#687F78; --info-light:#E9EFEC;
+  --shadow-xs:0 1px 2px rgba(91,64,38,.05);
+  --shadow-sm:0 2px 10px rgba(91,64,38,.07);
+  --shadow-md:0 8px 24px rgba(91,64,38,.10);
+  --shadow-lg:0 18px 50px rgba(74,50,29,.16);
+  --shadow-accent:0 10px 28px rgba(69,102,64,.18);
+}
+body { background:var(--bg); }
+.app { background:transparent; }
+.auth-gate {
+  position:fixed; inset:0; z-index:1000; display:grid; place-items:center;
+  padding:24px; background:var(--bg); overflow-y:auto;
+}
+.auth-gate[hidden] { display:none; }
+.auth-gate-card {
+  width:min(100%,430px); padding:26px; border:1px solid var(--border);
+  border-radius:28px; background:var(--surface); box-shadow:var(--shadow-lg);
+}
+.auth-gate-brand { display:flex; align-items:center; gap:11px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+.auth-gate-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:var(--accent-strong); color:#fff; font-family:var(--font-serif); font-weight:700; }
+.auth-gate-brand div { display:flex; flex-direction:column; }
+.auth-gate-brand strong { color:var(--text); font-size:16px; }
+.auth-gate-brand span { color:var(--muted); font-size:11px; }
+.auth-gate-copy { margin-block:22px 18px; }
+.auth-gate-copy h1 { font-family:var(--font-serif); color:var(--text); font-size:28px; margin-bottom:6px; }
+.auth-gate-copy p { color:var(--text-2); font-size:13px; line-height:1.65; }
+.auth-gate-form { display:flex; flex-direction:column; gap:13px; }
+.auth-gate-submit { min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
+.auth-gate-submit[disabled] { opacity:.6; cursor:wait; }
+.auth-gate-error { min-height:18px; color:var(--expense); font-size:12px; }
+.auth-gate-note { margin-top:18px; padding:10px 12px; border-radius:14px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; line-height:1.55; }
+.topbar {
+  min-height:64px; height:auto; padding-block:10px;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border-color:var(--border); box-shadow:0 1px 0 var(--border);
+}
+.topbar-logo { color:var(--text); }
+.topbar-logo-icon {
+  border-radius:50%; background:var(--accent-strong); color:#fff;
+  box-shadow:0 4px 12px rgba(69,102,64,.22); font-size:15px;
+}
+.topbar-select {
+  background:var(--surface-2); border-color:var(--border); color:var(--text);
+  border-radius:14px; min-width:96px;
+}
+.topbar-dark-btn,.topbar-mobile-menu {
+  min-width:38px; min-height:38px; border:1px solid var(--border);
+  border-radius:14px; background:var(--surface); display:inline-flex;
+  align-items:center; justify-content:center;
+}
+.app-status-strip {
+  width:min(calc(100% - 32px),var(--content-max)); margin:14px auto 0;
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
+  background:var(--surface); border:1px solid var(--border); border-radius:18px;
+  box-shadow:var(--shadow-xs); color:var(--text-2);
+}
+.status-dot { width:11px; height:11px; border-radius:50%; background:var(--warn); flex:0 0 auto; box-shadow:0 0 0 4px var(--warn-light); }
+.app-status-strip.is-connected .status-dot { background:var(--accent); box-shadow:0 0 0 4px var(--accent-light); }
+.app-status-strip.is-error .status-dot { background:var(--expense); box-shadow:0 0 0 4px var(--expense-light); }
+.app-status-copy { display:flex; flex-direction:column; min-width:0; flex:1; }
+.app-status-copy strong { font-size:13px; color:var(--text); }
+.app-status-copy span { font-size:11px; color:var(--muted); }
+.partner-data-chip { flex:0 0 auto; padding:6px 10px; border-radius:999px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; font-weight:700; }
+.edit-safety-banner {
+  width:min(calc(100% - 32px),var(--content-max)); margin:8px auto 0;
+  padding:9px 13px; border:1px solid var(--wood); border-radius:14px;
+  background:#FBF2E5; color:var(--wood-strong); font-size:12px; font-weight:700;
+}
+.edit-safety-banner[hidden] { display:none; }
+.main { padding-top:16px; }
+
+/* Selected dashboard direction: quiet monthly status + review inbox. */
+.hero.monthly-status-card {
+  color:var(--text); background:var(--surface); border:1px solid var(--border);
+  box-shadow:var(--shadow-sm); padding:24px; border-radius:26px;
+}
+.hero.monthly-status-card::before {
+  content:""; position:absolute; inset-block:0; inset-inline-start:0; width:9px;
+  background:var(--surface-3); opacity:.75;
+}
+.hero.monthly-status-card::after { opacity:.09; filter:sepia(1); }
+.monthly-status-card .hero-top { border-bottom:1px solid var(--border); padding-bottom:12px; }
+.monthly-status-card .hero-label { color:var(--text); font-size:19px; }
+.monthly-status-card .hero-cfg { background:var(--surface-2); color:var(--wood-strong); border:1px solid var(--border); }
+.monthly-status-card .hero-balance {
+  color:var(--accent-strong); font-size:clamp(42px,11vw,68px); margin-block:16px 2px;
+  text-shadow:none; justify-content:flex-start;
+}
+.monthly-status-card .hero-cur { color:var(--accent); opacity:1; }
+.hero-balance-label { color:var(--text-2); font-size:15px; }
+.monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
+.hero-month-metrics {
+  display:grid; grid-template-columns:repeat(3,1fr); margin-top:20px;
+  padding-top:16px; border-top:1px solid var(--border);
+}
+.hero-month-metrics > div { display:flex; flex-direction:column; align-items:flex-start; padding-inline:14px; border-inline-start:1px solid var(--border); }
+.hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
+.hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
+.hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
+.review-queue {
+  background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
+  padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
+}
+.review-queue-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.review-queue-title { font-family:var(--font-serif); font-size:20px; font-weight:700; color:var(--text); }
+.review-queue-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.review-count { min-width:34px; height:34px; display:grid; place-items:center; border-radius:12px; background:#F4D8A8; color:#8A5D14; font-size:18px; font-weight:800; }
+.review-list { display:flex; flex-direction:column; gap:8px; }
+.review-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:11px; min-height:66px; padding:11px 13px; background:var(--surface); border:1px solid var(--border); border-radius:18px; }
+.review-marker { width:10px; height:10px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 5px var(--warn-light); }
+.review-marker.good { background:var(--accent); box-shadow:0 0 0 5px var(--accent-light); }
+.review-item strong { display:block; color:var(--text); font-size:14px; }
+.review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+.review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+.review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
+.review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
+
+/* Shared component finish across all nine tabs. */
+.section,.budget-overview-hero,.budget-card,.debt-card,.year-card,.backup-card,
+.shared-balance-card,.shared-stat-card,.card-method,.income-topbar,.sync-card,.recovery-card {
+  border-color:var(--border); box-shadow:var(--shadow-sm); border-radius:22px;
+}
+.section { overflow:clip; }
+.section > .header { min-height:54px; background:var(--surface); border-inline-start:4px solid var(--wood); }
+.section > .header:hover { background:var(--surface-2); }
+.section .content { background:var(--surface); }
+.budget-overview-hero,.income-topbar,.sync-card { background:var(--surface-2); }
+.shared-balance-card,.debt-highlight-bank,.debt-highlight-father {
+  background:var(--accent-strong); color:#fff;
+}
+.debt-highlight-father { background:var(--wood-strong); }
+.kpi,.bento-card,.summary-row,.income-row,.shared-expense-card,.debt-row,.recovery-item {
+  border-color:var(--border); box-shadow:var(--shadow-xs); border-radius:18px;
+}
+.kpi::before,.bento-card::before { background:var(--wood); }
+.field input,.field select,.field textarea,.filter-search-input,.filter-select-item select,
+#ccImportPayment,#ccImportSheet {
+  background:var(--surface); border-color:var(--border-2); border-radius:14px; color:var(--text);
+}
+.field label,.filter-select-item label,.filter-cats-label { color:var(--text-2); letter-spacing:0; text-transform:none; }
+.filter-body { background:var(--surface-2); border:1px solid var(--border); border-radius:18px; padding:12px; }
+.filter-chip { background:var(--surface); color:var(--text-2); border-color:var(--border); }
+.filter-chip.active { background:var(--wood-light); border-color:var(--wood); color:var(--wood-strong); }
+.toolbar { padding:10px 0 14px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+button.primary-cta,button.success-btn,button.primary,.review-primary { background:var(--accent-strong); color:#fff; box-shadow:none; }
+button.secondary,.edit-toggle-btn { background:var(--surface); color:var(--text-2); border-color:var(--border-2); }
+button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); color:var(--wood-strong); border-color:var(--wood); }
+.editing,.income-edit-card,.summary-row.editing,.income-row.editing,.debt-row.editing {
+  background:#FBF4E9 !important; border-color:var(--wood) !important; box-shadow:0 0 0 3px var(--wood-light) !important;
+}
+.edit-mode-note { color:var(--wood-strong); background:var(--wood-light); border-radius:12px; padding:8px 10px; }
+.table-shell,.year-table { border:1px solid var(--border); border-radius:18px; background:var(--surface); }
+.table-shell th,.year-table th { background:var(--surface-2); color:var(--text-2); }
+.table-shell td,.year-table td { border-color:var(--border); }
+.feed-day-header { border-color:var(--border-2); }
+.feed-row { min-height:58px; border:1px solid transparent; }
+.feed-row:hover { border-color:var(--border); background:var(--surface-2); }
+.modal-card { border:1px solid var(--border); background:var(--surface); }
+.toast { border-radius:16px; box-shadow:var(--shadow-lg); }
+.fab { background:var(--accent-strong); box-shadow:0 8px 24px rgba(69,102,64,.26); }
+.fab:hover { box-shadow:0 10px 28px rgba(69,102,64,.30); }
+.botanic-tabbar { border-color:var(--border); }
+.more-sheet { border:1px solid var(--border); }
+
+/* Import review gets the same safety language as the rest of the product. */
+.cc-import-card { max-width:860px !important; border:1px solid var(--border); }
+.cc-import-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.cc-import-stat { padding:10px 12px; border:1px solid var(--border); border-radius:14px; background:var(--surface-2); }
+.cc-import-stat span { display:block; color:var(--muted); font-size:10px; }
+.cc-import-stat strong { display:block; color:var(--text); font-size:16px; margin-top:3px; }
+.cc-import-safety { padding:10px 12px; margin-bottom:12px; border-radius:14px; background:var(--accent-light); color:var(--accent-strong); font-size:12px; font-weight:600; }
+
+@media (max-width:600px) {
+  .topbar { padding:8px 10px; gap:7px; }
+  .topbar-logo-text { display:none; }
+  .topbar-logo-icon { width:38px; height:38px; }
+  .topbar-selects { gap:6px; flex:1; justify-content:flex-start; }
+  .topbar-select { min-width:0; max-width:118px; height:38px; flex:1; }
+  .topbar-dark-btn,.topbar-mobile-menu { display:inline-flex; padding:0; }
+  .app-status-strip { width:calc(100% - 24px); margin-top:10px; border-radius:16px; align-items:flex-start; }
+  .edit-safety-banner { width:calc(100% - 24px); }
+  .app-status-copy span { display:none; }
+  .partner-data-chip { font-size:10px; padding:5px 8px; }
+  .main { padding:12px 12px calc(96px + env(safe-area-inset-bottom,0px)); }
+  .hero.monthly-status-card { padding:18px 16px; border-radius:22px; }
+  .monthly-status-card .hero-label { font-size:18px; }
+  .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
+  .hero-month-metrics > div { padding-inline:9px; }
+  .hero-month-metrics strong { font-size:15px; }
+  .review-queue { padding:14px; border-radius:22px; }
+  .review-item { grid-template-columns:auto 1fr; }
+  .review-action { grid-column:2; justify-self:start; }
+  .dashboard-note { padding-inline:2px; }
+  .dashboard-note-top { display:flex; flex-direction:column; gap:10px; }
+  .section > .header { align-items:flex-start; gap:10px; }
+  .section > .header > div { width:100%; }
+  .toolbar { align-items:stretch; gap:10px; }
+  .toolbar > div { display:flex; flex-wrap:wrap; gap:7px; }
+  .filter-selects-row { display:grid; grid-template-columns:1fr 1fr; }
+  .filter-select-item select { width:100%; min-width:0; }
+  .filter-reset-btn { grid-column:1/-1; width:100%; }
+  .debt-col-header { display:none !important; }
+  .debt-row { grid-template-columns:minmax(0,1fr) minmax(92px,.75fr) !important; align-items:end; }
+  .debt-row > * { min-width:0; }
+  .debt-row input,.debt-row select { width:100%; min-width:0; }
+  .debt-row .icon-btn,.debt-row .income-edit-delete { justify-self:end; }
+  .year-table table,.table-shell table { min-width:0; }
+  .cc-import-summary { grid-template-columns:1fr 1fr; }
+  #ccImportTable table { min-width:760px; }
+  .fab { inset-inline-end:16px !important; }
+}
+@media (min-width:601px) { .topbar-mobile-menu { display:none; } }
+
+[data-theme="dark"] .app-status-strip,
+[data-theme="dark"] .hero.monthly-status-card,
+[data-theme="dark"] .review-item { background:var(--surface); }
+[data-theme="dark"] .review-queue,
+[data-theme="dark"] .filter-body,
+[data-theme="dark"] .budget-overview-hero,
+[data-theme="dark"] .income-topbar,
+[data-theme="dark"] .sync-card { background:var(--surface-2); }
 </style>
 </head>
 <body>
 
 <!-- מכל הודעות Toast — גל 8.2.2, מחליף alert() חוסם -->
 <div id="toastContainer" class="toast-container" aria-live="polite"></div>
+
+<section class="auth-gate" id="authGate" hidden aria-labelledby="authGateTitle">
+  <div class="auth-gate-card">
+    <div class="auth-gate-brand">
+      <span class="auth-gate-mark" aria-hidden="true">רש</span>
+      <div>
+        <strong>רז ושירה</strong>
+        <span>הבית הפיננסי המשותף</span>
+      </div>
+    </div>
+    <div class="auth-gate-copy">
+      <h1 id="authGateTitle">כניסה לחשבון</h1>
+      <p>כל אחד נכנס עם המשתמש האישי שלו. הזהות קובעת אילו נתונים ניתן לערוך, וההתחשבנות המשותפת נשארת גלויה לשניכם.</p>
+    </div>
+    <form id="authGateForm" class="auth-gate-form">
+      <div class="field"><label for="authGateEmail">אימייל</label><input id="authGateEmail" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="authGatePassword">סיסמה</label><input id="authGatePassword" type="password" autocomplete="current-password" required></div>
+      <div class="auth-gate-error" id="authGateError" role="alert"></div>
+      <button class="auth-gate-submit" id="authGateSubmit" type="submit">כניסה מאובטחת</button>
+    </form>
+    <div class="auth-gate-note">הנתונים נשמרים בנפרד לכל משתמש. שיתוף מלא של נתוני בן/בת הזוג יופעל רק לאחר השלמת הרשאות household בשרת.</div>
+  </div>
+</section>
 
 <!-- Backup banner (shown by JS) -->
 <div id="backupBanner" style="display:none" class="backup-banner">
@@ -1488,8 +1746,8 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
   <!-- ── Topbar ────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="topbar-logo">
-      <div class="topbar-logo-icon">💰</div>
-      מנהל הוצאות
+      <div class="topbar-logo-icon" id="topbarUserAvatar" aria-hidden="true">ר</div>
+      <span class="topbar-logo-text">מנהל הוצאות</span>
     </div>
     <!-- Hidden elements for JS compatibility (updateMiniNavLabel, renderMiniNavMeta) -->
     <span id="miniNavIcon" style="display:none">📊</span>
@@ -1514,6 +1772,16 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
     <button class="topbar-dark-btn" id="darkModeBtn" onclick="toggleDarkMode()" aria-label="מצב לילה">🌙</button>
     <button class="topbar-mobile-menu" onclick="openDrawer()" aria-label="תפריט">☰</button>
   </header>
+
+  <div class="app-status-strip" id="appStatusStrip" role="status" aria-live="polite">
+    <span class="status-dot" id="appStatusDot" aria-hidden="true"></span>
+    <div class="app-status-copy">
+      <strong id="appConnectionTitle">בודק חיבור וסנכרון…</strong>
+      <span id="appConnectionMeta">הנתונים של רז ושירה נשמרים בנפרד ומוצגים יחד לפי ההרשאה.</span>
+    </div>
+    <span class="partner-data-chip" id="appPartnerSummary">משותף עם בן/בת הזוג</span>
+  </div>
+  <div class="edit-safety-banner" id="editSafetyBanner" hidden role="status"></div>
 
   <!-- ── Pill Navigation ──────────────────────────────────────── -->
   <nav class="pill-nav" aria-label="ניווט ראשי">
@@ -1563,18 +1831,25 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
     <!-- ── Dashboard ── -->
     <section class="tab-panel active" data-panel="dashboard">
       <div class="dashboard-clean">
-        <section class="hero" aria-labelledby="heroLabel" id="dashboardHero">
+        <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
           <div class="hero-top">
-            <span class="hero-label" id="heroLabel">יתרת סגירה — <span id="heroMonthName">—</span></span>
+            <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
             <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
           </div>
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
+          <div class="hero-balance-label">צפויים להישאר בסוף החודש</div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
-          <div class="hero-spark"><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
+          <div class="hero-month-metrics" aria-label="סיכום חודשי">
+            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
+            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
+            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לתשלום</small></div>
+          </div>
+          <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
         </section>
+        <section class="review-queue" id="dashboardReviewQueue" aria-labelledby="dashboardReviewTitle"></section>
         <div class="dashboard-note">
           <div class="dashboard-note-top">
             <div>
@@ -2028,11 +2303,11 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 </div><!-- /.app -->
 
 <!-- ── Debt Details Modal ──────────────────────────────────────── -->
-<div id="debtDetailsModal" class="modal-backdrop" onclick="closeDebtDetailsModal(event)">
+<div id="debtDetailsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="debtDetailsTitle" onclick="closeDebtDetailsModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-top">
       <div>
-        <h3 style="margin:0">פירוט חובות</h3>
+        <h3 id="debtDetailsTitle" style="margin:0">פירוט חובות</h3>
         <div class="small">תמונת מצב עדכנית לפי הנתונים הפעילים של המשתמש.</div>
       </div>
       <button class="secondary" type="button" onclick="closeDebtDetailsModal()">סגור</button>
@@ -2593,12 +2868,52 @@ function renderCloudSyncStatus(){
   }
   if(statusEl) statusEl.textContent = cloudSyncState.message;
   renderAuthLoginState();
+  renderAppConnectionSummary();
+}
+function renderAppConnectionSummary(){
+  const strip = document.getElementById("appStatusStrip");
+  const title = document.getElementById("appConnectionTitle");
+  const meta = document.getElementById("appConnectionMeta");
+  const partnerSummary = document.getElementById("appPartnerSummary");
+  const avatar = document.getElementById("topbarUserAvatar");
+  if(!strip || !title || !meta) return;
+  const config = getCloudSyncConfig();
+  const session = loadSupabaseAuthSession();
+  const loggedIn = isSupabaseSessionValid(session);
+  const message = String(cloudSyncState.message || "");
+  const hasSyncError = /נכשל|שגיאה|צריך להתחבר|401|403/i.test(message);
+  strip.classList.toggle("is-connected", loggedIn && hasCloudSyncConfig() && !config.disabled && !hasSyncError);
+  strip.classList.toggle("is-error", hasSyncError);
+  if(config.disabled){
+    title.textContent = "הסנכרון כבוי במכשיר הזה";
+    meta.textContent = "הנתונים נשמרים כרגע רק בדפדפן המקומי.";
+  } else if(!loggedIn){
+    title.textContent = "נדרשת כניסה כדי לסנכרן";
+    meta.textContent = "הנתונים המקומיים נשמרים, אבל עדכון בין המכשירים ממתין להתחברות.";
+  } else if(hasSyncError){
+    title.textContent = "הסנכרון דורש בדיקה";
+    meta.textContent = message || "החיבור קיים, אך העדכון האחרון לא הושלם.";
+  } else {
+    title.textContent = "מחובר ומסונכרן עכשיו";
+    const latest = cloudSyncState.lastPulledAt || cloudSyncState.lastPushedAt;
+    meta.textContent = latest ? `העדכון האחרון הושלם ב־${getReadableDateTime(latest)}.` : "החיבור מאובטח ומוכן לעדכון בין המכשירים.";
+  }
+  const partnerId = getPartnerUserId(currentUser);
+  if(partnerSummary){
+    partnerSummary.textContent = config.disabled
+      ? "נתונים מקומיים בלבד"
+      : loggedIn
+        ? `משותף עם ${getUserLabel(partnerId)}`
+        : `נתוני ${getUserLabel(partnerId)} אחרי התחברות`;
+  }
+  if(avatar) avatar.textContent = String(getUserLabel(currentUser) || currentUser || "?").trim().slice(0,1);
 }
 function renderAuthLoginState(){
   const loginBox = document.getElementById("authLoginBox");
   const loggedInBox = document.getElementById("authLoggedInBox");
   const emailEl = document.getElementById("authLoggedInEmail");
   if(!loginBox || !loggedInBox) return;
+  renderAuthGate();
   const config = getCloudSyncConfig();
   if(!hasCloudSyncConfig()){
     loginBox.style.display = "none";
@@ -2615,22 +2930,30 @@ function renderAuthLoginState(){
     loggedInBox.style.display = "none";
   }
 }
-async function handleAuthLoginClick(){
-  const emailInput = document.getElementById("authEmailInput");
-  const passwordInput = document.getElementById("authPasswordInput");
-  const errorEl = document.getElementById("authLoginError");
+function renderAuthGate(){
+  const gate = document.getElementById("authGate");
+  if(!gate) return;
+  const config = getCloudSyncConfig();
+  const shouldGate = hasCloudSyncConfig() && !config.disabled && !isSupabaseSessionValid(loadSupabaseAuthSession());
+  gate.hidden = !shouldGate;
+  document.body.classList.toggle("auth-gated", shouldGate);
+  if(shouldGate) setTimeout(() => document.getElementById("authGateEmail")?.focus(), 30);
+}
+async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton){
   if(errorEl) errorEl.textContent = "";
   const email = (emailInput?.value || "").trim();
   const password = passwordInput?.value || "";
   if(!email || !password){
     if(errorEl) errorEl.textContent = "יש להזין אימייל וסיסמה.";
-    return;
+    return false;
   }
+  if(submitButton){ submitButton.disabled = true; submitButton.textContent = "מתחבר…"; }
   try {
     const session = await supabaseSignIn(email, password);
     if(!session.appUserKey){
+      await supabaseSignOut();
       if(errorEl) errorEl.textContent = "המשתמש הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.";
-      return;
+      return false;
     }
     // Lock the local identity to whoever actually logged in — no more free
     // switching between raz/shira once real auth is on.
@@ -2645,9 +2968,30 @@ async function handleAuthLoginClick(){
       try { await pullCloudSnapshot({showErrors:true}); } catch(e){ /* surfaced via cloudSyncState */ }
     }
     render();
+    return true;
   } catch(error){
     if(errorEl) errorEl.textContent = error.message || "התחברות נכשלה.";
+    return false;
+  } finally {
+    if(submitButton){ submitButton.disabled = false; submitButton.textContent = "כניסה מאובטחת"; }
   }
+}
+async function handleAuthLoginClick(){
+  return performAuthLogin(
+    document.getElementById("authEmailInput"),
+    document.getElementById("authPasswordInput"),
+    document.getElementById("authLoginError"),
+    document.getElementById("authLoginBtn")
+  );
+}
+async function handleAuthGateLogin(event){
+  if(event) event.preventDefault();
+  return performAuthLogin(
+    document.getElementById("authGateEmail"),
+    document.getElementById("authGatePassword"),
+    document.getElementById("authGateError"),
+    document.getElementById("authGateSubmit")
+  );
 }
 async function handleAuthLogoutClick(){
   await supabaseSignOut();
@@ -4607,10 +4951,21 @@ function closeDebtDetailsModal(event){
 function renderUserSelect(){
   const select = document.getElementById("userSelect");
   if(!select) return;
+  const session = loadSupabaseAuthSession();
+  const authenticatedUser = isSupabaseSessionValid(session) && USERS.some(user => user.id === session.appUserKey)
+    ? session.appUserKey
+    : null;
+  if(authenticatedUser && currentUser !== authenticatedUser){
+    currentUser = authenticatedUser;
+    localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+  }
   select.innerHTML = USERS.map(user => `<option value="${user.id}">${user.label}</option>`).join("");
   if(!USERS.some(user => user.id === currentUser)) currentUser = "raz";
   select.value = currentUser;
+  select.disabled = Boolean(authenticatedUser);
+  select.title = authenticatedUser ? "הזהות נקבעת לפי המשתמש המחובר" : "";
   select.onchange = ()=>{
+    if(authenticatedUser) return;
     currentUser = select.value;
     localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
     if(currentUser === "shira"){
@@ -4974,6 +5329,17 @@ function renderDashboardHero(){
   const closing = getDisplayedClosingBalance(selectedSheet);
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
+  const monthlyIncome = getIncomeTotal(selectedSheet);
+  const monthlyExpenses = getExpenseStats(selectedSheet).total;
+  const monthlyDebt = isDebtTrackingEnabled()
+    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0)
+    : 0;
+  const incomeMetric = document.getElementById("dashboardIncomeMetric");
+  const expenseMetric = document.getElementById("dashboardExpenseMetric");
+  const debtMetric = document.getElementById("dashboardDebtMetric");
+  if(incomeMetric) incomeMetric.textContent = fmt(monthlyIncome);
+  if(expenseMetric) expenseMetric.textContent = fmt(monthlyExpenses);
+  if(debtMetric) debtMetric.textContent = fmt(monthlyDebt);
   heroEl.classList.toggle("is-negative", value < 0);
   const prevTarget = Number(balEl.dataset.target || 0);
   if(prevTarget !== value || !balEl.dataset.initialized){
@@ -5008,7 +5374,7 @@ function renderDashboardHero(){
     const trend = spark.values.length > 1 && spark.values[spark.values.length - 1] >= spark.values[0] ? "עלייה" : "ירידה";
     sparkAlt.textContent = `מגמה: ${spark.values.length} חודשים, ${trend}`;
   }
-  if(sparkCanvas && typeof Chart !== "undefined"){
+  if(sparkCanvas && !sparkCanvas.closest(".hero-spark")?.hidden && typeof Chart !== "undefined"){
     if(heroSparkInstance) heroSparkInstance.destroy();
     heroSparkInstance = new Chart(sparkCanvas, {
       type: "line",
@@ -5027,6 +5393,92 @@ function renderDashboardHero(){
       }
     });
   }
+}
+
+function getDashboardReviewItems(){
+  const rows = getEditableRows(selectedSheet);
+  const missingCategory = rows.filter(row => !normalizeCategory(row.category)).length;
+  const invalidRows = rows.filter(row => !String(row.merchant || "").trim() || !Number.isFinite(Number(row.amount)) || Number(row.amount) <= 0).length;
+  const sharedSummary = getSharedExpenseSummary();
+  const config = getCloudSyncConfig();
+  const loggedIn = isSupabaseSessionValid(loadSupabaseAuthSession());
+  const syncMessage = String(cloudSyncState.message || "");
+  const syncNeedsReview = !config.disabled && hasCloudSyncConfig() && (!loggedIn || /נכשל|שגיאה|צריך להתחבר|401|403/i.test(syncMessage));
+  const items = [];
+  if(invalidRows){
+    items.push({
+      tone:"warn",
+      title:`${invalidRows} הוצאות עם מידע חסר`,
+      sub:"צריך להשלים בית עסק או סכום לפני שהדוחות יהיו אמינים.",
+      action:"reviewExpensesNeedingAttention()",
+      label:"פתח הוצאות"
+    });
+  }
+  if(missingCategory){
+    items.push({
+      tone:"warn",
+      title:`${missingCategory} הוצאות ללא קטגוריה`,
+      sub:"הסיווג ישפר את התקציב, התחזית והסיכום השנתי.",
+      action:"reviewExpensesNeedingAttention()",
+      label:"סווג עכשיו"
+    });
+  }
+  if(Math.abs(Number(sharedSummary.netBalance || 0)) >= 1){
+    items.push({
+      tone:"warn",
+      title:`התחשבנות זוגית פתוחה · ${fmt(Math.abs(sharedSummary.netBalance))}`,
+      sub:"המאזן מחושב מכל ההוצאות המשותפות והאיזונים הישירים.",
+      action:"switchToTab('shared')",
+      label:"בדוק חלוקה"
+    });
+  }
+  if(syncNeedsReview){
+    items.push({
+      tone:"warn",
+      title:loggedIn ? "הסנכרון האחרון לא הושלם" : "הכניסה לענן ממתינה",
+      sub:loggedIn ? (syncMessage || "בדוק את מצב החיבור לפני עריכה ממכשיר נוסף.") : "התחבר כדי לראות ולעדכן את הנתונים משני המכשירים.",
+      action:"switchToTab('backup')",
+      label:"בדוק חיבור"
+    });
+  }
+  return items;
+}
+function reviewExpensesNeedingAttention(){
+  activeTab = "expenses";
+  editMode = true;
+  clearSelectedExpenseRows();
+  renderTabs();
+  render();
+  setTimeout(() => document.querySelector('[data-panel="expenses"] .expense-feed')?.scrollIntoView({behavior:"smooth",block:"start"}), 80);
+}
+function goToFirstDashboardReviewItem(){
+  const first = getDashboardReviewItems()[0];
+  if(!first) return;
+  if(first.action === "reviewExpensesNeedingAttention()") reviewExpensesNeedingAttention();
+  else if(first.action.includes("'shared'")) switchToTab("shared");
+  else switchToTab("backup");
+}
+function renderDashboardReviewQueue(){
+  const root = document.getElementById("dashboardReviewQueue");
+  if(!root) return;
+  const items = getDashboardReviewItems().slice(0,4);
+  root.innerHTML = `
+    <div class="review-queue-head">
+      <div>
+        <h2 class="review-queue-title" id="dashboardReviewTitle">ממתינות לבדיקה</h2>
+        <div class="review-queue-sub">רק פריטים שמשפיעים על אמינות הנתונים או על הסנכרון.</div>
+      </div>
+      <span class="review-count" aria-label="${items.length} פריטים">${items.length}</span>
+    </div>
+    ${items.length ? `<div class="review-list">${items.map(item => `
+      <div class="review-item">
+        <span class="review-marker ${item.tone === "good" ? "good" : ""}" aria-hidden="true"></span>
+        <div><strong>${escapeHtmlAttr(item.title)}</strong><small>${escapeHtmlAttr(item.sub)}</small></div>
+        <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+      </div>`).join("")}</div>
+      <button class="review-primary" type="button" onclick="goToFirstDashboardReviewItem()">בדוק את הפריט הראשון</button>`
+      : `<div class="review-all-clear">הכול מסודר — אין כרגע פריטים שממתינים לבדיקה.</div>`}
+  `;
 }
 
 function renderBudgetOverview(rows){
@@ -6627,7 +7079,11 @@ function renderTabs(){
     if(btn.dataset.tab === "debts"){
       btn.style.display = showDebts ? "" : "none";
     }
-    btn.classList.toggle("active", btn.dataset.tab === activeTab);
+    const isActive = btn.dataset.tab === activeTab;
+    btn.classList.toggle("active", isActive);
+    if(btn.getAttribute("role") === "tab") btn.setAttribute("aria-selected", String(isActive));
+    if(isActive) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
   });
   if(setupBtn){
     setupBtn.style.display = showDebts ? "none" : "inline-flex";
@@ -6636,8 +7092,32 @@ function renderTabs(){
   document.querySelectorAll(".tab-panel").forEach(panel=>{
     panel.classList.toggle("active", panel.dataset.panel === activeTab);
   });
+  const moreButton = document.querySelector(".btab-more");
+  if(moreButton){
+    const moreIsActive = ["income","cards","debts","yearly","backup"].includes(activeTab);
+    moreButton.classList.toggle("active", moreIsActive);
+    moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
+  }
+  const fab = document.getElementById("fabBtn");
+  if(fab) fab.style.display = activeTab === "expenses" ? "grid" : "none";
   updateMiniNavLabel();
   renderMiniNavMeta();
+}
+function renderEditSafetyBanner(){
+  const banner = document.getElementById("editSafetyBanner");
+  if(!banner) return;
+  const activeModes = {
+    expenses:editMode,
+    budget:categoryEditMode,
+    income:incomeEditMode,
+    cards:cardEditMode,
+    debts:debtEditMode
+  };
+  const isEditing = Boolean(activeModes[activeTab]);
+  banner.hidden = !isEditing;
+  if(!isEditing) return;
+  const labels = {expenses:"הוצאות",budget:"קטגוריות ותקציבים",income:"הכנסות",cards:"כרטיסים",debts:"חובות"};
+  banner.textContent = `מצב עריכה פעיל · ${labels[activeTab]} · השינויים נשמרים אוטומטית. מחיקה תבקש אישור או תציע ביטול.`;
 }
 function renderLoanScheduleRows(rows, currentMonthKey, todayIso){
   if(!rows.length) return `<div class="debt-empty">עדיין לא ירד חיוב מהלוואת הבנק לפי לוח הסילוקין.</div>`;
@@ -6935,6 +7415,7 @@ function render(){
     const rows = getFilteredRows(baseRows);
     renderHero(baseRows);
     renderDashboardHero();
+    renderDashboardReviewQueue();
     renderExcelKpis();
     renderBudgetOverview(baseRows);
     renderCategorySummary(baseRows);
@@ -6947,6 +7428,7 @@ function render(){
     renderCloudSyncStatus();
     renderRecoveryPoints();
     document.body.classList.toggle("edit-active", editMode);
+    renderEditSafetyBanner();
     const btn=document.getElementById("toggleEditBtn");
     // edit button label handled by CSS classes
     btn.classList.toggle("active", editMode);
@@ -7051,6 +7533,7 @@ document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
 document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
 document.getElementById("authLoginBtn").onclick=handleAuthLoginClick;
 document.getElementById("authLogoutBtn").onclick=handleAuthLogoutClick;
+document.getElementById("authGateForm").onsubmit=handleAuthGateLogin;
 document.getElementById("createRecoveryPointBtn").onclick=()=>createManualRecoveryPoint();
 document.getElementById("refreshRecoveryPointsBtn").onclick=()=>refreshRecoveryPoints({showErrors:true});
 document.getElementById("exportBackupBtn").onclick=exportBackup;
@@ -7191,6 +7674,7 @@ function openMoreSheet(){
   const sh=document.getElementById("moreSheet");
   if(bd) bd.classList.add("open");
   if(sh){ sh.classList.add("open"); }
+  document.querySelector(".btab-more")?.setAttribute("aria-expanded", "true");
   document.addEventListener("keydown", moreSheetEsc);
 }
 function closeMoreSheet(){
@@ -7198,6 +7682,7 @@ function closeMoreSheet(){
   const sh=document.getElementById("moreSheet");
   if(bd) bd.classList.remove("open");
   if(sh) sh.classList.remove("open");
+  document.querySelector(".btab-more")?.setAttribute("aria-expanded", "false");
   document.removeEventListener("keydown", moreSheetEsc);
 }
 function moreSheetEsc(e){ if(e.key==="Escape") closeMoreSheet(); }
@@ -7207,6 +7692,9 @@ function showMobileEditSheet(rowId, row){
   if(!modal){
     modal = document.createElement("div");
     modal.id = "mobileEditModal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "עריכת הוצאה");
     modal.style.cssText = "position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;overflow:hidden";
     document.body.appendChild(modal);
   }
@@ -7342,6 +7830,7 @@ window.addEventListener("focus", maybePullOnFocus);
 
 // ── Credit Card Import ────────────────────────────────
 let ccImportRows = [];
+let ccImportSourceFileName = "";
 
 function openCCImport(){
   const input = document.getElementById("importCCFile");
@@ -7350,9 +7839,13 @@ function openCCImport(){
   input.click();
 }
 
+function ccImportEsc(event){ if(event.key === "Escape") closeCCImport(); }
+
 function closeCCImport(){
   document.getElementById("ccImportModal").style.display = "none";
   ccImportRows = [];
+  ccImportSourceFileName = "";
+  document.removeEventListener("keydown", ccImportEsc);
 }
 
 function escapeHtmlAttr(value){
@@ -7369,6 +7862,17 @@ function normalizeImportMerchant(value){
     .trim()
     .toLowerCase();
 }
+function createImportFingerprint(txn){
+  const amount = Number(txn && txn.amount);
+  const amountKey = Number.isFinite(amount) ? amount.toFixed(2) : "";
+  const cardKey = extractLast4(txn && (txn.sourceCardLast4 || txn.payment || txn.sourceCardLabel)) || normalizeMatchText(txn && txn.payment);
+  return [
+    toIsoDate(txn && txn.date_raw),
+    amountKey,
+    normalizeImportMerchant(txn && txn.merchant),
+    cardKey
+  ].join("|");
+}
 
 function getAllExpenseSheetsForDuplicateScan(){
   const sheetKeys = new Set([
@@ -7381,11 +7885,35 @@ function getAllExpenseSheetsForDuplicateScan(){
 
 function refreshCCImportDuplicateState(){
   ccImportRows.forEach(row => {
+    row._sourceFingerprint = row._sourceFingerprint || createImportFingerprint(row);
     row._isDuplicate = findDuplicateExpense(row);
     if(row._isDuplicate){
       row._skip = true;
     }
   });
+}
+
+function toggleCCImportRow(index, checked){
+  if(!ccImportRows[index]) return;
+  ccImportRows[index]._skip = !checked;
+  updateCCImportSummary();
+}
+
+function updateCCImportSummary(){
+  const root = document.getElementById("ccImportSummary");
+  if(!root) return;
+  const selectedRows = ccImportRows.filter(row => !row._skip);
+  const defaultPayment = document.getElementById("ccImportPayment")?.value || "";
+  const duplicateCount = ccImportRows.filter(row => row._isDuplicate).length;
+  const missingCategory = selectedRows.filter(row => !row.category).length;
+  const missingPayment = selectedRows.filter(row => !(row.payment || defaultPayment)).length;
+  const total = selectedRows.reduce((sum,row) => sum + Number(row.amount || 0), 0);
+  root.innerHTML = `
+    <div class="cc-import-stat"><span>נבחרו</span><strong>${selectedRows.length}</strong></div>
+    <div class="cc-import-stat"><span>סכום לבדיקה</span><strong>${fmt(total)}</strong></div>
+    <div class="cc-import-stat"><span>כפילויות שסומנו</span><strong>${duplicateCount}</strong></div>
+    <div class="cc-import-stat"><span>חסר סיווג / כרטיס</span><strong>${missingCategory + missingPayment}</strong></div>
+  `;
 }
 
 function updateCCImportField(index, field, value){
@@ -7395,6 +7923,7 @@ function updateCCImportField(index, field, value){
   if(field === "merchant"){
     row.merchant = String(value || "").replace(/\s+/g, " ").trim();
   }
+  if(field === "merchant" || field === "payment") row._sourceFingerprint = createImportFingerprint(row);
   refreshCCImportDuplicateState();
   buildCCImportTable();
 }
@@ -7627,6 +8156,7 @@ function parseCCStatement(rows, filename){
 
 
 function showCCImportModal(result, filename){
+  ccImportSourceFileName = String(filename || "");
   const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
   ccImportRows = result.txns.map(t => {
     const inferred = normalizeCategory(inferCategoryForMerchant(t.merchant));
@@ -7650,6 +8180,7 @@ function showCCImportModal(result, filename){
   // Auto-guess the default card for unmatched rows, using the robust matcher.
   const guessName = guessPaymentMethodForImport(result.cardName || "", result.last4 || "", result.cardName || "", "");
   if(guessName) paySel.value = guessName;
+  paySel.onchange = updateCCImportSummary;
 
   // Populate sheet selector
   const sheetSel = document.getElementById("ccImportSheet");
@@ -7688,6 +8219,7 @@ function showCCImportModal(result, filename){
 
   buildCCImportTable();
   document.getElementById("ccImportModal").style.display = "block";
+  document.addEventListener("keydown", ccImportEsc);
 }
 
 
@@ -7697,10 +8229,13 @@ function findDuplicateExpense(txn){
     const tDate = txn.date_raw || "";
     const tAmt  = txn.amount;
     const tMer  = normalizeImportMerchant(txn.merchant);
+    const fingerprint = txn._sourceFingerprint || txn.sourceFingerprint || createImportFingerprint(txn);
     if(!tDate || !Number.isFinite(Number(tAmt)) || !tMer) return false;
     for(const sheet of getAllExpenseSheetsForDuplicateScan()){
       const rows = getEditableRows(sheet) || [];
       for(const row of rows){
+        const existingFingerprint = row.sourceFingerprint || (row.importMeta && row.importMeta.fingerprint) || "";
+        if(fingerprint && existingFingerprint && fingerprint === existingFingerprint) return true;
         if(row.date_raw === tDate && Math.abs((row.amount||0) - tAmt) < 0.02){
           const rMer = normalizeImportMerchant(row.merchant);
           const shortMer = tMer.slice(0, Math.min(6, tMer.length));
@@ -7736,7 +8271,7 @@ function buildCCImportTable(){
     const checked = !row._skip;
     const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
-    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
+    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"toggleCCImportRow("+i+", this.checked)\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
     html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
@@ -7748,6 +8283,7 @@ function buildCCImportTable(){
   });
   html += "</tbody></table>";
   document.getElementById("ccImportTable").innerHTML = html;
+  updateCCImportSummary();
 }
 
 
@@ -7763,6 +8299,8 @@ function confirmCCImport(){
   }
   const overrides = getOverrides();
   if(!overrides[sheet]) overrides[sheet] = [];
+  rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
+  const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
   // Find max existing row number
   const allRows = getEditableRows(sheet);
@@ -7780,7 +8318,16 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
-      notes: r.notes || ""
+      notes: r.notes || "",
+      sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
+      importMeta: {
+        source:"credit-card-file",
+        sourceFile:ccImportSourceFileName,
+        batchId:importBatchId,
+        importedBy:currentUser,
+        fingerprint:r._sourceFingerprint || createImportFingerprint({...r,payment}),
+        importedAt:new Date().toISOString()
+      }
     });
   });
 
@@ -7796,14 +8343,16 @@ function confirmCCImport(){
 </script>
 
 <!-- Credit Card Import Modal -->
-<div id="ccImportModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);overflow-y:auto;padding:20px 12px">
-  <div style="max-width:700px;margin:0 auto;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+<div id="ccImportModal" role="dialog" aria-modal="true" aria-labelledby="ccImportTitle" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);overflow-y:auto;padding:20px 12px">
+  <div class="cc-import-card" style="max-width:700px;margin:0 auto;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="font-size:18px;font-weight:800;color:var(--text)">ייבוא עסקאות מאשראי</div>
+      <div id="ccImportTitle" style="font-size:18px;font-weight:800;color:var(--text)">ייבוא עסקאות מאשראי</div>
       <button onclick="closeCCImport()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&times;</button>
     </div>
+    <div class="cc-import-safety">הקובץ נקרא לתיבת בדיקה בלבד. שום עסקה לא תישמר לפני שתעבור על השורות ותלחץ על אישור הייבוא.</div>
     <div id="ccImportDetected" style="background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);display:none"></div>
     <div id="ccImportDupNote" style="display:none;background:rgba(212,130,50,.15);border:1px solid rgba(212,130,50,.4);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);font-weight:600"></div>
+    <div id="ccImportSummary" class="cc-import-summary" aria-live="polite"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
       <div style="flex:1;min-width:160px">
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">כרטיס ברירת מחדל לשורות שלא זוהו</div>

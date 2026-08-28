@@ -1,0 +1,29 @@
+{
+  "project": "Expense App — Raz & Shira",
+  "stage": "V38 demo implementation",
+  "date": "2026-08-28",
+  "owner": "Raz",
+  "writer": "Codex primary",
+  "environment": "demo only",
+  "status": "demo_implementation_complete_static_qa_passed_visual_qa_blocked",
+  "changed_files": [
+    "expense-app-v37-demo.html",
+    "00_PROJECT_CONTROL/EXPENSE_APP_V38_LAUNCH_PACKET.md",
+    "00_PROJECT_CONTROL/FULL_PRODUCT_SURFACE_MAP.md",
+    "00_PROJECT_CONTROL/IMPORT_AUTOMATION_PLAN.md",
+    "00_PROJECT_CONTROL/HOUSEHOLD_AUTHORIZATION_DESIGN.md",
+    "00_PROJECT_CONTROL/PROJECT_STATUS_SNAPSHOT.json",
+    "00_PROJECT_CONTROL/STATUS_CHANGELOG.md",
+    "design-qa.md"
+  ],
+  "production_changed": false,
+  "commit_created": false,
+  "pushed": false,
+  "checks": {
+    "javascript_syntax": "passed",
+    "live_demo_mobile": "not_observed_pending_push_approval",
+    "design_comparison": "blocked_pending_live_capture",
+    "iphone_review": "not_observed"
+  },
+  "next_gate": "Owner approval to commit and push demo for live mobile QA"
+}
