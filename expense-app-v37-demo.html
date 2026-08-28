@@ -13,7 +13,7 @@
 <title>מנהל הוצאות — רז ושירה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700&family=Heebo:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -1720,6 +1720,38 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
 [data-theme="dark"] .budget-overview-hero,
 [data-theme="dark"] .income-topbar,
 [data-theme="dark"] .sync-card { background:var(--surface-2); }
+
+/* V39 Warm Tech — selected visual direction: personal-first, light maple and sage. */
+:root { --font-sans:'Rubik','Heebo',system-ui,sans-serif; --font-num:'Rubik','Heebo',system-ui,sans-serif; --font-serif:'Rubik','Heebo',sans-serif; }
+body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacing:-.01em; }
+.topbar { background:rgba(255,253,249,.92); backdrop-filter:blur(18px); }
+.pill-nav { background:rgba(255,253,249,.78); border-bottom:1px solid var(--border); }
+.pill-btn { border-radius:14px; transition:transform .2s var(--ease-out),background .2s var(--ease-out),color .2s var(--ease-out); }
+.pill-btn.active { background:var(--accent-light); color:var(--accent-strong); box-shadow:none; }
+.pill-btn:hover { transform:translateY(-1px); }
+.tab-panel.active { animation:warmPanelIn .32s var(--ease-out); }
+@keyframes warmPanelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.workspace-switch { display:inline-grid; grid-template-columns:1fr 1fr; padding:4px; gap:4px; margin:0 0 14px; background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-xs); }
+.workspace-btn { min-width:104px; min-height:42px; border:0; border-radius:13px; background:transparent; color:var(--muted); font-weight:800; transition:background .2s var(--ease-out),color .2s var(--ease-out),transform .2s var(--ease-out); }
+.workspace-btn.active { background:var(--sage,#E7F0E1); color:var(--accent-strong); box-shadow:0 3px 10px rgba(91,124,83,.12); }
+.workspace-btn:active,.dashboard-quick-actions button:active { transform:scale(.97); }
+.monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
+.monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
+.monthly-status-card .hero-balance { font-family:var(--font-num); font-weight:800; letter-spacing:-.06em; }
+.dashboard-quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; margin:14px 0; background:var(--surface); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow-xs); }
+.dashboard-quick-actions button { min-height:92px; border:1px solid #F0E6D9; border-radius:17px; background:linear-gradient(180deg,#FFFDF9,#FAF6F0); color:var(--text); padding:12px 8px; display:flex; flex-direction:column; justify-content:center; gap:6px; transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+.dashboard-quick-actions button:hover { transform:translateY(-2px); border-color:var(--wood); box-shadow:var(--shadow-sm); }
+.dashboard-quick-actions span { color:var(--accent-strong); font-weight:800; font-size:13px; }
+.dashboard-quick-actions small { color:var(--muted); font-size:10px; }
+.section,.budget-overview-hero,.budget-card,.debt-card,.year-card,.backup-card,.shared-balance-card,.shared-stat-card,.card-method,.income-topbar,.sync-card,.recovery-card { transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+.section:hover,.budget-card:hover,.debt-card:hover,.year-card:hover,.card-method:hover { box-shadow:var(--shadow-md); }
+.kpi strong,.bento-card strong,.year-kpi-value,.amount,.income-amount { font-family:var(--font-num); font-variant-numeric:tabular-nums; }
+button.primary-cta,button.success-btn,button.primary,.review-primary { border-radius:15px; transition:transform .18s var(--ease-out),box-shadow .18s var(--ease-out); }
+button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-primary:hover { transform:translateY(-1px); box-shadow:var(--shadow-accent); }
+.modal-card,.more-sheet { animation:warmModalIn .22s var(--ease-out); }
+@keyframes warmModalIn { from{opacity:0;transform:translateY(10px) scale(.99)} to{opacity:1;transform:none} }
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (max-width:600px){.workspace-switch{width:100%;margin-bottom:12px}.workspace-btn{min-height:40px}.dashboard-quick-actions{gap:8px;padding:9px;border-radius:19px}.dashboard-quick-actions button{min-height:78px;border-radius:14px;padding:9px 5px}.dashboard-quick-actions span{font-size:11px}.dashboard-quick-actions small{display:none}.monthly-status-card .hero-balance{font-size:clamp(42px,13vw,56px)}}
 </style>
 </head>
 <body>
@@ -1851,6 +1883,10 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
     <!-- ── Dashboard ── -->
     <section class="tab-panel active" data-panel="dashboard">
       <div class="dashboard-clean">
+        <div class="workspace-switch" role="group" aria-label="מרחב עבודה">
+          <button type="button" class="workspace-btn active" id="personalWorkspaceBtn" onclick="openPersonalWorkspace()">אישי</button>
+          <button type="button" class="workspace-btn" id="coupleWorkspaceBtn" onclick="openCoupleWorkspace()">זוגי</button>
+        </div>
         <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
           <div class="hero-top">
             <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
@@ -1868,6 +1904,12 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
           </div>
           <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
+        </section>
+        <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
+          <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
+          <button type="button" onclick="switchToTab('cards')"><span>תקציבים</span><small>חיובים וייבוא</small></button>
+          <button type="button" onclick="switchToTab('yearly')"><span>יעדים</span><small>תחזית שנתית</small></button>
+          <button type="button" onclick="switchToTab('yearly')"><span>דוחות</span><small>סיכום וייצוא</small></button>
         </section>
         <section class="review-queue" id="dashboardReviewQueue" aria-labelledby="dashboardReviewTitle"></section>
         <div class="dashboard-note">
@@ -7089,6 +7131,12 @@ function renderSharedExpensesTab(){
   }).join("");
 }
 /* ─────────────────────────────────────────────────────── */
+function openPersonalWorkspace(){
+  switchToTab("dashboard");
+}
+function openCoupleWorkspace(){
+  switchToTab("shared");
+}
 function renderTabs(){
   const showDebts = isDebtTrackingEnabled();
   const setupBtn = document.getElementById("showDebtsSetupBtn");
@@ -7120,6 +7168,10 @@ function renderTabs(){
   }
   const fab = document.getElementById("fabBtn");
   if(fab) fab.style.display = activeTab === "expenses" ? "grid" : "none";
+  const personalBtn = document.getElementById("personalWorkspaceBtn");
+  const coupleBtn = document.getElementById("coupleWorkspaceBtn");
+  if(personalBtn) personalBtn.classList.toggle("active", activeTab === "dashboard");
+  if(coupleBtn) coupleBtn.classList.toggle("active", activeTab === "shared");
   updateMiniNavLabel();
   renderMiniNavMeta();
 }
