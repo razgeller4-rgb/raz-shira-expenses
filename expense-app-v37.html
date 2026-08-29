@@ -2238,8 +2238,12 @@ function getTimeMs(value){
   const time = new Date(value).getTime();
   return Number.isFinite(time) ? time : 0;
 }
-function getLocalDataChangedAt(){
-  return localStorage.getItem(LOCAL_DATA_CHANGED_AT_KEY) || "";
+function getLocalDataChangedAtKey(userId=currentUser){
+  return `${LOCAL_DATA_CHANGED_AT_KEY}_${userId}`;
+}
+function getLocalDataChangedAt(userId=currentUser){
+  return localStorage.getItem(getLocalDataChangedAtKey(userId))
+    || localStorage.getItem(LOCAL_DATA_CHANGED_AT_KEY) || ""; // one-time backwards compatibility
 }
 let autoRecoveryTimer = null;
 function scheduleAutoRecoveryPoint(){
@@ -2247,8 +2251,8 @@ function scheduleAutoRecoveryPoint(){
   clearTimeout(autoRecoveryTimer);
   autoRecoveryTimer = setTimeout(() => rememberLocalRecoveryPoint("שינוי נתונים"), 30000);
 }
-function markLocalDataChanged(timestamp=getIsoNow()){
-  localStorage.setItem(LOCAL_DATA_CHANGED_AT_KEY, timestamp);
+function markLocalDataChanged(timestamp=getIsoNow(), userId=currentUser){
+  localStorage.setItem(getLocalDataChangedAtKey(userId), timestamp);
   scheduleAutoRecoveryPoint();
   return timestamp;
 }
@@ -2379,6 +2383,21 @@ function isSupabaseSessionValid(session){
   if(!session || !session.access_token) return false;
   if(!session.expires_at) return true;
   return Date.now() < (Number(session.expires_at) * 1000) - 30000; // 30s safety margin
+}
+function getAuthenticatedAppUserId(){
+  const session = loadSupabaseAuthSession();
+  return isSupabaseSessionValid(session) && USERS.some(user => user.id === session.appUserKey)
+    ? session.appUserKey
+    : null;
+}
+function requireCloudActorUserId(){
+  const actorUserId = getAuthenticatedAppUserId();
+  if(!actorUserId) throw new Error("צריך להתחבר עם חשבון רז או שירה לפני סנכרון.");
+  if(currentUser !== actorUserId){
+    currentUser = actorUserId;
+    localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+  }
+  return actorUserId;
 }
 /* Sign in with email+password against Supabase Auth's password grant.
    Direct fetch (no supabase-js) to match this file's existing style. */
@@ -2773,7 +2792,7 @@ function collectCloudSnapshot(keys=getCloudSyncKeys(), meta={}){
     app:"raz-expenses-local",
     version:"cloud-v1",
     exportedAt:new Date().toISOString(),
-    changedAt:getLocalDataChangedAt() || getIsoNow(),
+    changedAt:getLocalDataChangedAt(meta.user || currentUser) || getIsoNow(),
     ...meta,
     data
   };
@@ -3115,11 +3134,12 @@ function applySettlementsRow(remoteRow){
 async function pushCloudSnapshot(options={}){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
+  const actorUserId = requireCloudActorUserId();
   // Per-user push: write ONLY the current user's row. Two devices use two
   // different primary keys (user-raz / user-shira) so they can never overwrite
   // each other's data.
-  const userSnapshot = collectCloudSnapshot(getCloudSyncKeysForUser(currentUser), {user:currentUser});
-  const remote = await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${currentUser}`, userSnapshot);
+  const userSnapshot = collectCloudSnapshot(getCloudSyncKeysForUser(actorUserId), {user:actorUserId});
+  const remote = await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${actorUserId}`, userSnapshot);
   // Settlements live in their own shared, guarded row (fixes B1). Push it when
   // it has pending local changes (or when caller forces a full push).
   if(settlementsDirty || options.forceSettlements){
@@ -3152,7 +3172,8 @@ async function pushCloudSnapshot(options={}){
    partner's half of the restored data stays local until they log in on
    their own device and push it themselves. */
 async function pushAllRowsFromLocal(options={}){
-  const ownRow = USERS.find(u => u.id === currentUser);
+  const actorUserId = requireCloudActorUserId();
+  const ownRow = USERS.find(u => u.id === actorUserId);
   if(ownRow){
     const snap = collectCloudSnapshot(getCloudSyncKeysForUser(ownRow.id), {user:ownRow.id});
     await upsertCloudRow(`${CLOUD_SYNC_ROW_PREFIX}${ownRow.id}`, snap);
@@ -3174,8 +3195,9 @@ async function pushAllRowsFromLocal(options={}){
      self-row can't clobber unsynced local edits.
    - Settlements: append-merged (never drop a local-only settlement). */
 function assembleFromCloudRows(byId, options={}){
-  const partnerId = getPartnerUserId(currentUser);
-  const selfRow = byId[`${CLOUD_SYNC_ROW_PREFIX}${currentUser}`] || null;
+  const actorUserId = requireCloudActorUserId();
+  const partnerId = getPartnerUserId(actorUserId);
+  const selfRow = byId[`${CLOUD_SYNC_ROW_PREFIX}${actorUserId}`] || null;
   const partnerRow = byId[`${CLOUD_SYNC_ROW_PREFIX}${partnerId}`] || null;
   const settlRow = byId[CLOUD_SETTLEMENTS_ROW_ID] || null;
   let applied = false;
@@ -3187,9 +3209,9 @@ function assembleFromCloudRows(byId, options={}){
   // own row — apply only if remote is not older than local (protect unsynced edits)
   if(selfRow && selfRow.payload){
     const remoteChangedAt = getTimeMs(selfRow.payload.changedAt || selfRow.updated_at);
-    const localChangedAt = getTimeMs(getLocalDataChangedAt());
+    const localChangedAt = getTimeMs(getLocalDataChangedAt(actorUserId));
     if(options.forceSelf || remoteChangedAt >= localChangedAt){
-      applyCloudSnapshot(selfRow.payload, getCloudSyncKeysForUser(currentUser));
+      applyCloudSnapshot(selfRow.payload, getCloudSyncKeysForUser(actorUserId));
       applied = true;
     }
   }
@@ -3415,13 +3437,15 @@ async function bootstrapCloudSync(){
   if(!userDisabledManually){
     saveCloudSyncConfig({...DEFAULT_CLOUD_SYNC_CONFIG, disabled:false});
   }
-  if(!getLocalDataChangedAt()) markLocalDataChanged();
+  if(!getAuthenticatedAppUserId() && !getLocalDataChangedAt()) markLocalDataChanged();
   renderCloudSyncStatus();
   if(!hasCloudSyncConfig()) return;
   if(requiresSupabaseLogin()){
     setCloudSyncState({status:"idle", message:"צריך להתחבר (אימייל+סיסמה) כדי לסנכרן עם הענן."});
     return;
   }
+  const actorUserId = requireCloudActorUserId();
+  if(!getLocalDataChangedAt(actorUserId)) markLocalDataChanged();
   try {
     setCloudSyncState({status:"syncing", message:"מתחבר לענן..."});
     // one-time, additive migration: split legacy blob → per-user + settlements rows
@@ -4494,10 +4518,18 @@ function closeDebtDetailsModal(event){
 function renderUserSelect(){
   const select = document.getElementById("userSelect");
   if(!select) return;
+  const authenticatedUser = getAuthenticatedAppUserId();
   select.innerHTML = USERS.map(user => `<option value="${user.id}">${user.label}</option>`).join("");
+  if(authenticatedUser && currentUser !== authenticatedUser){
+    currentUser = authenticatedUser;
+    localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+  }
   if(!USERS.some(user => user.id === currentUser)) currentUser = "raz";
   select.value = currentUser;
+  select.disabled = Boolean(authenticatedUser);
+  select.title = authenticatedUser ? "הזהות נקבעת לפי המשתמש המחובר" : "";
   select.onchange = ()=>{
+    if(authenticatedUser) return;
     currentUser = select.value;
     localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
     if(currentUser === "shira"){
