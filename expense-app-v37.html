@@ -1866,6 +1866,7 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
               <div class="sync-actions" style="margin-top:10px">
                 <button id="pullCloudSyncBtn" class="secondary" type="button">משוך מהענן עכשיו</button>
                 <button id="pushCloudSyncBtn" class="secondary" type="button">דחוף לענן עכשיו</button>
+                <button id="clearAppCacheBtn" class="secondary" type="button" title="מרענן את קבצי האתר בלי למחוק נתונים">נקה מטמון ורענן</button>
                 <button id="clearCloudSyncBtn" class="secondary" type="button">נתק סנכרון במכשיר זה</button>
               </div>
               <!-- hidden inputs kept for internal use -->
@@ -3304,6 +3305,25 @@ function clearCloudSyncConnection(){
   cloudSyncTimer = null;
   setCloudSyncState({status:"idle", message:"סנכרון הענן כובה במכשיר הזה. אפשר להפעיל שוב בלחיצה על שמור חיבור ענן.", lastPulledAt:null, lastPushedAt:null, lastRemoteUpdatedAt:null});
   renderCloudSyncStatus();
+}
+async function clearAppCacheAndRefresh(){
+  if(!confirm("לנקות מטמון ורענן את גרסת האתר? הוצאות, הכנסות, הגדרות וסנכרון ענן לא יימחקו.")) return;
+  try {
+    if("caches" in window){
+      const cacheNames = await caches.keys();
+      await Promise.all(cacheNames.map(name => caches.delete(name)));
+    }
+    if("serviceWorker" in navigator){
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(registrations.map(registration => registration.unregister()));
+    }
+    sessionStorage.clear();
+  } catch(error){
+    console.warn("Cache cleanup was partial", error);
+  }
+  const url = new URL(window.location.href);
+  url.searchParams.set("refresh", String(Date.now()));
+  window.location.replace(url.toString());
 }
 function hasAnyLocalExpenses(){
   return USERS.some(user => {
@@ -6837,6 +6857,7 @@ document.getElementById("addCategoryBtn").onclick=addCategoryRow;
 document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
 document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
 document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
+document.getElementById("clearAppCacheBtn").onclick=clearAppCacheAndRefresh;
 document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
 document.getElementById("authLoginBtn").onclick=handleAuthLoginClick;
 document.getElementById("authLogoutBtn").onclick=handleAuthLogoutClick;
