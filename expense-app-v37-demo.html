@@ -1561,6 +1561,19 @@ body { background:var(--bg); }
 .panel-hero::before { background:var(--wood); opacity:.13; }
 .panel-hero::after { background:var(--accent); opacity:.10; }
 .panel-hero-sub { color:var(--text-2); opacity:1; }
+[data-theme="dark"] .panel-hero,
+[data-theme="dark"] [data-panel="dashboard"] .panel-hero,
+[data-theme="dark"] [data-panel="budget"] .panel-hero,
+[data-theme="dark"] [data-panel="income"] .panel-hero,
+[data-theme="dark"] [data-panel="cards"] .panel-hero,
+[data-theme="dark"] [data-panel="expenses"] .panel-hero,
+[data-theme="dark"] [data-panel="shared"] .panel-hero,
+[data-theme="dark"] [data-panel="debts"] .panel-hero,
+[data-theme="dark"] [data-panel="goals"] .panel-hero,
+[data-theme="dark"] [data-panel="yearly"] .panel-hero,
+[data-theme="dark"] [data-panel="backup"] .panel-hero {
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 56%,var(--surface) 100%);
+}
 
 /* Selected dashboard direction: quiet monthly status + review inbox. */
 .hero.monthly-status-card {
@@ -1729,9 +1742,18 @@ body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacin
 .monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
 .monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
 [data-theme="dark"] .monthly-status-card { background:linear-gradient(110deg,var(--surface) 0%,var(--surface) 65%,var(--surface-2) 100%) !important; }
+[data-theme="dark"] body { background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 100%) !important; }
+[data-theme="dark"] .edit-safety-banner { background:var(--wood-light) !important; }
+[data-theme="dark"] .review-count { background:var(--warn-light); color:var(--warn); }
+[data-theme="dark"] .editing,
+[data-theme="dark"] .income-edit-card,
+[data-theme="dark"] .summary-row.editing,
+[data-theme="dark"] .income-row.editing,
+[data-theme="dark"] .debt-row.editing { background:var(--surface-2) !important; }
 .monthly-status-card .hero-balance { font-family:var(--font-num); font-weight:800; letter-spacing:-.06em; }
 .dashboard-quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; margin:14px 0; background:var(--surface); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow-xs); }
 .dashboard-quick-actions button { min-height:92px; border:1px solid #F0E6D9; border-radius:17px; background:linear-gradient(180deg,#FFFDF9,#FAF6F0); color:var(--text); padding:12px 8px; display:flex; flex-direction:column; justify-content:center; gap:6px; transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+[data-theme="dark"] .dashboard-quick-actions button { border-color:var(--border); background:linear-gradient(180deg,var(--surface),var(--surface-2)); }
 .dashboard-quick-actions button:hover { transform:translateY(-2px); border-color:var(--wood); box-shadow:var(--shadow-sm); }
 .dashboard-quick-actions span { color:var(--accent-strong); font-weight:800; font-size:13px; }
 .dashboard-quick-actions small { color:var(--muted); font-size:10px; }
