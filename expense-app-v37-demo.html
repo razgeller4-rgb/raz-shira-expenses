@@ -4614,6 +4614,45 @@ function inferCategoryForMerchant(merchant){
   }
   return "";
 }
+/* Merchant memory: a small learned map of merchant name → {category, payment, type},
+   built from confirmed imports. Faster and more reliable than re-scanning full
+   expense history, and it's the only place fixed/variable ("קבוע/משתנה") gets
+   remembered at all — inferCategoryForMerchant/guessPaymentMethodForImport never
+   touch that field. Namespaced + synced like other per-user settings. */
+const MERCHANT_MEMORY_STORAGE_KEY = STORAGE_NS_PREFIX + "expense_app_merchant_memory_v1";
+function getMerchantMemoryMap(){
+  try { return JSON.parse(localStorage.getItem(MERCHANT_MEMORY_STORAGE_KEY) || "{}"); } catch(e){ return {}; }
+}
+function saveMerchantMemoryMap(map){
+  localStorage.setItem(MERCHANT_MEMORY_STORAGE_KEY, JSON.stringify(map));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+function rememberMerchantMapping(merchant, {category, payment, type} = {}){
+  const key = normalizeMerchantName(merchant);
+  if(!key) return;
+  const map = getMerchantMemoryMap();
+  map[key] = {
+    category: category || (map[key] && map[key].category) || "",
+    payment: payment || (map[key] && map[key].payment) || "",
+    type: type || (map[key] && map[key].type) || "",
+    lastUpdated: Date.now()
+  };
+  saveMerchantMemoryMap(map);
+}
+/* Unified lookup used both at import-modal-open time and live while editing a
+   merchant name in the review table. Learned memory wins; falls back to the
+   older category-only history scan and card fuzzy-matcher for merchants we
+   haven't confirmed an import for yet. */
+function lookupMerchantMapping(merchant){
+  const key = normalizeMerchantName(merchant);
+  if(!key) return {category:"", payment:"", type:""};
+  const remembered = getMerchantMemoryMap()[key];
+  const category = (remembered && remembered.category) || normalizeCategory(inferCategoryForMerchant(merchant)) || "";
+  const payment = (remembered && remembered.payment) || "";
+  const type = (remembered && remembered.type) || "";
+  return {category, payment, type};
+}
 function maybeFillNewCategoryFromMerchant(){
   const merchantInput = document.getElementById("newMerchant");
   const categorySelect = document.getElementById("newCategory");
@@ -5302,6 +5341,19 @@ function resetFilters(){
   document.getElementById("sortDir").value="asc";
   render();
 }
+/* Budget-card drill-down: jump to the expenses tab pre-filtered to this
+   category (same chip mechanism the manual filter UI uses). */
+function drillIntoCategoryExpenses(categoryName){
+  switchToTab("expenses");
+  document.getElementById("searchInput").value = "";
+  document.getElementById("filterPayment").value = "";
+  document.getElementById("filterType").value = "";
+  document.getElementById("filterImmediate").value = "";
+  renderFilterOptions();
+  const chip = document.querySelector(`#filterCategoryChips .filter-chip[data-category="${CSS.escape(categoryName)}"]`);
+  if(chip) chip.classList.add("active");
+  render();
+}
 /* ── helpers: prev month comparison ── */
 function getPrevSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
@@ -5781,7 +5833,7 @@ function renderCategorySummary(rows){
     const amountLabel = c.budget == null
       ? fmt(used)
       : (remainingValue < 0 ? `-${fmt(Math.abs(remainingValue))}` : `${fmt(used)} / ${budgetText}`);
-    return `<div class="summary-row budget-card ${cls==="bad" ? "status-bad" : cls==="good" ? "status-good" : ""}">
+    return `<div class="summary-row budget-card ${cls==="bad" ? "status-bad" : cls==="good" ? "status-good" : ""}" role="button" tabindex="0" title="לחץ לצפייה בהוצאות הקטגוריה" data-drill-category="${escapeHtmlAttr(c.name)}" style="cursor:pointer">
       <div class="budget-card-top">
         <div class="budget-card-title">
           <strong>${c.name}</strong>
@@ -5806,6 +5858,10 @@ function renderCategorySummary(rows){
       </div>
     </div>`;
   }).join("");
+  summaryRoot.querySelectorAll("[data-drill-category]").forEach(card => {
+    card.onclick = () => drillIntoCategoryExpenses(card.dataset.drillCategory);
+    card.onkeydown = (event) => { if(event.key === "Enter") drillIntoCategoryExpenses(card.dataset.drillCategory); };
+  });
   renderMobileExpenseList(rows);
 }
 function renderChart(rows){
@@ -8109,6 +8165,13 @@ function updateCCImportField(index, field, value){
   row[field] = value;
   if(field === "merchant"){
     row.merchant = String(value || "").replace(/\s+/g, " ").trim();
+    // Live-apply learned category/card/fixed-variable the moment the business
+    // name is corrected to something we recognize — not just at import-open time.
+    const known = new Set(getCategoryDefinitions().map(c => c.name));
+    const match = lookupMerchantMapping(row.merchant);
+    if(match.category && known.has(match.category)) row.category = match.category;
+    if(match.payment) row.payment = match.payment;
+    if(match.type) row.type = match.type;
   }
   if(field === "merchant" || field === "payment") row._sourceFingerprint = createImportFingerprint(row);
   refreshCCImportDuplicateState();
@@ -8346,11 +8409,11 @@ function showCCImportModal(result, filename){
   ccImportSourceFileName = String(filename || "");
   const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
   ccImportRows = result.txns.map(t => {
-    const inferred = normalizeCategory(inferCategoryForMerchant(t.merchant));
+    const match = lookupMerchantMapping(t.merchant);
     return Object.assign({}, t, {
-      category: knownCategories.has(inferred) ? inferred : "",
-      type: "\u05de\u05e9\u05ea\u05e0\u05d4",
-      payment: t.payment || "",
+      category: knownCategories.has(match.category) ? match.category : "",
+      type: match.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      payment: t.payment || match.payment || "",
       immediate: ""
     });
   });
@@ -8496,6 +8559,9 @@ function confirmCCImport(){
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
     const isImm = isPaymentMethodImmediate(payment);
+    if(r.category || payment || r.type){
+      rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
+    }
     overrides[sheet].push({
       row: nextRow++,
       date_raw: r.date_raw,
