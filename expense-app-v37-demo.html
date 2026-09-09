@@ -2011,6 +2011,11 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
               <button id="addIncomeBtn" class="success-btn" type="button">+ הכנסה</button>
             </div>
           </div>
+          <div class="budget-card-grid" id="incomeStatsKpis" style="margin:14px 0"></div>
+          <div id="incomeTypeBreakdown" style="margin-bottom:14px"></div>
+          <div class="chart-box" style="height:220px;margin-bottom:14px">
+            <canvas id="incomeTrendChart"></canvas>
+          </div>
           <div id="incomeList" class="income-list"></div>
         </div>
       </div>
@@ -2608,6 +2613,7 @@ const LOAN_SCHEDULE = [
 const _initNow = new Date();
 let selectedSheet = formatSheetFromMonth(_initNow.getFullYear(), _initNow.getMonth() + 1);
 let chartInstance = null;
+let incomeTrendChartInstance = null;
 let editMode = false;
 let addExpenseOpen = false;
 let activeTab = "dashboard";
@@ -6642,6 +6648,63 @@ function deletePaymentMethodRow(id){
   savePaymentMethods(methods.filter(method => method.id !== id));
   render();
 }
+function renderIncomeStats(rows, incomeTotal){
+  const kpiRoot = document.getElementById("incomeStatsKpis");
+  const breakdownRoot = document.getElementById("incomeTypeBreakdown");
+  const chartCanvas = document.getElementById("incomeTrendChart");
+  if(!kpiRoot || !breakdownRoot || !chartCanvas) return;
+
+  const prevSheet = getPrevSheet(selectedSheet);
+  const prevTotal = prevSheet ? getIncomeTotal(prevSheet) : null;
+  const deltaChip = buildComparisonChip(incomeTotal, prevTotal, true);
+  const recurringTotal = rows.filter(r => r.recurring).reduce((sum,r) => sum + Number(r.amount || 0), 0);
+  const variableTotal = incomeTotal - recurringTotal;
+  const avgPerEntry = rows.length ? incomeTotal / rows.length : 0;
+
+  kpiRoot.innerHTML = `
+    <div class="budget-card-stat"><span>לעומת חודש קודם</span><strong>${deltaChip || "—"}</strong></div>
+    <div class="budget-card-stat"><span>הכנסה קבועה</span><strong>${fmt(recurringTotal)}${incomeTotal ? ` <small style="font-weight:400;color:var(--muted)">(${Math.round(recurringTotal/incomeTotal*100)}%)</small>` : ""}</strong></div>
+    <div class="budget-card-stat"><span>הכנסה משתנה</span><strong>${fmt(variableTotal)}${incomeTotal ? ` <small style="font-weight:400;color:var(--muted)">(${Math.round(variableTotal/incomeTotal*100)}%)</small>` : ""}</strong></div>
+    <div class="budget-card-stat"><span>ממוצע לרשומה</span><strong>${fmt(avgPerEntry)}</strong></div>
+  `;
+
+  const byType = {};
+  rows.forEach(r => { byType[r.type || "other"] = (byType[r.type || "other"] || 0) + Number(r.amount || 0); });
+  const typeEntries = Object.entries(byType).filter(([,amt]) => amt > 0).sort((a,b) => b[1]-a[1]);
+  breakdownRoot.innerHTML = typeEntries.length ? typeEntries.map(([type, amt]) => {
+    const pct = incomeTotal ? Math.round(amt/incomeTotal*100) : 0;
+    return `<div style="margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+        <span>${INCOME_TYPE_LABELS[type] || INCOME_TYPE_LABELS.other}</span>
+        <strong>${fmt(amt)} · ${pct}%</strong>
+      </div>
+      <div class="budget-progress-track"><div class="budget-progress-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join("") : `<div class="info-box">אין עדיין פירוט לפי סוג הכנסה.</div>`;
+
+  // 6-month trend
+  const monthSheets = [];
+  let cursor = selectedSheet;
+  for(let i = 0; i < 6; i++){
+    monthSheets.unshift(cursor);
+    const prev = getPrevSheet(cursor);
+    if(!prev) break;
+    cursor = prev;
+  }
+  const trendLabels = monthSheets.map(s => formatSheetLabel(s));
+  const trendData = monthSheets.map(s => getIncomeTotal(s));
+  if(incomeTrendChartInstance) incomeTrendChartInstance.destroy();
+  const _css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#7E9B6E";
+  incomeTrendChartInstance = new Chart(chartCanvas, {
+    type:"bar",
+    data:{ labels:trendLabels, datasets:[{ label:"הכנסות", data:trendData, backgroundColor:_css("--income") || "#4E7A4A", borderRadius:6 }] },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:false } },
+      scales:{ y:{ beginAtZero:true, ticks:{ color:_css("--muted") } }, x:{ ticks:{ color:_css("--muted") } } }
+    }
+  });
+}
 function renderIncomeTab(){
   const list = document.getElementById("incomeList");
   const rows = getIncomeRows(selectedSheet);
@@ -6649,6 +6712,7 @@ function renderIncomeTab(){
   const incomeTotal = getIncomeTotal(selectedSheet);
   document.getElementById("incomeMonthTotal").textContent = fmtOrDash(incomeTotal);
   document.getElementById("incomeWindowRange").textContent = `חלון הכנסות: ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}`;
+  renderIncomeStats(rows, incomeTotal);
   if(!rows.length){
     list.innerHTML = `<div class="empty-state">
       <svg class="empty-art good" viewBox="0 0 64 64" aria-hidden="true">
