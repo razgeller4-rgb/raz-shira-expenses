@@ -1716,7 +1716,6 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .debt-row .icon-btn,.debt-row .income-edit-delete { justify-self:end; }
   .year-table table,.table-shell table { min-width:0; }
   .cc-import-summary { grid-template-columns:1fr 1fr; }
-  #ccImportTable table { min-width:760px; }
   .fab { inset-inline-end:16px !important; }
 }
 @media (min-width:601px) { .topbar-mobile-menu { display:none; } }
@@ -4786,9 +4785,36 @@ function normalizeCategory(cat){ const c=(cat || "").trim(); if(c==="דלק" || 
 function normalizeMerchantName(merchant){
   return String(merchant || "").trim().toLowerCase().replace(/\s+/g," ");
 }
+/* Strips parenthetical branch notes, standalone numbers/codes and generic
+   filler words that make statement merchant text ("קרביץ ישראל (מרכז)")
+   diverge from what the user actually typed once ("קרביץ"). Used as the
+   fuzzy-match fallback whenever an exact normalizeMerchantName match fails —
+   which is the common case, since import statements append store/branch
+   noise the user never types manually. */
+function coreMerchantToken(merchant){
+  return normalizeMerchantName(merchant)
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\d+/g, " ")
+    .replace(/\b(בע"מ|בעמ|ltd|inc|com)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function merchantNamesFuzzyMatch(a, b){
+  const keyA = normalizeMerchantName(a), keyB = normalizeMerchantName(b);
+  if(!keyA || !keyB) return false;
+  if(keyA === keyB) return true;
+  const coreA = coreMerchantToken(a), coreB = coreMerchantToken(b);
+  if(!coreA || !coreB) return false;
+  if(coreA === coreB) return true;
+  const shorter = coreA.length <= coreB.length ? coreA : coreB;
+  const longer = coreA.length <= coreB.length ? coreB : coreA;
+  // Require a meaningful overlap (not a 1-2 letter fluke) before calling it a match.
+  return shorter.length >= 3 && longer.includes(shorter);
+}
 function inferCategoryForMerchant(merchant){
   const merchantKey = normalizeMerchantName(merchant);
   if(!merchantKey) return "";
+  let fuzzyFallback = "";
   for(const sheet of [...SHEET_OPTIONS].reverse()){
     const rows = getEditableRows(sheet);
     for(let i = rows.length - 1; i >= 0; i--){
@@ -4796,9 +4822,10 @@ function inferCategoryForMerchant(merchant){
       const category = normalizeCategory(row.category);
       if(!category || category === "כן") continue;
       if(normalizeMerchantName(row.merchant) === merchantKey) return category;
+      if(!fuzzyFallback && merchantNamesFuzzyMatch(row.merchant, merchant)) fuzzyFallback = category;
     }
   }
-  return "";
+  return fuzzyFallback;
 }
 /* Merchant memory: a small learned map of merchant name → {category, payment, type},
    built from confirmed imports. Faster and more reliable than re-scanning full
@@ -4830,10 +4857,22 @@ function rememberMerchantMapping(merchant, {category, payment, type} = {}){
    merchant name in the review table. Learned memory wins; falls back to the
    older category-only history scan and card fuzzy-matcher for merchants we
    haven't confirmed an import for yet. */
+function findFuzzyMerchantMemoryMatch(merchant){
+  const map = getMerchantMemoryMap();
+  const exact = map[normalizeMerchantName(merchant)];
+  if(exact) return exact;
+  let best = null;
+  for(const key of Object.keys(map)){
+    if(merchantNamesFuzzyMatch(key, merchant)){
+      if(!best || (map[key].lastUpdated || 0) > (best.lastUpdated || 0)) best = map[key];
+    }
+  }
+  return best;
+}
 function lookupMerchantMapping(merchant){
   const key = normalizeMerchantName(merchant);
   if(!key) return {category:"", payment:"", type:""};
-  const remembered = getMerchantMemoryMap()[key];
+  const remembered = findFuzzyMerchantMemoryMatch(merchant);
   const category = (remembered && remembered.category) || normalizeCategory(inferCategoryForMerchant(merchant)) || "";
   const payment = (remembered && remembered.payment) || "";
   const type = (remembered && remembered.type) || "";
@@ -8693,34 +8732,38 @@ function buildCCImportTable(){
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
   const paymentOptionDefs = getImportPaymentOptions();
 
-  let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
-  html += "<thead><tr style=\"background:var(--bg);\">";
-  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05db\u05e8\u05d8\u05d9\u05e1","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2",""].forEach(h => {
-    html += "<th style=\"padding:8px 6px;text-align:right;font-weight:700;color:var(--muted);border-bottom:2px solid var(--line)\">"+h+"</th>";
-  });
-  html += "</tr></thead><tbody>";
+  const cardStyle = "padding:8px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
 
-  ccImportRows.forEach((row, i) => {
+  const html = ccImportRows.map((row, i) => {
     const isDup = row._isDuplicate;
-    const rowBg = isDup ? "background:rgba(220,150,50,.13);" : "";
-    const amtExtra = row.foreign ? " <small style=\"color:var(--muted);font-size:11px\">("+row.foreign+")</small>" : "";
+    const amtExtra = row.foreign ? ` <small style="color:var(--muted);font-size:11px">(${row.foreign})</small>` : "";
     // Auto-uncheck duplicates
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
-    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
-    html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
-    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"toggleCCImportRow("+i+", this.checked)\" style=\"width:16px;height:16px\"></td>";
-    html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
-    html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
-    html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'payment', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(paymentOptionDefs, row.payment)+"</select><div style=\"margin-top:4px;font-size:10px;color:var(--muted)\">"+escapeHtmlAttr(row.sourceCardLabel || "")+"</div></td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'category', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(categoryOptionDefs, row.category)+"</select></td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'type', this.value)\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(typeOptionDefs, row.type)+"</select></td>";
-    html += "<td style=\"padding:6px;font-size:11px;color:var(--muted)\">"+(isDup ? "\u05db\u05e4\u05d5\u05dc?" : "")+"</td>";
-    html += "</tr>";
-  });
-  html += "</tbody></table>";
-  document.getElementById("ccImportTable").innerHTML = html;
+    const dupBadge = isDup ? `<span title="\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4" style="display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05db\u05e4\u05d5\u05dc?</span>` : "";
+    const cardWrap = isDup ? "background:rgba(220,150,50,.10);border-color:rgba(220,150,50,.35)" : "";
+    return `<div style="border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;${cardWrap}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <input type="checkbox" ${checked?"checked":""} onchange="toggleCCImportRow(${i}, this.checked)" style="width:18px;height:18px;flex-shrink:0">
+        <div style="flex:1;min-width:0">
+          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--muted)">
+        <span>${row.date_raw}</span>
+        <strong style="font-size:14px;color:var(--accent)">${fmt(row.amount)}${amtExtra}</strong>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
+          ${row.sourceCardLabel ? `<div style="margin-top:3px;font-size:10px;color:var(--muted)">${escapeHtmlAttr(row.sourceCardLabel)}</div>` : ""}
+        </div>
+        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
+        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${cardStyle};grid-column:1/-1">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("ccImportTable").innerHTML = html || `<div class="info-box">\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05e7\u05d5\u05d1\u05e5 \u05d4\u05d6\u05d4.</div>`;
   updateCCImportSummary();
 }
 
