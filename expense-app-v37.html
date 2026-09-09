@@ -203,6 +203,7 @@ input, select, textarea { font: inherit; }
 [data-panel="expenses"]  .panel-hero { background: linear-gradient(135deg,#7A4A35,#9C6347,#C28A68); }
 [data-panel="shared"]    .panel-hero { background: linear-gradient(135deg,#9E5A68,#C77B8B,#DAA2AE); }
 [data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#6E5C4D,#8E7A66,#B3A085); }
+[data-panel="goals"]     .panel-hero { background: linear-gradient(135deg,#4E7C6E,#6E9C8E,#9DC4B6); }
 [data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#A8895C,#C2A579,#DDC79E); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#8A5E3C,#B07D56,#CCA079); }
 
@@ -1467,23 +1468,6 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 /* ═══════════ V38 DEMO — LIGHT WOOD SAFETY SYSTEM ═══════════
    One visual language for every tab, form, table and edit state.
    This layer is intentionally demo-only until mobile review is approved. */
-:root {
-  --bg:#FAF7F2; --surface:#FFFDF9; --surface-2:#F7F0E7; --surface-3:#E8D7C1;
-  --border:#E9D8C4; --border-2:#D8C2A6; --border-3:#CDAE89;
-  --text:#30271F; --text-2:#665649; --muted:#887568;
-  --accent:#5F7F56; --accent-2:#7E9B6E; --accent-strong:#456640;
-  --accent-light:rgba(95,127,86,.12); --accent-ring:rgba(95,127,86,.30);
-  --wood:#C89B68; --wood-strong:#8E6747; --wood-light:rgba(216,194,166,.30);
-  --income:#4E7449; --income-light:#EBF2E8;
-  --expense:#A86349; --expense-light:#F8ECE5;
-  --warn:#B88127; --warn-light:#FBF0D9;
-  --info:#687F78; --info-light:#E9EFEC;
-  --shadow-xs:0 1px 2px rgba(91,64,38,.05);
-  --shadow-sm:0 2px 10px rgba(91,64,38,.07);
-  --shadow-md:0 8px 24px rgba(91,64,38,.10);
-  --shadow-lg:0 18px 50px rgba(74,50,29,.16);
-  --shadow-accent:0 10px 28px rgba(69,102,64,.18);
-}
 body { background:var(--bg); }
 .app { background:transparent; }
 .auth-gate {
@@ -1575,6 +1559,19 @@ body { background:var(--bg); }
 .panel-hero::before { background:var(--wood); opacity:.13; }
 .panel-hero::after { background:var(--accent); opacity:.10; }
 .panel-hero-sub { color:var(--text-2); opacity:1; }
+[data-theme="dark"] .panel-hero,
+[data-theme="dark"] [data-panel="dashboard"] .panel-hero,
+[data-theme="dark"] [data-panel="budget"] .panel-hero,
+[data-theme="dark"] [data-panel="income"] .panel-hero,
+[data-theme="dark"] [data-panel="cards"] .panel-hero,
+[data-theme="dark"] [data-panel="expenses"] .panel-hero,
+[data-theme="dark"] [data-panel="shared"] .panel-hero,
+[data-theme="dark"] [data-panel="debts"] .panel-hero,
+[data-theme="dark"] [data-panel="goals"] .panel-hero,
+[data-theme="dark"] [data-panel="yearly"] .panel-hero,
+[data-theme="dark"] [data-panel="backup"] .panel-hero {
+  background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 56%,var(--surface) 100%);
+}
 
 /* Selected dashboard direction: quiet monthly status + review inbox. */
 .hero.monthly-status-card {
@@ -1713,7 +1710,6 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .debt-row .icon-btn,.debt-row .income-edit-delete { justify-self:end; }
   .year-table table,.table-shell table { min-width:0; }
   .cc-import-summary { grid-template-columns:1fr 1fr; }
-  #ccImportTable table { min-width:760px; }
   .fab { inset-inline-end:16px !important; }
 }
 @media (min-width:601px) { .topbar-mobile-menu { display:none; } }
@@ -1743,9 +1739,19 @@ body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacin
 .workspace-btn:active,.dashboard-quick-actions button:active { transform:scale(.97); }
 .monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
 .monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
+[data-theme="dark"] .monthly-status-card { background:linear-gradient(110deg,var(--surface) 0%,var(--surface) 65%,var(--surface-2) 100%) !important; }
+[data-theme="dark"] body { background:linear-gradient(180deg,var(--bg) 0%,var(--surface) 100%) !important; }
+[data-theme="dark"] .edit-safety-banner { background:var(--wood-light) !important; }
+[data-theme="dark"] .review-count { background:var(--warn-light); color:var(--warn); }
+[data-theme="dark"] .editing,
+[data-theme="dark"] .income-edit-card,
+[data-theme="dark"] .summary-row.editing,
+[data-theme="dark"] .income-row.editing,
+[data-theme="dark"] .debt-row.editing { background:var(--surface-2) !important; }
 .monthly-status-card .hero-balance { font-family:var(--font-num); font-weight:800; letter-spacing:-.06em; }
 .dashboard-quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; margin:14px 0; background:var(--surface); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow-xs); }
 .dashboard-quick-actions button { min-height:92px; border:1px solid #F0E6D9; border-radius:17px; background:linear-gradient(180deg,#FFFDF9,#FAF6F0); color:var(--text); padding:12px 8px; display:flex; flex-direction:column; justify-content:center; gap:6px; transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+[data-theme="dark"] .dashboard-quick-actions button { border-color:var(--border); background:linear-gradient(180deg,var(--surface),var(--surface-2)); }
 .dashboard-quick-actions button:hover { transform:translateY(-2px); border-color:var(--wood); box-shadow:var(--shadow-sm); }
 .dashboard-quick-actions span { color:var(--accent-strong); font-weight:800; font-size:13px; }
 .dashboard-quick-actions small { color:var(--muted); font-size:10px; }
@@ -1855,6 +1861,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
     <button class="tab-btn pill-btn" data-tab="expenses"><span class="pill-icon">📋</span>הוצאות</button>
     <button class="tab-btn pill-btn" data-tab="shared"><span class="pill-icon">❤️</span>משותף</button>
     <button class="tab-btn pill-btn" data-tab="debts"><span class="pill-icon">🏦</span>חובות</button>
+    <button class="tab-btn pill-btn" data-tab="goals"><span class="pill-icon">🎯</span>יעדים</button>
     <button class="tab-btn pill-btn" data-tab="yearly"><span class="pill-icon">📅</span>שנתי</button>
     <button class="tab-btn pill-btn" data-tab="backup"><span class="pill-icon">🗄️</span>גיבוי</button>
   </nav>
@@ -1872,6 +1879,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       <button class="tab-btn" data-tab="expenses">הוצאות</button>
       <button class="tab-btn" data-tab="shared">הוצאות משותפות</button>
       <button class="tab-btn" data-tab="debts">חובות והלוואות</button>
+      <button class="tab-btn" data-tab="goals">יעדים</button>
       <button class="tab-btn" data-tab="yearly">סיכום שנתי</button>
       <button class="tab-btn" data-tab="backup">גיבוי נתונים</button>
       <button class="tab-btn" id="showDebtsSetupBtn" type="button" style="display:none">הפעל טאב חובות</button>
@@ -1918,8 +1926,8 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
-          <button type="button" onclick="switchToTab('cards')"><span>תקציבים</span><small>חיובים וייבוא</small></button>
-          <button type="button" onclick="switchToTab('yearly')"><span>יעדים</span><small>תחזית שנתית</small></button>
+          <button type="button" onclick="switchToTab('cards')"><span>אשראיים</span><small>חיובים וייבוא</small></button>
+          <button type="button" onclick="switchToTab('goals')"><span>יעדים</span><small>חיסכון ומטרות</small></button>
           <button type="button" onclick="switchToTab('yearly')"><span>דוחות</span><small>סיכום וייצוא</small></button>
         </section>
         <section class="review-queue" id="dashboardReviewQueue" aria-labelledby="dashboardReviewTitle"></section>
@@ -2248,6 +2256,30 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       </div>
     </section>
 
+    <!-- ── Goals ── -->
+    <section class="tab-panel" data-panel="goals">
+      <div class="panel-hero">
+        <div class="panel-hero-title">🎯 יעדים</div>
+        <div class="panel-hero-sub">חיסכון, מטרות ותשלומים גדולים שאתם עובדים לקראתם</div>
+      </div>
+      <div class="section open">
+        <div class="header" onclick="toggleSection(this)">
+          <span>היעדים שלי</span>
+          <div style="display:flex;gap:8px" onclick="event.stopPropagation()">
+            <button id="goalsEditToggleBtn" class="secondary" type="button" onclick="toggleGoalsEditMode()">ערוך יעדים</button>
+            <button id="addGoalBtn" class="secondary" type="button" style="display:none" onclick="addGoalRow()">יעד חדש +</button>
+            <button id="goalsCancelBtn" class="secondary" type="button" style="display:none" onclick="cancelGoalsEdit()">ביטול</button>
+            <button id="goalsSaveBtn" class="success-btn" type="button" style="display:none" onclick="saveGoalsEdit()">שמור</button>
+          </div>
+        </div>
+        <div class="content">
+          <div class="summary-card">
+            <div id="goalsList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Yearly ── -->
     <section class="tab-panel" data-panel="yearly">
       <div class="year-card">
@@ -2370,6 +2402,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
     <button class="more-row tab-btn" data-tab="income" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M5 7c4 0 7 2 9 5'/><path d='M5 7l-1 4 4-1'/><path d='M14 12c1-3 4-4.5 6-5-.5 3-2.5 5-6 5z'/></svg>הכנסות</button>
     <button class="more-row tab-btn" data-tab="cards"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='8' width='16' height='10' rx='2'/><path d='M4 11h16'/></svg>אשראיים</button>
     <button class="more-row tab-btn" data-tab="debts"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 20h16'/><path d='M6 20v-8M10 20v-8M14 20v-8M18 20v-8'/><path d='M12 4L4 9h16z'/></svg>חובות</button>
+    <button class="more-row tab-btn" data-tab="goals"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='4'/><circle cx='12' cy='12' r='0.6' fill='currentColor'/></svg>יעדים</button>
     <button class="more-row tab-btn" data-tab="yearly" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='6' width='16' height='14' rx='2'/><path d='M4 10h16M9 4v4M15 4v4'/></svg>שנתי</button>
     <button class="more-row tab-btn" data-tab="backup" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx='12' cy='7' rx='7' ry='3'/><path d='M5 7v10c0 1.7 3.1 3 7 3s7-1.3 7-3V7'/></svg>גיבוי</button>
   </nav>
@@ -3332,6 +3365,164 @@ function saveCategoryDefinitions(list){
   localStorage.setItem(getCategoriesStorageKey(), JSON.stringify(normalized));
   markLocalDataChanged();
   scheduleCloudSync();
+}
+function getGoalsStorageKey(){ return getScopedStorageKey("expense_app_goals_v1"); }
+function normalizeGoalItem(item){
+  return {
+    id: String(item && item.id || `goal-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
+    name: String(item && item.name || "").trim(),
+    targetAmount: Number(item && item.targetAmount) || 0,
+    savedAmount: Number(item && item.savedAmount) || 0,
+    targetDate: String(item && item.targetDate || ""),
+    note: String(item && item.note || "").trim()
+  };
+}
+function getGoals(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getGoalsStorageKey()) || "null");
+    if(Array.isArray(parsed)) return parsed.map(normalizeGoalItem);
+  } catch(e){}
+  return [];
+}
+function saveGoals(list){
+  const normalized = (Array.isArray(list) ? list : []).map(normalizeGoalItem);
+  localStorage.setItem(getGoalsStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+let goalsEditMode = false;
+let goalsEditSnapshot = null;
+function toggleGoalsEditMode(){
+  if(!goalsEditMode){
+    goalsEditSnapshot = clone(getGoals());
+    goalsEditMode = true;
+  } else {
+    goalsEditSnapshot = null;
+    goalsEditMode = false;
+  }
+  render();
+}
+function saveGoalsEdit(){
+  goalsEditSnapshot = null;
+  goalsEditMode = false;
+  render();
+  showToast("היעדים נשמרו.", "success");
+}
+function cancelGoalsEdit(){
+  if(goalsEditSnapshot) saveGoals(goalsEditSnapshot);
+  goalsEditSnapshot = null;
+  goalsEditMode = false;
+  render();
+}
+function addGoalRow(){
+  if(!goalsEditMode){ goalsEditSnapshot = clone(getGoals()); goalsEditMode = true; }
+  const goals = getGoals();
+  goals.push(normalizeGoalItem({name:"יעד חדש"}));
+  saveGoals(goals);
+  render();
+}
+function updateGoalRow(id, field, value){
+  const goals = getGoals();
+  const target = goals.find(g => g.id === id);
+  if(!target) return;
+  if(field === "targetAmount" || field === "savedAmount") target[field] = Number(value) || 0;
+  else target[field] = value;
+  saveGoals(goals);
+  render();
+}
+function deleteGoalRow(id){
+  if(!confirm("למחוק את היעד הזה?")) return;
+  saveGoals(getGoals().filter(g => g.id !== id));
+  render();
+}
+function quickUpdateGoalSaved(id, delta){
+  const goals = getGoals();
+  const target = goals.find(g => g.id === id);
+  if(!target) return;
+  target.savedAmount = Math.max(0, Number(target.savedAmount || 0) + delta);
+  saveGoals(goals);
+  render();
+}
+function renderGoals(){
+  const root = document.getElementById("goalsList");
+  const editBtn = document.getElementById("goalsEditToggleBtn");
+  const addBtn = document.getElementById("addGoalBtn");
+  const saveBtn = document.getElementById("goalsSaveBtn");
+  const cancelBtn = document.getElementById("goalsCancelBtn");
+  if(!root) return;
+  if(editBtn) editBtn.style.display = goalsEditMode ? "none" : "inline-flex";
+  if(addBtn) addBtn.style.display = goalsEditMode ? "inline-flex" : "none";
+  if(saveBtn) saveBtn.style.display = goalsEditMode ? "inline-flex" : "none";
+  if(cancelBtn) cancelBtn.style.display = goalsEditMode ? "inline-flex" : "none";
+  const goals = getGoals();
+  if(!goals.length){
+    root.innerHTML = `<div class="info-box">אין עדיין יעדים. לחץ "ערוך יעדים" ואז "יעד חדש +" — לדוגמה חיסכון לחופשה, תשלום חוב, או קנייה גדולה.</div>`;
+    return;
+  }
+  root.innerHTML = goals.map(g => {
+    const progressRaw = g.targetAmount ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+    const progress = Math.max(0, Math.min(progressRaw, 100));
+    const remaining = g.targetAmount - g.savedAmount;
+    const cls = remaining <= 0 && g.targetAmount ? "good" : "";
+    const dateLabel = g.targetDate ? new Intl.DateTimeFormat("he-IL",{dateStyle:"medium"}).format(new Date(g.targetDate)) : "בלי תאריך יעד";
+
+    if(goalsEditMode){
+      return `<div class="summary-row budget-card editing">
+        <div class="budget-card-top">
+          <div class="budget-card-title" style="flex:1">
+            <input value="${escapeHtmlAttr(g.name)}" placeholder="שם היעד" onchange="updateGoalRow('${g.id}','name',this.value)" style="border:1px solid var(--border,var(--line));border-radius:8px;padding:6px 10px;background:var(--surface,var(--bg));font-weight:800;font-size:15px;color:var(--text);width:100%;box-sizing:border-box">
+          </div>
+          <button class="row-delete-btn" type="button" onclick="deleteGoalRow('${g.id}')" title="מחק יעד" aria-label="מחק יעד">🗑️</button>
+        </div>
+        <div class="budget-card-grid">
+          <div class="budget-card-stat">
+            <span>סכום יעד</span>
+            <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.targetAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','targetAmount',this.value)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          <div class="budget-card-stat">
+            <span>נחסך עד כה</span>
+            <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.savedAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','savedAmount',this.value)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          <div class="budget-card-stat">
+            <span>תאריך יעד</span>
+            <input type="date" value="${g.targetDate || ""}" onchange="updateGoalRow('${g.id}','targetDate',this.value)" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:8px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text)">
+          </div>
+        </div>
+        <input value="${escapeHtmlAttr(g.note)}" placeholder="הערה (אופציונלי)" onchange="updateGoalRow('${g.id}','note',this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px;box-sizing:border-box">
+      </div>`;
+    }
+
+    return `<div class="summary-row budget-card ${cls==="good" ? "status-good" : ""}">
+      <div class="budget-card-top">
+        <div class="budget-card-title">
+          <strong>${escapeHtmlAttr(g.name) || "יעד ללא שם"}</strong>
+          ${g.targetAmount && remaining <= 0 ? `<span class="budget-card-badge good">הושלם 🎉</span>` : ""}
+        </div>
+      </div>
+      <div class="budget-progress">
+        <div class="budget-progress-track">
+          <div class="budget-progress-fill ${cls}" style="width:${progress}%"></div>
+          ${g.targetAmount ? `<span class="budget-pct-label">${progress}%</span>` : ""}
+        </div>
+        <div class="budget-progress-meta">
+          <span>נחסך: ${fmt(g.savedAmount)}</span>
+          <span>${g.targetAmount ? `מתוך ${fmt(g.targetAmount)}` : "בלי סכום יעד"}</span>
+        </div>
+      </div>
+      <div class="budget-card-grid">
+        <div class="budget-card-stat"><span>תאריך יעד</span><strong>${dateLabel}</strong></div>
+        <div class="budget-card-stat"><span>נשאר</span><strong class="${cls}">${g.targetAmount ? fmt(Math.max(0,remaining)) : "—"}</strong></div>
+        <div class="budget-card-stat">
+          <span>עדכון מהיר</span>
+          <div style="display:flex;gap:6px">
+            <button class="secondary" type="button" style="padding:4px 10px;font-size:12px" onclick="quickUpdateGoalSaved('${g.id}', 100)">+100</button>
+            <button class="secondary" type="button" style="padding:4px 10px;font-size:12px" onclick="quickUpdateGoalSaved('${g.id}', 500)">+500</button>
+          </div>
+        </div>
+      </div>
+      ${g.note ? `<div class="micro" style="margin-top:8px">${escapeHtmlAttr(g.note)}</div>` : ""}
+    </div>`;
+  }).join("");
 }
 function formatMetricValue(value, format="currency"){
   if(value == null || value === "") return "—";
@@ -4595,9 +4786,36 @@ function normalizeCategory(cat){ const c=(cat || "").trim(); if(c==="דלק" || 
 function normalizeMerchantName(merchant){
   return String(merchant || "").trim().toLowerCase().replace(/\s+/g," ");
 }
+/* Strips parenthetical branch notes, standalone numbers/codes and generic
+   filler words that make statement merchant text ("קרביץ ישראל (מרכז)")
+   diverge from what the user actually typed once ("קרביץ"). Used as the
+   fuzzy-match fallback whenever an exact normalizeMerchantName match fails —
+   which is the common case, since import statements append store/branch
+   noise the user never types manually. */
+function coreMerchantToken(merchant){
+  return normalizeMerchantName(merchant)
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\d+/g, " ")
+    .replace(/\b(בע"מ|בעמ|ltd|inc|com)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+function merchantNamesFuzzyMatch(a, b){
+  const keyA = normalizeMerchantName(a), keyB = normalizeMerchantName(b);
+  if(!keyA || !keyB) return false;
+  if(keyA === keyB) return true;
+  const coreA = coreMerchantToken(a), coreB = coreMerchantToken(b);
+  if(!coreA || !coreB) return false;
+  if(coreA === coreB) return true;
+  const shorter = coreA.length <= coreB.length ? coreA : coreB;
+  const longer = coreA.length <= coreB.length ? coreB : coreA;
+  // Require a meaningful overlap (not a 1-2 letter fluke) before calling it a match.
+  return shorter.length >= 3 && longer.includes(shorter);
+}
 function inferCategoryForMerchant(merchant){
   const merchantKey = normalizeMerchantName(merchant);
   if(!merchantKey) return "";
+  let fuzzyFallback = "";
   for(const sheet of [...SHEET_OPTIONS].reverse()){
     const rows = getEditableRows(sheet);
     for(let i = rows.length - 1; i >= 0; i--){
@@ -4605,9 +4823,61 @@ function inferCategoryForMerchant(merchant){
       const category = normalizeCategory(row.category);
       if(!category || category === "כן") continue;
       if(normalizeMerchantName(row.merchant) === merchantKey) return category;
+      if(!fuzzyFallback && merchantNamesFuzzyMatch(row.merchant, merchant)) fuzzyFallback = category;
     }
   }
-  return "";
+  return fuzzyFallback;
+}
+/* Merchant memory: a small learned map of merchant name → {category, payment, type},
+   built from confirmed imports. Faster and more reliable than re-scanning full
+   expense history, and it's the only place fixed/variable ("קבוע/משתנה") gets
+   remembered at all — inferCategoryForMerchant/guessPaymentMethodForImport never
+   touch that field. Namespaced + synced like other per-user settings. */
+const MERCHANT_MEMORY_STORAGE_KEY = STORAGE_NS_PREFIX + "expense_app_merchant_memory_v1";
+function getMerchantMemoryMap(){
+  try { return JSON.parse(localStorage.getItem(MERCHANT_MEMORY_STORAGE_KEY) || "{}"); } catch(e){ return {}; }
+}
+function saveMerchantMemoryMap(map){
+  localStorage.setItem(MERCHANT_MEMORY_STORAGE_KEY, JSON.stringify(map));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+function rememberMerchantMapping(merchant, {category, payment, type} = {}){
+  const key = normalizeMerchantName(merchant);
+  if(!key) return;
+  const map = getMerchantMemoryMap();
+  map[key] = {
+    category: category || (map[key] && map[key].category) || "",
+    payment: payment || (map[key] && map[key].payment) || "",
+    type: type || (map[key] && map[key].type) || "",
+    lastUpdated: Date.now()
+  };
+  saveMerchantMemoryMap(map);
+}
+/* Unified lookup used both at import-modal-open time and live while editing a
+   merchant name in the review table. Learned memory wins; falls back to the
+   older category-only history scan and card fuzzy-matcher for merchants we
+   haven't confirmed an import for yet. */
+function findFuzzyMerchantMemoryMatch(merchant){
+  const map = getMerchantMemoryMap();
+  const exact = map[normalizeMerchantName(merchant)];
+  if(exact) return exact;
+  let best = null;
+  for(const key of Object.keys(map)){
+    if(merchantNamesFuzzyMatch(key, merchant)){
+      if(!best || (map[key].lastUpdated || 0) > (best.lastUpdated || 0)) best = map[key];
+    }
+  }
+  return best;
+}
+function lookupMerchantMapping(merchant){
+  const key = normalizeMerchantName(merchant);
+  if(!key) return {category:"", payment:"", type:""};
+  const remembered = findFuzzyMerchantMemoryMatch(merchant);
+  const category = (remembered && remembered.category) || normalizeCategory(inferCategoryForMerchant(merchant)) || "";
+  const payment = (remembered && remembered.payment) || "";
+  const type = (remembered && remembered.type) || "";
+  return {category, payment, type};
 }
 function maybeFillNewCategoryFromMerchant(){
   const merchantInput = document.getElementById("newMerchant");
@@ -5297,6 +5567,19 @@ function resetFilters(){
   document.getElementById("sortDir").value="asc";
   render();
 }
+/* Budget-card drill-down: jump to the expenses tab pre-filtered to this
+   category (same chip mechanism the manual filter UI uses). */
+function drillIntoCategoryExpenses(categoryName){
+  switchToTab("expenses");
+  document.getElementById("searchInput").value = "";
+  document.getElementById("filterPayment").value = "";
+  document.getElementById("filterType").value = "";
+  document.getElementById("filterImmediate").value = "";
+  document.querySelectorAll("#filterCategoryChips .filter-chip.active").forEach(btn => btn.classList.remove("active"));
+  const chip = document.querySelector(`#filterCategoryChips .filter-chip[data-category="${CSS.escape(categoryName)}"]`);
+  if(chip) chip.classList.add("active");
+  render();
+}
 /* ── helpers: prev month comparison ── */
 function getPrevSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
@@ -5776,7 +6059,7 @@ function renderCategorySummary(rows){
     const amountLabel = c.budget == null
       ? fmt(used)
       : (remainingValue < 0 ? `-${fmt(Math.abs(remainingValue))}` : `${fmt(used)} / ${budgetText}`);
-    return `<div class="summary-row budget-card ${cls==="bad" ? "status-bad" : cls==="good" ? "status-good" : ""}">
+    return `<div class="summary-row budget-card ${cls==="bad" ? "status-bad" : cls==="good" ? "status-good" : ""}" role="button" tabindex="0" title="לחץ לצפייה בהוצאות הקטגוריה" data-drill-category="${escapeHtmlAttr(c.name)}" style="cursor:pointer">
       <div class="budget-card-top">
         <div class="budget-card-title">
           <strong>${c.name}</strong>
@@ -5801,6 +6084,10 @@ function renderCategorySummary(rows){
       </div>
     </div>`;
   }).join("");
+  summaryRoot.querySelectorAll("[data-drill-category]").forEach(card => {
+    card.onclick = () => drillIntoCategoryExpenses(card.dataset.drillCategory);
+    card.onkeydown = (event) => { if(event.key === "Enter") drillIntoCategoryExpenses(card.dataset.drillCategory); };
+  });
   renderMobileExpenseList(rows);
 }
 function renderChart(rows){
@@ -7062,6 +7349,7 @@ const TAB_META = [
   {id:"expenses",  label:"הוצאות",           icon:"📋"},
   {id:"shared",    label:"הוצאות משותפות",   icon:"❤️"},
   {id:"debts",     label:"חובות והלוואות",   icon:"🏦"},
+  {id:"goals",     label:"יעדים",            icon:"🎯"},
   {id:"yearly",    label:"סיכום שנתי",       icon:"📅"},
   {id:"backup",    label:"גיבוי נתונים",     icon:"🗄️"},
 ];
@@ -7271,7 +7559,7 @@ function renderTabs(){
   });
   const moreButton = document.querySelector(".btab-more");
   if(moreButton){
-    const moreIsActive = ["income","cards","debts","yearly","backup"].includes(activeTab);
+    const moreIsActive = ["income","cards","debts","goals","yearly","backup"].includes(activeTab);
     moreButton.classList.toggle("active", moreIsActive);
     moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
   }
@@ -7605,6 +7893,7 @@ function render(){
     renderTable(rows);
     renderSharedExpensesTab();
     renderDebts();
+    renderGoals();
     renderYearly();
     renderCloudSyncStatus();
     renderRecoveryPoints();
@@ -8104,6 +8393,13 @@ function updateCCImportField(index, field, value){
   row[field] = value;
   if(field === "merchant"){
     row.merchant = String(value || "").replace(/\s+/g, " ").trim();
+    // Live-apply learned category/card/fixed-variable the moment the business
+    // name is corrected to something we recognize — not just at import-open time.
+    const known = new Set(getCategoryDefinitions().map(c => c.name));
+    const match = lookupMerchantMapping(row.merchant);
+    if(match.category && known.has(match.category)) row.category = match.category;
+    if(match.payment) row.payment = match.payment;
+    if(match.type) row.type = match.type;
   }
   if(field === "merchant" || field === "payment") row._sourceFingerprint = createImportFingerprint(row);
   refreshCCImportDuplicateState();
@@ -8341,11 +8637,11 @@ function showCCImportModal(result, filename){
   ccImportSourceFileName = String(filename || "");
   const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
   ccImportRows = result.txns.map(t => {
-    const inferred = normalizeCategory(inferCategoryForMerchant(t.merchant));
+    const match = lookupMerchantMapping(t.merchant);
     return Object.assign({}, t, {
-      category: knownCategories.has(inferred) ? inferred : "",
-      type: "\u05de\u05e9\u05ea\u05e0\u05d4",
-      payment: t.payment || "",
+      category: knownCategories.has(match.category) ? match.category : "",
+      type: match.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      payment: t.payment || match.payment || "",
       immediate: ""
     });
   });
@@ -8437,34 +8733,38 @@ function buildCCImportTable(){
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
   const paymentOptionDefs = getImportPaymentOptions();
 
-  let html = "<table style=\"width:100%;border-collapse:collapse;font-size:13px\">";
-  html += "<thead><tr style=\"background:var(--bg);\">";
-  ["\u05de\u05d7\u05e7","\u05ea\u05d0\u05e8\u05d9\u05da","\u05d1\u05d9\u05ea \u05e2\u05e1\u05e7","\u05e1\u05db\u05d5\u05dd","\u05db\u05e8\u05d8\u05d9\u05e1","\u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4","\u05e1\u05d5\u05d2",""].forEach(h => {
-    html += "<th style=\"padding:8px 6px;text-align:right;font-weight:700;color:var(--muted);border-bottom:2px solid var(--line)\">"+h+"</th>";
-  });
-  html += "</tr></thead><tbody>";
+  const cardStyle = "padding:8px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
 
-  ccImportRows.forEach((row, i) => {
+  const html = ccImportRows.map((row, i) => {
     const isDup = row._isDuplicate;
-    const rowBg = isDup ? "background:rgba(220,150,50,.13);" : "";
-    const amtExtra = row.foreign ? " <small style=\"color:var(--muted);font-size:11px\">("+row.foreign+")</small>" : "";
+    const amtExtra = row.foreign ? ` <small style="color:var(--muted);font-size:11px">(${row.foreign})</small>` : "";
     // Auto-uncheck duplicates
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
-    const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
-    html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
-    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"toggleCCImportRow("+i+", this.checked)\" style=\"width:16px;height:16px\"></td>";
-    html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
-    html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
-    html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'payment', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(paymentOptionDefs, row.payment)+"</select><div style=\"margin-top:4px;font-size:10px;color:var(--muted)\">"+escapeHtmlAttr(row.sourceCardLabel || "")+"</div></td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'category', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(categoryOptionDefs, row.category)+"</select></td>";
-    html += "<td style=\"padding:4px\"><select onchange=\"updateCCImportField("+i+", 'type', this.value)\" style=\"padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px\">"+buildCCImportOptionMarkup(typeOptionDefs, row.type)+"</select></td>";
-    html += "<td style=\"padding:6px;font-size:11px;color:var(--muted)\">"+(isDup ? "\u05db\u05e4\u05d5\u05dc?" : "")+"</td>";
-    html += "</tr>";
-  });
-  html += "</tbody></table>";
-  document.getElementById("ccImportTable").innerHTML = html;
+    const dupBadge = isDup ? `<span title="\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4" style="display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05db\u05e4\u05d5\u05dc?</span>` : "";
+    const cardWrap = isDup ? "background:rgba(220,150,50,.10);border-color:rgba(220,150,50,.35)" : "";
+    return `<div style="border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;${cardWrap}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <input type="checkbox" ${checked?"checked":""} onchange="toggleCCImportRow(${i}, this.checked)" style="width:18px;height:18px;flex-shrink:0">
+        <div style="flex:1;min-width:0">
+          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
+        </div>
+      </div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--muted)">
+        <span>${row.date_raw}</span>
+        <strong style="font-size:14px;color:var(--accent)">${fmt(row.amount)}${amtExtra}</strong>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
+          ${row.sourceCardLabel ? `<div style="margin-top:3px;font-size:10px;color:var(--muted)">${escapeHtmlAttr(row.sourceCardLabel)}</div>` : ""}
+        </div>
+        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
+        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${cardStyle};grid-column:1/-1">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
+      </div>
+    </div>`;
+  }).join("");
+  document.getElementById("ccImportTable").innerHTML = html || `<div class="info-box">\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05e7\u05d5\u05d1\u05e5 \u05d4\u05d6\u05d4.</div>`;
   updateCCImportSummary();
 }
 
@@ -8491,6 +8791,9 @@ function confirmCCImport(){
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
     const isImm = isPaymentMethodImmediate(payment);
+    if(r.category || payment || r.type){
+      rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
+    }
     overrides[sheet].push({
       row: nextRow++,
       date_raw: r.date_raw,
