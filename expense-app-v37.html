@@ -92,6 +92,38 @@ body { font-family: var(--font-sans); font-size: 14px;
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; }
 
+body.auth-gated .app { display:none; }
+.auth-gate {
+  position:fixed; inset:0; z-index:1000; display:grid; place-items:center;
+  padding:24px; background:var(--bg); overflow-y:auto;
+}
+.auth-gate[hidden] { display:none; }
+.auth-gate-card {
+  width:min(100%,430px); padding:26px; border:1px solid var(--border);
+  border-radius:28px; background:var(--surface); box-shadow:var(--shadow-lg);
+}
+.auth-gate-brand { display:flex; align-items:center; gap:11px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+.auth-gate-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:var(--accent-strong); color:#fff; font-family:var(--font-serif); font-weight:700; }
+.auth-gate-brand div { display:flex; flex-direction:column; }
+.auth-gate-brand strong { color:var(--text); font-size:16px; }
+.auth-gate-brand span { color:var(--muted); font-size:11px; }
+.auth-gate-copy { margin-block:22px 18px; }
+.auth-gate-copy h1 { font-family:var(--font-serif); color:var(--text); font-size:28px; margin-bottom:6px; }
+.auth-gate-copy p { color:var(--text-2); font-size:13px; line-height:1.65; }
+.auth-gate-form { display:flex; flex-direction:column; gap:13px; }
+.auth-gate-submit { min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
+.auth-gate-submit[disabled] { opacity:.6; cursor:wait; }
+.auth-gate-error { min-height:18px; color:var(--expense); font-size:12px; }
+.auth-gate-google-btn {
+  width:100%; min-height:48px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:10px;
+  border:1px solid var(--border); border-radius:16px; background:#fff; color:#3c4043; font-weight:700; font-size:15px; cursor:pointer;
+}
+.auth-gate-google-btn:hover { background:#f7f7f7; }
+.auth-gate-alt-toggle {
+  width:100%; text-align:center; margin-bottom:16px; border:0; background:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer;
+}
+.auth-gate-note { margin-top:18px; padding:10px 12px; border-radius:14px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; line-height:1.55; }
+
 /* ── App Shell ────────────────────────────────────────────────── */
 /* 100dvh = dynamic viewport height — adjusts as iOS Safari chrome shows/hides */
 .app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
@@ -1378,6 +1410,34 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 </head>
 <body>
 
+<section class="auth-gate" id="authGate" hidden aria-labelledby="authGateTitle">
+  <div class="auth-gate-card">
+    <div class="auth-gate-brand">
+      <span class="auth-gate-mark" aria-hidden="true">רש</span>
+      <div>
+        <strong>רז ושירה</strong>
+        <span>הבית הפיננסי המשותף</span>
+      </div>
+    </div>
+    <div class="auth-gate-copy">
+      <h1 id="authGateTitle">כניסה לחשבון</h1>
+      <p>כל אחד נכנס עם המשתמש האישי שלו. הזהות קובעת אילו נתונים ניתן לערוך, וההתחשבנות המשותפת נשארת גלויה לשניכם.</p>
+    </div>
+    <button type="button" class="auth-gate-google-btn" id="authGateGoogleBtn" onclick="supabaseSignInWithGoogle()">
+      <svg width="18" height="18" viewBox="0 0 18 18" aria-hidden="true"><path fill="#4285F4" d="M17.64 9.2c0-.64-.06-1.25-.16-1.84H9v3.48h4.84a4.14 4.14 0 01-1.8 2.72v2.26h2.92c1.7-1.57 2.68-3.88 2.68-6.62z"/><path fill="#34A853" d="M9 18c2.43 0 4.47-.8 5.96-2.18l-2.92-2.26c-.81.54-1.84.86-3.04.86-2.34 0-4.32-1.58-5.03-3.7H.96v2.33A9 9 0 009 18z"/><path fill="#FBBC05" d="M3.97 10.72A5.4 5.4 0 013.68 9c0-.6.1-1.18.29-1.72V4.95H.96A9 9 0 000 9c0 1.45.35 2.83.96 4.05l3.01-2.33z"/><path fill="#EA4335" d="M9 3.58c1.32 0 2.5.45 3.44 1.35l2.58-2.58C13.46.89 11.43 0 9 0A9 9 0 00.96 4.95l3.01 2.33C4.68 5.16 6.66 3.58 9 3.58z"/></svg>
+      <span>התחבר עם Google</span>
+    </button>
+    <button type="button" class="auth-gate-alt-toggle" id="authGateAltToggle" onclick="document.getElementById('authGateForm').hidden=false; this.hidden=true;">כניסה עם אימייל וסיסמה</button>
+    <form id="authGateForm" class="auth-gate-form" hidden>
+      <div class="field"><label for="authGateEmail">אימייל</label><input id="authGateEmail" type="email" autocomplete="username" required></div>
+      <div class="field"><label for="authGatePassword">סיסמה</label><input id="authGatePassword" type="password" autocomplete="current-password" required></div>
+      <div class="auth-gate-error" id="authGateError" role="alert"></div>
+      <button class="auth-gate-submit" id="authGateSubmit" type="submit">כניסה מאובטחת</button>
+    </form>
+    <div class="auth-gate-note">הנתונים נשמרים בנפרד לכל משתמש. שיתוף מלא של נתוני בן/בת הזוג יופעל רק לאחר השלמת הרשאות household בשרת.</div>
+  </div>
+</section>
+
 <!-- Backup banner (shown by JS) -->
 <div id="backupBanner" style="display:none" class="backup-banner">
   <span>💾</span>
@@ -2522,6 +2582,7 @@ function renderAuthLoginState(){
   const loggedInBox = document.getElementById("authLoggedInBox");
   const emailEl = document.getElementById("authLoggedInEmail");
   if(!loginBox || !loggedInBox) return;
+  renderAuthGate();
   if(!hasCloudSyncConfig()){
     loginBox.style.display = "none";
     loggedInBox.style.display = "none";
@@ -2537,22 +2598,29 @@ function renderAuthLoginState(){
     loggedInBox.style.display = "none";
   }
 }
-async function handleAuthLoginClick(){
-  const emailInput = document.getElementById("authEmailInput");
-  const passwordInput = document.getElementById("authPasswordInput");
-  const errorEl = document.getElementById("authLoginError");
+function renderAuthGate(){
+  const gate = document.getElementById("authGate");
+  if(!gate) return;
+  const config = getCloudSyncConfig();
+  const shouldGate = hasCloudSyncConfig() && !config.disabled && !isSupabaseSessionValid(loadSupabaseAuthSession());
+  gate.hidden = !shouldGate;
+  document.body.classList.toggle("auth-gated", shouldGate);
+}
+async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton){
   if(errorEl) errorEl.textContent = "";
   const email = (emailInput?.value || "").trim();
   const password = passwordInput?.value || "";
   if(!email || !password){
     if(errorEl) errorEl.textContent = "יש להזין אימייל וסיסמה.";
-    return;
+    return false;
   }
+  if(submitButton){ submitButton.disabled = true; submitButton.textContent = "מתחבר…"; }
   try {
     const session = await supabaseSignIn(email, password);
     if(!session.appUserKey){
+      await supabaseSignOut();
       if(errorEl) errorEl.textContent = "המשתמש הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.";
-      return;
+      return false;
     }
     if(USERS.some(u => u.id === session.appUserKey) && currentUser !== session.appUserKey){
       currentUser = session.appUserKey;
@@ -2565,8 +2633,78 @@ async function handleAuthLoginClick(){
       try { await pullCloudSnapshot({showErrors:true}); } catch(e){ /* surfaced via cloudSyncState */ }
     }
     render();
+    return true;
   } catch(error){
     if(errorEl) errorEl.textContent = error.message || "התחברות נכשלה.";
+    return false;
+  } finally {
+    if(submitButton){ submitButton.disabled = false; submitButton.textContent = "כניסה מאובטחת"; }
+  }
+}
+async function handleAuthLoginClick(){
+  return performAuthLogin(
+    document.getElementById("authEmailInput"),
+    document.getElementById("authPasswordInput"),
+    document.getElementById("authLoginError"),
+    document.getElementById("authLoginBtn")
+  );
+}
+async function handleAuthGateLogin(event){
+  if(event) event.preventDefault();
+  return performAuthLogin(
+    document.getElementById("authGateEmail"),
+    document.getElementById("authGatePassword"),
+    document.getElementById("authGateError"),
+    document.getElementById("authGateSubmit")
+  );
+}
+/* Redirect to Google via Supabase Auth's OAuth authorize endpoint. No client
+   secret involved here — the Google client id/secret live only in the
+   Supabase dashboard provider config, never in this file. */
+function supabaseSignInWithGoogle(){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey){
+    setBackupStatus("חסרים פרטי חיבור ל־Supabase.");
+    return;
+  }
+  const redirectTo = window.location.origin + window.location.pathname;
+  window.location.href = `${config.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+}
+/* After Google redirects back, Supabase appends the session to the URL hash
+   (#access_token=...&refresh_token=...). Parse it once, fetch the user's
+   app_metadata (implicit flow only gives us the tokens, not the user), then
+   store the session exactly like a password login would. */
+async function handleOAuthRedirectCallback(){
+  const hash = window.location.hash || "";
+  if(!hash.includes("access_token=")) return false;
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
+  const expires_at = params.get("expires_at");
+  if(!access_token){ history.replaceState(null, "", window.location.pathname + window.location.search); return false; }
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const config = getCloudSyncConfig();
+  try {
+    const response = await fetch(`${config.url}/auth/v1/user`, {
+      headers:{ apikey:config.anonKey, Authorization:`Bearer ${access_token}` }
+    });
+    const user = await response.json().catch(() => null);
+    if(!response.ok || !user) throw new Error("לא הצלחתי לקרוא את פרטי המשתמש מגוגל.");
+    const appUserKey = user?.app_metadata?.app_user_key || null;
+    if(!appUserKey){
+      setBackupStatus("החשבון הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.");
+      return false;
+    }
+    const session = { access_token, refresh_token, expires_at, email:user.email || "", appUserKey };
+    saveSupabaseAuthSession(session);
+    if(USERS.some(u => u.id === appUserKey) && currentUser !== appUserKey){
+      currentUser = appUserKey;
+      localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+    }
+    return true;
+  } catch(error){
+    setBackupStatus(error.message || "התחברות עם Google נכשלה.");
+    return false;
   }
 }
 async function handleAuthLogoutClick(){
@@ -6893,6 +7031,7 @@ document.getElementById("clearAppCacheBtn").onclick=clearAppCacheAndRefresh;
 document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
 document.getElementById("authLoginBtn").onclick=handleAuthLoginClick;
 document.getElementById("authLogoutBtn").onclick=handleAuthLogoutClick;
+document.getElementById("authGateForm").onsubmit=handleAuthGateLogin;
 document.getElementById("createRecoveryPointBtn").onclick=()=>createManualRecoveryPoint();
 document.getElementById("refreshRecoveryPointsBtn").onclick=()=>refreshRecoveryPoints({showErrors:true});
 document.getElementById("exportBackupBtn").onclick=exportBackup;
@@ -7180,7 +7319,7 @@ async function keepSupabaseAlive(){
   } catch(e){ /* silent */ }
 }
 
-bootstrapCloudSync().finally(() => {
+handleOAuthRedirectCallback().finally(() => bootstrapCloudSync()).finally(() => {
   if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
   render(); initHeroCollapse(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
