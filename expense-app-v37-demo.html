@@ -5465,7 +5465,7 @@ function drillIntoCategoryExpenses(categoryName){
   document.getElementById("filterPayment").value = "";
   document.getElementById("filterType").value = "";
   document.getElementById("filterImmediate").value = "";
-  renderFilterOptions();
+  document.querySelectorAll("#filterCategoryChips .filter-chip.active").forEach(btn => btn.classList.remove("active"));
   const chip = document.querySelector(`#filterCategoryChips .filter-chip[data-category="${CSS.escape(categoryName)}"]`);
   if(chip) chip.classList.add("active");
   render();
