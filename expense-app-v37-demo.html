@@ -205,6 +205,7 @@ input, select, textarea { font: inherit; }
 [data-panel="expenses"]  .panel-hero { background: linear-gradient(135deg,#7A4A35,#9C6347,#C28A68); }
 [data-panel="shared"]    .panel-hero { background: linear-gradient(135deg,#9E5A68,#C77B8B,#DAA2AE); }
 [data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#6E5C4D,#8E7A66,#B3A085); }
+[data-panel="goals"]     .panel-hero { background: linear-gradient(135deg,#4E7C6E,#6E9C8E,#9DC4B6); }
 [data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#A8895C,#C2A579,#DDC79E); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#8A5E3C,#B07D56,#CCA079); }
 
@@ -1857,6 +1858,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
     <button class="tab-btn pill-btn" data-tab="expenses"><span class="pill-icon">📋</span>הוצאות</button>
     <button class="tab-btn pill-btn" data-tab="shared"><span class="pill-icon">❤️</span>משותף</button>
     <button class="tab-btn pill-btn" data-tab="debts"><span class="pill-icon">🏦</span>חובות</button>
+    <button class="tab-btn pill-btn" data-tab="goals"><span class="pill-icon">🎯</span>יעדים</button>
     <button class="tab-btn pill-btn" data-tab="yearly"><span class="pill-icon">📅</span>שנתי</button>
     <button class="tab-btn pill-btn" data-tab="backup"><span class="pill-icon">🗄️</span>גיבוי</button>
   </nav>
@@ -1874,6 +1876,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       <button class="tab-btn" data-tab="expenses">הוצאות</button>
       <button class="tab-btn" data-tab="shared">הוצאות משותפות</button>
       <button class="tab-btn" data-tab="debts">חובות והלוואות</button>
+      <button class="tab-btn" data-tab="goals">יעדים</button>
       <button class="tab-btn" data-tab="yearly">סיכום שנתי</button>
       <button class="tab-btn" data-tab="backup">גיבוי נתונים</button>
       <button class="tab-btn" id="showDebtsSetupBtn" type="button" style="display:none">הפעל טאב חובות</button>
@@ -1921,7 +1924,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
           <button type="button" onclick="switchToTab('cards')"><span>תקציבים</span><small>חיובים וייבוא</small></button>
-          <button type="button" onclick="switchToTab('yearly')"><span>יעדים</span><small>תחזית שנתית</small></button>
+          <button type="button" onclick="switchToTab('goals')"><span>יעדים</span><small>חיסכון ומטרות</small></button>
           <button type="button" onclick="switchToTab('yearly')"><span>דוחות</span><small>סיכום וייצוא</small></button>
         </section>
         <section class="review-queue" id="dashboardReviewQueue" aria-labelledby="dashboardReviewTitle"></section>
@@ -2250,6 +2253,25 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       </div>
     </section>
 
+    <!-- ── Goals ── -->
+    <section class="tab-panel" data-panel="goals">
+      <div class="panel-hero">
+        <div class="panel-hero-title">🎯 יעדים</div>
+        <div class="panel-hero-sub">חיסכון, מטרות ותשלומים גדולים שאתם עובדים לקראתם</div>
+      </div>
+      <div class="section open">
+        <div class="header" onclick="toggleSection(this)">
+          <span>היעדים שלי</span>
+          <button class="success-btn" type="button" onclick="event.stopPropagation();addGoalRow()">יעד חדש +</button>
+        </div>
+        <div class="content">
+          <div class="summary-card">
+            <div id="goalsList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Yearly ── -->
     <section class="tab-panel" data-panel="yearly">
       <div class="year-card">
@@ -2372,6 +2394,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
     <button class="more-row tab-btn" data-tab="income" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M5 7c4 0 7 2 9 5'/><path d='M5 7l-1 4 4-1'/><path d='M14 12c1-3 4-4.5 6-5-.5 3-2.5 5-6 5z'/></svg>הכנסות</button>
     <button class="more-row tab-btn" data-tab="cards"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='8' width='16' height='10' rx='2'/><path d='M4 11h16'/></svg>אשראיים</button>
     <button class="more-row tab-btn" data-tab="debts"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 20h16'/><path d='M6 20v-8M10 20v-8M14 20v-8M18 20v-8'/><path d='M12 4L4 9h16z'/></svg>חובות</button>
+    <button class="more-row tab-btn" data-tab="goals"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='4'/><circle cx='12' cy='12' r='0.6' fill='currentColor'/></svg>יעדים</button>
     <button class="more-row tab-btn" data-tab="yearly" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='6' width='16' height='14' rx='2'/><path d='M4 10h16M9 4v4M15 4v4'/></svg>שנתי</button>
     <button class="more-row tab-btn" data-tab="backup" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx='12' cy='7' rx='7' ry='3'/><path d='M5 7v10c0 1.7 3.1 3 7 3s7-1.3 7-3V7'/></svg>גיבוי</button>
   </nav>
@@ -3337,6 +3360,99 @@ function saveCategoryDefinitions(list){
   localStorage.setItem(getCategoriesStorageKey(), JSON.stringify(normalized));
   markLocalDataChanged();
   scheduleCloudSync();
+}
+function getGoalsStorageKey(){ return getScopedStorageKey("expense_app_goals_v1"); }
+function normalizeGoalItem(item){
+  return {
+    id: String(item && item.id || `goal-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
+    name: String(item && item.name || "").trim(),
+    targetAmount: Number(item && item.targetAmount) || 0,
+    savedAmount: Number(item && item.savedAmount) || 0,
+    targetDate: String(item && item.targetDate || ""),
+    note: String(item && item.note || "").trim()
+  };
+}
+function getGoals(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getGoalsStorageKey()) || "null");
+    if(Array.isArray(parsed)) return parsed.map(normalizeGoalItem);
+  } catch(e){}
+  return [];
+}
+function saveGoals(list){
+  const normalized = (Array.isArray(list) ? list : []).map(normalizeGoalItem);
+  localStorage.setItem(getGoalsStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+function addGoalRow(){
+  const goals = getGoals();
+  goals.push(normalizeGoalItem({name:"יעד חדש"}));
+  saveGoals(goals);
+  render();
+}
+function updateGoalRow(id, field, value){
+  const goals = getGoals();
+  const target = goals.find(g => g.id === id);
+  if(!target) return;
+  if(field === "targetAmount" || field === "savedAmount") target[field] = Number(value) || 0;
+  else target[field] = value;
+  saveGoals(goals);
+  render();
+}
+function deleteGoalRow(id){
+  saveGoals(getGoals().filter(g => g.id !== id));
+  render();
+}
+function renderGoals(){
+  const root = document.getElementById("goalsList");
+  if(!root) return;
+  const goals = getGoals();
+  if(!goals.length){
+    root.innerHTML = `<div class="info-box">אין עדיין יעדים. הוסף יעד ראשון — לדוגמה חיסכון לחופשה, תשלום חוב, או קנייה גדולה.</div>`;
+    return;
+  }
+  root.innerHTML = goals.map(g => {
+    const progressRaw = g.targetAmount ? Math.round((g.savedAmount / g.targetAmount) * 100) : 0;
+    const progress = Math.max(0, Math.min(progressRaw, 100));
+    const remaining = g.targetAmount - g.savedAmount;
+    const cls = remaining <= 0 && g.targetAmount ? "good" : "";
+    const dateLabel = g.targetDate ? new Intl.DateTimeFormat("he-IL",{dateStyle:"medium"}).format(new Date(g.targetDate)) : "";
+    return `<div class="summary-row budget-card ${cls==="good" ? "status-good" : ""}">
+      <div class="budget-card-top">
+        <div class="budget-card-title" style="flex:1">
+          <input value="${escapeHtmlAttr(g.name)}" placeholder="שם היעד" onchange="updateGoalRow('${g.id}','name',this.value)" style="border:0;background:transparent;font-weight:800;font-size:15px;color:var(--text);width:100%">
+          ${g.targetAmount && remaining <= 0 ? `<span class="budget-card-badge good">הושלם 🎉</span>` : ""}
+        </div>
+        <button class="row-delete-btn" type="button" onclick="deleteGoalRow('${g.id}')" title="מחק יעד" aria-label="מחק יעד">🗑️</button>
+      </div>
+      <div class="budget-progress">
+        <div class="budget-progress-track">
+          <div class="budget-progress-fill ${cls}" style="width:${progress}%"></div>
+          ${g.targetAmount ? `<span class="budget-pct-label">${progress}%</span>` : ""}
+        </div>
+        <div class="budget-progress-meta">
+          <span>נחסך: ${fmt(g.savedAmount)}</span>
+          <span>${g.targetAmount ? `מתוך ${fmt(g.targetAmount)}` : "בלי סכום יעד"}</span>
+        </div>
+      </div>
+      <div class="budget-card-grid">
+        <div class="budget-card-stat">
+          <span>סכום יעד</span>
+          <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.targetAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','targetAmount',this.value)"></div>
+        </div>
+        <div class="budget-card-stat">
+          <span>נחסך עד כה</span>
+          <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.savedAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','savedAmount',this.value)"></div>
+        </div>
+        <div class="budget-card-stat">
+          <span>תאריך יעד</span>
+          <input type="date" value="${g.targetDate || ""}" onchange="updateGoalRow('${g.id}','targetDate',this.value)">
+        </div>
+      </div>
+      <input value="${escapeHtmlAttr(g.note)}" placeholder="הערה (אופציונלי)" onchange="updateGoalRow('${g.id}','note',this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,var(--line));background:var(--bg);color:var(--text);font-size:12px">
+    </div>`;
+  }).join("");
 }
 function formatMetricValue(value, format="currency"){
   if(value == null || value === "") return "—";
@@ -7123,6 +7239,7 @@ const TAB_META = [
   {id:"expenses",  label:"הוצאות",           icon:"📋"},
   {id:"shared",    label:"הוצאות משותפות",   icon:"❤️"},
   {id:"debts",     label:"חובות והלוואות",   icon:"🏦"},
+  {id:"goals",     label:"יעדים",            icon:"🎯"},
   {id:"yearly",    label:"סיכום שנתי",       icon:"📅"},
   {id:"backup",    label:"גיבוי נתונים",     icon:"🗄️"},
 ];
@@ -7332,7 +7449,7 @@ function renderTabs(){
   });
   const moreButton = document.querySelector(".btab-more");
   if(moreButton){
-    const moreIsActive = ["income","cards","debts","yearly","backup"].includes(activeTab);
+    const moreIsActive = ["income","cards","debts","goals","yearly","backup"].includes(activeTab);
     moreButton.classList.toggle("active", moreIsActive);
     moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
   }
@@ -7666,6 +7783,7 @@ function render(){
     renderTable(rows);
     renderSharedExpensesTab();
     renderDebts();
+    renderGoals();
     renderYearly();
     renderCloudSyncStatus();
     renderRecoveryPoints();
