@@ -8,10 +8,10 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%237E9B6E'/%3E%3Cpath d='M90 134c0-30 14-48 38-54-6 26-20 42-38 54zm0 0c0-30-14-48-38-54 6 26 20 42 38 54zm0 0V70' fill='none' stroke='%23FFFDF8' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
-<title>Expense App V36</title>
+<title>מנהל הוצאות — רז ושירה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700&family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Frank+Ruhl+Libre:wght@500;600;700&family=Heebo:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 <style>
@@ -91,38 +91,6 @@ body { font-family: var(--font-sans); font-size: 14px;
   line-height: 1.5; color: var(--text); background: var(--bg); }
 button { font: inherit; cursor: pointer; }
 input, select, textarea { font: inherit; }
-
-body.auth-gated .app { display:none; }
-.auth-gate {
-  position:fixed; inset:0; z-index:1000; display:grid; place-items:center;
-  padding:24px; background:var(--bg); overflow-y:auto;
-}
-.auth-gate[hidden] { display:none; }
-.auth-gate-card {
-  width:min(100%,430px); padding:26px; border:1px solid var(--border);
-  border-radius:28px; background:var(--surface); box-shadow:var(--shadow-lg);
-}
-.auth-gate-brand { display:flex; align-items:center; gap:11px; padding-bottom:18px; border-bottom:1px solid var(--border); }
-.auth-gate-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:var(--accent-strong); color:#fff; font-family:var(--font-serif); font-weight:700; }
-.auth-gate-brand div { display:flex; flex-direction:column; }
-.auth-gate-brand strong { color:var(--text); font-size:16px; }
-.auth-gate-brand span { color:var(--muted); font-size:11px; }
-.auth-gate-copy { margin-block:22px 18px; }
-.auth-gate-copy h1 { font-family:var(--font-serif); color:var(--text); font-size:28px; margin-bottom:6px; }
-.auth-gate-copy p { color:var(--text-2); font-size:13px; line-height:1.65; }
-.auth-gate-form { display:flex; flex-direction:column; gap:13px; }
-.auth-gate-submit { min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
-.auth-gate-submit[disabled] { opacity:.6; cursor:wait; }
-.auth-gate-error { min-height:18px; color:var(--expense); font-size:12px; }
-.auth-gate-google-btn {
-  width:100%; min-height:48px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:10px;
-  border:1px solid var(--border); border-radius:16px; background:#fff; color:#3c4043; font-weight:700; font-size:15px; cursor:pointer;
-}
-.auth-gate-google-btn:hover { background:#f7f7f7; }
-.auth-gate-alt-toggle {
-  width:100%; text-align:center; margin-bottom:16px; border:0; background:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer;
-}
-.auth-gate-note { margin-top:18px; padding:10px 12px; border-radius:14px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; line-height:1.55; }
 
 /* ── App Shell ────────────────────────────────────────────────── */
 /* 100dvh = dynamic viewport height — adjusts as iOS Safari chrome shows/hides */
@@ -319,6 +287,15 @@ body.auth-gated .app { display:none; }
 .kpi.tone-warn .value, .kpi .value.warn { color: var(--warn); }
 .kpi .value.kpi-value.good { color: var(--good); }
 .kpi .value.kpi-value.bad  { color: var(--bad); }
+
+/* ── Yearly KPI cards — icon + tone tint (גל 7.3, טאב שנתי היה מגדל כרטיסים לבנים זהים) ── */
+.kpi-yearly { padding-top: 16px; }
+.kpi-icon { font-size: 20px; line-height: 1; margin-bottom: 2px; opacity: .9; }
+.kpi-yearly.tone-good { background: var(--good-light); border-color: rgba(5,150,105,.25); }
+.kpi-yearly.tone-good::before { background: var(--good); }
+.kpi-yearly.tone-bad  { background: var(--bad-light); border-color: rgba(220,38,38,.25); }
+.kpi-yearly.tone-bad::before { background: var(--bad); }
+.kpi-yearly.tone-warn { background: var(--warn-light, #fef3c7); border-color: rgba(217,119,6,.25); }
 
 /* ── Dashboard ────────────────────────────────────────────────── */
 .dashboard-clean { }
@@ -735,6 +712,24 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   align-items: center; background: var(--bg); border: 1px solid var(--border);
   border-radius: var(--r-sm); padding: 7px 11px; font-size: 12px; }
 .debt-row .lbl { font-size: 9px; color: var(--muted); }
+.debt-row.is-current { border-color: var(--accent-strong, #b0894f); box-shadow: 0 0 0 1px var(--accent-strong, #b0894f) inset; }
+.debt-row.is-future { opacity: .6; }
+.debt-year-group { border: 1px solid var(--border); border-radius: var(--r-sm); overflow: hidden; margin-bottom: 6px; }
+.debt-year-group[open] { overflow: visible; }
+.debt-year-summary { display:flex; justify-content:space-between; align-items:center; gap:8px;
+  padding: 9px 12px; font-size: 12px; font-weight: 700; cursor: pointer; background: var(--surface-2);
+  list-style: none; }
+.debt-year-summary::-webkit-details-marker { display: none; }
+.debt-year-summary::before { content: "▸"; font-size: 10px; color: var(--muted); transition: transform .15s; }
+.debt-year-group[open] > .debt-year-summary::before { transform: rotate(90deg); }
+.debt-year-summary .muted { font-weight: 500; color: var(--muted); font-size: 11px; }
+.debt-year-body { padding: 6px; display: flex; flex-direction: column; gap: 5px; }
+.debt-col-header { display: none; grid-template-columns: 1fr auto auto auto auto; gap: 7px;
+  font-size: 10px; color: var(--muted); font-weight: 600; padding: 4px 11px; }
+@media (min-width:601px) {
+  .debt-col-header { display: grid; }
+  .bank-debt-row .mobile-label, .father-debt-row .mobile-label { display: none; }
+}
 @media (max-width:720px) { .debt-highlight-value { font-size: 24px; } }
 
 /* ── Yearly ───────────────────────────────────────────────────── */
@@ -1113,17 +1108,18 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 
 /* ── Income Row redesign ──────────────────────────────────────── */
 .income-row.display-rich {
-  grid-template-columns: 1fr auto auto auto;
+  grid-template-columns: 1fr auto;
+  align-items:center;
   background:var(--surface); padding:13px 16px;
 }
-.income-cell { display:flex; flex-direction:column; gap:2px; }
+.income-cell { display:flex; flex-direction:column; gap:2px; min-width:0; }
 .income-cell strong { font-size:14px; font-weight:800; color:var(--text); }
-.income-cell.amount strong { color:var(--good); font-size:15px; }
-.income-cell .tiny { font-size:10px; color:var(--muted); }
+.income-cell.amount { align-items:flex-start; text-align:left; }
+.income-cell.amount strong { color:var(--good); font-size:16px; font-variant-numeric:tabular-nums; }
+.income-cell .tiny { font-size:11px; color:var(--muted); }
 .income-cell .mobile-label { display:none; }
+.income-chips { display:flex; flex-wrap:wrap; gap:4px; margin-bottom:2px; }
 @media (max-width:600px) {
-  .income-row.display-rich { grid-template-columns:1fr auto; }
-  .income-row.display-rich .income-cell:nth-child(3) { display:none; }
   .income-row.editing { display:flex; flex-direction:column; gap:8px; }
 }
 
@@ -1140,6 +1136,20 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 .income-edit-grid .field select {
   height: 44px; font-size: 14px;
 }
+/* עוטף רק את ה-input (לא את הלייבל) כדי שהמיקום היחסי יהיה מדויק בלי מספרי-קסם */
+.field-currency-wrap { position: relative; }
+.field-currency-wrap input { padding-inline-start: 26px !important; padding-inline-end: 26px !important; }
+.field-currency-wrap::after {
+  content: "₪"; position: absolute; inset-inline-start: 10px; top: 50%; transform: translateY(-50%);
+  font-size: 13px; color: var(--muted); pointer-events: none;
+}
+.field-clear-btn {
+  position: absolute; inset-inline-end: 6px; top: 50%; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 50%; border: none; background: var(--surface-2);
+  color: var(--muted); font-size: 12px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+.field-clear-btn:hover { background: var(--bad-light); color: var(--bad); }
 .income-edit-card .field label {
   font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em;
 }
@@ -1182,6 +1192,53 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
   transition: background .12s, border-color .12s;
 }
 .income-edit-delete:hover { background: var(--bad-light); border-color: var(--bad); }
+.income-edit-card.is-increase { border-color: rgba(220,38,38,.3); background: var(--bad-light); }
+.debt-direction-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px; border-radius: var(--r-pill);
+  font-size: 10px; font-weight: 700; margin-right: 6px;
+  background: var(--good-light); color: var(--good);
+}
+.debt-direction-badge.increase { background: var(--bad-light); color: var(--bad); }
+.debt-amount-increase { color: var(--bad) !important; }
+.debt-row.is-increase { border-color: rgba(220,38,38,.25); }
+
+/* ── רכיב מחיקה אחיד לשורות טבלה קומפקטיות (גל 7.4) ── */
+.row-delete-btn {
+  width: 30px; height: 30px; border-radius: 50%; border: 1.5px solid var(--border);
+  background: var(--surface); font-size: 13px; line-height: 1; cursor: pointer;
+  display: flex; align-items: center; justify-content: center; transition: background .12s, border-color .12s;
+}
+.row-delete-btn:hover { background: var(--bad-light); border-color: var(--bad); }
+
+/* ── Toast — גל 8.2.2, מחליף alert() חוסם ── */
+.toast-container {
+  position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+  z-index: 9999; display: flex; flex-direction: column; gap: 8px; align-items: center;
+  pointer-events: none; width: min(92vw, 420px);
+}
+.toast {
+  pointer-events: auto; width: 100%; box-sizing: border-box;
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px;
+  border-radius: var(--r-lg); box-shadow: var(--shadow-lg, 0 10px 30px rgba(0,0,0,.18));
+  background: var(--surface); border: 1.5px solid var(--border);
+  font-size: 13px; font-weight: 600; color: var(--text);
+  animation: toastIn .22s ease-out;
+}
+.toast.leaving { animation: toastOut .18s ease-in forwards; }
+.toast .toast-icon { font-size: 15px; flex-shrink: 0; }
+.toast.success { border-color: rgba(5,150,105,.35); background: var(--good-light); color: var(--good); }
+.toast.error   { border-color: rgba(220,38,38,.35);  background: var(--bad-light);  color: var(--bad); }
+.toast .toast-action {
+  margin-inline-start: auto; background: none; border: none; font-weight: 800; font-size: 13px;
+  color: inherit; text-decoration: underline; cursor: pointer; padding: 2px 4px; flex-shrink: 0;
+}
+@keyframes toastIn { from{ opacity:0; transform:translateY(10px) scale(.96); } to{ opacity:1; transform:translateY(0) scale(1); } }
+@keyframes toastOut { from{ opacity:1; transform:translateY(0) scale(1); } to{ opacity:0; transform:translateY(6px) scale(.96); } }
+
+/* ── מיקרו-אנימציה לכניסת שורות/כרטיסים (גל 7.5) — משתמש ב-panelEnter הקיים ── */
+.income-edit-card, .income-row, .debt-row, .kpi-yearly, .card-method, .summary-row {
+  animation: panelEnter .2s ease-out;
+}
 
 /* ── Filter Redesign ──────────────────────────────────────────── */
 .filter-body { display:flex; flex-direction:column; gap:10px; }
@@ -1406,9 +1463,307 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 .modal-card{ border-radius:var(--r-2xl); box-shadow:var(--shadow-lg); }
 
 /* Forecast chart wrap height handled inline by JS */
+
+/* ═══════════ V38 DEMO — LIGHT WOOD SAFETY SYSTEM ═══════════
+   One visual language for every tab, form, table and edit state.
+   This layer is intentionally demo-only until mobile review is approved. */
+:root {
+  --bg:#FAF7F2; --surface:#FFFDF9; --surface-2:#F7F0E7; --surface-3:#E8D7C1;
+  --border:#E9D8C4; --border-2:#D8C2A6; --border-3:#CDAE89;
+  --text:#30271F; --text-2:#665649; --muted:#887568;
+  --accent:#5F7F56; --accent-2:#7E9B6E; --accent-strong:#456640;
+  --accent-light:rgba(95,127,86,.12); --accent-ring:rgba(95,127,86,.30);
+  --wood:#C89B68; --wood-strong:#8E6747; --wood-light:rgba(216,194,166,.30);
+  --income:#4E7449; --income-light:#EBF2E8;
+  --expense:#A86349; --expense-light:#F8ECE5;
+  --warn:#B88127; --warn-light:#FBF0D9;
+  --info:#687F78; --info-light:#E9EFEC;
+  --shadow-xs:0 1px 2px rgba(91,64,38,.05);
+  --shadow-sm:0 2px 10px rgba(91,64,38,.07);
+  --shadow-md:0 8px 24px rgba(91,64,38,.10);
+  --shadow-lg:0 18px 50px rgba(74,50,29,.16);
+  --shadow-accent:0 10px 28px rgba(69,102,64,.18);
+}
+body { background:var(--bg); }
+.app { background:transparent; }
+.auth-gate {
+  position:fixed; inset:0; z-index:1000; display:grid; place-items:center;
+  padding:24px; background:var(--bg); overflow-y:auto;
+}
+.auth-gate[hidden] { display:none; }
+.auth-gate-card {
+  width:min(100%,430px); padding:26px; border:1px solid var(--border);
+  border-radius:28px; background:var(--surface); box-shadow:var(--shadow-lg);
+}
+.auth-gate-brand { display:flex; align-items:center; gap:11px; padding-bottom:18px; border-bottom:1px solid var(--border); }
+.auth-gate-mark { width:48px; height:48px; display:grid; place-items:center; border-radius:50%; background:var(--accent-strong); color:#fff; font-family:var(--font-serif); font-weight:700; }
+.auth-gate-brand div { display:flex; flex-direction:column; }
+.auth-gate-brand strong { color:var(--text); font-size:16px; }
+.auth-gate-brand span { color:var(--muted); font-size:11px; }
+.auth-gate-copy { margin-block:22px 18px; }
+.auth-gate-copy h1 { font-family:var(--font-serif); color:var(--text); font-size:28px; margin-bottom:6px; }
+.auth-gate-copy p { color:var(--text-2); font-size:13px; line-height:1.65; }
+.auth-gate-form { display:flex; flex-direction:column; gap:13px; }
+.auth-gate-submit { min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
+.auth-gate-submit[disabled] { opacity:.6; cursor:wait; }
+.auth-gate-error { min-height:18px; color:var(--expense); font-size:12px; }
+.auth-gate-google-btn {
+  width:100%; min-height:48px; margin-bottom:12px; display:flex; align-items:center; justify-content:center; gap:10px;
+  border:1px solid var(--border); border-radius:16px; background:#fff; color:#3c4043; font-weight:700; font-size:15px; cursor:pointer;
+}
+.auth-gate-google-btn:hover { background:#f7f7f7; }
+.auth-gate-alt-toggle {
+  width:100%; text-align:center; margin-bottom:16px; border:0; background:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer;
+}
+.auth-gate-note { margin-top:18px; padding:10px 12px; border-radius:14px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; line-height:1.55; }
+.topbar {
+  min-height:64px; height:auto; padding-block:10px;
+  background:color-mix(in srgb,var(--surface) 96%,transparent);
+  border-color:var(--border); box-shadow:0 1px 0 var(--border);
+}
+.topbar-logo { color:var(--text); }
+.topbar-logo-icon {
+  border-radius:50%; background:var(--accent-strong); color:#fff;
+  box-shadow:0 4px 12px rgba(69,102,64,.22); font-size:15px;
+}
+.topbar-select {
+  background:var(--surface-2); border-color:var(--border); color:var(--text);
+  border-radius:14px; min-width:96px;
+}
+.topbar-dark-btn,.topbar-mobile-menu {
+  min-width:38px; min-height:38px; border:1px solid var(--border);
+  border-radius:14px; background:var(--surface); display:inline-flex;
+  align-items:center; justify-content:center;
+}
+.app-status-strip {
+  width:min(calc(100% - 32px),var(--content-max)); margin:14px auto 0;
+  display:flex; align-items:center; gap:10px; padding:11px 14px;
+  background:var(--surface); border:1px solid var(--border); border-radius:18px;
+  box-shadow:var(--shadow-xs); color:var(--text-2);
+}
+.status-dot { width:11px; height:11px; border-radius:50%; background:var(--warn); flex:0 0 auto; box-shadow:0 0 0 4px var(--warn-light); }
+.app-status-strip.is-connected .status-dot { background:var(--accent); box-shadow:0 0 0 4px var(--accent-light); }
+.app-status-strip.is-error .status-dot { background:var(--expense); box-shadow:0 0 0 4px var(--expense-light); }
+.app-status-copy { display:flex; flex-direction:column; min-width:0; flex:1; }
+.app-status-copy strong { font-size:13px; color:var(--text); }
+.app-status-copy span { font-size:11px; color:var(--muted); }
+.partner-data-chip { flex:0 0 auto; padding:6px 10px; border-radius:999px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; font-weight:700; }
+.edit-safety-banner {
+  width:min(calc(100% - 32px),var(--content-max)); margin:8px auto 0;
+  padding:9px 13px; border:1px solid var(--wood); border-radius:14px;
+  background:#FBF2E5; color:var(--wood-strong); font-size:12px; font-weight:700;
+}
+.edit-safety-banner[hidden] { display:none; }
+.main { padding-top:16px; }
+
+/* Quiet light-oak tab headers: the panel title should orient, not compete with the numbers. */
+.panel-hero,
+[data-panel="dashboard"] .panel-hero,
+[data-panel="budget"] .panel-hero,
+[data-panel="income"] .panel-hero,
+[data-panel="cards"] .panel-hero,
+[data-panel="expenses"] .panel-hero,
+[data-panel="shared"] .panel-hero,
+[data-panel="debts"] .panel-hero,
+[data-panel="yearly"] .panel-hero,
+[data-panel="backup"] .panel-hero {
+  color:var(--text);
+  background:linear-gradient(135deg,#F4E9D8 0%,#FFFDF9 56%,#E6F0E1 100%);
+  border:1px solid var(--border);
+  box-shadow:var(--shadow-xs);
+}
+.panel-hero::before { background:var(--wood); opacity:.13; }
+.panel-hero::after { background:var(--accent); opacity:.10; }
+.panel-hero-sub { color:var(--text-2); opacity:1; }
+
+/* Selected dashboard direction: quiet monthly status + review inbox. */
+.hero.monthly-status-card {
+  color:var(--text); background:var(--surface); border:1px solid var(--border);
+  box-shadow:var(--shadow-sm); padding:24px; border-radius:26px;
+}
+.hero.monthly-status-card::before {
+  content:""; position:absolute; inset-block:0; inset-inline-start:0; width:9px;
+  background:var(--surface-3); opacity:.75;
+}
+.hero.monthly-status-card::after { opacity:.09; filter:sepia(1); }
+.monthly-status-card .hero-top { border-bottom:1px solid var(--border); padding-bottom:12px; }
+.monthly-status-card .hero-label { color:var(--text); font-size:19px; }
+.monthly-status-card .hero-cfg { background:var(--surface-2); color:var(--wood-strong); border:1px solid var(--border); }
+.monthly-status-card .hero-balance {
+  color:var(--accent-strong); font-size:clamp(42px,11vw,68px); margin-block:16px 2px;
+  text-shadow:none; justify-content:flex-start;
+}
+.monthly-status-card .hero-cur { color:var(--accent); opacity:1; }
+.hero-balance-label { color:var(--text-2); font-size:15px; }
+.monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
+.hero-month-metrics {
+  display:grid; grid-template-columns:repeat(3,1fr); margin-top:20px;
+  padding-top:16px; border-top:1px solid var(--border);
+}
+.hero-month-metrics > div { display:flex; flex-direction:column; align-items:flex-start; padding-inline:14px; border-inline-start:1px solid var(--border); }
+.hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
+.hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
+.hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
+.review-queue {
+  background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
+  padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
+}
+.review-queue-head { display:flex; justify-content:space-between; align-items:flex-start; gap:12px; margin-bottom:12px; }
+.review-queue-title { font-family:var(--font-serif); font-size:20px; font-weight:700; color:var(--text); }
+.review-queue-sub { font-size:12px; color:var(--muted); margin-top:2px; }
+.review-count { min-width:34px; height:34px; display:grid; place-items:center; border-radius:12px; background:#F4D8A8; color:#8A5D14; font-size:18px; font-weight:800; }
+.review-list { display:flex; flex-direction:column; gap:8px; }
+.review-item { display:grid; grid-template-columns:auto 1fr auto; align-items:center; gap:11px; min-height:66px; padding:11px 13px; background:var(--surface); border:1px solid var(--border); border-radius:18px; }
+.review-marker { width:10px; height:10px; border-radius:50%; background:var(--warn); box-shadow:0 0 0 5px var(--warn-light); }
+.review-marker.good { background:var(--accent); box-shadow:0 0 0 5px var(--accent-light); }
+.review-item strong { display:block; color:var(--text); font-size:14px; }
+.review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
+.review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+.review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
+.review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
+
+/* Shared component finish across all nine tabs. */
+.section,.budget-overview-hero,.budget-card,.debt-card,.year-card,.backup-card,
+.shared-balance-card,.shared-stat-card,.card-method,.income-topbar,.sync-card,.recovery-card {
+  border-color:var(--border); box-shadow:var(--shadow-sm); border-radius:22px;
+}
+.section { overflow:clip; }
+.section > .header { min-height:54px; background:var(--surface); border-inline-start:4px solid var(--wood); }
+.section > .header:hover { background:var(--surface-2); }
+.section .content { background:var(--surface); }
+.budget-overview-hero,.income-topbar,.sync-card { background:var(--surface-2); }
+.shared-balance-card,.debt-highlight-bank,.debt-highlight-father {
+  background:var(--accent-strong); color:#fff;
+}
+.debt-highlight-father { background:var(--wood-strong); }
+.kpi,.bento-card,.summary-row,.income-row,.shared-expense-card,.debt-row,.recovery-item {
+  border-color:var(--border); box-shadow:var(--shadow-xs); border-radius:18px;
+}
+.kpi::before,.bento-card::before { background:var(--wood); }
+.field input,.field select,.field textarea,.filter-search-input,.filter-select-item select,
+#ccImportPayment,#ccImportSheet {
+  background:var(--surface); border-color:var(--border-2); border-radius:14px; color:var(--text);
+}
+.field label,.filter-select-item label,.filter-cats-label { color:var(--text-2); letter-spacing:0; text-transform:none; }
+.filter-body { background:var(--surface-2); border:1px solid var(--border); border-radius:18px; padding:12px; }
+.filter-chip { background:var(--surface); color:var(--text-2); border-color:var(--border); }
+.filter-chip.active { background:var(--wood-light); border-color:var(--wood); color:var(--wood-strong); }
+.toolbar { padding:10px 0 14px; border-bottom:1px solid var(--border); margin-bottom:12px; }
+button.primary-cta,button.success-btn,button.primary,.review-primary { background:var(--accent-strong); color:#fff; box-shadow:none; }
+button.secondary,.edit-toggle-btn { background:var(--surface); color:var(--text-2); border-color:var(--border-2); }
+button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); color:var(--wood-strong); border-color:var(--wood); }
+.editing,.income-edit-card,.summary-row.editing,.income-row.editing,.debt-row.editing {
+  background:#FBF4E9 !important; border-color:var(--wood) !important; box-shadow:0 0 0 3px var(--wood-light) !important;
+}
+.edit-mode-note { color:var(--wood-strong); background:var(--wood-light); border-radius:12px; padding:8px 10px; }
+.table-shell,.year-table { border:1px solid var(--border); border-radius:18px; background:var(--surface); }
+.table-shell th,.year-table th { background:var(--surface-2); color:var(--text-2); }
+.table-shell td,.year-table td { border-color:var(--border); }
+.feed-day-header { border-color:var(--border-2); }
+.feed-row { min-height:58px; border:1px solid transparent; }
+.feed-row:hover { border-color:var(--border); background:var(--surface-2); }
+.modal-card { border:1px solid var(--border); background:var(--surface); }
+.toast { border-radius:16px; box-shadow:var(--shadow-lg); }
+.fab { background:var(--accent-strong); box-shadow:0 8px 24px rgba(69,102,64,.26); }
+.fab:hover { box-shadow:0 10px 28px rgba(69,102,64,.30); }
+.botanic-tabbar { border-color:var(--border); }
+.more-sheet { border:1px solid var(--border); }
+
+/* Import review gets the same safety language as the rest of the product. */
+.cc-import-card { max-width:860px !important; border:1px solid var(--border); }
+.cc-import-summary { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:14px; }
+.cc-import-stat { padding:10px 12px; border:1px solid var(--border); border-radius:14px; background:var(--surface-2); }
+.cc-import-stat span { display:block; color:var(--muted); font-size:10px; }
+.cc-import-stat strong { display:block; color:var(--text); font-size:16px; margin-top:3px; }
+.cc-import-safety { padding:10px 12px; margin-bottom:12px; border-radius:14px; background:var(--accent-light); color:var(--accent-strong); font-size:12px; font-weight:600; }
+
+@media (max-width:600px) {
+  .topbar { padding:8px 10px; gap:7px; }
+  .topbar-logo-text { display:none; }
+  .topbar-logo-icon { width:38px; height:38px; }
+  .topbar-selects { gap:6px; flex:1; justify-content:flex-start; }
+  .topbar-select { min-width:0; max-width:118px; height:38px; flex:1; }
+  .topbar-dark-btn,.topbar-mobile-menu { display:inline-flex; padding:0; }
+  .app-status-strip { width:calc(100% - 24px); margin-top:10px; border-radius:16px; align-items:flex-start; }
+  .edit-safety-banner { width:calc(100% - 24px); }
+  .app-status-copy span { display:none; }
+  .partner-data-chip { font-size:10px; padding:5px 8px; }
+  .main { padding:12px 12px calc(96px + env(safe-area-inset-bottom,0px)); }
+  .hero.monthly-status-card { padding:18px 16px; border-radius:22px; }
+  .monthly-status-card .hero-label { font-size:18px; }
+  .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
+  .hero-month-metrics > div { padding-inline:9px; }
+  .hero-month-metrics strong { font-size:15px; }
+  .review-queue { padding:14px; border-radius:22px; }
+  .review-item { grid-template-columns:auto 1fr; }
+  .review-action { grid-column:2; justify-self:start; }
+  .dashboard-note { padding-inline:2px; }
+  .dashboard-note-top { display:flex; flex-direction:column; gap:10px; }
+  .section > .header { align-items:flex-start; gap:10px; }
+  .section > .header > div { width:100%; }
+  .toolbar { align-items:stretch; gap:10px; }
+  .toolbar > div { display:flex; flex-wrap:wrap; gap:7px; }
+  .filter-selects-row { display:grid; grid-template-columns:1fr 1fr; }
+  .filter-select-item select { width:100%; min-width:0; }
+  .filter-reset-btn { grid-column:1/-1; width:100%; }
+  .debt-col-header { display:none !important; }
+  .debt-row { grid-template-columns:minmax(0,1fr) minmax(92px,.75fr) !important; align-items:end; }
+  .debt-row > * { min-width:0; }
+  .debt-row input,.debt-row select { width:100%; min-width:0; }
+  .debt-row .icon-btn,.debt-row .income-edit-delete { justify-self:end; }
+  .year-table table,.table-shell table { min-width:0; }
+  .cc-import-summary { grid-template-columns:1fr 1fr; }
+  #ccImportTable table { min-width:760px; }
+  .fab { inset-inline-end:16px !important; }
+}
+@media (min-width:601px) { .topbar-mobile-menu { display:none; } }
+
+[data-theme="dark"] .app-status-strip,
+[data-theme="dark"] .hero.monthly-status-card,
+[data-theme="dark"] .review-item { background:var(--surface); }
+[data-theme="dark"] .review-queue,
+[data-theme="dark"] .filter-body,
+[data-theme="dark"] .budget-overview-hero,
+[data-theme="dark"] .income-topbar,
+[data-theme="dark"] .sync-card { background:var(--surface-2); }
+
+/* V39 Warm Tech — selected visual direction: personal-first, light maple and sage. */
+:root { --font-sans:'Rubik','Heebo',system-ui,sans-serif; --font-num:'Rubik','Heebo',system-ui,sans-serif; --font-serif:'Rubik','Heebo',sans-serif; }
+body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacing:-.01em; }
+.topbar { background:rgba(255,253,249,.92); backdrop-filter:blur(18px); }
+.pill-nav { background:rgba(255,253,249,.78); border-bottom:1px solid var(--border); }
+.pill-btn { border-radius:14px; transition:transform .2s var(--ease-out),background .2s var(--ease-out),color .2s var(--ease-out); }
+.pill-btn.active { background:var(--accent-light); color:var(--accent-strong); box-shadow:none; }
+.pill-btn:hover { transform:translateY(-1px); }
+.tab-panel.active { animation:warmPanelIn .32s var(--ease-out); }
+@keyframes warmPanelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
+.workspace-switch { display:inline-grid; grid-template-columns:1fr 1fr; padding:4px; gap:4px; margin:0 0 14px; background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-xs); }
+.workspace-btn { min-width:104px; min-height:42px; border:0; border-radius:13px; background:transparent; color:var(--muted); font-weight:800; transition:background .2s var(--ease-out),color .2s var(--ease-out),transform .2s var(--ease-out); }
+.workspace-btn.active { background:var(--sage,#E7F0E1); color:var(--accent-strong); box-shadow:0 3px 10px rgba(91,124,83,.12); }
+.workspace-btn:active,.dashboard-quick-actions button:active { transform:scale(.97); }
+.monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
+.monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
+.monthly-status-card .hero-balance { font-family:var(--font-num); font-weight:800; letter-spacing:-.06em; }
+.dashboard-quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; margin:14px 0; background:var(--surface); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow-xs); }
+.dashboard-quick-actions button { min-height:92px; border:1px solid #F0E6D9; border-radius:17px; background:linear-gradient(180deg,#FFFDF9,#FAF6F0); color:var(--text); padding:12px 8px; display:flex; flex-direction:column; justify-content:center; gap:6px; transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+.dashboard-quick-actions button:hover { transform:translateY(-2px); border-color:var(--wood); box-shadow:var(--shadow-sm); }
+.dashboard-quick-actions span { color:var(--accent-strong); font-weight:800; font-size:13px; }
+.dashboard-quick-actions small { color:var(--muted); font-size:10px; }
+.section,.budget-overview-hero,.budget-card,.debt-card,.year-card,.backup-card,.shared-balance-card,.shared-stat-card,.card-method,.income-topbar,.sync-card,.recovery-card { transition:transform .2s var(--ease-out),box-shadow .2s var(--ease-out); }
+.section:hover,.budget-card:hover,.debt-card:hover,.year-card:hover,.card-method:hover { box-shadow:var(--shadow-md); }
+.kpi strong,.bento-card strong,.year-kpi-value,.amount,.income-amount { font-family:var(--font-num); font-variant-numeric:tabular-nums; }
+button.primary-cta,button.success-btn,button.primary,.review-primary { border-radius:15px; transition:transform .18s var(--ease-out),box-shadow .18s var(--ease-out); }
+button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-primary:hover { transform:translateY(-1px); box-shadow:var(--shadow-accent); }
+.modal-card,.more-sheet { animation:warmModalIn .22s var(--ease-out); }
+@keyframes warmModalIn { from{opacity:0;transform:translateY(10px) scale(.99)} to{opacity:1;transform:none} }
+@media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+@media (max-width:600px){.workspace-switch{width:100%;margin-bottom:12px}.workspace-btn{min-height:40px}.dashboard-quick-actions{gap:8px;padding:9px;border-radius:19px}.dashboard-quick-actions button{min-height:78px;border-radius:14px;padding:9px 5px}.dashboard-quick-actions span{font-size:11px}.dashboard-quick-actions small{display:none}.monthly-status-card .hero-balance{font-size:clamp(42px,13vw,56px)}}
 </style>
 </head>
 <body>
+
+<!-- מכל הודעות Toast — גל 8.2.2, מחליף alert() חוסם -->
+<div id="toastContainer" class="toast-container" aria-live="polite"></div>
 
 <section class="auth-gate" id="authGate" hidden aria-labelledby="authGateTitle">
   <div class="auth-gate-card">
@@ -1454,8 +1809,8 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
   <!-- ── Topbar ────────────────────────────────────────────────── -->
   <header class="topbar">
     <div class="topbar-logo">
-      <div class="topbar-logo-icon">💰</div>
-      מנהל הוצאות
+      <div class="topbar-logo-icon" id="topbarUserAvatar" aria-hidden="true">ר</div>
+      <span class="topbar-logo-text">מנהל הוצאות</span>
     </div>
     <!-- Hidden elements for JS compatibility (updateMiniNavLabel, renderMiniNavMeta) -->
     <span id="miniNavIcon" style="display:none">📊</span>
@@ -1480,6 +1835,16 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
     <button class="topbar-dark-btn" id="darkModeBtn" onclick="toggleDarkMode()" aria-label="מצב לילה">🌙</button>
     <button class="topbar-mobile-menu" onclick="openDrawer()" aria-label="תפריט">☰</button>
   </header>
+
+  <div class="app-status-strip" id="appStatusStrip" role="status" aria-live="polite">
+    <span class="status-dot" id="appStatusDot" aria-hidden="true"></span>
+    <div class="app-status-copy">
+      <strong id="appConnectionTitle">בודק חיבור וסנכרון…</strong>
+      <span id="appConnectionMeta">הנתונים של רז ושירה נשמרים בנפרד ומוצגים יחד לפי ההרשאה.</span>
+    </div>
+    <span class="partner-data-chip" id="appPartnerSummary">משותף עם בן/בת הזוג</span>
+  </div>
+  <div class="edit-safety-banner" id="editSafetyBanner" hidden role="status"></div>
 
   <!-- ── Pill Navigation ──────────────────────────────────────── -->
   <nav class="pill-nav" aria-label="ניווט ראשי">
@@ -1529,18 +1894,35 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
     <!-- ── Dashboard ── -->
     <section class="tab-panel active" data-panel="dashboard">
       <div class="dashboard-clean">
-        <section class="hero" aria-labelledby="heroLabel" id="dashboardHero">
+        <div class="workspace-switch" role="group" aria-label="מרחב עבודה">
+          <button type="button" class="workspace-btn active" id="personalWorkspaceBtn" onclick="openPersonalWorkspace()">אישי</button>
+          <button type="button" class="workspace-btn" id="coupleWorkspaceBtn" onclick="openCoupleWorkspace()">זוגי</button>
+        </div>
+        <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
           <div class="hero-top">
-            <span class="hero-label" id="heroLabel">יתרת סגירה — <span id="heroMonthName">—</span></span>
+            <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
             <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
           </div>
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
+          <div class="hero-balance-label">צפויים להישאר בסוף החודש</div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
-          <div class="hero-spark"><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
+          <div class="hero-month-metrics" aria-label="סיכום חודשי">
+            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
+            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
+            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לתשלום</small></div>
+          </div>
+          <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
         </section>
+        <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
+          <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
+          <button type="button" onclick="switchToTab('cards')"><span>תקציבים</span><small>חיובים וייבוא</small></button>
+          <button type="button" onclick="switchToTab('yearly')"><span>יעדים</span><small>תחזית שנתית</small></button>
+          <button type="button" onclick="switchToTab('yearly')"><span>דוחות</span><small>סיכום וייצוא</small></button>
+        </section>
+        <section class="review-queue" id="dashboardReviewQueue" aria-labelledby="dashboardReviewTitle"></section>
         <div class="dashboard-note">
           <div class="dashboard-note-top">
             <div>
@@ -1805,10 +2187,11 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
             <div class="small">הטאב הזה מציג את תמונת החוב הכוללת ולא משתנה לפי בחירת החודש. רק הכרטיסים של "החודש" מבוססים על החודש הנוכחי בפועל.</div>
           </div>
           <div class="actions" style="margin-top:0">
-            <button id="toggleDebtVisibilityBtn" class="secondary" type="button">הסתר טאב חובות</button>
             <button id="toggleDebtEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
             <button id="addDebtLoanBtn" class="success-btn" type="button" style="display:none">תשלום בנק +</button>
             <button id="addDebtFatherBtn" class="success-btn" type="button" style="display:none">החזר לאבא +</button>
+            <button id="addDebtFatherIncreaseBtn" class="secondary" type="button" style="display:none">תוספת הלוואה +</button>
+            <button id="toggleDebtVisibilityBtn" class="secondary" type="button" style="opacity:.7">הסתר טאב חובות</button>
           </div>
         </div>
 
@@ -1842,9 +2225,9 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
         <div class="debt-grid">
           <div class="debt-item"><div class="title">החזר בנק בחודש</div><div class="big" id="debtMonthlyLoan">—</div></div>
           <div class="debt-item"><div class="title">החזר לאבא החודש</div><div class="big" id="debtFatherThisMonth">—</div></div>
-          <div class="debt-item"><div class="title">יתרת חוב לבנק</div><div class="big" id="debtBankRemaining">—</div></div>
-          <div class="debt-item"><div class="title">יתרת חוב לאבא</div><div class="big" id="debtFatherRemaining">—</div></div>
         </div>
+        <!-- שני כרטיסי "יתרת חוב" הוסרו — היו כפילות מדויקת של הכרטיסים
+             העליונים (debtBankRemainingHero/debtFatherRemainingHero). -->
 
         <div class="debt-sections">
           <div class="debt-section open" id="bankDebtSection">
@@ -1994,11 +2377,11 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 </div><!-- /.app -->
 
 <!-- ── Debt Details Modal ──────────────────────────────────────── -->
-<div id="debtDetailsModal" class="modal-backdrop" onclick="closeDebtDetailsModal(event)">
+<div id="debtDetailsModal" class="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="debtDetailsTitle" onclick="closeDebtDetailsModal(event)">
   <div class="modal-card" onclick="event.stopPropagation()">
     <div class="modal-top">
       <div>
-        <h3 style="margin:0">פירוט חובות</h3>
+        <h3 id="debtDetailsTitle" style="margin:0">פירוט חובות</h3>
         <div class="small">תמונת מצב עדכנית לפי הנתונים הפעילים של המשתמש.</div>
       </div>
       <button class="secondary" type="button" onclick="closeDebtDetailsModal()">סגור</button>
@@ -2043,12 +2426,9 @@ button.secondary:focus-visible,.field input:focus,.field select:focus,.field tex
 <!-- Main JS engine (from v35 with targeted v36 modifications) -->
 <script>
 /* ═══ v37 — Production mode (Supabase live) ═══════════════════════════════════
-   Forked from v36 (demo sandbox). Reverts back to v34 behavior:
      • IS_LOCAL_DRAFT_FILE is true ONLY when opened from local file:// (DevTools).
        On https:// (GitHub Pages) → false → Cloud Sync (Supabase) is active.
      • STORAGE_NS_PREFIX = "" → localStorage keys identical to production. Real data.
-     • No demo banner.
-   stripDemoPrefix kept as identity passthrough (no prefix to strip).
 ═══════════════════════════════════════════════════════════════════════════ */
 const IS_LOCAL_DRAFT_FILE = window.location.protocol === "file:";
 const STORAGE_NS_PREFIX = "";
@@ -2195,6 +2575,7 @@ let addExpenseOpen = false;
 let activeTab = "dashboard";
 let selectedYear = 2026;
 let incomeEditMode = false;
+const INCOME_TYPE_LABELS = { salary:"משכורת", bitpay:"ביט / פיי", transfer:"העברה", refund:"החזר", other:"אחר" };
 let debtEditMode = false;
 let categoryEditMode = false;
 let cardEditMode = false;
@@ -2279,10 +2660,21 @@ function getAllUserStorageKeys(userId){
   ];
 }
 function getBackupKeys(){
-  return [ACTIVE_USER_STORAGE_KEY, ...USERS.flatMap(user => getAllUserStorageKeys(user.id))];
+  return [
+    ACTIVE_USER_STORAGE_KEY,
+    ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
+    getSharedSettlementsKey(),
+    getSharedSettlementsTombstonesKey()
+  ];
 }
 function getCloudSyncKeys(){
-  return USERS.flatMap(user => getAllUserStorageKeys(user.id));
+  // A full recovery/backup snapshot must include shared state too. Per-user
+  // sync rows intentionally use getCloudSyncKeysForUser() below instead.
+  return [
+    ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
+    getSharedSettlementsKey(),
+    getSharedSettlementsTombstonesKey()
+  ];
 }
 /* Per-user key set — the only keys a device writes to its own cloud row.
    getSharedSettlementsKey() is deliberately NOT here: settlements live in the
@@ -2418,7 +2810,8 @@ function hasCloudSyncConfig(){
 
 /* ── Supabase Auth (email/password) ──
    Real login gating access to app_state, on top of RLS enforced
-   server-side. Each Supabase auth user must carry
+   server-side. Session is stored per-namespace (demo__) so it never mixes
+   with a future production session. Each Supabase auth user must carry
    app_metadata.app_user_key = "raz" | "shira" (set once via SQL/dashboard)
    so the client knows which local identity a login maps to. */
 const SUPABASE_AUTH_SESSION_KEY = STORAGE_NS_PREFIX + "expense_app_supabase_session_v1";
@@ -2509,6 +2902,55 @@ async function supabaseRefreshSession(){
   saveSupabaseAuthSession(next);
   return next;
 }
+/* Redirect to Google via Supabase Auth's OAuth authorize endpoint. No client
+   secret involved here — the Google client id/secret live only in the
+   Supabase dashboard provider config, never in this file. */
+function supabaseSignInWithGoogle(){
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey){
+    setBackupStatus("חסרים פרטי חיבור ל־Supabase.");
+    return;
+  }
+  const redirectTo = window.location.origin + window.location.pathname;
+  window.location.href = `${config.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
+}
+/* After Google redirects back, Supabase appends the session to the URL hash
+   (#access_token=...&refresh_token=...). Parse it once, fetch the user's
+   app_metadata (implicit flow only gives us the tokens, not the user), then
+   store the session exactly like a password login would. */
+async function handleOAuthRedirectCallback(){
+  const hash = window.location.hash || "";
+  if(!hash.includes("access_token=")) return false;
+  const params = new URLSearchParams(hash.replace(/^#/, ""));
+  const access_token = params.get("access_token");
+  const refresh_token = params.get("refresh_token");
+  const expires_at = params.get("expires_at");
+  if(!access_token){ history.replaceState(null, "", window.location.pathname + window.location.search); return false; }
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const config = getCloudSyncConfig();
+  try {
+    const response = await fetch(`${config.url}/auth/v1/user`, {
+      headers:{ apikey:config.anonKey, Authorization:`Bearer ${access_token}` }
+    });
+    const user = await response.json().catch(() => null);
+    if(!response.ok || !user) throw new Error("לא הצלחתי לקרוא את פרטי המשתמש מגוגל.");
+    const appUserKey = user?.app_metadata?.app_user_key || null;
+    if(!appUserKey){
+      setBackupStatus("החשבון הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.");
+      return false;
+    }
+    const session = { access_token, refresh_token, expires_at, email:user.email || "", appUserKey };
+    saveSupabaseAuthSession(session);
+    if(USERS.some(u => u.id === appUserKey) && currentUser !== appUserKey){
+      currentUser = appUserKey;
+      localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
+    }
+    return true;
+  } catch(error){
+    setBackupStatus(error.message || "התחברות עם Google נכשלה.");
+    return false;
+  }
+}
 async function supabaseSignOut(){
   const config = getCloudSyncConfig();
   const session = loadSupabaseAuthSession();
@@ -2576,6 +3018,45 @@ function renderCloudSyncStatus(){
   }
   if(statusEl) statusEl.textContent = cloudSyncState.message;
   renderAuthLoginState();
+  renderAppConnectionSummary();
+}
+function renderAppConnectionSummary(){
+  const strip = document.getElementById("appStatusStrip");
+  const title = document.getElementById("appConnectionTitle");
+  const meta = document.getElementById("appConnectionMeta");
+  const partnerSummary = document.getElementById("appPartnerSummary");
+  const avatar = document.getElementById("topbarUserAvatar");
+  if(!strip || !title || !meta) return;
+  const config = getCloudSyncConfig();
+  const session = loadSupabaseAuthSession();
+  const loggedIn = isSupabaseSessionValid(session);
+  const message = String(cloudSyncState.message || "");
+  const hasSyncError = /נכשל|שגיאה|צריך להתחבר|401|403/i.test(message);
+  strip.classList.toggle("is-connected", loggedIn && hasCloudSyncConfig() && !config.disabled && !hasSyncError);
+  strip.classList.toggle("is-error", hasSyncError);
+  if(config.disabled){
+    title.textContent = "הסנכרון כבוי במכשיר הזה";
+    meta.textContent = "הנתונים נשמרים כרגע רק בדפדפן המקומי.";
+  } else if(!loggedIn){
+    title.textContent = "נדרשת כניסה כדי לסנכרן";
+    meta.textContent = "הנתונים המקומיים נשמרים, אבל עדכון בין המכשירים ממתין להתחברות.";
+  } else if(hasSyncError){
+    title.textContent = "הסנכרון דורש בדיקה";
+    meta.textContent = message || "החיבור קיים, אך העדכון האחרון לא הושלם.";
+  } else {
+    title.textContent = "מחובר ומסונכרן עכשיו";
+    const latest = cloudSyncState.lastPulledAt || cloudSyncState.lastPushedAt;
+    meta.textContent = latest ? `העדכון האחרון הושלם ב־${getReadableDateTime(latest)}.` : "החיבור מאובטח ומוכן לעדכון בין המכשירים.";
+  }
+  const partnerId = getPartnerUserId(currentUser);
+  if(partnerSummary){
+    partnerSummary.textContent = config.disabled
+      ? "נתונים מקומיים בלבד"
+      : loggedIn
+        ? `משותף עם ${getUserLabel(partnerId)}`
+        : `נתוני ${getUserLabel(partnerId)} אחרי התחברות`;
+  }
+  if(avatar) avatar.textContent = String(getUserLabel(currentUser) || currentUser || "?").trim().slice(0,1);
 }
 function renderAuthLoginState(){
   const loginBox = document.getElementById("authLoginBox");
@@ -2583,6 +3064,7 @@ function renderAuthLoginState(){
   const emailEl = document.getElementById("authLoggedInEmail");
   if(!loginBox || !loggedInBox) return;
   renderAuthGate();
+  const config = getCloudSyncConfig();
   if(!hasCloudSyncConfig()){
     loginBox.style.display = "none";
     loggedInBox.style.display = "none";
@@ -2605,6 +3087,7 @@ function renderAuthGate(){
   const shouldGate = hasCloudSyncConfig() && !config.disabled && !isSupabaseSessionValid(loadSupabaseAuthSession());
   gate.hidden = !shouldGate;
   document.body.classList.toggle("auth-gated", shouldGate);
+  if(shouldGate) setTimeout(() => document.getElementById("authGateEmail")?.focus(), 30);
 }
 async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton){
   if(errorEl) errorEl.textContent = "";
@@ -2622,6 +3105,8 @@ async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton
       if(errorEl) errorEl.textContent = "המשתמש הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.";
       return false;
     }
+    // Lock the local identity to whoever actually logged in — no more free
+    // switching between raz/shira once real auth is on.
     if(USERS.some(u => u.id === session.appUserKey) && currentUser !== session.appUserKey){
       currentUser = session.appUserKey;
       localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
@@ -2629,7 +3114,7 @@ async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton
     if(passwordInput) passwordInput.value = "";
     renderCloudSyncStatus();
     setBackupStatus(`התחברת בהצלחה כ־${session.email}.`);
-    if(hasCloudSyncConfig()){
+    if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
       try { await pullCloudSnapshot({showErrors:true}); } catch(e){ /* surfaced via cloudSyncState */ }
     }
     render();
@@ -2657,55 +3142,6 @@ async function handleAuthGateLogin(event){
     document.getElementById("authGateError"),
     document.getElementById("authGateSubmit")
   );
-}
-/* Redirect to Google via Supabase Auth's OAuth authorize endpoint. No client
-   secret involved here — the Google client id/secret live only in the
-   Supabase dashboard provider config, never in this file. */
-function supabaseSignInWithGoogle(){
-  const config = getCloudSyncConfig();
-  if(!config.url || !config.anonKey){
-    setBackupStatus("חסרים פרטי חיבור ל־Supabase.");
-    return;
-  }
-  const redirectTo = window.location.origin + window.location.pathname;
-  window.location.href = `${config.url}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(redirectTo)}`;
-}
-/* After Google redirects back, Supabase appends the session to the URL hash
-   (#access_token=...&refresh_token=...). Parse it once, fetch the user's
-   app_metadata (implicit flow only gives us the tokens, not the user), then
-   store the session exactly like a password login would. */
-async function handleOAuthRedirectCallback(){
-  const hash = window.location.hash || "";
-  if(!hash.includes("access_token=")) return false;
-  const params = new URLSearchParams(hash.replace(/^#/, ""));
-  const access_token = params.get("access_token");
-  const refresh_token = params.get("refresh_token");
-  const expires_at = params.get("expires_at");
-  if(!access_token){ history.replaceState(null, "", window.location.pathname + window.location.search); return false; }
-  history.replaceState(null, "", window.location.pathname + window.location.search);
-  const config = getCloudSyncConfig();
-  try {
-    const response = await fetch(`${config.url}/auth/v1/user`, {
-      headers:{ apikey:config.anonKey, Authorization:`Bearer ${access_token}` }
-    });
-    const user = await response.json().catch(() => null);
-    if(!response.ok || !user) throw new Error("לא הצלחתי לקרוא את פרטי המשתמש מגוגל.");
-    const appUserKey = user?.app_metadata?.app_user_key || null;
-    if(!appUserKey){
-      setBackupStatus("החשבון הזה לא מקושר ל־raz/shira (app_metadata.app_user_key חסר). פנה לרז לתקן ב-Supabase.");
-      return false;
-    }
-    const session = { access_token, refresh_token, expires_at, email:user.email || "", appUserKey };
-    saveSupabaseAuthSession(session);
-    if(USERS.some(u => u.id === appUserKey) && currentUser !== appUserKey){
-      currentUser = appUserKey;
-      localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
-    }
-    return true;
-  } catch(error){
-    setBackupStatus(error.message || "התחברות עם Google נכשלה.");
-    return false;
-  }
 }
 async function handleAuthLogoutClick(){
   await supabaseSignOut();
@@ -2839,7 +3275,13 @@ function normalizeDebtData(data){
   return {
     enabled: next.enabled == null ? defaults.enabled : Boolean(next.enabled),
     fatherDebtStart: Number(next.fatherDebtStart != null ? next.fatherDebtStart : defaults.fatherDebtStart) || 0,
-    fatherHistory: Array.isArray(next.fatherHistory) ? next.fatherHistory : clone(defaults.fatherHistory),
+    // כל שורה חייבת id יציב. בעבר המפתח נגזר מהתוכן (תאריך-סכום-תיאור),
+    // כך ששתי שורות זהות נחשבו לישות אחת — עריכה/מחיקה פגעו בשתיהן.
+    // direction: 'repayment' (מקטין את היתרה, ברירת מחדל) או 'increase'
+    // (הלוואה נוספת מאבא, מגדיל את היתרה). שורות ישנות/מסונכרנות מהוצאות
+    // הן תמיד repayment — זה בדיוק ההתנהגות שהייתה קודם, בלי direction בכלל.
+    fatherHistory: (Array.isArray(next.fatherHistory) ? next.fatherHistory : clone(defaults.fatherHistory))
+      .map((row, i) => ({...row, id: row && row.id ? row.id : `father-legacy-${i}`, direction: row && row.direction === "increase" ? "increase" : "repayment"})),
     loanSchedule: Array.isArray(next.loanSchedule) ? next.loanSchedule : clone(defaults.loanSchedule)
   };
 }
@@ -3299,9 +3741,6 @@ async function pushCloudSnapshot(options={}){
   await refreshRecoveryPoints();
   return remote;
 }
-/* Push BOTH user rows + the settlements row from current local state.
-   Used after a full-snapshot restore (recovery point / backup import), where
-   the restored state spans both users and we want all rows to reflect it. */
 /* Push local state to the cloud after a full-snapshot restore (recovery point
    or backup import). Under real per-user auth, a logged-in session can only
    write its OWN row (RLS enforces this) — it can no longer write the
@@ -3400,7 +3839,7 @@ async function saveCloudSyncConnection(){
   const url = (document.getElementById("cloudSyncUrl").value || "").trim().replace(/\/+$/,"");
   const anonKey = (document.getElementById("cloudSyncAnonKey").value || "").trim();
   if(!url || !anonKey){
-    alert("צריך להזין גם Project URL וגם Anon Key.");
+    showToast("צריך להזין גם Project URL וגם Anon Key.", "error");
     return;
   }
   saveCloudSyncConfig({url, anonKey, disabled:false});
@@ -3433,7 +3872,7 @@ async function saveCloudSyncConnection(){
 }
 async function pullCloudSyncNow(){
   if(!hasCloudSyncConfig()){
-    alert("קודם שמור פרטי חיבור לענן.");
+    showToast("קודם שמור פרטי חיבור לענן.", "error");
     return;
   }
   try {
@@ -3446,7 +3885,7 @@ async function pullCloudSyncNow(){
 }
 async function pushCloudSyncNow(){
   if(!hasCloudSyncConfig()){
-    alert("קודם שמור פרטי חיבור לענן.");
+    showToast("קודם שמור פרטי חיבור לענן.", "error");
     return;
   }
   try {
@@ -3827,6 +4266,10 @@ function addSharedSettlement(data){
   saveSharedSettlements(list);
 }
 function deleteSharedSettlement(id){
+  const target = getSharedSettlements().find(s => s.id === id);
+  if(!target) return;
+  // מחיקת איזון כותבת tombstone שמסתנכרן גם לצד השני — לכן אישור מפורש.
+  if(!confirm(`למחוק את האיזון של ${fmt(target.amount)} (${getUserLabel(target.paidById)})? המחיקה תחול גם על הצד השני ואינה הפיכה.`)) return;
   const tombstones = getSharedSettlementTombstones();
   tombstones[id] = getIsoNow();
   saveSharedSettlementTombstones(tombstones);
@@ -3838,7 +4281,7 @@ function toggleSettlementForm(){
 }
 function submitSettlement(){
   const amt = Number(document.getElementById("settlAmt")?.value||0);
-  if(!amt||amt<=0){ alert("יש להזין סכום חיובי"); return; }
+  if(!amt||amt<=0){ showToast("יש להזין סכום חיובי", "error"); return; }
   const paidById = document.getElementById("settlPayer")?.value||currentUser;
   const partnerId = getPartnerUserId(currentUser);
   const receivedById = paidById===currentUser ? partnerId : currentUser;
@@ -3944,9 +4387,13 @@ function getFatherHistory(){
 }
 function addIncomeRow(){
   const rows = getIncomeRows(selectedSheet);
-  rows.push({id:`income-${Date.now()}`, source:"", amount:0, date_raw:""});
+  const id = `income-${Date.now()}`;
+  rows.push({id, source:"", amount:0, date_raw:formatDateForStorage(new Date().toISOString().slice(0,10)), type:"other", recurring:false});
   saveIncomeRows(selectedSheet, rows);
+  incomeEditMode = true;   // אחרת השורה החדשה מרונדרת כתצוגה בלבד ואי אפשר למלא אותה
   render();
+  const card = document.querySelector(`.income-edit-card[data-income-id="${id}"]`);
+  if(card){ card.scrollIntoView({behavior:"smooth", block:"center"}); card.querySelector("input")?.focus(); }
 }
 function updateIncomeRow(id, field, value){
   const coerce = field === "amount" ? Number(value || 0)
@@ -3958,29 +4405,48 @@ function updateIncomeRow(id, field, value){
   render();
 }
 function deleteIncomeRow(id){
-  const rows = getIncomeRows(selectedSheet).filter(row => row.id !== id);
-  saveIncomeRows(selectedSheet, rows);
+  const sheet = selectedSheet;
+  const allRows = getIncomeRows(sheet);
+  const index = allRows.findIndex(row => row.id === id);
+  if(index === -1) return;
+  const target = allRows[index];
+  const label = target.source ? `"${target.source}"` : "ההכנסה הזו";
+  saveIncomeRows(sheet, allRows.filter(row => row.id !== id));
   render();
+  showToast(`${label} נמחקה`, "info", {
+    actionLabel: "בטל",
+    onAction: () => {
+      const current = getIncomeRows(sheet);
+      if(current.some(row => row.id === id)) return; // כבר הוחזרה, לא לשכפל
+      const restored = [...current];
+      restored.splice(Math.min(index, restored.length), 0, target);
+      saveIncomeRows(sheet, restored);
+      render();
+    }
+  });
 }
-function addFatherHistoryRow(){
+function addFatherHistoryRow(direction="repayment"){
   const data = getDebtData();
-  data.fatherHistory.push({id:`father-${Date.now()}`, date_raw:"", amount:0, description:"", source:"ידני"});
+  data.fatherHistory.push({id:`father-${Date.now()}`, date_raw:formatDateForStorage(new Date().toISOString().slice(0,10)), amount:0, description:"", source:"ידני", direction});
+  data.enabled = true;
   saveDebtData(data);
+  debtEditMode = true;
   render();
 }
 function updateFatherHistoryRow(id, field, value){
   const data = getDebtData();
-  data.fatherHistory = data.fatherHistory.map(row => {
-    const rowId = row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`;
-    if(rowId !== id) return row;
-    return {...row, [field]: field === "amount" ? Number(value || 0) : value};
-  });
+  data.fatherHistory = data.fatherHistory.map(row =>
+    row.id === id ? {...row, [field]: field === "amount" ? Number(value || 0) : value} : row);
   saveDebtData(data);
   render();
 }
 function deleteFatherHistoryRow(id){
   const data = getDebtData();
-  data.fatherHistory = data.fatherHistory.filter(row => (row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`) !== id);
+  const target = data.fatherHistory.find(row => row.id === id);
+  if(!target) return;
+  const label = [target.date_raw, target.amount ? fmt(target.amount) : null].filter(Boolean).join(" · ") || "השורה הזו";
+  if(!confirm(`למחוק את ההחזר ${label}? הפעולה לא הפיכה.`)) return;
+  data.fatherHistory = data.fatherHistory.filter(row => row.id !== id);
   saveDebtData(data);
   render();
 }
@@ -4000,6 +4466,9 @@ function updateLoanScheduleRow(installment, field, value){
 }
 function deleteLoanScheduleRow(installment){
   const data = getDebtData();
+  const target = data.loanSchedule.find(row => row.installment === installment);
+  if(!target) return;
+  if(!confirm(`למחוק את תשלום ${installment}${target.dueDate ? ` (${target.dueDate})` : ""}? הפעולה לא הפיכה.`)) return;
   data.loanSchedule = data.loanSchedule.filter(row => row.installment !== installment);
   saveDebtData(data);
   render();
@@ -4067,7 +4536,7 @@ function importBackupFile(file){
     try {
       const backup = JSON.parse(String(reader.result || "{}"));
       if(!backup || backup.app !== "raz-expenses-local" || !backup.data){
-        alert("קובץ הגיבוי לא נראה כמו גיבוי תקין של האתר הזה.");
+        showToast("קובץ הגיבוי לא נראה כמו גיבוי תקין של האתר הזה.", "error");
         return;
       }
       const ok = confirm("ייבוא הגיבוי יחליף את הנתונים המקומיים ששמורים בדפדפן. להמשיך?");
@@ -4098,7 +4567,7 @@ function importBackupFile(file){
       refreshRecoveryPoints();
       render();
     } catch(e){
-      alert("לא הצלחתי לקרוא את קובץ הגיבוי. ודא שזה קובץ JSON תקין.");
+      showToast("לא הצלחתי לקרוא את קובץ הגיבוי. ודא שזה קובץ JSON תקין.", "error");
     }
   };
   reader.readAsText(file);
@@ -4457,7 +4926,7 @@ function getYearlySummaryData(year=selectedYear){
   const todayIso = getTodayIso();
   const fatherRemaining = debtEnabled ? Math.max(0, getFatherDebtStart() - getCombinedFatherRepayments()
     .filter(item => toIsoDate(item.date_raw) && toIsoDate(item.date_raw) <= todayIso)
-    .reduce((sum,row)=>sum + Number(row.amount || 0),0)) : 0;
+    .reduce((sum,row)=>sum + getFatherNetAmount(row),0)) : 0;
   const bankRemaining = debtEnabled ? Math.max(0, getLoanPrincipalBase() - getLoanSchedule()
     .filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso)
     .reduce((sum,entry)=>sum + Number(entry.principal || 0),0)) : 0;
@@ -4495,23 +4964,23 @@ function getYearlySummaryData(year=selectedYear){
 function getYearlyWidgetCatalog(year=selectedYear){
   const summary = getYearlySummaryData(year);
   const widgets = [
-    {id:"avg_expense", label:"ממוצע הוצאות חודשי", value:summary.averageExpense, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
-    {id:"avg_income", label:"ממוצע הכנסות חודשי", value:summary.averageIncome, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
-    {id:"avg_balance", label:"ממוצע מאזן חודשי", value:summary.averageBalance, sub:"הכנסות פחות הוצאות בממוצע", tone:getMetricTone(summary.averageBalance)},
-    {id:"year_to_date_savings", label:"חיסכון מתחילת השנה", value:summary.yearToDateSavings, sub:"המאזן המצטבר של כל החודשים שנרשמו", tone:getMetricTone(summary.yearToDateSavings)},
-    {id:"rolling_three_balance", label:"מאזן 3 חודשים אחרונים", value:summary.rollingThreeBalance, sub:"שלושת החודשים האחרונים יחד", tone:getMetricTone(summary.rollingThreeBalance)},
-    {id:"annual_expense_total", label:"סה״כ הוצאות שנתיות", value:summary.totalExpense, sub:"כל ההוצאות לאורך השנה"},
-    {id:"annual_income_total", label:"סה״כ הכנסות שנתיות", value:summary.totalIncome, sub:"כל ההכנסות לאורך השנה"},
-    {id:"annual_fixed_total", label:"סה״כ קבועות", value:summary.totalFixed, sub:"כל ההוצאות הקבועות בשנה"},
-    {id:"annual_variable_total", label:"סה״כ משתנות", value:summary.totalVariable, sub:"כל ההוצאות המשתנות בשנה"},
-    {id:"best_balance_month", label:"החודש הכי חזק", value:summary.bestBalanceMonth?.monthlyBalance ?? null, sub:summary.bestBalanceMonth ? formatSheetLabel(summary.bestBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.bestBalanceMonth?.monthlyBalance)},
-    {id:"worst_balance_month", label:"החודש הכי חלש", value:summary.worstBalanceMonth?.monthlyBalance ?? null, sub:summary.worstBalanceMonth ? formatSheetLabel(summary.worstBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.worstBalanceMonth?.monthlyBalance)}
+    {id:"avg_expense", icon:"📉", label:"ממוצע הוצאות חודשי", value:summary.averageExpense, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
+    {id:"avg_income", icon:"📈", label:"ממוצע הכנסות חודשי", value:summary.averageIncome, sub:"ממוצע לפי החודשים של השנה הנבחרת"},
+    {id:"avg_balance", icon:"⚖️", label:"ממוצע מאזן חודשי", value:summary.averageBalance, sub:"הכנסות פחות הוצאות בממוצע", tone:getMetricTone(summary.averageBalance)},
+    {id:"year_to_date_savings", icon:"💰", label:"חיסכון מתחילת השנה", value:summary.yearToDateSavings, sub:"המאזן המצטבר של כל החודשים שנרשמו", tone:getMetricTone(summary.yearToDateSavings)},
+    {id:"rolling_three_balance", icon:"📊", label:"מאזן 3 חודשים אחרונים", value:summary.rollingThreeBalance, sub:"שלושת החודשים האחרונים יחד", tone:getMetricTone(summary.rollingThreeBalance)},
+    {id:"annual_expense_total", icon:"🧾", label:"סה״כ הוצאות שנתיות", value:summary.totalExpense, sub:"כל ההוצאות לאורך השנה"},
+    {id:"annual_income_total", icon:"💵", label:"סה״כ הכנסות שנתיות", value:summary.totalIncome, sub:"כל ההכנסות לאורך השנה"},
+    {id:"annual_fixed_total", icon:"📌", label:"סה״כ קבועות", value:summary.totalFixed, sub:"כל ההוצאות הקבועות בשנה"},
+    {id:"annual_variable_total", icon:"🔄", label:"סה״כ משתנות", value:summary.totalVariable, sub:"כל ההוצאות המשתנות בשנה"},
+    {id:"best_balance_month", icon:"🏆", label:"החודש הכי חזק", value:summary.bestBalanceMonth?.monthlyBalance ?? null, sub:summary.bestBalanceMonth ? formatSheetLabel(summary.bestBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.bestBalanceMonth?.monthlyBalance)},
+    {id:"worst_balance_month", icon:"⚠️", label:"החודש הכי חלש", value:summary.worstBalanceMonth?.monthlyBalance ?? null, sub:summary.worstBalanceMonth ? formatSheetLabel(summary.worstBalanceMonth.sheet) : "אין נתונים", tone:getMetricTone(summary.worstBalanceMonth?.monthlyBalance)}
   ];
   if(isDebtTrackingEnabled()){
     widgets.splice(7, 0,
-      {id:"total_debt_remaining", label:"סך כל חובות פתוחים", value:summary.totalDebtRemaining || null, sub:"בנק ואבא יחד נכון להיום", action:"openDebtDetailsModal()", actionLabel:"פירוט"},
-      {id:"bank_remaining", label:"יתרת חוב לבנק", value:summary.bankRemaining || null, sub:"קרן נותרת לפי לוח הסילוקין"},
-      {id:"father_remaining", label:"יתרת חוב לאבא", value:summary.fatherRemaining || null, sub:"לאחר כל ההחזרים שנרשמו"}
+      {id:"total_debt_remaining", icon:"🏦", label:"סך כל חובות פתוחים", value:summary.totalDebtRemaining || null, sub:"בנק ואבא יחד נכון להיום", action:"openDebtDetailsModal()", actionLabel:"פירוט"},
+      {id:"bank_remaining", icon:"🏛️", label:"יתרת חוב לבנק", value:summary.bankRemaining || null, sub:"קרן נותרת לפי לוח הסילוקין"},
+      {id:"father_remaining", icon:"👨‍👦", label:"יתרת חוב לאבא", value:summary.fatherRemaining || null, sub:"לאחר כל ההחזרים שנרשמו"}
     );
   }
   return widgets;
@@ -4657,11 +5126,11 @@ function renderUserSelect(){
   const select = document.getElementById("userSelect");
   if(!select) return;
   const authenticatedUser = getAuthenticatedAppUserId();
-  select.innerHTML = USERS.map(user => `<option value="${user.id}">${user.label}</option>`).join("");
   if(authenticatedUser && currentUser !== authenticatedUser){
     currentUser = authenticatedUser;
     localStorage.setItem(ACTIVE_USER_STORAGE_KEY, currentUser);
   }
+  select.innerHTML = USERS.map(user => `<option value="${user.id}">${user.label}</option>`).join("");
   if(!USERS.some(user => user.id === currentUser)) currentUser = "raz";
   select.value = currentUser;
   select.disabled = Boolean(authenticatedUser);
@@ -4722,33 +5191,6 @@ function getCategoryOptionsForEditing(){
   if(!options.includes("דלק")) options.push("דלק");
   return options;
 }
-function renderCategoryManager(){
-  const list = document.getElementById("categoryManagerList");
-  if(!list) return;
-  const categories = getCategoryDefinitions();
-  if(!categories.length){
-    list.innerHTML = `<div class="debt-empty">עדיין אין קטגוריות לחשבון הזה.</div>`;
-    return;
-  }
-  list.innerHTML = categories.map((category, index) => categoryEditMode ? `
-    <div class="income-row editing">
-      <div class="field">
-        <label>שם קטגוריה</label>
-        <input value="${String(category.name || "").replace(/"/g,"&quot;")}" onchange="updateCategoryRow(${index}, 'name', this.value)">
-      </div>
-      <div class="field">
-        <label>תקציב</label>
-        <input value="${category.budget == null ? "" : Number(category.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
-      </div>
-      <button class="secondary" type="button" onclick="deleteCategoryRow(${index})">מחק</button>
-    </div>
-  ` : `
-    <div class="income-row">
-      <div><span class="mobile-label">קטגוריה</span><strong>${category.name}</strong></div>
-      <div class="amount"><span class="mobile-label">תקציב</span><strong>${category.budget == null ? "ללא תקציב" : fmt(category.budget)}</strong></div>
-    </div>
-  `).join("");
-}
 function addCategoryRow(){
   const categories = getCategoryDefinitions();
   categories.push({name:"קטגוריה חדשה", budget:null});
@@ -4785,6 +5227,10 @@ function getFatherRows(sheet){
     .filter(isFatherRepayment)
     .map(row => ({...row, source:"מהוצאות"}));
 }
+function getFatherNetAmount(row){
+  // repayment מקטין את היתרה (חיובי), increase מגדיל אותה (שלילי בסכימה).
+  return row && row.direction === "increase" ? -Number(row.amount || 0) : Number(row && row.amount || 0);
+}
 function getCombinedFatherRepayments(){
   const historical = getFatherHistory().map(item => ({...item, source:item.source || "היסטורי"}));
   const existingKeys = new Set(historical.map(item => normalizeRepaymentKey(item.date_raw, item.amount)));
@@ -4801,7 +5247,7 @@ function getFatherRepaymentTotal(sheet){
       const iso = toIsoDate(item.date_raw);
       return iso && Number(iso.slice(0,4)) === year && Number(iso.slice(5,7)) === month;
     })
-    .reduce((sum,row)=>sum + Number(row.amount || 0),0);
+    .reduce((sum,row)=>sum + getFatherNetAmount(row),0);
 }
 function getFatherRepaymentRowsForSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
@@ -4811,7 +5257,7 @@ function getFatherRepaymentRowsForSheet(sheet){
   });
 }
 function getTotalFatherRepayments(){
-  return getCombinedFatherRepayments().reduce((sum,row)=>sum + Number(row.amount || 0),0);
+  return getCombinedFatherRepayments().reduce((sum,row)=>sum + getFatherNetAmount(row),0);
 }
 function getFilteredRows(baseRows){
   let rows=[...baseRows],
@@ -4988,6 +5434,50 @@ function countUp(el, target, {dur=700, fmt=v=>Math.round(v).toLocaleString('he-I
     if (p < 1) requestAnimationFrame(step); else el.dataset.target = String(target);
   })(performance.now());
 }
+// עוטף countUp עם אותה הגנה שיש כבר על ה-hero: לא להריץ הנפשה מחדש אם הערך לא השתנה,
+// כי render() רץ הרבה יותר תכוף מהשינויים בפועל (כל onchange בטופס אחר).
+// הודעת toast שנעלמת לבד, במקום alert() חוסם. type: "info"|"success"|"error".
+// actionLabel+onAction אופציונליים — מאפשר שימוש חוזר לרכיב "בטל" בעתיד (גל 8.2.3) בלי לבנות מכל שני.
+function showToast(message, type="info", {duration=4200, actionLabel, onAction}={}){
+  const container = document.getElementById("toastContainer");
+  if(!container){ if(type === "error") console.error(message); return; }
+  const icon = type === "success" ? "✓" : type === "error" ? "⚠" : "ℹ";
+  const toast = document.createElement("div");
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<span class="toast-icon">${icon}</span><span>${escapeHtmlAttr(message)}</span>`;
+  if(actionLabel && onAction){
+    const btn = document.createElement("button");
+    btn.type = "button"; btn.className = "toast-action"; btn.textContent = actionLabel;
+    btn.onclick = () => { onAction(); dismiss(); };
+    toast.appendChild(btn);
+  }
+  container.appendChild(toast);
+  let dismissed = false;
+  function dismiss(){
+    if(dismissed) return;
+    dismissed = true;
+    toast.classList.add("leaving");
+    setTimeout(() => toast.remove(), 180);
+  }
+  setTimeout(dismiss, duration);
+  return dismiss;
+}
+// מנקה שדה סכום בלחיצה אחת במקום למחוק ספרה-ספרה, ומפעיל את ה-onchange הקיים של השדה כרגיל.
+function clearCurrencyField(btn){
+  const input = btn.previousElementSibling;
+  if(!input) return;
+  input.value = "";
+  input.dispatchEvent(new Event("change", {bubbles:true}));
+  input.focus();
+}
+function countUpIfChanged(el, value){
+  if(!el) return;
+  const prevTarget = Number(el.dataset.target || 0);
+  if(prevTarget !== value || !el.dataset.initialized){
+    countUp(el, value, {fmt});
+    el.dataset.initialized = "1";
+  }
+}
 function getHeroSparkData(){
   /* Reuse existing yearly running-balance data (getYearlyRowsData) — last up-to-6 months
      of cumulativeBalance, spanning year boundary by combining current + previous year if needed. */
@@ -5010,6 +5500,17 @@ function renderDashboardHero(){
   const closing = getDisplayedClosingBalance(selectedSheet);
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
+  const monthlyIncome = getIncomeTotal(selectedSheet);
+  const monthlyExpenses = getExpenseStats(selectedSheet).total;
+  const monthlyDebt = isDebtTrackingEnabled()
+    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0)
+    : 0;
+  const incomeMetric = document.getElementById("dashboardIncomeMetric");
+  const expenseMetric = document.getElementById("dashboardExpenseMetric");
+  const debtMetric = document.getElementById("dashboardDebtMetric");
+  if(incomeMetric) incomeMetric.textContent = fmt(monthlyIncome);
+  if(expenseMetric) expenseMetric.textContent = fmt(monthlyExpenses);
+  if(debtMetric) debtMetric.textContent = fmt(monthlyDebt);
   heroEl.classList.toggle("is-negative", value < 0);
   const prevTarget = Number(balEl.dataset.target || 0);
   if(prevTarget !== value || !balEl.dataset.initialized){
@@ -5022,10 +5523,14 @@ function renderDashboardHero(){
   if(prevSheet && deltaEl){
     const prevClosing = getDisplayedClosingBalance(prevSheet);
     if(prevClosing != null && prevClosing !== 0){
-      const pct = ((value - prevClosing) / Math.abs(prevClosing)) * 100;
+      const diff = value - prevClosing;
+      const pct = (diff / Math.abs(prevClosing)) * 100;
       deltaEl.style.display = "inline-flex";
-      deltaEl.className = "hero-delta " + (pct >= 0 ? "up" : "down");
-      deltaEl.textContent = `${Math.abs(pct).toFixed(1)}% מהחודש שעבר`;
+      deltaEl.className = "hero-delta " + (diff >= 0 ? "up" : "down");
+      // אחוז על בסיס קטן יוצא חסר משמעות (למשל "692.9%") — מעל 200% מציגים רק את ההפרש בשקלים.
+      deltaEl.textContent = Math.abs(pct) > 200
+        ? `${fmtIls(Math.abs(diff))} מהחודש שעבר`
+        : `${Math.abs(pct).toFixed(1)}% מהחודש שעבר`;
     } else {
       deltaEl.style.display = "none";
     }
@@ -5040,7 +5545,7 @@ function renderDashboardHero(){
     const trend = spark.values.length > 1 && spark.values[spark.values.length - 1] >= spark.values[0] ? "עלייה" : "ירידה";
     sparkAlt.textContent = `מגמה: ${spark.values.length} חודשים, ${trend}`;
   }
-  if(sparkCanvas && typeof Chart !== "undefined"){
+  if(sparkCanvas && !sparkCanvas.closest(".hero-spark")?.hidden && typeof Chart !== "undefined"){
     if(heroSparkInstance) heroSparkInstance.destroy();
     heroSparkInstance = new Chart(sparkCanvas, {
       type: "line",
@@ -5059,6 +5564,92 @@ function renderDashboardHero(){
       }
     });
   }
+}
+
+function getDashboardReviewItems(){
+  const rows = getEditableRows(selectedSheet);
+  const missingCategory = rows.filter(row => !normalizeCategory(row.category)).length;
+  const invalidRows = rows.filter(row => !String(row.merchant || "").trim() || !Number.isFinite(Number(row.amount)) || Number(row.amount) <= 0).length;
+  const sharedSummary = getSharedExpenseSummary();
+  const config = getCloudSyncConfig();
+  const loggedIn = isSupabaseSessionValid(loadSupabaseAuthSession());
+  const syncMessage = String(cloudSyncState.message || "");
+  const syncNeedsReview = !config.disabled && hasCloudSyncConfig() && (!loggedIn || /נכשל|שגיאה|צריך להתחבר|401|403/i.test(syncMessage));
+  const items = [];
+  if(invalidRows){
+    items.push({
+      tone:"warn",
+      title:`${invalidRows} הוצאות עם מידע חסר`,
+      sub:"צריך להשלים בית עסק או סכום לפני שהדוחות יהיו אמינים.",
+      action:"reviewExpensesNeedingAttention()",
+      label:"פתח הוצאות"
+    });
+  }
+  if(missingCategory){
+    items.push({
+      tone:"warn",
+      title:`${missingCategory} הוצאות ללא קטגוריה`,
+      sub:"הסיווג ישפר את התקציב, התחזית והסיכום השנתי.",
+      action:"reviewExpensesNeedingAttention()",
+      label:"סווג עכשיו"
+    });
+  }
+  if(Math.abs(Number(sharedSummary.netBalance || 0)) >= 1){
+    items.push({
+      tone:"warn",
+      title:`התחשבנות זוגית פתוחה · ${fmt(Math.abs(sharedSummary.netBalance))}`,
+      sub:"המאזן מחושב מכל ההוצאות המשותפות והאיזונים הישירים.",
+      action:"switchToTab('shared')",
+      label:"בדוק חלוקה"
+    });
+  }
+  if(syncNeedsReview){
+    items.push({
+      tone:"warn",
+      title:loggedIn ? "הסנכרון האחרון לא הושלם" : "הכניסה לענן ממתינה",
+      sub:loggedIn ? (syncMessage || "בדוק את מצב החיבור לפני עריכה ממכשיר נוסף.") : "התחבר כדי לראות ולעדכן את הנתונים משני המכשירים.",
+      action:"switchToTab('backup')",
+      label:"בדוק חיבור"
+    });
+  }
+  return items;
+}
+function reviewExpensesNeedingAttention(){
+  activeTab = "expenses";
+  editMode = true;
+  clearSelectedExpenseRows();
+  renderTabs();
+  render();
+  setTimeout(() => document.querySelector('[data-panel="expenses"] .expense-feed')?.scrollIntoView({behavior:"smooth",block:"start"}), 80);
+}
+function goToFirstDashboardReviewItem(){
+  const first = getDashboardReviewItems()[0];
+  if(!first) return;
+  if(first.action === "reviewExpensesNeedingAttention()") reviewExpensesNeedingAttention();
+  else if(first.action.includes("'shared'")) switchToTab("shared");
+  else switchToTab("backup");
+}
+function renderDashboardReviewQueue(){
+  const root = document.getElementById("dashboardReviewQueue");
+  if(!root) return;
+  const items = getDashboardReviewItems().slice(0,4);
+  root.innerHTML = `
+    <div class="review-queue-head">
+      <div>
+        <h2 class="review-queue-title" id="dashboardReviewTitle">ממתינות לבדיקה</h2>
+        <div class="review-queue-sub">רק פריטים שמשפיעים על אמינות הנתונים או על הסנכרון.</div>
+      </div>
+      <span class="review-count" aria-label="${items.length} פריטים">${items.length}</span>
+    </div>
+    ${items.length ? `<div class="review-list">${items.map(item => `
+      <div class="review-item">
+        <span class="review-marker ${item.tone === "good" ? "good" : ""}" aria-hidden="true"></span>
+        <div><strong>${escapeHtmlAttr(item.title)}</strong><small>${escapeHtmlAttr(item.sub)}</small></div>
+        <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+      </div>`).join("")}</div>
+      <button class="review-primary" type="button" onclick="goToFirstDashboardReviewItem()">בדוק את הפריט הראשון</button>`
+      : `<div class="review-all-clear">הכול מסודר — אין כרגע פריטים שממתינים לבדיקה.</div>`}
+  `;
 }
 
 function renderBudgetOverview(rows){
@@ -5166,18 +5757,18 @@ function renderCategorySummary(rows){
       return `<div class="summary-row editing">
         <div class="summary-category">
           <span>קטגוריה</span>
-          <input value="${String(c.name || "").replace(/"/g,"&quot;")}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
+          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
         </div>
         <div class="summary-metric">
           <span>תקציב</span>
-          <input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)">
+          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
         </div>
         <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
         <div class="summary-metric summary-actions">
           <span>נשאר</span><strong class="${cls}">${remainText}</strong>
         </div>
         <div class="summary-delete">
-          <button class="secondary" type="button" onclick="deleteCategoryRow(${index})">מחק</button>
+          <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
         </div>
       </div>`;
     }
@@ -5618,10 +6209,11 @@ function renderPaymentMethodTab(){
     const cardAmt = method.isImmediate ? monthlyCharge : scheduledCharge;
     const cardCnt = method.isImmediate ? monthlyCount : scheduledCount;
     return cardEditMode ? `
-      <div class="card-method">
+      <div class="card-method" style="position:relative">
+        <button class="income-edit-delete" type="button" onclick="deletePaymentMethodRow('${method.id}')" title="מחק כרטיס" aria-label="מחק כרטיס" style="position:absolute;top:12px;left:12px;z-index:2">🗑️</button>
         <div class="card-visual${method.isImmediate?" immediate":""}">
           <div class="card-visual-top">
-            <div class="card-visual-name">${method.name}</div>
+            <div class="card-visual-name">${escapeHtmlAttr(method.name)}</div>
             <div class="card-visual-chip"></div>
           </div>
           <div class="card-visual-type">${method.isImmediate ? "דיירקט / מיידי" : "כרטיס אשראי"}</div>
@@ -5630,7 +6222,7 @@ function renderPaymentMethodTab(){
           <div class="card-method-edit">
             <div class="field">
               <label>שם הכרטיס</label>
-              <input value="${String(method.name || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
+              <input value="${escapeHtmlAttr(method.name)}" onchange="updatePaymentMethodRow('${method.id}', 'name', this.value)">
             </div>
             <div class="field">
               <label>יום תחילת מחזור</label>
@@ -5638,7 +6230,7 @@ function renderPaymentMethodTab(){
             </div>
             <div class="field">
               <label>4 ספרות אחרונות (לזיהוי בייבוא)</label>
-              <input type="text" inputmode="numeric" maxlength="4" placeholder="למשל 8251" value="${String(method.last4 || "").replace(/"/g,"&quot;")}" onchange="updatePaymentMethodRow('${method.id}', 'last4', this.value)">
+              <input type="text" inputmode="numeric" maxlength="4" placeholder="למשל 8251" value="${escapeHtmlAttr(method.last4)}" onchange="updatePaymentMethodRow('${method.id}', 'last4', this.value)">
             </div>
             <div class="field">
               <label>סוג חיוב</label>
@@ -5647,7 +6239,6 @@ function renderPaymentMethodTab(){
                 <option value="immediate" ${method.isImmediate ? "selected" : ""}>מיידי / דיירקט</option>
               </select>
             </div>
-            <button class="secondary" type="button" onclick="deletePaymentMethodRow('${method.id}')">מחק</button>
           </div>
           <div class="card-method-grid" style="margin-top:12px">
             <div class="card-stat">
@@ -5752,7 +6343,7 @@ function deletePaymentMethodRow(id){
   if(!target) return;
   const isUsed = SHEET_OPTIONS.some(sheet => getEditableRows(sheet).some(row => row.payment === target.name));
   if(isUsed){
-    alert("אי אפשר למחוק כרטיס שכבר משויך להוצאות קיימות. אפשר קודם לשנות אותן לכרטיס אחר.");
+    showToast("אי אפשר למחוק כרטיס שכבר משויך להוצאות קיימות. אפשר קודם לשנות אותן לכרטיס אחר.", "error");
     return;
   }
   if(!confirm("למחוק את הכרטיס הזה?")) return;
@@ -5763,7 +6354,8 @@ function renderIncomeTab(){
   const list = document.getElementById("incomeList");
   const rows = getIncomeRows(selectedSheet);
   const incomeWindow = getIncomeWindowForSheet(selectedSheet);
-  document.getElementById("incomeMonthTotal").textContent = fmtOrDash(getIncomeTotal(selectedSheet));
+  const incomeTotal = getIncomeTotal(selectedSheet);
+  document.getElementById("incomeMonthTotal").textContent = fmtOrDash(incomeTotal);
   document.getElementById("incomeWindowRange").textContent = `חלון הכנסות: ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}`;
   if(!rows.length){
     list.innerHTML = `<div class="empty-state">
@@ -5775,12 +6367,13 @@ function renderIncomeTab(){
       </svg>
       <div class="empty-title">עדיין אין הכנסות מתועדות החודש</div>
       <div class="empty-sub">אפשר להתחיל עם משכורת, ביט או כל הכנסה אחרת — לחלון ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}.</div>
+      <button class="success-btn" type="button" onclick="addIncomeRow()">+ הוסף הכנסה ראשונה</button>
     </div>`;
     return;
   }
   list.innerHTML = rows.map(row => incomeEditMode ? `
-    <div class="income-row editing income-edit-card">
-      <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">✕</button>
+    <div class="income-row editing income-edit-card" data-income-id="${row.id}">
+      <button class="income-edit-delete" type="button" onclick="deleteIncomeRow('${row.id}')" title="מחק הכנסה" aria-label="מחק הכנסה">🗑️</button>
       <div class="income-edit-grid">
         <div class="field">
           <label>מקור הכנסה</label>
@@ -5788,7 +6381,7 @@ function renderIncomeTab(){
         </div>
         <div class="field">
           <label>סכום</label>
-          <input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)">
+          <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateIncomeRow('${row.id}', 'amount', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
         </div>
         <div class="field">
           <label>תאריך</label>
@@ -5817,21 +6410,16 @@ function renderIncomeTab(){
   ` : `
     <div class="income-row display-rich">
       <div class="income-cell">
-        <span class="mobile-label">מקור</span>
-        <span class="income-source-chip">${row.source || "ללא מקור"}</span>
-        <strong>${row.source || "ללא מקור"}</strong>
-        ${row.recurring ? `<span class="income-recurring-chip">חוזר</span>` : ""}
-        <div class="tiny">שויכה לחלון ${incomeWindow.startLabel} עד ${incomeWindow.endLabel}</div>
+        <div class="income-chips">
+          <span class="income-source-chip">${INCOME_TYPE_LABELS[row.type] || INCOME_TYPE_LABELS.other}</span>
+          ${row.recurring ? `<span class="income-recurring-chip">חוזר · ${row.recurringDay || 10} בחודש</span>` : ""}
+        </div>
+        <strong>${escapeHtmlAttr(row.source) || "ללא מקור"}</strong>
+        <div class="tiny">${row.date_raw || "ללא תאריך"}</div>
       </div>
       <div class="income-cell amount">
-        <span class="mobile-label">סכום</span>
-        <div class="tiny">סכום שנכנס</div>
         <strong>${fmt(row.amount)}</strong>
-      </div>
-      <div class="income-cell">
-        <span class="mobile-label">תאריך וחלק יחסי</span>
-        <div class="tiny">${row.date_raw || "אין תאריך מדויק"}</div>
-        <strong>${getIncomeTotal(selectedSheet) ? `${Math.round((Number(row.amount || 0) / getIncomeTotal(selectedSheet)) * 100)}%` : "—"}</strong>
+        <div class="tiny">${incomeTotal ? `${Math.round((Number(row.amount || 0) / incomeTotal) * 100)}% מההכנסות` : ""}</div>
       </div>
     </div>
   `).join("");
@@ -6004,7 +6592,7 @@ function copyRowToNextMonth(rowNumber){
   if(!sourceRow) return;
   const {year, month} = getSheetMonthYear(selectedSheet);
   if(!year || !month){
-    alert("לא הצלחתי לזהות את החודש הנוכחי.");
+    showToast("לא הצלחתי לזהות את החודש הנוכחי.", "error");
     return;
   }
   const nextMonth = shiftMonth(year, month, 1);
@@ -6023,7 +6611,7 @@ function copyRowToNextMonth(rowNumber){
     String(row.notes || "").trim() === String(sourceRow.notes || "").trim()
   );
   if(alreadyExists){
-    alert(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)}.`);
+    showToast(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)}.`, "error");
     return;
   }
   const nextRow = targetRows.length ? Math.max(...targetRows.map(r => Number(r.row) || 0)) + 1 : 1;
@@ -6037,14 +6625,14 @@ function copyRowToNextMonth(rowNumber){
   saveOverrides(o);
   selectedSheet = targetSheet;
   render();
-  setTimeout(()=>alert(`ההוצאה הועתקה ל-${formatSheetLabel(targetSheet)}.`), 0);
+  showToast(`ההוצאה הועתקה ל-${formatSheetLabel(targetSheet)}.`, "success");
 }
 function updateRowBillingShift(rowNumber, nextShiftValue){
   const sourceRows = getEditableRows(selectedSheet);
   const sourceRow = sourceRows.find(r => Number(r.row) === Number(rowNumber));
   if(!sourceRow) return;
   if(isRowImmediate(sourceRow) || !sourceRow.payment){
-    alert("שיוך חריג לחודש הבא רלוונטי רק לחיובים שנכנסים למחזור אשראי.");
+    showToast("שיוך חריג לחודש הבא רלוונטי רק לחיובים שנכנסים למחזור אשראי.", "error");
     return;
   }
   const desiredShift = Math.max(0, Number(nextShiftValue || 0));
@@ -6055,7 +6643,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     desiredShift
   );
   if(!targetSheet){
-    alert("לא הצלחתי לחשב את חודש החיוב החדש של ההוצאה.");
+    showToast("לא הצלחתי לחשב את חודש החיוב החדש של ההוצאה.", "error");
     return;
   }
   const targetRows = targetSheet === selectedSheet ? sourceRows : getEditableRows(targetSheet);
@@ -6072,7 +6660,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     Number(row.billingShiftMonths || 0) === desiredShift
   );
   if(alreadyExists){
-    alert(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)} עם אותו שיוך חיוב.`);
+    showToast(`ההוצאה הזאת כבר קיימת ב-${formatSheetLabel(targetSheet)} עם אותו שיוך חיוב.`, "error");
     return;
   }
   const movedRow = {
@@ -6084,7 +6672,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
     overrides[selectedSheet] = sourceRows.map(row => Number(row.row) === Number(rowNumber) ? movedRow : row);
     saveOverrides(overrides);
     render();
-    setTimeout(()=>alert(desiredShift ? "ההוצאה סומנה כחריג ותיכנס לחודש הבא." : "ההוצאה חזרה לשיוך החיוב האוטומטי."), 0);
+    showToast(desiredShift ? "ההוצאה סומנה כחריג ותיכנס לחודש הבא." : "ההוצאה חזרה לשיוך החיוב האוטומטי.", "success");
     return;
   }
   const nextRow = targetRows.length ? Math.max(...targetRows.map(r => Number(r.row) || 0)) + 1 : 1;
@@ -6095,7 +6683,7 @@ function updateRowBillingShift(rowNumber, nextShiftValue){
   selectedSheet = targetSheet;
   selectedExpenseRows.delete(Number(rowNumber));
   render();
-  setTimeout(()=>alert(desiredShift ? `ההוצאה הועברה ל-${formatSheetLabel(targetSheet)} כחריג חיוב.` : `ההוצאה חזרה ל-${formatSheetLabel(targetSheet)} לפי החיוב האוטומטי.`), 0);
+  showToast(desiredShift ? `ההוצאה הועברה ל-${formatSheetLabel(targetSheet)} כחריג חיוב.` : `ההוצאה חזרה ל-${formatSheetLabel(targetSheet)} לפי החיוב האוטומטי.`, "success");
 }
 function moveRowToNextMonth(rowNumber){
   updateRowBillingShift(rowNumber, Math.max(1, Number((getEditableRows(selectedSheet).find(r => Number(r.row) === Number(rowNumber)) || {}).billingShiftMonths || 0) + 1));
@@ -6106,18 +6694,18 @@ function resetRowBillingShift(rowNumber){
 function copySelectedRowsToNextMonth(){
   const selectedRows = getSelectedExpenseRowNumbers();
   if(!selectedRows.length){
-    alert("לא נבחרו הוצאות להעתקה.");
+    showToast("לא נבחרו הוצאות להעתקה.", "error");
     return;
   }
   const sourceRows = getEditableRows(selectedSheet);
   const rowsToCopy = sourceRows.filter(row => selectedRows.includes(Number(row.row)));
   if(!rowsToCopy.length){
-    alert("לא נבחרו הוצאות תקינות להעתקה.");
+    showToast("לא נבחרו הוצאות תקינות להעתקה.", "error");
     return;
   }
   const {year, month} = getSheetMonthYear(selectedSheet);
   if(!year || !month){
-    alert("לא הצלחתי לזהות את החודש הנוכחי.");
+    showToast("לא הצלחתי לזהות את החודש הנוכחי.", "error");
     return;
   }
   const nextMonth = shiftMonth(year, month, 1);
@@ -6157,7 +6745,7 @@ function copySelectedRowsToNextMonth(){
   });
 
   if(!copiedRows.length){
-    alert("כל ההוצאות המסומנות כבר קיימות בחודש הבא.");
+    showToast("כל ההוצאות המסומנות כבר קיימות בחודש הבא.", "error");
     return;
   }
 
@@ -6169,7 +6757,7 @@ function copySelectedRowsToNextMonth(){
   render();
   const copiedCount = copiedRows.length;
   const skippedText = skipped ? `, ו-${skipped} כבר היו קיימות` : "";
-  setTimeout(()=>alert(`הועתקו ${copiedCount} הוצאות ל-${formatSheetLabel(targetSheet)}${skippedText}.`), 0);
+  showToast(`הועתקו ${copiedCount} הוצאות ל-${formatSheetLabel(targetSheet)}${skippedText}.`, "success");
 }
 function sproutConfirm(){
   const el = document.createElement("div");
@@ -6204,13 +6792,13 @@ function addNewExpense(){
   const amount = Number(document.getElementById("newAmount").value || 0);
   const merchant = (document.getElementById("newMerchant").value || "").trim();
   if(!merchant || !amount){
-    alert("צריך לפחות בית עסק וסכום.");
+    showToast("צריך לפחות בית עסק וסכום.", "error");
     return;
   }
   const dateValue = document.getElementById("newDate").value || "";
   const rawPayment = document.getElementById("newPayment").value || "";
   if(rawPayment === "__unset__"){
-    alert("צריך לבחור אמצעי תשלום או העברה בנקאית.");
+    showToast("צריך לבחור אמצעי תשלום או העברה בנקאית.", "error");
     return;
   }
   const payment = rawPayment;
@@ -6256,7 +6844,7 @@ function addNewExpense(){
   render();
   sproutConfirm();
   if(createdSheet || previousSheet !== targetSheet){
-    setTimeout(()=>alert(`ההוצאה נשמרה בגיליון ${formatSheetLabel(targetSheet)} לפי מחזור החיוב.`), 0);
+    showToast(`ההוצאה נשמרה בגיליון ${formatSheetLabel(targetSheet)} לפי מחזור החיוב.`, "success");
   }
 }
 function updateRow(rowNumber, field, value){
@@ -6405,7 +6993,7 @@ function renderTable(rows){
     }
     return `<div class="feed-edit-row" data-row="${rowId}"><div class="edit-card">
         <div class="edit-card-top">
-          <div class="edit-card-title">${draft.date_raw || ""} · ${draft.merchant || ""}</div>
+          <div class="edit-card-title">${escapeHtmlAttr(draft.date_raw)} · ${escapeHtmlAttr(draft.merchant)}</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
             <label class="compact-badge" style="display:flex;align-items:center;gap:6px;cursor:pointer">
               <input type="checkbox" ${isSelected ? "checked" : ""} onchange="toggleExpenseSelection(${rowId})">
@@ -6424,7 +7012,7 @@ function renderTable(rows){
         </div>
         <div class="edit-card-grid">
           <div class="field"><label>תאריך</label><input type="date" value="${toIsoDate(draft.date_raw)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'date_raw', formatDateForStorage(this.value))` : `updateRow(${rowId}, 'date_raw', formatDateForStorage(this.value))`}"></div>
-          <div class="field"><label>בית עסק</label><input value="${String(draft.merchant || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
+          <div class="field"><label>בית עסק</label><input value="${escapeHtmlAttr(draft.merchant)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
           <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
           <div class="field"><label><span class="category-field-swatch" style="background:${getCategoryColor(normalizeCategory(draft.category)||draft.category)}"></span>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
           <div class="field"><label>סוג</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'type', this.value)` : `updateRow(${rowId}, 'type', this.value)`}"><option value="" ${!draft.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${draft.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${draft.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
@@ -6512,16 +7100,6 @@ function updateMiniNavLabel(){
   const title = document.getElementById("miniNavLabelTitle");
   if(icon && meta) icon.textContent = meta.icon;
   if(title && meta) title.textContent = meta.label;
-}
-/* Stage 2: cycle to prev/next tab via mini-nav chevrons (mobile-only navigation aid).
-   Reuses existing switchToTab() and TAB_META — does not modify any state logic. */
-function cycleMiniNavTab(dir){
-  const list = TAB_META.filter(t => t.id !== "debts" || isDebtTrackingEnabled());
-  const idx = list.findIndex(t => t.id === activeTab);
-  if(idx < 0) return;
-  const len = list.length;
-  const nextIdx = dir === "next" ? (idx + 1) % len : (idx - 1 + len) % len;
-  switchToTab(list[nextIdx].id);
 }
 function renderMiniNavMeta(){
   const userChip = document.getElementById("miniNavUserChip");
@@ -6636,8 +7214,8 @@ function renderSharedExpensesTab(){
       <div class="shared-expense-card">
         <div class="sec-header">
           <div class="sec-header-info">
-            <div class="sec-header-name">${entry.merchant}</div>
-            <div class="sec-header-date">${entry.date_raw || "ללא תאריך"} · ${formatSheetLabel(entry.sheet)}</div>
+            <div class="sec-header-name">${escapeHtmlAttr(entry.merchant)}</div>
+            <div class="sec-header-date">${escapeHtmlAttr(entry.date_raw) || "ללא תאריך"} · ${formatSheetLabel(entry.sheet)}</div>
           </div>
           <div class="sec-header-amount">${fmt(entry.amount)}</div>
         </div>
@@ -6662,6 +7240,12 @@ function renderSharedExpensesTab(){
   }).join("");
 }
 /* ─────────────────────────────────────────────────────── */
+function openPersonalWorkspace(){
+  switchToTab("dashboard");
+}
+function openCoupleWorkspace(){
+  switchToTab("shared");
+}
 function renderTabs(){
   const showDebts = isDebtTrackingEnabled();
   const setupBtn = document.getElementById("showDebtsSetupBtn");
@@ -6672,7 +7256,11 @@ function renderTabs(){
     if(btn.dataset.tab === "debts"){
       btn.style.display = showDebts ? "" : "none";
     }
-    btn.classList.toggle("active", btn.dataset.tab === activeTab);
+    const isActive = btn.dataset.tab === activeTab;
+    btn.classList.toggle("active", isActive);
+    if(btn.getAttribute("role") === "tab") btn.setAttribute("aria-selected", String(isActive));
+    if(isActive) btn.setAttribute("aria-current", "page");
+    else btn.removeAttribute("aria-current");
   });
   if(setupBtn){
     setupBtn.style.display = showDebts ? "none" : "inline-flex";
@@ -6681,8 +7269,81 @@ function renderTabs(){
   document.querySelectorAll(".tab-panel").forEach(panel=>{
     panel.classList.toggle("active", panel.dataset.panel === activeTab);
   });
+  const moreButton = document.querySelector(".btab-more");
+  if(moreButton){
+    const moreIsActive = ["income","cards","debts","yearly","backup"].includes(activeTab);
+    moreButton.classList.toggle("active", moreIsActive);
+    moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
+  }
+  const fab = document.getElementById("fabBtn");
+  if(fab) fab.style.display = activeTab === "expenses" ? "grid" : "none";
+  const personalBtn = document.getElementById("personalWorkspaceBtn");
+  const coupleBtn = document.getElementById("coupleWorkspaceBtn");
+  if(personalBtn) personalBtn.classList.toggle("active", activeTab === "dashboard");
+  if(coupleBtn) coupleBtn.classList.toggle("active", activeTab === "shared");
   updateMiniNavLabel();
   renderMiniNavMeta();
+}
+function renderEditSafetyBanner(){
+  const banner = document.getElementById("editSafetyBanner");
+  if(!banner) return;
+  const activeModes = {
+    expenses:editMode,
+    budget:categoryEditMode,
+    income:incomeEditMode,
+    cards:cardEditMode,
+    debts:debtEditMode
+  };
+  const isEditing = Boolean(activeModes[activeTab]);
+  banner.hidden = !isEditing;
+  if(!isEditing) return;
+  const labels = {expenses:"הוצאות",budget:"קטגוריות ותקציבים",income:"הכנסות",cards:"כרטיסים",debts:"חובות"};
+  banner.textContent = `מצב עריכה פעיל · ${labels[activeTab]} · השינויים נשמרים אוטומטית. מחיקה תבקש אישור או תציע ביטול.`;
+}
+function renderLoanScheduleRows(rows, currentMonthKey, todayIso){
+  if(!rows.length) return `<div class="debt-empty">עדיין לא ירד חיוב מהלוואת הבנק לפי לוח הסילוקין.</div>`;
+  const header = `<div class="debt-col-header"><span>תשלום</span><span>תאריך חיוב</span><span>קרן</span>${debtEditMode ? "<span></span>" : ""}</div>`;
+  const groups = new Map();
+  rows.forEach(entry => {
+    const year = toIsoDate(entry.dueDate).slice(0,4) || "ללא תאריך";
+    if(!groups.has(year)) groups.set(year, []);
+    groups.get(year).push(entry);
+  });
+  const years = [...groups.keys()].sort((a,b)=>b.localeCompare(a));
+  const currentYear = currentMonthKey.slice(0,4);
+  const body = years.map(year => {
+    const yearRows = groups.get(year);
+    const yearTotal = yearRows.reduce((sum,r)=>sum+Number(r.principal||0),0);
+    const isCurrentYear = year === currentYear;
+    const rowsHtml = yearRows.map(entry => {
+      const iso = toIsoDate(entry.dueDate);
+      const isCurrent = iso.slice(0,7) === currentMonthKey;
+      const isFuture = iso && iso > todayIso;
+      const stateClass = isCurrent ? " is-current" : (isFuture ? " is-future" : "");
+      return debtEditMode ? `
+      <div class="debt-row bank-debt-row editing${stateClass}">
+        <div>
+          <strong>תשלום ${entry.installment}</strong>
+          <div class="micro">${isCurrent ? "החודש הנוכחי" : (isFuture ? "עתידי" : "שולם")}</div>
+        </div>
+        <div><input type="date" value="${iso}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', formatDateForStorage(this.value))"></div>
+        <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
+        <div><button class="row-delete-btn" type="button" onclick="deleteLoanScheduleRow(${entry.installment})" title="מחק תשלום" aria-label="מחק תשלום">🗑️</button></div>
+      </div>
+    ` : `
+      <div class="debt-row bank-debt-row${stateClass}">
+        <div><strong>תשלום ${entry.installment}</strong><div class="micro">${isCurrent ? "החודש הנוכחי" : "שולם"}</div></div>
+        <div class="mobile-metric"><span class="mobile-label">תאריך חיוב</span>${entry.dueDate}</div>
+        <div class="mobile-metric"><span class="mobile-label">קרן</span><strong>${fmt(entry.principal)}</strong></div>
+      </div>
+    `;
+    }).join("");
+    return `<details class="debt-year-group"${isCurrentYear ? " open" : ""}>
+      <summary class="debt-year-summary"><span>${year}</span><span class="muted">${yearRows.length} תשלומים · ${fmt(yearTotal)}</span></summary>
+      <div class="debt-year-body">${rowsHtml}</div>
+    </details>`;
+  }).join("");
+  return header + body;
 }
 function renderDebts(){
   const debtData = getDebtData();
@@ -6694,9 +7355,11 @@ function renderDebts(){
   const visibilityBtn = document.getElementById("toggleDebtVisibilityBtn");
   const addLoanBtn = document.getElementById("addDebtLoanBtn");
   const addFatherBtn = document.getElementById("addDebtFatherBtn");
+  const addFatherIncreaseBtn = document.getElementById("addDebtFatherIncreaseBtn");
   if(visibilityBtn) visibilityBtn.textContent = enabled ? "הסתר טאב חובות" : "הפעל טאב חובות";
   if(addLoanBtn) addLoanBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
   if(addFatherBtn) addFatherBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
+  if(addFatherIncreaseBtn) addFatherIncreaseBtn.style.display = debtEditMode && enabled ? "inline-flex" : "none";
   if(!enabled){
     if(debtDisabledState){
       debtDisabledState.style.display = "block";
@@ -6736,11 +7399,9 @@ function renderDebts(){
   const bankProgress = getLoanPrincipalBase() ? Math.max(0, Math.min(100, Math.round((bankPaidPrincipal / getLoanPrincipalBase()) * 100))) : 0;
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
   document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal);
-  document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : "—";
-  document.getElementById("debtBankRemaining").textContent = fmt(bankRemaining);
-  document.getElementById("debtFatherRemaining").textContent = fmt(fatherRemaining);
-  document.getElementById("debtBankRemainingHero").textContent = fmt(bankRemaining);
-  document.getElementById("debtFatherRemainingHero").textContent = fmt(fatherRemaining);
+  document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
+  countUpIfChanged(document.getElementById("debtBankRemainingHero"), bankRemaining);
+  countUpIfChanged(document.getElementById("debtFatherRemainingHero"), fatherRemaining);
   document.getElementById("debtBankProgressBar").style.width = `${bankProgress}%`;
   document.getElementById("debtFatherProgressBar").style.width = `${fatherProgress}%`;
   document.getElementById("debtBankProgressTag").textContent = bankRemaining ? `${bankProgress}% נפרע` : "ללא יתרה";
@@ -6766,23 +7427,7 @@ function renderDebts(){
     <span class="tag">קרן שנפרעה: ${fmt(bankPaidPrincipal)}</span>
     <span class="tag">יתרת קרן משוערת: ${fmt(bankRemaining)}</span>
   `;
-  document.getElementById("bankDebtRows").innerHTML = chargedLoanRows.length ? chargedLoanRows.map(entry => debtEditMode ? `
-      <div class="debt-row bank-debt-row editing">
-        <div>
-          <strong>תשלום ${entry.installment}</strong>
-          <div class="micro">${toIsoDate(entry.dueDate).slice(0,7) === currentMonthKey ? "החודש הנוכחי" : "לוח סילוקין"}</div>
-        </div>
-        <div><input type="text" value="${entry.dueDate}" onchange="updateLoanScheduleRow(${entry.installment}, 'dueDate', this.value)"></div>
-        <div><input type="number" step="0.01" value="${Number(entry.principal || 0)}" onchange="updateLoanScheduleRow(${entry.installment}, 'principal', this.value)"></div>
-        <div><button class="secondary" type="button" onclick="deleteLoanScheduleRow(${entry.installment})">מחק</button></div>
-      </div>
-    ` : `
-      <div class="debt-row bank-debt-row">
-        <div><strong>תשלום ${entry.installment}</strong><div class="micro">${toIsoDate(entry.dueDate).slice(0,7) === currentMonthKey ? "החודש הנוכחי" : "לוח סילוקין"}</div></div>
-        <div class="mobile-metric"><span class="mobile-label">תאריך חיוב</span>${entry.dueDate}</div>
-        <div class="mobile-metric"><span class="mobile-label">קרן</span><strong>${fmt(entry.principal)}</strong></div>
-      </div>
-    `).join("") : `<div class="debt-empty">עדיין לא ירד חיוב מהלוואת הבנק לפי לוח הסילוקין.</div>`;
+  document.getElementById("bankDebtRows").innerHTML = renderLoanScheduleRows(chargedLoanRows, currentMonthKey, todayIso);
   document.getElementById("fatherDebtMeta").innerHTML = `
     <span class="tag">חוב פתיחה: ${fmt(getFatherDebtStart())}</span>
     <span class="tag">שולם עד כה: ${fmt(getTotalFatherRepayments())}</span>
@@ -6791,32 +7436,67 @@ function renderDebts(){
   document.getElementById("debtFatherRows").innerHTML = `
     ${debtEditMode ? `<div class="debt-meta-editor">
       <div class="field">
-        <label>חוב פתיחה לאבא</label>
+        <label>יתרת פתיחה היסטורית (לא לעדכן עבור הלוואה חדשה!)</label>
         <input type="number" step="0.01" value="${Number(getFatherDebtStart() || 0)}" onchange="updateDebtSetting('fatherDebtStart', this.value)">
+        <div class="micro" style="margin-top:4px">לקחת הלוואה נוספת? השתמש ב"תוספת הלוואה +" למטה — היתרה תתעדכן לבד, בלי לחשב בראש.</div>
       </div>
       <div class="field">
-        <label>החזר ידני</label>
-        <button class="success-btn" type="button" onclick="addFatherHistoryRow()">החזר ידני לאבא +</button>
+        <label>רישום ידני</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="success-btn" type="button" onclick="addFatherHistoryRow('repayment')">החזר ידני +</button>
+          <button class="secondary" type="button" onclick="addFatherHistoryRow('increase')" style="border-color:var(--bad);color:var(--bad)">תוספת הלוואה +</button>
+        </div>
       </div>
     </div>` : ""}
     ${allFatherRows.length ? allFatherRows.map(row => {
-      const rowId = row.id || `${row.date_raw}-${row.amount}-${row.description || ""}`;
-      const editable = row.source !== "מהוצאות";
+      const rowId = row.id;
+      const editable = row.source !== "מהוצאות" && rowId;
+      const isIncrease = row.direction === "increase";
       if(debtEditMode && editable){
-        return `<div class="debt-row">
-          <div><input type="text" value="${String(row.description || row.merchant || "").replace(/"/g,"&quot;")}" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)"></div>
-          <div><input type="text" value="${row.date_raw || ""}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', this.value)"></div>
-          <div><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"></div>
-          <div><button class="secondary" type="button" onclick="deleteFatherHistoryRow('${rowId}')">מחק</button></div>
+        return `<div class="income-edit-card${isIncrease ? " is-increase" : ""}">
+          <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">🗑️</button>
+          <div class="income-edit-grid">
+            <div class="field">
+              <label>תיאור</label>
+              <input value="${escapeHtmlAttr(row.description || row.merchant)}" placeholder="למה זה קשור" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)">
+            </div>
+            <div class="field">
+              <label>סכום</label>
+              <div class="field-currency-wrap"><input type="number" step="0.01" value="${Number(row.amount || 0)}" onchange="updateFatherHistoryRow('${rowId}', 'amount', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
+            </div>
+            <div class="field">
+              <label>תאריך</label>
+              <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))">
+            </div>
+            <div class="field">
+              <label>סוג</label>
+              <select onchange="updateFatherHistoryRow('${rowId}', 'direction', this.value)">
+                <option value="repayment"${!isIncrease ? " selected" : ""}>החזר (מקטין את היתרה)</option>
+                <option value="increase"${isIncrease ? " selected" : ""}>תוספת הלוואה (מגדיל את היתרה)</option>
+              </select>
+            </div>
+          </div>
         </div>`;
       }
-      return `<div class="debt-row">
-        <div><strong>${row.merchant || row.description || "ללא שם"}</strong><div class="micro">${row.notes || row.description || "ללא הערה"} · ${row.source || "מערכת"}${toIsoDate(row.date_raw).slice(0,7) === currentMonthKey ? " · החודש הנוכחי" : ""}</div></div>
+      return `<div class="debt-row${isIncrease ? " is-increase" : ""}">
+        <div>
+          <strong>${escapeHtmlAttr(row.merchant || row.description) || "ללא שם"}</strong>
+          <span class="debt-direction-badge${isIncrease ? " increase" : ""}">${isIncrease ? "הלוואה נוספה" : "הוחזר"}</span>
+          <div class="micro">${escapeHtmlAttr(row.notes || row.description) || "ללא הערה"} · ${escapeHtmlAttr(row.source) || "מערכת"}${toIsoDate(row.date_raw).slice(0,7) === currentMonthKey ? " · החודש הנוכחי" : ""}</div>
+        </div>
         <div class="mobile-metric"><span class="mobile-label">תאריך</span>${row.date_raw || "—"}</div>
         <div class="mobile-metric"><span class="mobile-label">אמצעי</span>${row.payment || "העברה"}</div>
-        <div class="mobile-metric"><span class="mobile-label">סכום</span><strong>${fmt(row.amount)}</strong></div>
+        <div class="mobile-metric"><span class="mobile-label">סכום</span><strong class="${isIncrease ? "debt-amount-increase" : ""}">${isIncrease ? "+" : ""}${fmt(row.amount)}</strong></div>
       </div>`;
-    }).join("") : `<div class="info-box" style="margin-top:14px">עדיין לא נמצאו החזרים לאבא.</div>`}
+    }).join("") : `<div class="empty-state" style="margin-top:14px">
+      <svg class="empty-art neutral" viewBox="0 0 64 64" aria-hidden="true">
+        <path d="M16 46h32"/>
+        <path d="M22 46V28l10-10 10 10v18"/>
+        <path d="M28 46v-10h8v10"/>
+      </svg>
+      <div class="empty-title">עדיין אין רישום להחזרים או להלוואות מאבא</div>
+      <div class="empty-sub">ברגע שתוסיפו החזר ידני או תוספת הלוואה, הן יופיעו כאן עם היתרה המעודכנת.</div>
+    </div>`}
   `;
 }
 function renderYearly(){
@@ -6828,7 +7508,8 @@ function renderYearly(){
   const visibleWidgetIds = selectedWidgetIds.length ? selectedWidgetIds : fallbackWidgetIds;
   const visibleWidgets = visibleWidgetIds.map(id => widgetCatalog.find(item => item.id === id)).filter(Boolean);
   document.getElementById("yearlyKpis").innerHTML = visibleWidgets.map(item => `
-    <div class="kpi">
+    <div class="kpi kpi-yearly${item.tone ? ` tone-${item.tone}` : ""}">
+      <div class="kpi-icon">${item.icon || "📅"}</div>
       ${item.action ? `<button class="kpi-edit-btn" type="button" onclick="${item.action}">${item.actionLabel || "פירוט"}</button>` : ""}
       <div class="label">${item.label}</div>
       <div class="value kpi-value ${item.tone || ""}">${formatMetricValue(item.value, item.format)}</div>
@@ -6847,7 +7528,7 @@ function renderYearly(){
       <td data-label="חודש">${formatSheetLabel(row.sheet)}</td>
       ${visibleColumns.map(column => `<td data-label="${column.label}">${fmtOrDash(row[column.id])}</td>`).join("")}
     </tr>
-  `).join("") || `<tr><td colspan="${visibleColumns.length + 1}">אין כרגע חודשים זמינים לשנה הזאת.</td></tr>`;
+  `).join("") || `<tr><td colspan="${visibleColumns.length + 1}" style="text-align:center;padding:24px;color:var(--muted)">🌱 עדיין אין חודשים מתועדים בשנה הזאת — הם יופיעו כאן ברגע שיהיו נתונים.</td></tr>`;
 }
 function renderHero(baseRows){
   const total = baseRows.reduce((sum,row)=>sum + Number(row.amount || 0),0);
@@ -6915,6 +7596,7 @@ function render(){
     const rows = getFilteredRows(baseRows);
     renderHero(baseRows);
     renderDashboardHero();
+    renderDashboardReviewQueue();
     renderExcelKpis();
     renderBudgetOverview(baseRows);
     renderCategorySummary(baseRows);
@@ -6927,6 +7609,7 @@ function render(){
     renderCloudSyncStatus();
     renderRecoveryPoints();
     document.body.classList.toggle("edit-active", editMode);
+    renderEditSafetyBanner();
     const btn=document.getElementById("toggleEditBtn");
     // edit button label handled by CSS classes
     btn.classList.toggle("active", editMode);
@@ -6936,9 +7619,9 @@ function render(){
       copySelectedBtn.textContent = selectedExpenseRows.size ? `העתק מסומנות (${selectedExpenseRows.size}) לחודש הבא` : "העתק מסומנות לחודש הבא";
     }
     const incomeBtn = document.getElementById("toggleIncomeEditBtn");
-    incomeBtn.textContent = `מצב עריכה: ${incomeEditMode ? "פעיל" : "כבוי"}`;
+    incomeBtn.textContent = incomeEditMode ? "סיום עריכה" : "עריכה";
     incomeBtn.classList.toggle("active", incomeEditMode);
-    document.getElementById("addIncomeBtn").style.display = incomeEditMode ? "inline-flex" : "none";
+    document.getElementById("addIncomeBtn").style.display = "inline-flex";
     const debtBtn = document.getElementById("toggleDebtEditBtn");
     debtBtn.textContent = `מצב עריכה: ${debtEditMode ? "פעיל" : "כבוי"}`;
     debtBtn.classList.toggle("active", debtEditMode);
@@ -7017,7 +7700,8 @@ document.getElementById("toggleDebtVisibilityBtn").onclick=()=>{
   render();
 };
 document.getElementById("addDebtLoanBtn").onclick=addLoanScheduleRow;
-document.getElementById("addDebtFatherBtn").onclick=addFatherHistoryRow;
+document.getElementById("addDebtFatherBtn").onclick=()=>addFatherHistoryRow("repayment");
+document.getElementById("addDebtFatherIncreaseBtn").onclick=()=>addFatherHistoryRow("increase");
 document.getElementById("toggleCategoryEditBtn").onclick=()=>{ categoryEditMode=!categoryEditMode; render(); };
 document.getElementById("toggleDashboardPrefsBtn").onclick=()=>{ dashboardPrefsOpen=!dashboardPrefsOpen; render(); };
 document.getElementById("toggleYearlyPrefsBtn").onclick=()=>{ yearlyPrefsOpen=!yearlyPrefsOpen; render(); };
@@ -7094,26 +7778,6 @@ function exportBackupFromBanner(){
   dismissBackupBanner();
 }
 
-
-/* ── Hero collapse ─────────────────────────── */
-const HERO_COLLAPSE_KEY = "expense_hero_collapsed_v1";
-function toggleHeroCollapse(){
-  const hero = document.getElementById("heroCard");
-  const btn  = document.getElementById("heroCollapseBtn");
-  if(!hero) return;
-  const isNowCollapsed = !hero.classList.contains("hero-collapsed");
-  hero.classList.toggle("hero-collapsed", isNowCollapsed);
-  if(btn) btn.classList.toggle("rotated", isNowCollapsed);
-  localStorage.setItem(HERO_COLLAPSE_KEY, isNowCollapsed ? "1" : "0");
-}
-function initHeroCollapse(){
-  if(localStorage.getItem(HERO_COLLAPSE_KEY) === "1"){
-    const hero = document.getElementById("heroCard");
-    const btn  = document.getElementById("heroCollapseBtn");
-    if(hero){ hero.classList.add("hero-collapsed"); }
-    if(btn)  { btn.classList.add("rotated"); }
-  }
-}
 
 /* ── Mobile expense list ─────────────────────── */
 let mxpOpenRow = null;
@@ -7192,6 +7856,7 @@ function openMoreSheet(){
   const sh=document.getElementById("moreSheet");
   if(bd) bd.classList.add("open");
   if(sh){ sh.classList.add("open"); }
+  document.querySelector(".btab-more")?.setAttribute("aria-expanded", "true");
   document.addEventListener("keydown", moreSheetEsc);
 }
 function closeMoreSheet(){
@@ -7199,6 +7864,7 @@ function closeMoreSheet(){
   const sh=document.getElementById("moreSheet");
   if(bd) bd.classList.remove("open");
   if(sh) sh.classList.remove("open");
+  document.querySelector(".btab-more")?.setAttribute("aria-expanded", "false");
   document.removeEventListener("keydown", moreSheetEsc);
 }
 function moreSheetEsc(e){ if(e.key==="Escape") closeMoreSheet(); }
@@ -7208,6 +7874,9 @@ function showMobileEditSheet(rowId, row){
   if(!modal){
     modal = document.createElement("div");
     modal.id = "mobileEditModal";
+    modal.setAttribute("role", "dialog");
+    modal.setAttribute("aria-modal", "true");
+    modal.setAttribute("aria-label", "עריכת הוצאה");
     modal.style.cssText = "position:fixed;inset:0;z-index:300;background:rgba(0,0,0,.5);display:flex;align-items:flex-end;overflow:hidden";
     document.body.appendChild(modal);
   }
@@ -7221,9 +7890,9 @@ function showMobileEditSheet(rowId, row){
         <button onclick="closeMobileEditSheet()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&times;</button>
       </div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
-        <div class="field" style="grid-column:1/-1"><label>בית עסק</label><input id="mxpEditMerchant" value="${(row.merchant||"").replace(/"/g,'&quot;')}"></div>
+        <div class="field" style="grid-column:1/-1"><label>בית עסק</label><input id="mxpEditMerchant" value="${escapeHtmlAttr(row.merchant)}"></div>
         <div class="field"><label>סכום</label><input id="mxpEditAmount" type="number" step="0.01" value="${row.amount||""}"></div>
-        <div class="field"><label>תאריך</label><input id="mxpEditDate" type="date" value="${dateRawToISO(row.date_raw||"")}"></div>
+        <div class="field"><label>תאריך</label><input id="mxpEditDate" type="date" value="${toIsoDate(row.date_raw||"")}"></div>
         <div class="field"><label>קטגוריה</label><select id="mxpEditCat">${cats}</select></div>
         <div class="field"><label>אשראי</label><select id="mxpEditPay"><option value="">העברה בנקאית</option>${pays}</select></div>
         <div class="field"><label>סוג</label><select id="mxpEditType">
@@ -7239,12 +7908,6 @@ function showMobileEditSheet(rowId, row){
     </div>`;
   modal.style.display = "flex";
 }
-function dateRawToISO(dr){
-  if(!dr) return "";
-  const p = dr.split("/");
-  if(p.length === 3) return p[2]+"-"+p[1]+"-"+p[0];
-  return "";
-}
 function closeMobileEditSheet(){
   const m = document.getElementById("mobileEditModal");
   if(m) m.style.display = "none";
@@ -7257,7 +7920,13 @@ function saveMobileEdit(rowId){
   const pay      = document.getElementById("mxpEditPay").value;
   const type     = document.getElementById("mxpEditType").value;
   const notes    = document.getElementById("mxpEditNotes").value.trim();
-  if(!merchant || isNaN(amount)) return;
+  if(!merchant || isNaN(amount)){
+    // בעבר הפונקציה עשתה return שקט — "שמור" פשוט לא עשה כלום ללא הסבר.
+    const missing = [!merchant ? "שם בית עסק" : null, isNaN(amount) ? "סכום" : null].filter(Boolean).join(" ו");
+    showToast(`חסר ${missing}. יש למלא לפני שמירה.`, "error");
+    (document.getElementById(!merchant ? "mxpEditMerchant" : "mxpEditAmount") || {focus(){}}).focus();
+    return;
+  }
   // Convert date
   const parts = dateVal.split("-");
   const date_raw = parts.length === 3 ? parts[2]+"/"+parts[1]+"/"+parts[0] : dateVal;
@@ -7276,8 +7945,7 @@ function saveMobileEdit(rowId){
 }
 function deleteRowFromMobile(rowId, e){
   if(e) e.stopPropagation();
-  if(!confirm("למחוק הוצאה זו?")) return;
-  deleteRow(rowId);
+  deleteRow(rowId); // deleteRow כבר מבקש אישור — אין צורך ב-confirm שני
 }
 
 
@@ -7321,7 +7989,7 @@ async function keepSupabaseAlive(){
 
 handleOAuthRedirectCallback().finally(() => bootstrapCloudSync()).finally(() => {
   if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
-  render(); initHeroCollapse(); initMobileFilterState();
+  render(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
   setTimeout(keepSupabaseAlive, 3000);
 });
@@ -7344,6 +8012,7 @@ window.addEventListener("focus", maybePullOnFocus);
 
 // ── Credit Card Import ────────────────────────────────
 let ccImportRows = [];
+let ccImportSourceFileName = "";
 
 function openCCImport(){
   const input = document.getElementById("importCCFile");
@@ -7352,9 +8021,13 @@ function openCCImport(){
   input.click();
 }
 
+function ccImportEsc(event){ if(event.key === "Escape") closeCCImport(); }
+
 function closeCCImport(){
   document.getElementById("ccImportModal").style.display = "none";
   ccImportRows = [];
+  ccImportSourceFileName = "";
+  document.removeEventListener("keydown", ccImportEsc);
 }
 
 function escapeHtmlAttr(value){
@@ -7371,6 +8044,17 @@ function normalizeImportMerchant(value){
     .trim()
     .toLowerCase();
 }
+function createImportFingerprint(txn){
+  const amount = Number(txn && txn.amount);
+  const amountKey = Number.isFinite(amount) ? amount.toFixed(2) : "";
+  const cardKey = extractLast4(txn && (txn.sourceCardLast4 || txn.payment || txn.sourceCardLabel)) || normalizeMatchText(txn && txn.payment);
+  return [
+    toIsoDate(txn && txn.date_raw),
+    amountKey,
+    normalizeImportMerchant(txn && txn.merchant),
+    cardKey
+  ].join("|");
+}
 
 function getAllExpenseSheetsForDuplicateScan(){
   const sheetKeys = new Set([
@@ -7383,11 +8067,35 @@ function getAllExpenseSheetsForDuplicateScan(){
 
 function refreshCCImportDuplicateState(){
   ccImportRows.forEach(row => {
+    row._sourceFingerprint = row._sourceFingerprint || createImportFingerprint(row);
     row._isDuplicate = findDuplicateExpense(row);
     if(row._isDuplicate){
       row._skip = true;
     }
   });
+}
+
+function toggleCCImportRow(index, checked){
+  if(!ccImportRows[index]) return;
+  ccImportRows[index]._skip = !checked;
+  updateCCImportSummary();
+}
+
+function updateCCImportSummary(){
+  const root = document.getElementById("ccImportSummary");
+  if(!root) return;
+  const selectedRows = ccImportRows.filter(row => !row._skip);
+  const defaultPayment = document.getElementById("ccImportPayment")?.value || "";
+  const duplicateCount = ccImportRows.filter(row => row._isDuplicate).length;
+  const missingCategory = selectedRows.filter(row => !row.category).length;
+  const missingPayment = selectedRows.filter(row => !(row.payment || defaultPayment)).length;
+  const total = selectedRows.reduce((sum,row) => sum + Number(row.amount || 0), 0);
+  root.innerHTML = `
+    <div class="cc-import-stat"><span>נבחרו</span><strong>${selectedRows.length}</strong></div>
+    <div class="cc-import-stat"><span>סכום לבדיקה</span><strong>${fmt(total)}</strong></div>
+    <div class="cc-import-stat"><span>כפילויות שסומנו</span><strong>${duplicateCount}</strong></div>
+    <div class="cc-import-stat"><span>חסר סיווג / כרטיס</span><strong>${missingCategory + missingPayment}</strong></div>
+  `;
 }
 
 function updateCCImportField(index, field, value){
@@ -7397,6 +8105,7 @@ function updateCCImportField(index, field, value){
   if(field === "merchant"){
     row.merchant = String(value || "").replace(/\s+/g, " ").trim();
   }
+  if(field === "merchant" || field === "payment") row._sourceFingerprint = createImportFingerprint(row);
   refreshCCImportDuplicateState();
   buildCCImportTable();
 }
@@ -7485,7 +8194,7 @@ function handleCCFile(e){
       const result = parseCCStatement(raw, file.name);
       showCCImportModal(result, file.name);
     } catch(err){
-      alert("לא הצלחתי לקרוא את הקובץ: " + err.message);
+      showToast("לא הצלחתי לקרוא את הקובץ: " + err.message, "error");
     }
   };
   reader.readAsArrayBuffer(file);
@@ -7629,6 +8338,7 @@ function parseCCStatement(rows, filename){
 
 
 function showCCImportModal(result, filename){
+  ccImportSourceFileName = String(filename || "");
   const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
   ccImportRows = result.txns.map(t => {
     const inferred = normalizeCategory(inferCategoryForMerchant(t.merchant));
@@ -7652,6 +8362,7 @@ function showCCImportModal(result, filename){
   // Auto-guess the default card for unmatched rows, using the robust matcher.
   const guessName = guessPaymentMethodForImport(result.cardName || "", result.last4 || "", result.cardName || "", "");
   if(guessName) paySel.value = guessName;
+  paySel.onchange = updateCCImportSummary;
 
   // Populate sheet selector
   const sheetSel = document.getElementById("ccImportSheet");
@@ -7690,6 +8401,7 @@ function showCCImportModal(result, filename){
 
   buildCCImportTable();
   document.getElementById("ccImportModal").style.display = "block";
+  document.addEventListener("keydown", ccImportEsc);
 }
 
 
@@ -7699,10 +8411,13 @@ function findDuplicateExpense(txn){
     const tDate = txn.date_raw || "";
     const tAmt  = txn.amount;
     const tMer  = normalizeImportMerchant(txn.merchant);
+    const fingerprint = txn._sourceFingerprint || txn.sourceFingerprint || createImportFingerprint(txn);
     if(!tDate || !Number.isFinite(Number(tAmt)) || !tMer) return false;
     for(const sheet of getAllExpenseSheetsForDuplicateScan()){
       const rows = getEditableRows(sheet) || [];
       for(const row of rows){
+        const existingFingerprint = row.sourceFingerprint || (row.importMeta && row.importMeta.fingerprint) || "";
+        if(fingerprint && existingFingerprint && fingerprint === existingFingerprint) return true;
         if(row.date_raw === tDate && Math.abs((row.amount||0) - tAmt) < 0.02){
           const rMer = normalizeImportMerchant(row.merchant);
           const shortMer = tMer.slice(0, Math.min(6, tMer.length));
@@ -7738,7 +8453,7 @@ function buildCCImportTable(){
     const checked = !row._skip;
     const dupBadge = isDup ? "<span title=\"\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4\" style=\"display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-right:4px\">\u05db\u05e4\u05d5\u05dc</span>" : "";
     html += "<tr style=\"border-bottom:1px solid var(--line);"+rowBg+"\">";
-    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"ccImportRows["+i+"]._skip=!this.checked\" style=\"width:16px;height:16px\"></td>";
+    html += "<td style=\"padding:6px\"><input type=\"checkbox\" "+(checked?"checked":"")+" onchange=\"toggleCCImportRow("+i+", this.checked)\" style=\"width:16px;height:16px\"></td>";
     html += "<td style=\"padding:6px;color:var(--muted);font-size:12px\">"+row.date_raw+"</td>";
     html += "<td style=\"padding:4px\">"+dupBadge+"<input type=\"text\" value=\""+escapeHtmlAttr(row.merchant)+"\" onchange=\"updateCCImportField("+i+", 'merchant', this.value)\" style=\"width:100%;padding:5px 8px;border-radius:8px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:13px;font-weight:600\"></td>";
     html += "<td style=\"padding:6px;font-weight:700;color:var(--accent)\">"+fmt(row.amount)+amtExtra+"</td>";
@@ -7750,6 +8465,7 @@ function buildCCImportTable(){
   });
   html += "</tbody></table>";
   document.getElementById("ccImportTable").innerHTML = html;
+  updateCCImportSummary();
 }
 
 
@@ -7757,14 +8473,16 @@ function confirmCCImport(){
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
   const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
-  if(!toImport.length){ alert("\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d9\u05d9\u05d1\u05d5\u05d0."); return; }
+  if(!toImport.length){ showToast("אין עסקאות לייבוא.", "error"); return; }
   const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
   if(unresolved.length){
-    alert("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.");
+    showToast("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.", "error");
     return;
   }
   const overrides = getOverrides();
   if(!overrides[sheet]) overrides[sheet] = [];
+  rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
+  const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
   // Find max existing row number
   const allRows = getEditableRows(sheet);
@@ -7782,7 +8500,16 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
-      notes: r.notes || ""
+      notes: r.notes || "",
+      sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
+      importMeta: {
+        source:"credit-card-file",
+        sourceFile:ccImportSourceFileName,
+        batchId:importBatchId,
+        importedBy:currentUser,
+        fingerprint:r._sourceFingerprint || createImportFingerprint({...r,payment}),
+        importedAt:new Date().toISOString()
+      }
     });
   });
 
@@ -7792,20 +8519,22 @@ function confirmCCImport(){
   // Switch to the imported sheet
   selectedSheet = sheet;
   render();
-  alert("\u05d9\u05d5\u05d9\u05d1\u05d0\u05d5 " + toImport.length + " \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05dc\u05d2\u05d9\u05dc\u05d9\u05d5\u05df " + sheet + " \u05d1\u05d4\u05e6\u05dc\u05d7\u05d4!");
+  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success");
 }
 
 </script>
 
 <!-- Credit Card Import Modal -->
-<div id="ccImportModal" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);overflow-y:auto;padding:20px 12px">
-  <div style="max-width:700px;margin:0 auto;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
+<div id="ccImportModal" role="dialog" aria-modal="true" aria-labelledby="ccImportTitle" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.55);overflow-y:auto;padding:20px 12px">
+  <div class="cc-import-card" style="max-width:700px;margin:0 auto;background:var(--card);border-radius:20px;padding:24px;box-shadow:0 20px 60px rgba(0,0,0,.3)">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px">
-      <div style="font-size:18px;font-weight:800;color:var(--text)">ייבוא עסקאות מאשראי</div>
+      <div id="ccImportTitle" style="font-size:18px;font-weight:800;color:var(--text)">ייבוא עסקאות מאשראי</div>
       <button onclick="closeCCImport()" style="background:none;border:none;font-size:22px;cursor:pointer;color:var(--muted)">&times;</button>
     </div>
+    <div class="cc-import-safety">הקובץ נקרא לתיבת בדיקה בלבד. שום עסקה לא תישמר לפני שתעבור על השורות ותלחץ על אישור הייבוא.</div>
     <div id="ccImportDetected" style="background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);display:none"></div>
     <div id="ccImportDupNote" style="display:none;background:rgba(212,130,50,.15);border:1px solid rgba(212,130,50,.4);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);font-weight:600"></div>
+    <div id="ccImportSummary" class="cc-import-summary" aria-live="polite"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
       <div style="flex:1;min-width:160px">
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">כרטיס ברירת מחדל לשורות שלא זוהו</div>
