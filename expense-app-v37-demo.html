@@ -2262,7 +2262,12 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       <div class="section open">
         <div class="header" onclick="toggleSection(this)">
           <span>היעדים שלי</span>
-          <button class="success-btn" type="button" onclick="event.stopPropagation();addGoalRow()">יעד חדש +</button>
+          <div style="display:flex;gap:8px" onclick="event.stopPropagation()">
+            <button id="goalsEditToggleBtn" class="secondary" type="button" onclick="toggleGoalsEditMode()">ערוך יעדים</button>
+            <button id="addGoalBtn" class="secondary" type="button" style="display:none" onclick="addGoalRow()">יעד חדש +</button>
+            <button id="goalsCancelBtn" class="secondary" type="button" style="display:none" onclick="cancelGoalsEdit()">ביטול</button>
+            <button id="goalsSaveBtn" class="success-btn" type="button" style="display:none" onclick="saveGoalsEdit()">שמור</button>
+          </div>
         </div>
         <div class="content">
           <div class="summary-card">
@@ -3385,7 +3390,32 @@ function saveGoals(list){
   markLocalDataChanged();
   scheduleCloudSync();
 }
+let goalsEditMode = false;
+let goalsEditSnapshot = null;
+function toggleGoalsEditMode(){
+  if(!goalsEditMode){
+    goalsEditSnapshot = clone(getGoals());
+    goalsEditMode = true;
+  } else {
+    goalsEditSnapshot = null;
+    goalsEditMode = false;
+  }
+  render();
+}
+function saveGoalsEdit(){
+  goalsEditSnapshot = null;
+  goalsEditMode = false;
+  render();
+  showToast("היעדים נשמרו.", "success");
+}
+function cancelGoalsEdit(){
+  if(goalsEditSnapshot) saveGoals(goalsEditSnapshot);
+  goalsEditSnapshot = null;
+  goalsEditMode = false;
+  render();
+}
 function addGoalRow(){
+  if(!goalsEditMode){ goalsEditSnapshot = clone(getGoals()); goalsEditMode = true; }
   const goals = getGoals();
   goals.push(normalizeGoalItem({name:"יעד חדש"}));
   saveGoals(goals);
@@ -3401,15 +3431,32 @@ function updateGoalRow(id, field, value){
   render();
 }
 function deleteGoalRow(id){
+  if(!confirm("למחוק את היעד הזה?")) return;
   saveGoals(getGoals().filter(g => g.id !== id));
+  render();
+}
+function quickUpdateGoalSaved(id, delta){
+  const goals = getGoals();
+  const target = goals.find(g => g.id === id);
+  if(!target) return;
+  target.savedAmount = Math.max(0, Number(target.savedAmount || 0) + delta);
+  saveGoals(goals);
   render();
 }
 function renderGoals(){
   const root = document.getElementById("goalsList");
+  const editBtn = document.getElementById("goalsEditToggleBtn");
+  const addBtn = document.getElementById("addGoalBtn");
+  const saveBtn = document.getElementById("goalsSaveBtn");
+  const cancelBtn = document.getElementById("goalsCancelBtn");
   if(!root) return;
+  if(editBtn) editBtn.style.display = goalsEditMode ? "none" : "inline-flex";
+  if(addBtn) addBtn.style.display = goalsEditMode ? "inline-flex" : "none";
+  if(saveBtn) saveBtn.style.display = goalsEditMode ? "inline-flex" : "none";
+  if(cancelBtn) cancelBtn.style.display = goalsEditMode ? "inline-flex" : "none";
   const goals = getGoals();
   if(!goals.length){
-    root.innerHTML = `<div class="info-box">אין עדיין יעדים. הוסף יעד ראשון — לדוגמה חיסכון לחופשה, תשלום חוב, או קנייה גדולה.</div>`;
+    root.innerHTML = `<div class="info-box">אין עדיין יעדים. לחץ "ערוך יעדים" ואז "יעד חדש +" — לדוגמה חיסכון לחופשה, תשלום חוב, או קנייה גדולה.</div>`;
     return;
   }
   root.innerHTML = goals.map(g => {
@@ -3417,14 +3464,40 @@ function renderGoals(){
     const progress = Math.max(0, Math.min(progressRaw, 100));
     const remaining = g.targetAmount - g.savedAmount;
     const cls = remaining <= 0 && g.targetAmount ? "good" : "";
-    const dateLabel = g.targetDate ? new Intl.DateTimeFormat("he-IL",{dateStyle:"medium"}).format(new Date(g.targetDate)) : "";
+    const dateLabel = g.targetDate ? new Intl.DateTimeFormat("he-IL",{dateStyle:"medium"}).format(new Date(g.targetDate)) : "בלי תאריך יעד";
+
+    if(goalsEditMode){
+      return `<div class="summary-row budget-card editing">
+        <div class="budget-card-top">
+          <div class="budget-card-title" style="flex:1">
+            <input value="${escapeHtmlAttr(g.name)}" placeholder="שם היעד" onchange="updateGoalRow('${g.id}','name',this.value)" style="border:1px solid var(--border,var(--line));border-radius:8px;padding:6px 10px;background:var(--surface,var(--bg));font-weight:800;font-size:15px;color:var(--text);width:100%;box-sizing:border-box">
+          </div>
+          <button class="row-delete-btn" type="button" onclick="deleteGoalRow('${g.id}')" title="מחק יעד" aria-label="מחק יעד">🗑️</button>
+        </div>
+        <div class="budget-card-grid">
+          <div class="budget-card-stat">
+            <span>סכום יעד</span>
+            <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.targetAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','targetAmount',this.value)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          <div class="budget-card-stat">
+            <span>נחסך עד כה</span>
+            <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.savedAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','savedAmount',this.value)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          <div class="budget-card-stat">
+            <span>תאריך יעד</span>
+            <input type="date" value="${g.targetDate || ""}" onchange="updateGoalRow('${g.id}','targetDate',this.value)" style="width:100%;box-sizing:border-box;padding:6px 8px;border-radius:8px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text)">
+          </div>
+        </div>
+        <input value="${escapeHtmlAttr(g.note)}" placeholder="הערה (אופציונלי)" onchange="updateGoalRow('${g.id}','note',this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px;box-sizing:border-box">
+      </div>`;
+    }
+
     return `<div class="summary-row budget-card ${cls==="good" ? "status-good" : ""}">
       <div class="budget-card-top">
-        <div class="budget-card-title" style="flex:1">
-          <input value="${escapeHtmlAttr(g.name)}" placeholder="שם היעד" onchange="updateGoalRow('${g.id}','name',this.value)" style="border:0;background:transparent;font-weight:800;font-size:15px;color:var(--text);width:100%">
+        <div class="budget-card-title">
+          <strong>${escapeHtmlAttr(g.name) || "יעד ללא שם"}</strong>
           ${g.targetAmount && remaining <= 0 ? `<span class="budget-card-badge good">הושלם 🎉</span>` : ""}
         </div>
-        <button class="row-delete-btn" type="button" onclick="deleteGoalRow('${g.id}')" title="מחק יעד" aria-label="מחק יעד">🗑️</button>
       </div>
       <div class="budget-progress">
         <div class="budget-progress-track">
@@ -3437,20 +3510,17 @@ function renderGoals(){
         </div>
       </div>
       <div class="budget-card-grid">
+        <div class="budget-card-stat"><span>תאריך יעד</span><strong>${dateLabel}</strong></div>
+        <div class="budget-card-stat"><span>נשאר</span><strong class="${cls}">${g.targetAmount ? fmt(Math.max(0,remaining)) : "—"}</strong></div>
         <div class="budget-card-stat">
-          <span>סכום יעד</span>
-          <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.targetAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','targetAmount',this.value)"></div>
-        </div>
-        <div class="budget-card-stat">
-          <span>נחסך עד כה</span>
-          <div class="field-currency-wrap"><input type="number" step="0.01" value="${g.savedAmount || ""}" placeholder="0" onchange="updateGoalRow('${g.id}','savedAmount',this.value)"></div>
-        </div>
-        <div class="budget-card-stat">
-          <span>תאריך יעד</span>
-          <input type="date" value="${g.targetDate || ""}" onchange="updateGoalRow('${g.id}','targetDate',this.value)">
+          <span>עדכון מהיר</span>
+          <div style="display:flex;gap:6px">
+            <button class="secondary" type="button" style="padding:4px 10px;font-size:12px" onclick="quickUpdateGoalSaved('${g.id}', 100)">+100</button>
+            <button class="secondary" type="button" style="padding:4px 10px;font-size:12px" onclick="quickUpdateGoalSaved('${g.id}', 500)">+500</button>
+          </div>
         </div>
       </div>
-      <input value="${escapeHtmlAttr(g.note)}" placeholder="הערה (אופציונלי)" onchange="updateGoalRow('${g.id}','note',this.value)" style="margin-top:10px;width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--border,var(--line));background:var(--bg);color:var(--text);font-size:12px">
+      ${g.note ? `<div class="micro" style="margin-top:8px">${escapeHtmlAttr(g.note)}</div>` : ""}
     </div>`;
   }).join("");
 }
