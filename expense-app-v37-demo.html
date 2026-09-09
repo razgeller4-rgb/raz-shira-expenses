@@ -1745,6 +1745,7 @@ body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacin
 .workspace-btn:active,.dashboard-quick-actions button:active { transform:scale(.97); }
 .monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
 .monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
+[data-theme="dark"] .monthly-status-card { background:linear-gradient(110deg,var(--surface) 0%,var(--surface) 65%,var(--surface-2) 100%) !important; }
 .monthly-status-card .hero-balance { font-family:var(--font-num); font-weight:800; letter-spacing:-.06em; }
 .dashboard-quick-actions { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; padding:12px; margin:14px 0; background:var(--surface); border:1px solid var(--border); border-radius:22px; box-shadow:var(--shadow-xs); }
 .dashboard-quick-actions button { min-height:92px; border:1px solid #F0E6D9; border-radius:17px; background:linear-gradient(180deg,#FFFDF9,#FAF6F0); color:var(--text); padding:12px 8px; display:flex; flex-direction:column; justify-content:center; gap:6px; transition:transform .2s var(--ease-out),border-color .2s var(--ease-out),box-shadow .2s var(--ease-out); }
@@ -1922,7 +1923,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
-          <button type="button" onclick="switchToTab('cards')"><span>תקציבים</span><small>חיובים וייבוא</small></button>
+          <button type="button" onclick="switchToTab('cards')"><span>אשראיים</span><small>חיובים וייבוא</small></button>
           <button type="button" onclick="switchToTab('goals')"><span>יעדים</span><small>חיסכון ומטרות</small></button>
           <button type="button" onclick="switchToTab('yearly')"><span>דוחות</span><small>סיכום וייצוא</small></button>
         </section>
