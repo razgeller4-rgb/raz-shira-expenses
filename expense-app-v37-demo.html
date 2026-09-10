@@ -1931,8 +1931,9 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
-          <div class="hero-balance-label">צפויים להישאר בסוף החודש</div>
+          <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
+          <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
             <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
             <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
@@ -1940,6 +1941,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           </div>
           <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
+          <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
@@ -2697,6 +2699,13 @@ if(SHOW_DEBUG_PANEL){
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function getFatherDebtStart(){ return Number(getDebtData().fatherDebtStart || 0); }
+function getTotalDebtRemainingSummary(){
+  if(!isDebtTrackingEnabled()) return null;
+  const fatherRemaining = Math.max(0, getFatherDebtStart() - getCombinedFatherRepayments().reduce((sum,row)=>sum + getFatherNetAmount(row),0));
+  const bankPaidPrincipal = getLoanSchedule().reduce((sum,entry)=>sum + Number(entry.principal || 0),0);
+  const bankRemaining = Math.max(0, getLoanPrincipalBase() - bankPaidPrincipal);
+  return { bankRemaining, fatherRemaining, total: bankRemaining + fatherRemaining };
+}
 function getLoanPrincipalBase(){
   return getLoanSchedule().reduce((sum,row)=>sum + Number(row.principal || 0),0);
 }
@@ -5824,6 +5833,30 @@ function renderDashboardHero(){
   if(incomeMetric) incomeMetric.textContent = fmt(monthlyIncome);
   if(expenseMetric) expenseMetric.textContent = fmt(monthlyExpenses);
   if(debtMetric) debtMetric.textContent = fmt(monthlyDebt);
+  const debtChip = document.getElementById("dashboardDebtChip");
+  if(debtChip){
+    const debtSummary = getTotalDebtRemainingSummary();
+    if(debtSummary && debtSummary.total > 0){
+      debtChip.style.display = "flex";
+      debtChip.innerHTML = `<span>יתרת חוב כוללת (בנק + אבא)</span><strong>${fmt(debtSummary.total)}</strong>`;
+    } else {
+      debtChip.style.display = "none";
+    }
+  }
+  const forecastLine = document.getElementById("heroForecastLine");
+  if(forecastLine){
+    const fc = buildForecast();
+    const mi = getSheetMonthYear(selectedSheet);
+    const today = new Date();
+    const isCurrentMonth = mi.year === today.getFullYear() && mi.month === (today.getMonth() + 1);
+    if(isCurrentMonth && fc.closing != null && fc.remainingDays > 0){
+      forecastLine.style.display = "block";
+      const tone = fc.projected < 0 ? "var(--bad)" : "var(--text-2)";
+      forecastLine.innerHTML = `📈 בקצב ההוצאות הנוכחי (${fmt(fc.avgDaily)}/יום), צפוי להישאר <strong style="color:${tone}">${fmt(fc.projected)}</strong> בסוף החודש`;
+    } else {
+      forecastLine.style.display = "none";
+    }
+  }
   heroEl.classList.toggle("is-negative", value < 0);
   const prevTarget = Number(balEl.dataset.target || 0);
   if(prevTarget !== value || !balEl.dataset.initialized){
@@ -5879,6 +5912,26 @@ function renderDashboardHero(){
   }
 }
 
+/* Compares this month's rows against last month's "קבועה" (fixed) rows and
+   flags fixed merchants that had no matching row imported/entered yet this
+   month — catches a missed credit-card statement or a manual entry you forgot. */
+function getMissingFixedExpenses(){
+  const prevSheet = getPrevSheet(selectedSheet);
+  if(!prevSheet) return [];
+  const prevFixed = getEditableRows(prevSheet).filter(row => row.type === "קבועה" && row.merchant);
+  if(!prevFixed.length) return [];
+  const currentRows = getEditableRows(selectedSheet);
+  const missing = [];
+  const seen = new Set();
+  prevFixed.forEach(row => {
+    const key = normalizeMerchantName(row.merchant);
+    if(seen.has(key)) return;
+    seen.add(key);
+    const found = currentRows.some(r => merchantNamesFuzzyMatch(r.merchant, row.merchant));
+    if(!found) missing.push(row.merchant);
+  });
+  return missing;
+}
 function getDashboardReviewItems(){
   const rows = getEditableRows(selectedSheet);
   const missingCategory = rows.filter(row => !normalizeCategory(row.category)).length;
@@ -5916,6 +5969,16 @@ function getDashboardReviewItems(){
       label:"בדוק חלוקה"
     });
   }
+  const missingFixed = getMissingFixedExpenses();
+  if(missingFixed.length){
+    items.push({
+      tone:"warn",
+      title:`${missingFixed.length} הוצאות קבועות שלא יובאו החודש`,
+      sub:`מהחודש הקודם: ${missingFixed.slice(0,3).map(m=>escapeHtmlAttr(m)).join(", ")}${missingFixed.length>3 ? "..." : ""}`,
+      action:"switchToTab('expenses')",
+      label:"בדוק הוצאות"
+    });
+  }
   if(syncNeedsReview){
     items.push({
       tone:"warn",
@@ -5940,6 +6003,7 @@ function goToFirstDashboardReviewItem(){
   if(!first) return;
   if(first.action === "reviewExpensesNeedingAttention()") reviewExpensesNeedingAttention();
   else if(first.action.includes("'shared'")) switchToTab("shared");
+  else if(first.action.includes("'expenses'")) switchToTab("expenses");
   else switchToTab("backup");
 }
 function renderDashboardReviewQueue(){
@@ -7350,15 +7414,17 @@ function renderTable(rows){
     const moveShiftBtn = canShiftBilling ? `<button type="button" class="secondary" onclick="moveRowToNextMonth(${rowId})">העבר חריג לחודש הבא</button>` : "";
     const resetShiftBtn = billingShiftMonths > 0 ? `<button type="button" class="secondary" onclick="resetRowBillingShift(${rowId})">בטל חריג</button>` : "";
     if(!rowEditActive){
+      const hasCategory = Boolean(normalizeCategory(e.category) || e.category);
       const dotColor=getCategoryColor(normalizeCategory(e.category)||e.category);
       const catLabel=normalizeCategory(e.category)||e.category||"ללא קטגוריה";
+      const catLabelHtml = hasCategory ? catLabel : `<span style="color:var(--expense);font-weight:700">⚠️ ${catLabel}</span>`;
       const payLabel=e.payment||"העברה בנקאית";
       const sharedTag=isSharedExpenseRow(e)?'<span class="compact-badge" style="font-size:10px">משותפת</span>':'';
       return `<div class="feed-row" data-row="${rowId}">
         <div class="feed-dot" style="background:${dotColor}"></div>
         <div class="feed-info">
           <span class="feed-merchant">${e.merchant||"—"} ${sharedTag}</span>
-          <span class="feed-meta">${catLabel} · ${payLabel}${e.type?" · "+e.type:""}</span>
+          <span class="feed-meta">${catLabelHtml} · ${payLabel}${e.type?" · "+e.type:""}</span>
         </div>
         <div class="feed-right">
           <span class="feed-amount">${fmt(e.amount)}</span>
@@ -8235,7 +8301,7 @@ function renderMobileExpenseList(rows){
         </div>
         <div style="overflow:hidden">
           <div class="mxp-merchant">${e.merchant||""}</div>
-          <div class="mxp-cat">${badge}${sharedBadge}${normalizeCategory(e.category)||""}</div>
+          <div class="mxp-cat">${badge}${sharedBadge}${normalizeCategory(e.category) || `<span style="color:var(--expense);font-weight:700">⚠️ ללא קטגוריה</span>`}</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
           <div class="mxp-amount">${fmt(e.amount)}</div>
@@ -8920,7 +8986,7 @@ function confirmCCImport(){
   }
   const overrides = getOverrides();
   if(!overrides[sheet]) overrides[sheet] = [];
-  rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
+  const preImportRecoveryPoint = rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
   const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
   // Find max existing row number
@@ -8961,7 +9027,10 @@ function confirmCCImport(){
   // Switch to the imported sheet
   selectedSheet = sheet;
   render();
-  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success");
+  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success", {
+    actionLabel: "בטל ייבוא",
+    onAction: () => restoreLocalRecoveryPoint(preImportRecoveryPoint.id)
+  });
 }
 
 </script>
