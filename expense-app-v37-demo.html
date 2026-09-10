@@ -6092,6 +6092,8 @@ function dismissReviewItem(id){
   const dismissed = getDismissedReviewItemIds();
   if(!dismissed.includes(id)) dismissed.push(id);
   localStorage.setItem(getDismissedReviewItemsStorageKey(), JSON.stringify(dismissed.slice(-100)));
+  markLocalDataChanged();
+  scheduleCloudSync();
   render();
 }
 function reviewExpensesNeedingAttention(){
