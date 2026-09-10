@@ -384,6 +384,10 @@ button.delete-btn:hover, button.danger-btn:hover { background: var(--bad); color
 }
 .field input:focus, .field select:focus { border-color: var(--accent); }
 .field input[type="date"] { font-size: 13px; }
+/* Native date inputs render garbled/reordered ("Mar 2025 25") when inheriting
+   RTL direction from the Hebrew page — forcing LTR fixes the segment order
+   and width on iOS Safari without changing the stored value. */
+input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: border-box; }
 .field textarea { height: auto; padding: 9px 11px; resize: vertical; }
 .filter-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 12px; margin-bottom: 10px; }
 .category-filter-field { min-width: 0; }
@@ -1700,16 +1704,23 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .dashboard-note-top { display:flex; flex-direction:column; gap:10px; }
   .section > .header { align-items:flex-start; gap:10px; }
   .section > .header > div { width:100%; }
+  .debt-topbar .actions { display:grid; grid-template-columns:1fr 1fr; gap:8px; width:100%; }
+  .debt-topbar .actions button { width:100%; }
   .toolbar { align-items:stretch; gap:10px; }
   .toolbar > div { display:flex; flex-wrap:wrap; gap:7px; }
   .filter-selects-row { display:grid; grid-template-columns:1fr 1fr; }
   .filter-select-item select { width:100%; min-width:0; }
   .filter-reset-btn { grid-column:1/-1; width:100%; }
   .debt-col-header { display:none !important; }
-  .debt-row { grid-template-columns:minmax(0,1fr) minmax(92px,.75fr) !important; align-items:end; }
-  .debt-row > * { min-width:0; }
-  .debt-row input,.debt-row select { width:100%; min-width:0; }
-  .debt-row .icon-btn,.debt-row .income-edit-delete { justify-self:end; }
+  .debt-row.editing { grid-template-columns:minmax(0,1fr) minmax(92px,.75fr) !important; align-items:end; }
+  .debt-row.editing > * { min-width:0; }
+  .debt-row.editing input,.debt-row.editing select { width:100%; min-width:0; }
+  .debt-row.editing .icon-btn,.debt-row.editing .income-edit-delete { justify-self:end; }
+  /* View-mode schedule/history rows: one compact line per entry instead of a
+     tall stacked card (odd item count used to auto-flow into a 2-col grid). */
+  .debt-row:not(.editing) { grid-template-columns:minmax(0,1.3fr) auto auto !important; gap:8px; padding:8px 10px; }
+  .debt-row:not(.editing) .mobile-metric { flex-direction:row; gap:4px; align-items:baseline; padding:0; }
+  .debt-row:not(.editing) .mobile-label { display:none; }
   .year-table table,.table-shell table { min-width:0; }
   .cc-import-summary { grid-template-columns:1fr 1fr; }
   .fab { inset-inline-end:16px !important; }
