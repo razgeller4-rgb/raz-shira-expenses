@@ -253,6 +253,8 @@ input, select, textarea { font: inherit; }
   grid-template-columns: repeat(auto-fill, minmax(175px,1fr));
   gap: 12px; margin-bottom: 20px;
 }
+.kpis { display:grid; grid-template-columns:repeat(auto-fit,minmax(190px,1fr)); gap:12px; }
+@media (max-width:640px){ .kpis { grid-template-columns:repeat(2,1fr); gap:10px; } }
 .kpi {
   border-radius: var(--r-lg); padding: 18px 20px;
   position: relative; overflow: hidden; min-height: 100px;
@@ -2303,6 +2305,10 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
         </div>
         <div id="yearlyPrefsPanel" class="prefs-panel yearly-config"></div>
         <div class="kpis" id="yearlyKpis" style="margin-top:14px"></div>
+        <div class="chart-box" style="height:260px;margin:16px 0">
+          <canvas id="yearlyTrendChart"></canvas>
+        </div>
+        <div id="yearlyCategoryBreakdown" style="margin-bottom:16px"></div>
         <div class="year-table">
           <table>
             <thead><tr id="yearlyTableHead"></tr></thead>
@@ -7851,8 +7857,59 @@ function renderDebts(){
     </div>`}
   `;
 }
+let yearlyTrendChartInstance = null;
+function renderYearlyStats(summary){
+  const chartCanvas = document.getElementById("yearlyTrendChart");
+  const breakdownRoot = document.getElementById("yearlyCategoryBreakdown");
+  if(!chartCanvas || !breakdownRoot) return;
+
+  const labels = summary.rows.map(row => formatSheetLabel(row.sheet));
+  const _css = name => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || "#7E9B6E";
+  if(yearlyTrendChartInstance) yearlyTrendChartInstance.destroy();
+  yearlyTrendChartInstance = new Chart(chartCanvas, {
+    type:"line",
+    data:{
+      labels,
+      datasets:[
+        { label:"הכנסות", data:summary.rows.map(r=>r.income), borderColor:_css("--income"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
+        { label:"הוצאות", data:summary.rows.map(r=>r.totalExpenses), borderColor:_css("--expense"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
+        { label:"מאזן מצטבר", data:summary.rows.map(r=>r.cumulativeBalance), borderColor:_css("--wood-strong"), backgroundColor:"transparent", borderWidth:2, borderDash:[5,4], tension:.25 }
+      ]
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ position:"bottom", labels:{ color:_css("--text-2"), boxWidth:12, font:{size:11} } } },
+      scales:{ y:{ ticks:{ color:_css("--muted") } }, x:{ ticks:{ color:_css("--muted") } } }
+    }
+  });
+
+  // Annual category breakdown — sum every category across every sheet in the selected year.
+  const sums = {};
+  summary.rows.forEach(row => {
+    getEditableRows(row.sheet).forEach(e => {
+      const key = normalizeCategory(e.category) || "ללא קטגוריה";
+      sums[key] = (sums[key] || 0) + Number(e.amount || 0);
+    });
+  });
+  const total = Object.values(sums).reduce((s,v)=>s+v,0);
+  const entries = Object.entries(sums).filter(([,amt])=>amt>0).sort((a,b)=>b[1]-a[1]);
+  breakdownRoot.innerHTML = entries.length ? `
+    <h4 style="margin:0 0 10px">פילוח הוצאות שנתי לפי קטגוריה</h4>
+    ${entries.map(([cat, amt]) => {
+      const pct = total ? Math.round(amt/total*100) : 0;
+      return `<div style="margin-bottom:8px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px">
+          <span>${escapeHtmlAttr(cat)}</span>
+          <strong>${fmt(amt)} · ${pct}%</strong>
+        </div>
+        <div class="budget-progress-track"><div class="budget-progress-fill" style="width:${pct}%"></div></div>
+      </div>`;
+    }).join("")}
+  ` : "";
+}
 function renderYearly(){
   const summary = getYearlySummaryData(selectedYear);
+  renderYearlyStats(summary);
   const widgetCatalog = getYearlyWidgetCatalog(selectedYear);
   const prefs = getUiPrefs();
   const selectedWidgetIds = (prefs.yearlyWidgets || []).filter(id => widgetCatalog.some(item => item.id === id));
