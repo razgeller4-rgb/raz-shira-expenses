@@ -1,29 +1,89 @@
 {
+  "schema_version": 2,
   "project": "Expense App — Raz & Shira",
-  "stage": "V38 demo implementation",
-  "date": "2026-08-28",
+  "generated_at": "2026-09-10T14:30:00+03:00",
+  "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
   "owner": "Raz",
-  "writer": "Codex primary",
-  "environment": "demo only",
-  "status": "demo_implementation_complete_static_qa_passed_visual_qa_blocked",
-  "changed_files": [
-    "expense-app-v37-demo.html",
-    "00_PROJECT_CONTROL/EXPENSE_APP_V38_LAUNCH_PACKET.md",
-    "00_PROJECT_CONTROL/FULL_PRODUCT_SURFACE_MAP.md",
-    "00_PROJECT_CONTROL/IMPORT_AUTOMATION_PLAN.md",
-    "00_PROJECT_CONTROL/HOUSEHOLD_AUTHORIZATION_DESIGN.md",
-    "00_PROJECT_CONTROL/PROJECT_STATUS_SNAPSHOT.json",
-    "00_PROJECT_CONTROL/STATUS_CHANGELOG.md",
-    "design-qa.md"
-  ],
-  "production_changed": false,
-  "commit_created": false,
-  "pushed": false,
-  "checks": {
-    "javascript_syntax": "passed",
-    "live_demo_mobile": "not_observed_pending_push_approval",
-    "design_comparison": "blocked_pending_live_capture",
-    "iphone_review": "not_observed"
+  "headline": "production חי ומתעדכן בפועל — 8 קומיטים ל-v37 מאז 28/08. הדמו מקדים ב-227 שורות עם 3 קומיטים שטרם הועברו, כולל תיקון שבירת ייבוא. גיבויי הנתונים אינם תחת git.",
+  "stage": "V38 shipped incrementally to production; demo ahead",
+  "git": {
+    "branch": "main",
+    "head": "d87d2c0",
+    "sync_vs_origin": "0 ahead / 0 behind",
+    "commits_since_last_control_update": 29,
+    "production_changed": true,
+    "production_commits_since_2026_08_28": [
+      "b137383 feat: add safe cache refresh control",
+      "c7ece29 fix: harden household sync identity and revisions",
+      "7e50b91 feat: Google OAuth + מסך כניסה מלא ל-v37",
+      "ab34c7f feat: סנכרון כל שדרוגי העיצוב מ-demo ל-v37",
+      "06a8521 feat: סנכרון פיצ'רי A-D + תיקוני UX ומצב לילה",
+      "201bd2d feat: סטטיסטיקות וגרפים לטאב הכנסות",
+      "ba96b3a feat: גרף מגמה שנתי + פילוח קטגוריות שנתי + גריד KPI",
+      "548bc22 fix: טאב חובות — שורות קומפקטיות בנייד, תיקון RTL"
+    ],
+    "verified_at": "2026-09-10T14:30:00+03:00"
   },
-  "next_gate": "Owner approval to commit and push demo for live mobile QA"
+  "demo_vs_production": {
+    "demo_file": "expense-app-v37-demo.html",
+    "demo_lines": 9221,
+    "production_file": "expense-app-v37.html",
+    "production_lines": 8994,
+    "demo_ahead_lines": 227,
+    "unported_commits": [
+      { "sha": "2e4bc93", "summary": "ריבוי פריטי בדיקה בדשבורד + סימון כטופל, עיצוב טופס קטגוריות וכרטיסי ייבוא, מיידי/משותף בייבוא" },
+      { "sha": "18f64dc", "summary": "רישום מפתחות סנכרון חסרים (יעדים/זיכרון עסק/קטגוריות חודשיות/בדיקות שנדחו) + הגנה משגיאה שקטה בייבוא אשראי" },
+      { "sha": "d87d2c0", "summary": "הגנה מחריגת מכסת localStorage בנקודות שחזור — היה שובר את הייבוא לגמרי" }
+    ],
+    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז"
+  },
+  "verification": {
+    "javascript_syntax": "UNKNOWN — לא הורץ בסבב הזה",
+    "live_demo_mobile": "UNKNOWN",
+    "iphone_review": "UNKNOWN",
+    "two_device_sync_acceptance": "NOT_REPORTED — המטריצה ב-TWO_DEVICE_SYNC_ACCEPTANCE.md מעולם לא דווחה כמבוצעת"
+  },
+  "open_risks": [
+    {
+      "id": "R-01",
+      "severity": "high",
+      "title": "גיבויי נתונים ללא היסטוריית גרסאות",
+      "detail": ".gitignore מכיל '*.json' — 12 קבצי backups/raz-expenses-backup-*.json קיימים ב-iCloud בלבד. CLAUDE.md מגדיר אותם אזור סיכון גבוה."
+    },
+    {
+      "id": "R-02",
+      "severity": "high",
+      "title": "פקודת הגיבוי ב-CLAUDE.md שבורה",
+      "detail": "מפנה ל-backups/raz-expenses-backup-LATEST.json שאינו קיים. הפקודה שאמורה לרוץ לפני כל שינוי נתונים נכשלת."
+    },
+    {
+      "id": "R-03",
+      "severity": "medium",
+      "title": "פער 190 ₪ לא סגור",
+      "detail": "TWO_DEVICE_SYNC_ACCEPTANCE.md מתנה 'sync green' בפתרון או ייחוס של הפרש 190 ₪. אין רישום שזה נסגר."
+    },
+    {
+      "id": "R-04",
+      "severity": "medium",
+      "title": "ה-gate לשחרור production לא נאכף",
+      "detail": "V38 הועבר ל-production בחלקים דרך קומיטים נקודתיים, ולא דרך EXPENSE_APP_V38_LAUNCH_PACKET.md כפי שתוכנן."
+    },
+    {
+      "id": "R-05",
+      "severity": "low",
+      "title": "קבצים מחוץ למעקב git",
+      "detail": "CLOUD_DATA_RELIABILITY_PLAN.md (מצוטט כהוכחה), business-plan/, friend-setup/, backups/, 3 קבצי SQL, 5 קבצי archive/*.html"
+    }
+  ],
+  "stale_reference_docs": {
+    "note": "לא עודכנו — דורשים הכרעת Owner, לא עדכון טכני",
+    "files": [
+      "FEATURE_MASTER_BACKLOG.md — מצהיר כיוון עיצוב כהה/electric-lime בעוד שנשלח light wood/warm tech",
+      "FULL_PRODUCT_SURFACE_MAP.md",
+      "EXPENSE_APP_V38_LAUNCH_PACKET.md",
+      "IMPORT_AUTOMATION_PLAN.md",
+      "HOUSEHOLD_AUTHORIZATION_DESIGN.md"
+    ]
+  },
+  "decision_queue": ["D-01", "D-02", "D-03", "D-04", "D-05"]
 }
