@@ -1506,6 +1506,11 @@ body { background:var(--bg); }
   width:100%; text-align:center; margin-bottom:16px; border:0; background:none; color:var(--muted); font-size:12px; text-decoration:underline; cursor:pointer;
 }
 .auth-gate-note { margin-top:18px; padding:10px 12px; border-radius:14px; background:var(--wood-light); color:var(--wood-strong); font-size:11px; line-height:1.55; }
+.auth-gate-offline { margin-top:16px; padding:13px 14px; border-radius:14px; background:rgba(220,38,38,.07); border:1px solid rgba(220,38,38,.28); }
+.auth-gate-offline strong { display:block; font-size:13px; color:var(--bad); margin-bottom:5px; }
+.auth-gate-offline p { margin:0 0 10px; font-size:11.5px; line-height:1.55; color:var(--muted); }
+.auth-gate-offline button { width:100%; min-height:44px; border-radius:12px; border:1px solid var(--border-2); background:var(--card); color:var(--ink); font-size:13px; font-weight:700; cursor:pointer; }
+.auth-gate-offline button:hover { border-color:var(--accent); color:var(--accent); }
 .topbar {
   min-height:64px; height:auto; padding-block:10px;
   background:color-mix(in srgb,var(--surface) 96%,transparent);
@@ -1808,6 +1813,11 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
       <div class="auth-gate-error" id="authGateError" role="alert"></div>
       <button class="auth-gate-submit" id="authGateSubmit" type="submit">כניסה מאובטחת</button>
     </form>
+    <div class="auth-gate-offline" id="authGateOfflineWrap" hidden>
+      <strong>השרת לא מגיב כרגע</strong>
+      <p>אי אפשר להתחבר עד שהוא יחזור. אפשר להיכנס לנתונים ששמורים במכשיר הזה ולהמשיך לעבוד — השינויים לא יסונכרנו עד שתתחבר שוב.</p>
+      <button type="button" onclick="continueOffline()">המשך ללא חיבור</button>
+    </div>
     <div class="auth-gate-note">הנתונים נשמרים בנפרד לכל משתמש. שיתוף מלא של נתוני בן/בת הזוג יופעל רק לאחר השלמת הרשאות household בשרת.</div>
   </div>
 </section>
@@ -2864,6 +2874,23 @@ function hasCloudSyncConfig(){
   return Boolean(!config.disabled && config.url && config.anonKey);
 }
 
+/* Every Supabase call goes through here. A stalled project (Disk IO exhausted,
+   paused, or mid-restart) accepts the connection but never answers, so a plain
+   fetch() waits forever — which is how the app ended up hanging on a spinner
+   with no way in. Promise.race is used instead of AbortSignal.timeout for
+   older-iOS Safari support; the request itself may still be in flight, but the
+   app stops waiting on it and can show a real error. */
+const CLOUD_FETCH_TIMEOUT_MS = 12000;
+function cloudFetch(url, options){
+  let timer;
+  return Promise.race([
+    fetch(url, options),
+    new Promise((_, reject) => {
+      timer = setTimeout(() => reject(new Error("השרת לא הגיב בזמן. הנתונים המקומיים נשמרו במכשיר.")), CLOUD_FETCH_TIMEOUT_MS);
+    })
+  ]).finally(() => clearTimeout(timer));
+}
+
 /* ── Supabase Auth (email/password) ──
    Real login gating access to app_state, on top of RLS enforced
    server-side. Session is stored per-namespace (demo__) so it never mixes
@@ -2913,7 +2940,7 @@ function requireCloudActorUserId(){
 async function supabaseSignIn(email, password){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const response = await fetch(`${config.url}/auth/v1/token?grant_type=password`, {
+  const response = await cloudFetch(`${config.url}/auth/v1/token?grant_type=password`, {
     method:"POST",
     headers:{ "Content-Type":"application/json", apikey:config.anonKey },
     body:JSON.stringify({email, password})
@@ -2937,7 +2964,7 @@ async function supabaseRefreshSession(){
   const config = getCloudSyncConfig();
   const session = loadSupabaseAuthSession();
   if(!config.url || !config.anonKey || !session || !session.refresh_token) return null;
-  const response = await fetch(`${config.url}/auth/v1/token?grant_type=refresh_token`, {
+  const response = await cloudFetch(`${config.url}/auth/v1/token?grant_type=refresh_token`, {
     method:"POST",
     headers:{ "Content-Type":"application/json", apikey:config.anonKey },
     body:JSON.stringify({refresh_token:session.refresh_token})
@@ -2985,7 +3012,7 @@ async function handleOAuthRedirectCallback(){
   history.replaceState(null, "", window.location.pathname + window.location.search);
   const config = getCloudSyncConfig();
   try {
-    const response = await fetch(`${config.url}/auth/v1/user`, {
+    const response = await cloudFetch(`${config.url}/auth/v1/user`, {
       headers:{ apikey:config.anonKey, Authorization:`Bearer ${access_token}` }
     });
     const user = await response.json().catch(() => null);
@@ -3013,7 +3040,7 @@ async function supabaseSignOut(){
   saveSupabaseAuthSession(null);
   if(config.url && config.anonKey && session && session.access_token){
     try {
-      await fetch(`${config.url}/auth/v1/logout`, {
+      await cloudFetch(`${config.url}/auth/v1/logout`, {
         method:"POST",
         headers:{ apikey:config.anonKey, Authorization:`Bearer ${session.access_token}` }
       });
@@ -3140,10 +3167,41 @@ function renderAuthGate(){
   const gate = document.getElementById("authGate");
   if(!gate) return;
   const config = getCloudSyncConfig();
-  const shouldGate = hasCloudSyncConfig() && !config.disabled && !isSupabaseSessionValid(loadSupabaseAuthSession());
+  const shouldGate = hasCloudSyncConfig() && !config.disabled
+    && !isSupabaseSessionValid(loadSupabaseAuthSession())
+    && !offlineModeActive;
   gate.hidden = !shouldGate;
   document.body.classList.toggle("auth-gated", shouldGate);
   if(shouldGate) setTimeout(() => document.getElementById("authGateEmail")?.focus(), 30);
+}
+/* Escape hatch for a cloud outage. The gate exists to bind an identity to cloud
+   writes — it was never a lock on the local data, which sits unencrypted in this
+   browser's localStorage either way. But when Supabase stops answering, no login
+   of any kind can succeed, and the gate turned a sync outage into total lockout
+   from your own records. Offline mode shows the local data and blocks every
+   cloud write; server-side RLS is untouched. It lasts for this page load only,
+   so the next visit tries a real login again. */
+let offlineModeActive = false;
+function continueOffline(){
+  offlineModeActive = true;
+  setCloudSyncState({status:"error", message:"מצב לא-מקוון: השרת לא זמין. השינויים נשמרים במכשיר בלבד ולא מסונכרנים."});
+  renderAuthGate();
+  render();
+  showToast("נכנסת במצב לא-מקוון. כדאי לייצא גיבוי מטאב הגיבוי.", "error", {duration:7000});
+}
+/* Probe the project once on boot. If it can't answer, surface the offline
+   button rather than leaving the user staring at a login that cannot work. */
+async function checkCloudReachability(){
+  const banner = document.getElementById("authGateOfflineWrap");
+  if(!banner) return;
+  const config = getCloudSyncConfig();
+  if(!config.url || !config.anonKey) return;
+  try {
+    const response = await cloudFetch(`${config.url}/auth/v1/settings`, {headers:{apikey:config.anonKey}});
+    if(!response.ok && response.status >= 500) throw new Error("server error");
+  } catch(error){
+    banner.hidden = false;
+  }
 }
 async function performAuthLogin(emailInput, passwordInput, errorEl, submitButton){
   if(errorEl) errorEl.textContent = "";
@@ -3632,7 +3690,7 @@ async function fetchCloudRecoveryPoints(limit=8){
     limit:String(limit)
   });
   params.append("id", `like.${CLOUD_BACKUP_PREFIX}*`);
-  const response = await fetch(`${config.url}/rest/v1/app_state?${params.toString()}`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state?${params.toString()}`, {
     headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת נקודות שחזור נכשלה (${response.status})`);
@@ -3648,7 +3706,7 @@ async function pruneCloudRecoveryPoints(){
   const ids = extra.map(row => row.id).filter(Boolean);
   if(!ids.length) return;
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}`, {
     method:"DELETE",
     headers: await getCloudAuthHeaders()
   });
@@ -3665,7 +3723,7 @@ async function saveCloudRecoveryPoint(snapshot, reason="שמירה אוטומט�
       source:"cloud"
     }
   };
-  const response = await fetch(`${config.url}/rest/v1/app_state`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state`, {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -3742,7 +3800,7 @@ async function restoreCloudRecoveryPoint(id){
   try {
     rememberLocalRecoveryPoint("לפני שחזור מהענן");
     const config = getCloudSyncConfig();
-    const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
+    const response = await cloudFetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(id)}&select=id,payload,updated_at`, {
       headers: await getCloudAuthHeaders()
     });
     if(!response.ok) throw new Error(`טעינת נקודת שחזור מהענן נכשלה (${response.status})`);
@@ -3797,7 +3855,7 @@ async function createManualRecoveryPoint(){
 async function fetchCloudState(rowId=CLOUD_SYNC_ROW_ID){
   const config = getCloudSyncConfig();
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state?id=eq.${encodeURIComponent(rowId)}&select=id,payload,updated_at`, {
     headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת ענן נכשלה (${response.status})`);
@@ -3814,7 +3872,7 @@ async function fetchCloudUserRows(){
     CLOUD_SETTLEMENTS_ROW_ID
   ];
   const idFilter = `in.(${ids.map(id => `"${id}"`).join(",")})`;
-  const response = await fetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state?id=${encodeURIComponent(idFilter)}&select=id,payload,updated_at`, {
     headers: await getCloudAuthHeaders()
   });
   if(!response.ok) throw new Error(`קריאת ענן נכשלה (${response.status})`);
@@ -3845,7 +3903,7 @@ async function upsertCloudRow(rowId, payload){
   if(!config.url || !config.anonKey) throw new Error("חסרים פרטי חיבור ל־Supabase.");
   const isOwnedRow = rowId.startsWith(CLOUD_SYNC_ROW_PREFIX);
   const ownerId = isOwnedRow ? getAuthUserIdFromSession(loadSupabaseAuthSession()) : null;
-  const response = await fetch(`${config.url}/rest/v1/app_state?on_conflict=id`, {
+  const response = await cloudFetch(`${config.url}/rest/v1/app_state?on_conflict=id`, {
     method:"POST",
     headers:{
       "Content-Type":"application/json",
@@ -3940,11 +3998,19 @@ async function pushCloudSnapshot(options={}){
     try { await pushSettlementsRow(); }
     catch(error){ console.warn("Settlements push failed", error); }
   }
-  // Recovery point stays a FULL snapshot (both users) so restore points remain complete.
-  try {
-    await saveCloudRecoveryPoint(collectCloudSnapshot(), options.reason || "שמירה אוטומטית");
-  } catch(error){
-    console.warn("Cloud recovery point failed", error);
+  // Recovery point stays a FULL snapshot (both users) so restore points remain
+  // complete — but it is NOT written on every autosave. Doing that inserted a
+  // fresh ~46KB row (plus a prune DELETE) after every single edit, which burned
+  // through the project's Disk IO budget until the database stopped responding
+  // and locked everyone out. Callers that represent a real checkpoint (manual
+  // push, pre-pull, pre-restore, pre-import) pass recoveryPoint:true. Routine
+  // autosync relies on the local recovery points, which are kept every 30s.
+  if(options.recoveryPoint){
+    try {
+      await saveCloudRecoveryPoint(collectCloudSnapshot(), options.reason || "נקודת ציון");
+    } catch(error){
+      console.warn("Cloud recovery point failed", error);
+    }
   }
   setCloudSyncState({
     status:"ok",
@@ -3952,7 +4018,7 @@ async function pushCloudSnapshot(options={}){
     lastPushedAt:new Date().toISOString(),
     lastRemoteUpdatedAt:remote?.updated_at || new Date().toISOString()
   });
-  await refreshRecoveryPoints();
+  if(options.recoveryPoint) await refreshRecoveryPoints();
   return remote;
 }
 /* Push local state to the cloud after a full-snapshot restore (recovery point
@@ -4038,7 +4104,7 @@ async function pullCloudSnapshot(options={}){
   return byId;
 }
 function scheduleCloudSync(){
-  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
+  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || offlineModeActive || !hasCloudSyncConfig()) return;
   if(cloudSyncTimer) clearTimeout(cloudSyncTimer);
   cloudSyncTimer = setTimeout(async ()=>{
     try {
@@ -4076,7 +4142,7 @@ async function saveCloudSyncConnection(){
         lastRemoteUpdatedAt:newestUpdatedAt
       });
     } else {
-      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה.", reason:"חיבור ראשוני", forceSettlements:true});
+      await pushCloudSnapshot({message:"החיבור נשמר, והנתונים המקומיים נדחפו לענן בפעם הראשונה.", reason:"חיבור ראשוני", forceSettlements:true, recoveryPoint:true});
     }
     await refreshRecoveryPoints();
     render();
@@ -8401,7 +8467,7 @@ async function keepSupabaseAlive(){
   const lastPing = Number(localStorage.getItem(PING_KEY) || 0);
   if(Date.now() - lastPing < 3 * 24 * 60 * 60 * 1000) return; // once per 3 days
   try {
-    await fetch(`${config.url}/rest/v1/`, {
+    await cloudFetch(`${config.url}/rest/v1/`, {
       headers:{ apikey:config.anonKey, Authorization:`Bearer ${config.anonKey}` }
     });
     localStorage.setItem(PING_KEY, String(Date.now()));
@@ -8413,13 +8479,14 @@ handleOAuthRedirectCallback().finally(() => bootstrapCloudSync()).finally(() => 
   render(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
   setTimeout(keepSupabaseAlive, 3000);
+  checkCloudReachability();
 });
 
 /* Pull-on-focus: when the user returns to the tab (iOS Safari fires this), pull
    the partner's latest if it's been a while since our last pull. Cheap substitute
    for a websocket at 2-user scale. Gated exactly like scheduleCloudSync. */
 async function maybePullOnFocus(){
-  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || !hasCloudSyncConfig()) return;
+  if(IS_LOCAL_DRAFT_FILE || suppressCloudSync || offlineModeActive || !hasCloudSyncConfig()) return;
   if(document.visibilityState !== "visible") return;
   if(Date.now() - lastCloudPullAt < CLOUD_PULL_ON_FOCUS_MIN_MS) return;
   try {
