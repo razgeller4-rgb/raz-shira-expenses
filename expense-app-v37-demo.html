@@ -1998,7 +1998,8 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           <span>פירוט לפי קטגוריה</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap" onclick="event.stopPropagation()">
             <button id="toggleCategoryEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
-            <button id="addCategoryBtn" class="success-btn" type="button" style="display:none">קטגוריה חדשה +</button>
+            <button id="addCategoryBtn" class="success-btn" type="button" style="display:none">קטגוריה קבועה +</button>
+            <button id="addMonthlyCategoryBtn" class="secondary" type="button" style="display:none">קטגוריה חודשית +</button>
           </div>
         </div>
         <div class="content">
@@ -3386,20 +3387,71 @@ function normalizeBudgetValue(value){
 function getPreferenceSafeId(value){
   return encodeURIComponent(String(value || "").trim());
 }
+function normalizeFixedType(value){ return value === "monthly" ? "monthly" : "fixed"; }
 function getCategoryDefinitions(){
   try {
     const parsed = JSON.parse(localStorage.getItem(getCategoriesStorageKey()) || "null");
     if(Array.isArray(parsed) && parsed.length){
       return parsed
-        .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget)}))
+        .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget), fixedType:normalizeFixedType(item.fixedType)}))
         .filter(item=>item.name);
     }
   } catch(e){}
-  return clone(currentUser === "shira" ? DEFAULT_CATEGORIES_SHIRA : DEFAULT_CATEGORIES_TEMPLATE);
+  return clone(currentUser === "shira" ? DEFAULT_CATEGORIES_SHIRA : DEFAULT_CATEGORIES_TEMPLATE).map(c => ({...c, fixedType:"fixed"}));
+}
+/* Categories relevant to a specific month: every "fixed" (always-on) category,
+   plus any "monthly" (opt-in) category the user activated for this sheet —
+   this is the real per-month budget-building list. Effective budget amount
+   is the per-sheet override if set, otherwise the category's default. */
+function getActiveCategoriesForSheet(sheet=selectedSheet){
+  const pool = getCategoryDefinitions();
+  const state = getMonthlyCategoryState(sheet);
+  return pool
+    .filter(c => c.fixedType !== "monthly" || state.activeNames.includes(c.name))
+    .map(c => ({
+      name: c.name,
+      fixedType: c.fixedType,
+      budget: Object.prototype.hasOwnProperty.call(state.overrides, c.name) ? state.overrides[c.name] : c.budget
+    }));
+}
+function getMonthlyCategoryStorageKey(sheet){ return getScopedStorageKey(`expense_app_monthly_categories_v1__${sheet}`); }
+function getMonthlyCategoryState(sheet=selectedSheet){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getMonthlyCategoryStorageKey(sheet)) || "null");
+    if(parsed && typeof parsed === "object"){
+      return {
+        activeNames: Array.isArray(parsed.activeNames) ? parsed.activeNames : [],
+        overrides: (parsed.overrides && typeof parsed.overrides === "object") ? parsed.overrides : {}
+      };
+    }
+  } catch(e){}
+  return {activeNames:[], overrides:{}};
+}
+function saveMonthlyCategoryState(sheet, state){
+  localStorage.setItem(getMonthlyCategoryStorageKey(sheet), JSON.stringify({
+    activeNames: Array.isArray(state.activeNames) ? state.activeNames : [],
+    overrides: (state.overrides && typeof state.overrides === "object") ? state.overrides : {}
+  }));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+function toggleMonthlyCategoryActive(name, sheet=selectedSheet){
+  const state = getMonthlyCategoryState(sheet);
+  const idx = state.activeNames.indexOf(name);
+  if(idx >= 0) state.activeNames.splice(idx, 1);
+  else state.activeNames.push(name);
+  saveMonthlyCategoryState(sheet, state);
+  render();
+}
+function updateCategoryBudgetForSheet(name, value, sheet=selectedSheet){
+  const state = getMonthlyCategoryState(sheet);
+  state.overrides[name] = normalizeBudgetValue(value);
+  saveMonthlyCategoryState(sheet, state);
+  render();
 }
 function saveCategoryDefinitions(list){
   const normalized = (Array.isArray(list) ? list : [])
-    .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget)}))
+    .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget), fixedType:normalizeFixedType(item.fixedType)}))
     .filter(item=>item.name);
   localStorage.setItem(getCategoriesStorageKey(), JSON.stringify(normalized));
   markLocalDataChanged();
@@ -5500,10 +5552,12 @@ function getCategoryOptionsForEditing(){
   if(!options.includes("דלק")) options.push("דלק");
   return options;
 }
-function addCategoryRow(){
+function addCategoryRow(fixedType="fixed"){
   const categories = getCategoryDefinitions();
-  categories.push({name:"קטגוריה חדשה", budget:null});
+  const name = "קטגוריה חדשה";
+  categories.push({name, budget:null, fixedType:normalizeFixedType(fixedType)});
   saveCategoryDefinitions(categories);
+  if(fixedType === "monthly") toggleMonthlyCategoryActive(name, selectedSheet);
   render();
 }
 function updateCategoryRow(index, field, value){
@@ -5511,6 +5565,8 @@ function updateCategoryRow(index, field, value){
   if(!categories[index]) return;
   if(field === "budget"){
     categories[index].budget = normalizeBudgetValue(value);
+  } else if(field === "fixedType"){
+    categories[index].fixedType = normalizeFixedType(value);
   } else {
     categories[index].name = String(value || "").trim() || `קטגוריה ${index + 1}`;
   }
@@ -6037,7 +6093,7 @@ function renderBudgetOverview(rows){
     const key=normalizeCategory(e.category);
     sums[key]=(sums[key]||0)+Number(e.amount||0);
   });
-  const cats = getCategoryDefinitions();
+  const cats = getActiveCategoriesForSheet(selectedSheet);
   const totalBudget = cats.reduce((s,c)=>s+(c.budget!=null ? Number(c.budget)||0 : 0),0);
   const totalSpent  = cats.reduce((s,c)=>s+(sums[c.name]||0),0);
   const totalRemain = totalBudget - totalSpent;
@@ -6121,24 +6177,40 @@ function renderCategorySummary(rows){
   const summaryRoot = document.getElementById("categorySummary");
   const summaryCard = summaryRoot.closest(".summary-card");
   if(summaryCard) summaryCard.classList.toggle("editing", categoryEditMode);
-  summaryRoot.innerHTML=getCategoryDefinitions().map((c,index)=>{
-    const used=sums[c.name] || 0;
-    const budgetText=c.budget==null ? "ללא תקציב" : fmt(c.budget);
-    const remainingValue = c.budget==null ? null : (c.budget || 0)-used;
-    const remainText=c.budget==null ? "-" : fmt(remainingValue);
-    const cls=c.budget==null ? "" : (remainingValue<0 ? "bad" : "good");
-    const progressRaw = c.budget ? Math.round((used / c.budget) * 100) : 0;
-    const progress = c.budget ? Math.max(0, Math.min(progressRaw, 100)) : 0;
-    const badgeLabel = c.budget == null ? "ללא תקציב" : (remainingValue < 0 ? `חריגה של ${fmt(Math.abs(remainingValue))}` : `נשארו ${remainText}`);
-    if(categoryEditMode){
-      return `<div class="summary-row editing">
+  if(categoryEditMode){
+    const monthLabel = formatSheetLabel(selectedSheet);
+    const monthlyState = getMonthlyCategoryState(selectedSheet);
+    summaryRoot.innerHTML = `<div class="info-box" style="margin-bottom:10px">קטגוריות "קבועה" מופיעות כל חודש אוטומטית. קטגוריות "חודשית" צריך להפעיל בכל חודש בנפרד — כך אפשר לבנות תקציב עם רק מה שרלוונטי ל${monthLabel}. הסכום שתקבע כאן הוא התקציב הספציפי לחודש ${monthLabel} בלבד.</div>` +
+    getCategoryDefinitions().map((c,index)=>{
+      const isMonthly = c.fixedType === "monthly";
+      const isActiveThisMonth = !isMonthly || monthlyState.activeNames.includes(c.name);
+      const effectiveBudget = Object.prototype.hasOwnProperty.call(monthlyState.overrides, c.name) ? monthlyState.overrides[c.name] : c.budget;
+      const used = sums[c.name] || 0;
+      const remainingValue = effectiveBudget==null ? null : (effectiveBudget || 0)-used;
+      const remainText = effectiveBudget==null ? "-" : fmt(remainingValue);
+      const cls = effectiveBudget==null ? "" : (remainingValue<0 ? "bad" : "good");
+      return `<div class="summary-row editing${isMonthly && !isActiveThisMonth ? " is-inactive-monthly" : ""}" style="${isMonthly && !isActiveThisMonth ? "opacity:.55" : ""}">
         <div class="summary-category">
           <span>קטגוריה</span>
           <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
         </div>
         <div class="summary-metric">
-          <span>תקציב</span>
-          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
+          <span>סוג</span>
+          <select onchange="updateCategoryRow(${index}, 'fixedType', this.value)">
+            <option value="fixed"${!isMonthly ? " selected" : ""}>קבועה (כל חודש)</option>
+            <option value="monthly"${isMonthly ? " selected" : ""}>חודשית (לפי בחירה)</option>
+          </select>
+        </div>
+        ${isMonthly ? `<div class="summary-metric">
+          <span>פעילה ב${monthLabel}</span>
+          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;height:38px">
+            <input type="checkbox" ${isActiveThisMonth ? "checked" : ""} onchange="toggleMonthlyCategoryActive('${escapeHtmlAttr(c.name)}', selectedSheet)">
+            <span style="font-size:12px">${isActiveThisMonth ? "פעילה" : "לא פעילה"}</span>
+          </label>
+        </div>` : ""}
+        <div class="summary-metric">
+          <span>תקציב ל${monthLabel}</span>
+          <div class="field-currency-wrap"><input value="${effectiveBudget == null ? "" : Number(effectiveBudget)}" placeholder="סכום, 0 או -" onchange="updateCategoryBudgetForSheet('${escapeHtmlAttr(c.name)}', this.value, selectedSheet)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
         </div>
         <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
         <div class="summary-metric summary-actions">
@@ -6148,7 +6220,19 @@ function renderCategorySummary(rows){
           <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
         </div>
       </div>`;
-    }
+    }).join("");
+    renderMobileExpenseList(rows);
+    return;
+  }
+  summaryRoot.innerHTML=getActiveCategoriesForSheet(selectedSheet).map((c)=>{
+    const used=sums[c.name] || 0;
+    const budgetText=c.budget==null ? "ללא תקציב" : fmt(c.budget);
+    const remainingValue = c.budget==null ? null : (c.budget || 0)-used;
+    const remainText=c.budget==null ? "-" : fmt(remainingValue);
+    const cls=c.budget==null ? "" : (remainingValue<0 ? "bad" : "good");
+    const progressRaw = c.budget ? Math.round((used / c.budget) * 100) : 0;
+    const progress = c.budget ? Math.max(0, Math.min(progressRaw, 100)) : 0;
+    const badgeLabel = c.budget == null ? "ללא תקציב" : (remainingValue < 0 ? `חריגה של ${fmt(Math.abs(remainingValue))}` : `נשארו ${remainText}`);
     /* Stage 8 — compact card: name + badge on top, progress + amount inline */
     const amountLabel = c.budget == null
       ? fmt(used)
@@ -6315,7 +6399,7 @@ function renderChart(rows){
     return;
   }
   if(type === "budgetProgress"){
-    const budgetRows=getCategoryDefinitions().map(c=>{
+    const budgetRows=getActiveCategoriesForSheet(selectedSheet).map(c=>{
       const used=sums[c.name] || 0;
       const budget=Number(c.budget || 0);
       const percent=budget ? Math.round((used / budget) * 100) : 0;
@@ -8128,6 +8212,10 @@ function render(){
     if(addCategoryBtn){
       addCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
     }
+    const addMonthlyCategoryBtn = document.getElementById("addMonthlyCategoryBtn");
+    if(addMonthlyCategoryBtn){
+      addMonthlyCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
+    }
     const cardBtn = document.getElementById("toggleCardEditBtn");
     if(cardBtn){
       cardBtn.textContent = `מצב עריכה: ${cardEditMode ? "פעיל" : "כבוי"}`;
@@ -8201,7 +8289,8 @@ document.getElementById("toggleDashboardPrefsBtn").onclick=()=>{ dashboardPrefsO
 document.getElementById("toggleYearlyPrefsBtn").onclick=()=>{ yearlyPrefsOpen=!yearlyPrefsOpen; render(); };
 document.getElementById("addIncomeBtn").onclick=addIncomeRow;
 document.getElementById("addCardBtn").onclick=addPaymentMethodRow;
-document.getElementById("addCategoryBtn").onclick=addCategoryRow;
+document.getElementById("addCategoryBtn").onclick=()=>addCategoryRow("fixed");
+document.getElementById("addMonthlyCategoryBtn").onclick=()=>addCategoryRow("monthly");
 document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
 document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
 document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
