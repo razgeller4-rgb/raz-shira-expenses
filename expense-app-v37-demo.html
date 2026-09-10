@@ -2732,7 +2732,11 @@ function getAllUserStorageKeys(userId){
     getScopedStorageKey("expense_app_debt_entries_v1", userId),
     getScopedStorageKey("expense_app_categories_v1", userId),
     getScopedStorageKey("expense_app_payment_methods_v1", userId),
-    getScopedStorageKey("expense_app_ui_prefs_v1", userId)
+    getScopedStorageKey("expense_app_ui_prefs_v1", userId),
+    getScopedStorageKey("expense_app_goals_v1", userId),
+    getScopedStorageKey("expense_app_merchant_memory_v1", userId),
+    getScopedStorageKey("expense_app_monthly_categories_v1", userId),
+    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId)
   ];
 }
 function getBackupKeys(){
@@ -3417,24 +3421,34 @@ function getActiveCategoriesForSheet(sheet=selectedSheet){
       budget: Object.prototype.hasOwnProperty.call(state.overrides, c.name) ? state.overrides[c.name] : c.budget
     }));
 }
-function getMonthlyCategoryStorageKey(sheet){ return getScopedStorageKey(`expense_app_monthly_categories_v1__${sheet}`); }
-function getMonthlyCategoryState(sheet=selectedSheet){
+/* One storage key holding every sheet's monthly-category state (not a key
+   per sheet — a per-sheet key naming scheme would be invisible to the cloud
+   sync key list, which is a fixed array, and would silently never sync). */
+function getMonthlyCategoryStorageKey(){ return getScopedStorageKey("expense_app_monthly_categories_v1"); }
+function getAllMonthlyCategoryStates(){
   try {
-    const parsed = JSON.parse(localStorage.getItem(getMonthlyCategoryStorageKey(sheet)) || "null");
-    if(parsed && typeof parsed === "object"){
-      return {
-        activeNames: Array.isArray(parsed.activeNames) ? parsed.activeNames : [],
-        overrides: (parsed.overrides && typeof parsed.overrides === "object") ? parsed.overrides : {}
-      };
-    }
-  } catch(e){}
+    const parsed = JSON.parse(localStorage.getItem(getMonthlyCategoryStorageKey()) || "null");
+    return (parsed && typeof parsed === "object") ? parsed : {};
+  } catch(e){ return {}; }
+}
+function getMonthlyCategoryState(sheet=selectedSheet){
+  const all = getAllMonthlyCategoryStates();
+  const parsed = all[sheet];
+  if(parsed && typeof parsed === "object"){
+    return {
+      activeNames: Array.isArray(parsed.activeNames) ? parsed.activeNames : [],
+      overrides: (parsed.overrides && typeof parsed.overrides === "object") ? parsed.overrides : {}
+    };
+  }
   return {activeNames:[], overrides:{}};
 }
 function saveMonthlyCategoryState(sheet, state){
-  localStorage.setItem(getMonthlyCategoryStorageKey(sheet), JSON.stringify({
+  const all = getAllMonthlyCategoryStates();
+  all[sheet] = {
     activeNames: Array.isArray(state.activeNames) ? state.activeNames : [],
     overrides: (state.overrides && typeof state.overrides === "object") ? state.overrides : {}
-  }));
+  };
+  localStorage.setItem(getMonthlyCategoryStorageKey(), JSON.stringify(all));
   markLocalDataChanged();
   scheduleCloudSync();
 }
@@ -4927,12 +4941,12 @@ function inferCategoryForMerchant(merchant){
    expense history, and it's the only place fixed/variable ("קבוע/משתנה") gets
    remembered at all — inferCategoryForMerchant/guessPaymentMethodForImport never
    touch that field. Namespaced + synced like other per-user settings. */
-const MERCHANT_MEMORY_STORAGE_KEY = STORAGE_NS_PREFIX + "expense_app_merchant_memory_v1";
+function getMerchantMemoryStorageKey(){ return getScopedStorageKey("expense_app_merchant_memory_v1"); }
 function getMerchantMemoryMap(){
-  try { return JSON.parse(localStorage.getItem(MERCHANT_MEMORY_STORAGE_KEY) || "{}"); } catch(e){ return {}; }
+  try { return JSON.parse(localStorage.getItem(getMerchantMemoryStorageKey()) || "{}"); } catch(e){ return {}; }
 }
 function saveMerchantMemoryMap(map){
-  localStorage.setItem(MERCHANT_MEMORY_STORAGE_KEY, JSON.stringify(map));
+  localStorage.setItem(getMerchantMemoryStorageKey(), JSON.stringify(map));
   markLocalDataChanged();
   scheduleCloudSync();
 }
@@ -6055,17 +6069,17 @@ function getDashboardReviewItems(){
   const dismissed = getDismissedReviewItemIds();
   return items.filter(item => !dismissed.includes(item.id));
 }
-const DISMISSED_REVIEW_ITEMS_KEY = STORAGE_NS_PREFIX + "expense_app_dismissed_review_items_v1";
+function getDismissedReviewItemsStorageKey(){ return getScopedStorageKey("expense_app_dismissed_review_items_v1"); }
 function getDismissedReviewItemIds(){
   try {
-    const parsed = JSON.parse(localStorage.getItem(DISMISSED_REVIEW_ITEMS_KEY) || "[]");
+    const parsed = JSON.parse(localStorage.getItem(getDismissedReviewItemsStorageKey()) || "[]");
     return Array.isArray(parsed) ? parsed : [];
   } catch(e){ return []; }
 }
 function dismissReviewItem(id){
   const dismissed = getDismissedReviewItemIds();
   if(!dismissed.includes(id)) dismissed.push(id);
-  localStorage.setItem(DISMISSED_REVIEW_ITEMS_KEY, JSON.stringify(dismissed.slice(-100)));
+  localStorage.setItem(getDismissedReviewItemsStorageKey(), JSON.stringify(dismissed.slice(-100)));
   render();
 }
 function reviewExpensesNeedingAttention(){
@@ -9094,10 +9108,11 @@ function buildCCImportTable(){
 
 
 function confirmCCImport(){
+ try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
   const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
-  if(!toImport.length){ showToast("אין עסקאות לייבוא.", "error"); return; }
+  if(!toImport.length){ showToast("אין עסקאות לייבוא. סמן לפחות שורה אחת (ה-checkbox בצד).", "error"); return; }
   const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
   if(unresolved.length){
     showToast("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.", "error");
@@ -9151,6 +9166,10 @@ function confirmCCImport(){
     actionLabel: "בטל ייבוא",
     onAction: () => restoreLocalRecoveryPoint(preImportRecoveryPoint.id)
   });
+ } catch(error){
+   console.error("confirmCCImport failed:", error);
+   showToast("הייבוא נכשל: " + (error && error.message || error), "error", {duration:8000});
+ }
 }
 
 </script>
