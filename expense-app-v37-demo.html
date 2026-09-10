@@ -1626,6 +1626,9 @@ body { background:var(--bg); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
 .review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+.review-item-actions { display:flex; align-items:center; gap:6px; }
+.review-dismiss { border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:26px; height:26px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
+.review-dismiss:hover { background:var(--bad-light); color:var(--bad); }
 .review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
 .review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
 
@@ -1702,8 +1705,8 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
   .review-queue { padding:14px; border-radius:22px; }
-  .review-item { grid-template-columns:auto 1fr; }
-  .review-action { grid-column:2; justify-self:start; }
+  .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
+  .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
   .dashboard-note { padding-inline:2px; }
   .dashboard-note-top { display:flex; flex-direction:column; gap:10px; }
   .section > .header { align-items:flex-start; gap:10px; }
@@ -6000,6 +6003,7 @@ function getDashboardReviewItems(){
   const items = [];
   if(invalidRows){
     items.push({
+      id:`invalidRows:${selectedSheet}:${invalidRows}`,
       tone:"warn",
       title:`${invalidRows} הוצאות עם מידע חסר`,
       sub:"צריך להשלים בית עסק או סכום לפני שהדוחות יהיו אמינים.",
@@ -6009,6 +6013,7 @@ function getDashboardReviewItems(){
   }
   if(missingCategory){
     items.push({
+      id:`missingCategory:${selectedSheet}:${missingCategory}`,
       tone:"warn",
       title:`${missingCategory} הוצאות ללא קטגוריה`,
       sub:"הסיווג ישפר את התקציב, התחזית והסיכום השנתי.",
@@ -6018,6 +6023,7 @@ function getDashboardReviewItems(){
   }
   if(Math.abs(Number(sharedSummary.netBalance || 0)) >= 1){
     items.push({
+      id:`sharedBalance:${selectedSheet}`,
       tone:"warn",
       title:`התחשבנות זוגית פתוחה · ${fmt(Math.abs(sharedSummary.netBalance))}`,
       sub:"המאזן מחושב מכל ההוצאות המשותפות והאיזונים הישירים.",
@@ -6028,6 +6034,7 @@ function getDashboardReviewItems(){
   const missingFixed = getMissingFixedExpenses();
   if(missingFixed.length){
     items.push({
+      id:`missingFixed:${selectedSheet}:${missingFixed.join("|")}`,
       tone:"warn",
       title:`${missingFixed.length} הוצאות קבועות שלא יובאו החודש`,
       sub:`מהחודש הקודם: ${missingFixed.slice(0,3).map(m=>escapeHtmlAttr(m)).join(", ")}${missingFixed.length>3 ? "..." : ""}`,
@@ -6037,6 +6044,7 @@ function getDashboardReviewItems(){
   }
   if(syncNeedsReview){
     items.push({
+      id:`sync:${selectedSheet}:${loggedIn?1:0}`,
       tone:"warn",
       title:loggedIn ? "הסנכרון האחרון לא הושלם" : "הכניסה לענן ממתינה",
       sub:loggedIn ? (syncMessage || "בדוק את מצב החיבור לפני עריכה ממכשיר נוסף.") : "התחבר כדי לראות ולעדכן את הנתונים משני המכשירים.",
@@ -6044,7 +6052,21 @@ function getDashboardReviewItems(){
       label:"בדוק חיבור"
     });
   }
-  return items;
+  const dismissed = getDismissedReviewItemIds();
+  return items.filter(item => !dismissed.includes(item.id));
+}
+const DISMISSED_REVIEW_ITEMS_KEY = STORAGE_NS_PREFIX + "expense_app_dismissed_review_items_v1";
+function getDismissedReviewItemIds(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(DISMISSED_REVIEW_ITEMS_KEY) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e){ return []; }
+}
+function dismissReviewItem(id){
+  const dismissed = getDismissedReviewItemIds();
+  if(!dismissed.includes(id)) dismissed.push(id);
+  localStorage.setItem(DISMISSED_REVIEW_ITEMS_KEY, JSON.stringify(dismissed.slice(-100)));
+  render();
 }
 function reviewExpensesNeedingAttention(){
   activeTab = "expenses";
@@ -6078,11 +6100,17 @@ function renderDashboardReviewQueue(){
       <div class="review-item">
         <span class="review-marker ${item.tone === "good" ? "good" : ""}" aria-hidden="true"></span>
         <div><strong>${escapeHtmlAttr(item.title)}</strong><small>${escapeHtmlAttr(item.sub)}</small></div>
-        <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+        <div class="review-item-actions">
+          <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+          <button class="review-dismiss" type="button" data-dismiss-id="${escapeHtmlAttr(item.id)}" title="סמן כטופל" aria-label="סמן כטופל">✕</button>
+        </div>
       </div>`).join("")}</div>
       <button class="review-primary" type="button" onclick="goToFirstDashboardReviewItem()">בדוק את הפריט הראשון</button>`
       : `<div class="review-all-clear">הכול מסודר — אין כרגע פריטים שממתינים לבדיקה.</div>`}
   `;
+  root.querySelectorAll("[data-dismiss-id]").forEach(btn => {
+    btn.onclick = () => dismissReviewItem(btn.dataset.dismissId);
+  });
 }
 
 function renderBudgetOverview(rows){
@@ -6189,35 +6217,31 @@ function renderCategorySummary(rows){
       const remainingValue = effectiveBudget==null ? null : (effectiveBudget || 0)-used;
       const remainText = effectiveBudget==null ? "-" : fmt(remainingValue);
       const cls = effectiveBudget==null ? "" : (remainingValue<0 ? "bad" : "good");
-      return `<div class="summary-row editing${isMonthly && !isActiveThisMonth ? " is-inactive-monthly" : ""}" style="${isMonthly && !isActiveThisMonth ? "opacity:.55" : ""}">
-        <div class="summary-category">
-          <span>קטגוריה</span>
-          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
-        </div>
-        <div class="summary-metric">
-          <span>סוג</span>
-          <select onchange="updateCategoryRow(${index}, 'fixedType', this.value)">
-            <option value="fixed"${!isMonthly ? " selected" : ""}>קבועה (כל חודש)</option>
-            <option value="monthly"${isMonthly ? " selected" : ""}>חודשית (לפי בחירה)</option>
-          </select>
-        </div>
-        ${isMonthly ? `<div class="summary-metric">
-          <span>פעילה ב${monthLabel}</span>
-          <label style="display:flex;align-items:center;gap:6px;cursor:pointer;height:38px">
-            <input type="checkbox" ${isActiveThisMonth ? "checked" : ""} onchange="toggleMonthlyCategoryActive('${escapeHtmlAttr(c.name)}', selectedSheet)">
-            <span style="font-size:12px">${isActiveThisMonth ? "פעילה" : "לא פעילה"}</span>
-          </label>
-        </div>` : ""}
-        <div class="summary-metric">
-          <span>תקציב ל${monthLabel}</span>
-          <div class="field-currency-wrap"><input value="${effectiveBudget == null ? "" : Number(effectiveBudget)}" placeholder="סכום, 0 או -" onchange="updateCategoryBudgetForSheet('${escapeHtmlAttr(c.name)}', this.value, selectedSheet)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
-        </div>
-        <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
-        <div class="summary-metric summary-actions">
-          <span>נשאר</span><strong class="${cls}">${remainText}</strong>
-        </div>
-        <div class="summary-delete">
+      return `<div class="summary-row budget-card${isMonthly && !isActiveThisMonth ? "" : ""}" style="${isMonthly && !isActiveThisMonth ? "opacity:.55" : ""}">
+        <div class="budget-card-top">
+          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)" style="border:1px solid var(--border,var(--line));border-radius:8px;padding:6px 10px;background:var(--surface,var(--bg));font-weight:800;font-size:15px;color:var(--text);flex:1;box-sizing:border-box">
           <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
+        </div>
+        <div class="budget-card-grid">
+          <div class="budget-card-stat">
+            <span>סוג</span>
+            <select onchange="updateCategoryRow(${index}, 'fixedType', this.value)" style="width:100%;box-sizing:border-box">
+              <option value="fixed"${!isMonthly ? " selected" : ""}>קבועה</option>
+              <option value="monthly"${isMonthly ? " selected" : ""}>חודשית</option>
+            </select>
+          </div>
+          <div class="budget-card-stat">
+            <span>תקציב ל${monthLabel}</span>
+            <div class="field-currency-wrap"><input value="${effectiveBudget == null ? "" : Number(effectiveBudget)}" placeholder="0" onchange="updateCategoryBudgetForSheet('${escapeHtmlAttr(c.name)}', this.value, selectedSheet)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          ${isMonthly ? `<div class="budget-card-stat">
+            <span>פעילה ב${monthLabel}</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;height:38px">
+              <input type="checkbox" ${isActiveThisMonth ? "checked" : ""} onchange="toggleMonthlyCategoryActive('${escapeHtmlAttr(c.name)}', selectedSheet)">
+              <span style="font-size:12px">${isActiveThisMonth ? "פעילה" : "לא פעילה"}</span>
+            </label>
+          </div>` : `<div class="budget-card-stat"><span>יצא</span><strong>${fmt(used)}</strong></div>`}
+          <div class="budget-card-stat"><span>נשאר</span><strong class="${cls}">${remainText}</strong></div>
         </div>
       </div>`;
     }).join("");
@@ -9027,7 +9051,7 @@ function buildCCImportTable(){
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
   const paymentOptionDefs = getImportPaymentOptions();
 
-  const cardStyle = "padding:8px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
+  const selectStyle = "padding:7px 8px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
 
   const html = ccImportRows.map((row, i) => {
     const isDup = row._isDuplicate;
@@ -9036,25 +9060,31 @@ function buildCCImportTable(){
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
     const dupBadge = isDup ? `<span title="\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4" style="display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05db\u05e4\u05d5\u05dc?</span>` : "";
-    const cardWrap = isDup ? "background:rgba(220,150,50,.10);border-color:rgba(220,150,50,.35)" : "";
-    return `<div style="border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;${cardWrap}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    const isImmediateChecked = String(row.immediate || "").trim() === "\u05db\u05df";
+    const isSharedChecked = Boolean(row.sharedExpense);
+    return `<div class="summary-row${isDup ? " status-bad" : ""}" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <input type="checkbox" ${checked?"checked":""} onchange="toggleCCImportRow(${i}, this.checked)" style="width:18px;height:18px;flex-shrink:0">
         <div style="flex:1;min-width:0">
-          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
+          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
         </div>
+        <strong style="font-size:14px;color:var(--accent);white-space:nowrap">${fmt(row.amount)}${amtExtra}</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--muted)">
-        <span>${row.date_raw}</span>
-        <strong style="font-size:14px;color:var(--accent)">${fmt(row.amount)}${amtExtra}</strong>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}</div>
+      <div class="budget-card-grid">
+        <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
+        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
+        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>
-          <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
-          ${row.sourceCardLabel ? `<div style="margin-top:3px;font-size:10px;color:var(--muted)">${escapeHtmlAttr(row.sourceCardLabel)}</div>` : ""}
-        </div>
-        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
-        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${cardStyle};grid-column:1/-1">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
+      <div style="display:flex;gap:16px;margin-top:10px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2)">
+          <input type="checkbox" ${isImmediateChecked ? "checked" : ""} onchange="updateCCImportField(${i}, 'immediate', this.checked ? '\u05db\u05df' : '')">
+          \u05de\u05d9\u05d9\u05d3\u05d9
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2)">
+          <input type="checkbox" ${isSharedChecked ? "checked" : ""} onchange="updateCCImportField(${i}, 'sharedExpense', this.checked)">
+          \u05de\u05e9\u05d5\u05ea\u05e3
+        </label>
       </div>
     </div>`;
   }).join("");
@@ -9084,7 +9114,7 @@ function confirmCCImport(){
 
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
-    const isImm = isPaymentMethodImmediate(payment);
+    const isImm = isPaymentMethodImmediate(payment) || String(r.immediate || "").trim() === "\u05db\u05df";
     if(r.category || payment || r.type){
       rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
     }
@@ -9097,6 +9127,7 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
+      sharedExpense: Boolean(r.sharedExpense),
       notes: r.notes || "",
       sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
       importMeta: {
