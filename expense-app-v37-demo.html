@@ -1164,7 +1164,9 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 }
 @media (max-width:600px) {
   .income-edit-grid { grid-template-columns: 1fr; }
+  .income-edit-grid.father-edit-grid { grid-template-columns: 1fr 1fr; }
 }
+.field-span-2 { grid-column: span 2; }
 .income-type-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .income-type-pill {
   display: inline-flex; align-items: center; padding: 7px 14px; border-radius: var(--r-pill);
@@ -7829,8 +7831,8 @@ function renderDebts(){
       if(debtEditMode && editable){
         return `<div class="income-edit-card${isIncrease ? " is-increase" : ""}">
           <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">🗑️</button>
-          <div class="income-edit-grid">
-            <div class="field">
+          <div class="income-edit-grid father-edit-grid">
+            <div class="field field-span-2">
               <label>תיאור</label>
               <input value="${escapeHtmlAttr(row.description || row.merchant)}" placeholder="למה זה קשור" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)">
             </div>
@@ -7842,7 +7844,7 @@ function renderDebts(){
               <label>תאריך</label>
               <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))">
             </div>
-            <div class="field">
+            <div class="field field-span-2">
               <label>סוג</label>
               <select onchange="updateFatherHistoryRow('${rowId}', 'direction', this.value)">
                 <option value="repayment"${!isIncrease ? " selected" : ""}>החזר (מקטין את היתרה)</option>
