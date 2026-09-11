@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF7F1">
+<title>כיוון ב׳ — בהיר / חם</title>
+<style>
+/* ─────────────────────────────────────────────────────────
+   DIRECTION B — light / warm
+   Same markup as direction A, only this block differs.
+   The warm palette the app already has, but corrected: the
+   secondary text token was measured at 3.79:1 in the live
+   app, which is why every label read as washed out.
+   ───────────────────────────────────────────────────────── */
+:root{
+  --bg-base:#FAF7F1;
+  --bg-surface:#FFFFFF;
+  --bg-raised:#F4EFE5;
+  --bg-sunken:#EAE3D5;
+
+  --text-primary:#211C16;
+  --text-secondary:#574F43;
+  --text-tertiary:#6E6454;
+  --text-on-accent:#FFFFFF;
+
+  --accent:#4C7340;
+  --accent-dim:#E8F0E4;
+  --accent-border:#B9CDB1;
+
+  --good:#2F6B44;
+  --good-bg:#E3F1E7;
+  --bad:#9A3B27;
+  --bad-bg:#FAE7E1;
+  --warn:#8A5A12;
+  --warn-bg:#FBEFD9;
+
+  --border:#E3DACA;
+  --border-strong:#CBBFA9;
+
+  --r-sm:10px; --r-md:14px; --r-lg:18px; --r-pill:999px;
+  --tap:44px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg-base); color:var(--text-primary);
+  font-family:var(--font); font-size:15px; line-height:1.5;
+  padding-bottom:40px;
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{max-width:430px;margin:0 auto;padding:0 16px}
+
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:14px 16px 12px;
+  position:sticky;top:0;z-index:20;
+  background:var(--bg-base);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  width:36px;height:36px;border-radius:var(--r-sm);
+  background:var(--accent);color:var(--text-on-accent);
+  display:grid;place-items:center;font-weight:700;font-size:15px;flex:none;
+}
+.brand{flex:1;min-width:0}
+.brand b{display:block;font-size:14px;font-weight:600;letter-spacing:-.01em}
+.brand span{display:block;font-size:11.5px;color:var(--text-tertiary)}
+.icon-btn{
+  width:var(--tap);height:var(--tap);flex:none;
+  border-radius:var(--r-sm);border:1px solid var(--border);
+  background:var(--bg-surface);color:var(--text-secondary);
+  font-size:17px;display:grid;place-items:center;cursor:pointer;
+}
+.icon-btn:active{background:var(--bg-raised)}
+
+.workspace{
+  display:grid;grid-template-columns:1fr 1fr;gap:6px;
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:5px;margin:16px 0 18px;
+}
+.workspace button{
+  min-height:var(--tap);border:0;border-radius:var(--r-sm);
+  background:transparent;color:var(--text-secondary);
+  font-family:inherit;font-size:14px;font-weight:600;cursor:pointer;
+}
+.workspace button[aria-pressed="true"]{
+  background:var(--accent);color:var(--text-on-accent);
+}
+
+.hero{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:20px 18px 18px;margin-bottom:14px;
+}
+.hero-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}
+.hero-head h2{margin:0;font-size:13px;font-weight:600;color:var(--text-secondary);letter-spacing:.01em}
+.hero-amount{display:flex;align-items:baseline;gap:6px;direction:ltr;justify-content:flex-end}
+.hero-amount b{font-size:44px;font-weight:700;letter-spacing:-.03em;line-height:1}
+.hero-amount i{font-size:22px;font-style:normal;color:var(--text-secondary);font-weight:500}
+.hero-cap{font-size:12.5px;color:var(--text-tertiary);margin-top:8px}
+.delta{
+  display:inline-flex;align-items:center;gap:5px;margin-top:12px;
+  background:var(--good-bg);color:var(--good);
+  border:1px solid transparent;
+  padding:6px 11px;border-radius:var(--r-pill);
+  font-size:12.5px;font-weight:600;
+}
+
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.kpi{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:13px 11px;min-height:84px;
+  display:flex;flex-direction:column;justify-content:space-between;
+}
+.kpi small{display:block;font-size:11.5px;color:var(--text-secondary);font-weight:500;margin-bottom:7px}
+.kpi b{display:block;font-size:17px;font-weight:700;letter-spacing:-.02em;direction:ltr;text-align:right}
+.kpi em{display:block;font-size:11px;font-style:normal;color:var(--text-tertiary);margin-top:4px}
+
+.strip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:var(--tap);
+  background:var(--bad-bg);border:1px solid transparent;
+  border-radius:var(--r-md);padding:12px 15px;margin-bottom:20px;
+  color:var(--bad);font-size:13px;font-weight:600;
+}
+.strip b{font-size:16px;direction:ltr}
+
+.sec-head{
+  display:flex;align-items:center;justify-content:space-between;
+  margin:0 0 11px;
+}
+.sec-head h3{margin:0;font-size:15px;font-weight:600;letter-spacing:-.01em}
+.sec-head span{font-size:12px;color:var(--text-tertiary)}
+
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:22px}
+.quick a{
+  min-height:64px;display:flex;flex-direction:column;justify-content:center;gap:3px;
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--r-md);padding:12px 14px;text-decoration:none;
+}
+.quick b{font-size:14px;font-weight:600;color:var(--text-primary)}
+.quick span{font-size:11.5px;color:var(--text-secondary)}
+
+.review{
+  background:var(--bg-surface);border:1px solid var(--warn);
+  border-radius:var(--r-lg);padding:16px;margin-bottom:22px;
+}
+.review-top{display:flex;align-items:center;gap:10px;margin-bottom:4px}
+.badge{
+  min-width:26px;height:26px;padding:0 8px;border-radius:var(--r-pill);
+  background:var(--warn);color:#FFFFFF;
+  display:grid;place-items:center;font-size:13px;font-weight:700;flex:none;
+}
+.review-top h3{margin:0;font-size:14.5px;font-weight:600;flex:1}
+.review > p{margin:0 0 14px;font-size:12.5px;color:var(--text-secondary)}
+.review-item{
+  background:var(--bg-raised);border-radius:var(--r-md);padding:13px 14px;
+}
+.review-item b{display:block;font-size:13.5px;font-weight:600;margin-bottom:4px}
+.review-item p{margin:0 0 12px;font-size:12.5px;color:var(--text-secondary);line-height:1.5}
+.review-actions{display:flex;gap:8px}
+.btn{
+  min-height:var(--tap);padding:0 16px;border-radius:var(--r-sm);
+  font-family:inherit;font-size:13.5px;font-weight:600;cursor:pointer;
+  border:1px solid var(--border-strong);background:transparent;color:var(--text-primary);
+  display:inline-flex;align-items:center;justify-content:center;
+}
+.btn-primary{background:var(--accent);color:var(--text-on-accent);border-color:var(--accent);flex:1}
+.btn-ghost{flex:none;min-width:var(--tap)}
+
+.card{
+  background:var(--bg-surface);border:1px solid var(--border);
+  border-radius:var(--r-lg);padding:17px;margin-bottom:12px;
+}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:15px}
+.card-head h3{margin:0 0 3px;font-size:14.5px;font-weight:600}
+.card-head p{margin:0;font-size:12px;color:var(--text-secondary);line-height:1.45}
+.big-num{font-size:30px;font-weight:700;letter-spacing:-.025em;direction:ltr;text-align:right}
+.sub-num{font-size:12px;color:var(--text-tertiary);margin-top:5px}
+
+.cat{margin-bottom:13px}
+.cat:last-child{margin-bottom:0}
+.cat-row{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:6px}
+.cat-row b{font-size:13.5px;font-weight:600}
+.cat-row span{font-size:13px;color:var(--text-secondary);direction:ltr;font-weight:600}
+.bar{height:7px;border-radius:var(--r-pill);background:var(--bg-sunken);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:var(--r-pill);background:var(--accent)}
+.bar.over i{background:var(--bad)}
+
+.foot{
+  text-align:center;font-size:11.5px;color:var(--text-tertiary);
+  padding:26px 0 8px;line-height:1.7;
+}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo" aria-hidden="true">ר</div>
+  <div class="brand">
+    <b>לוח הבקרה</b>
+    <span>רז ושירה · מרץ 26</span>
+  </div>
+  <button class="icon-btn" aria-label="מצב תצוגה">☾</button>
+  <button class="icon-btn" aria-label="פתיחת תפריט">☰</button>
+</header>
+
+<main class="wrap">
+  <h1 class="sr">לוח הבקרה — מרץ 26</h1>
+
+  <div class="workspace" role="group" aria-label="בחירת מרחב עבודה">
+    <button aria-pressed="true">אישי</button>
+    <button aria-pressed="false">זוגי</button>
+  </div>
+
+  <section class="hero" aria-labelledby="heroH">
+    <div class="hero-head">
+      <h2 id="heroH">מצב החודש</h2>
+      <button class="icon-btn" aria-label="התאמת כרטיסיות" style="width:36px;height:36px">⚙</button>
+    </div>
+    <div class="hero-amount"><b>41,447</b><i>₪</i></div>
+    <div class="hero-cap">יתרה נוכחית — הכנסות פחות הוצאות עד היום</div>
+    <div class="delta"><span aria-hidden="true">↑</span> 27.3% מהחודש שעבר</div>
+  </section>
+
+  <div class="kpis">
+    <div class="kpi"><small>הכנסות</small><div><b>21,600</b><em>מתוכנן</em></div></div>
+    <div class="kpi"><small>הוצאות</small><div><b>4,170</b><em>עד היום</em></div></div>
+    <div class="kpi"><small>חובות</small><div><b>1,784</b><em>לתשלום</em></div></div>
+  </div>
+
+  <div class="strip">
+    <span>יתרת חוב כוללת · בנק ואבא</span>
+    <b>7,250 ₪</b>
+  </div>
+
+  <div class="sec-head"><h3>ממתינות לבדיקה</h3></div>
+  <section class="review">
+    <div class="review-top">
+      <span class="badge">1</span>
+      <h3>פריט אחד דורש תשומת לב</h3>
+    </div>
+    <p>רק פריטים שמשפיעים על אמינות הנתונים או על הסנכרון.</p>
+    <div class="review-item">
+      <b>הוצאה אחת ללא קטגוריה</b>
+      <p>הסיווג ישפר את התקציב, התחזית והסיכום השנתי.</p>
+      <div class="review-actions">
+        <button class="btn btn-primary">סווג עכשיו</button>
+        <button class="btn btn-ghost" aria-label="סמן כטופל">✓</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sec-head"><h3>תכנון ובקרה</h3></div>
+  <nav class="quick" aria-label="ניווט מהיר">
+    <a href="#"><b>תקציב</b><span>תקציב ומגמה</span></a>
+    <a href="#"><b>אשראיים</b><span>חיובים וייבוא</span></a>
+    <a href="#"><b>יעדים</b><span>חיסכון ומטרות</span></a>
+    <a href="#"><b>דוחות</b><span>סיכום וייצוא</span></a>
+  </nav>
+
+  <div class="sec-head"><h3>תמונת מצב</h3><span>מרץ 26</span></div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><h3>הוצאות החודש</h3><p>קבועות ומשתנות יחד</p></div>
+    </div>
+    <div class="big-num">4,170 ₪</div>
+    <div class="sub-num">קבועות 1,235 ₪ · משתנות 2,935 ₪</div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><h3>גן הקטגוריות</h3><p>לפי צריכה מול תקציב</p></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><b>בית</b><span>1,235 / 3,500</span></div>
+      <div class="bar"><i style="width:35%"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><b>מזון</b><span>737 / 2,800</span></div>
+      <div class="bar"><i style="width:26%"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><b>בילויים</b><span>434 / 1,200</span></div>
+      <div class="bar"><i style="width:36%"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><b>בריאות</b><span>90 / 600</span></div>
+      <div class="bar"><i style="width:15%"></i></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><h3>צפי סוף חודש</h3><p>בקצב ההוצאות הנוכחי</p></div>
+    </div>
+    <div class="big-num">41,447 ₪</div>
+    <div class="sub-num">ללא שינוי מהיתרה הנוכחית</div>
+  </div>
+
+  <p class="foot">
+    כיוון ב׳ — בהיר / חם<br>
+    אב־טיפוס לבחירה. הנתונים לדוגמה.
+  </p>
+</main>
+
+</body>
+</html>
