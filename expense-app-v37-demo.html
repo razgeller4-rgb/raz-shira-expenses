@@ -5030,12 +5030,18 @@ function inferCategoryForMerchant(merchant){
    remembered at all — inferCategoryForMerchant/guessPaymentMethodForImport never
    touch that field. Namespaced + synced like other per-user settings. */
 function getMerchantMemoryStorageKey(){ return getScopedStorageKey("expense_app_merchant_memory_v1"); }
-/* This key used to be a single global one shared by both users. Scoping it per
-   user is what lets it sync and back up, but it also renames it
-   (..._v1 → ..._v1_raz), which would silently orphan months of accumulated
-   merchant→category learning. Carry the old blob over once per user. Existing
-   per-user entries win, and the legacy key is read rather than deleted so a
-   rollback still finds its data. */
+/* This key used to be a single global one shared by both users; scoping it per
+   user is what lets it sync and back up.
+
+   getScopedStorageKey leaves raz's keys unsuffixed (see its definition), so for
+   raz the name does not actually change and nothing moves. Shira is the one
+   affected: her key becomes ..._v1_shira, and without this she would open the
+   credit import with an empty merchant memory after having shared raz's.
+
+   So this seeds her copy once from the shared blob, preserving what she had
+   before the split. Existing per-user entries win, and the legacy key is read
+   rather than deleted so a rollback still finds its data. For raz it is a
+   no-op that rewrites the same map onto itself. */
 const MERCHANT_MEMORY_SCOPE_MIGRATION_FLAG = STORAGE_NS_PREFIX + "merchant_memory_scope_migration_v1";
 function migrateLegacyMerchantMemory(){
   const flagKey = `${MERCHANT_MEMORY_SCOPE_MIGRATION_FLAG}_${currentUser}`;

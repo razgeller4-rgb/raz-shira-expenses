@@ -46,8 +46,9 @@ ALLOWED_REMOVALS = {
     "MERCHANT_MEMORY_STORAGE_KEY":
         "a single global key for both users; replaced by "
         "getMerchantMemoryStorageKey(), which scopes it per user so it syncs "
-        "and backs up. Existing data is carried over by "
-        "migrateLegacyMerchantMemory().",
+        "and backs up. Only shira's key is actually renamed (raz's stays "
+        "unsuffixed), and migrateLegacyMerchantMemory() seeds hers from the "
+        "shared blob.",
 }
 
 CHECK_ONLY = "--check" in sys.argv
