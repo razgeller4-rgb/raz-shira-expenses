@@ -7,6 +7,8 @@
 <meta name="theme-color" content="#1A1E17" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="הוצאות דמו">
+<link rel="manifest" href="manifest-demo.json">
 <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' rx='40' fill='%237E9B6E'/%3E%3Cpath d='M90 134c0-30 14-48 38-54-6 26-20 42-38 54zm0 0c0-30-14-48-38-54 6 26 20 42 38 54zm0 0V70' fill='none' stroke='%23FFFDF8' stroke-width='7' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
 <title>מנהל הוצאות — רז ושירה</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1162,7 +1164,9 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 }
 @media (max-width:600px) {
   .income-edit-grid { grid-template-columns: 1fr; }
+  .income-edit-grid.father-edit-grid { grid-template-columns: 1fr 1fr; }
 }
+.field-span-2 { grid-column: span 2; }
 .income-type-pills { display: flex; flex-wrap: wrap; gap: 6px; }
 .income-type-pill {
   display: inline-flex; align-items: center; padding: 7px 14px; border-radius: var(--r-pill);
@@ -1627,6 +1631,9 @@ body { background:var(--bg); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
 .review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+.review-item-actions { display:flex; align-items:center; gap:6px; }
+.review-dismiss { border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:26px; height:26px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
+.review-dismiss:hover { background:var(--bad-light); color:var(--bad); }
 .review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
 .review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
 
@@ -1703,8 +1710,8 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
   .review-queue { padding:14px; border-radius:22px; }
-  .review-item { grid-template-columns:auto 1fr; }
-  .review-action { grid-column:2; justify-self:start; }
+  .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
+  .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
   .dashboard-note { padding-inline:2px; }
   .dashboard-note-top { display:flex; flex-direction:column; gap:10px; }
   .section > .header { align-items:flex-start; gap:10px; }
@@ -1937,8 +1944,9 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
-          <div class="hero-balance-label">צפויים להישאר בסוף החודש</div>
+          <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
+          <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
             <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
             <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
@@ -1946,6 +1954,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           </div>
           <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
+          <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
@@ -2002,7 +2011,8 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
           <span>פירוט לפי קטגוריה</span>
           <div style="display:flex;gap:8px;flex-wrap:wrap" onclick="event.stopPropagation()">
             <button id="toggleCategoryEditBtn" class="secondary" type="button">מצב עריכה: כבוי</button>
-            <button id="addCategoryBtn" class="success-btn" type="button" style="display:none">קטגוריה חדשה +</button>
+            <button id="addCategoryBtn" class="success-btn" type="button" style="display:none">קטגוריה קבועה +</button>
+            <button id="addMonthlyCategoryBtn" class="secondary" type="button" style="display:none">קטגוריה חודשית +</button>
           </div>
         </div>
         <div class="content">
@@ -2490,10 +2500,22 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
 
 <!-- Main JS engine (from v35 with targeted v36 modifications) -->
 <script>
-/* ═══ v37 — Production mode (Supabase live) ═══════════════════════════════════
-     • IS_LOCAL_DRAFT_FILE is true ONLY when opened from local file:// (DevTools).
-       On https:// (GitHub Pages) → false → Cloud Sync (Supabase) is active.
-     • STORAGE_NS_PREFIX = "" → localStorage keys identical to production. Real data.
+/* ═══ Build mode ══════════════════════════════════════════════════════════════
+   This app ships as two files that differ in exactly two places — here, and
+   the Supabase table name:
+
+     demo  →  STORAGE_NS_PREFIX = "demo__"   table app_state
+     prod  →  STORAGE_NS_PREFIX = ""         table app_state
+
+   Anything else that differs between them is drift, not design. That is how
+   production once went two days without four sync keys and a quota guard the
+   demo already had. Promote with
+   00_PROJECT_CONTROL/promote_demo_to_prod.py, which regenerates production
+   from the demo and refuses to run if the two have diverged any other way.
+
+   IS_LOCAL_DRAFT_FILE is true only under file:// (DevTools); on https it is
+   false and cloud sync is live. stripDemoPrefix is an identity passthrough
+   when there is no prefix.
 ═══════════════════════════════════════════════════════════════════════════ */
 const IS_LOCAL_DRAFT_FILE = window.location.protocol === "file:";
 const STORAGE_NS_PREFIX = "";
@@ -2507,6 +2529,7 @@ function stripDemoPrefix(key){
 document.addEventListener("DOMContentLoaded", () => {
   initDarkMode();
   runIncomeMigrations();
+  migrateLegacyMerchantMemory();
   const HERO_DATA = {
     dashboard: { icon:"📊", title:"לוח הבקרה",          sub:"כל המספרים החשובים לחודש — בצפייה אחת" },
     budget:    { icon:"💰", title:"תקציב",               sub:"מעקב הוצאות לפי קטגוריה מול יעד" },
@@ -2555,7 +2578,7 @@ const MAX_CLOUD_RECOVERY_POINTS = 20;
 const DEFAULT_CLOUD_SYNC_CONFIG = {
   url:"https://otfrgdwrdfmwcrlntfkv.supabase.co",
   anonKey:"sb_publishable_47PInnWFqJK13lXJyzBL6Q_3IqOjbPH",
-  disabled:false
+  disabled:false  // demo file — sync ON, but only against the isolated app_state table (locked to real login)
 };
 const DEFAULT_CATEGORIES_TEMPLATE = [{"name":"מסחר","budget":1600},{"name":"קניות לבית","budget":null},{"name":"סופר","budget":1000},{"name":"רכב/דלק","budget":800},{"name":"הזמנות ואוכל בחוץ עם שירה","budget":1000},{"name":"ביטוחים","budget":null},{"name":"מנויים","budget":null},{"name":"לא רלוונטי","budget":null},{"name":"מותרות","budget":1000},{"name":"עישון","budget":600},{"name":"אין ברירה","budget":null}];
 const DEFAULT_CATEGORIES_SHIRA = DEFAULT_CATEGORIES_TEMPLATE;
@@ -2700,6 +2723,13 @@ if(SHOW_DEBUG_PANEL){
 
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function getFatherDebtStart(){ return Number(getDebtData().fatherDebtStart || 0); }
+function getTotalDebtRemainingSummary(){
+  if(!isDebtTrackingEnabled()) return null;
+  const fatherRemaining = Math.max(0, getFatherDebtStart() - getCombinedFatherRepayments().reduce((sum,row)=>sum + getFatherNetAmount(row),0));
+  const bankPaidPrincipal = getLoanSchedule().reduce((sum,entry)=>sum + Number(entry.principal || 0),0);
+  const bankRemaining = Math.max(0, getLoanPrincipalBase() - bankPaidPrincipal);
+  return { bankRemaining, fatherRemaining, total: bankRemaining + fatherRemaining };
+}
 function getLoanPrincipalBase(){
   return getLoanSchedule().reduce((sum,row)=>sum + Number(row.principal || 0),0);
 }
@@ -2722,7 +2752,11 @@ function getAllUserStorageKeys(userId){
     getScopedStorageKey("expense_app_debt_entries_v1", userId),
     getScopedStorageKey("expense_app_categories_v1", userId),
     getScopedStorageKey("expense_app_payment_methods_v1", userId),
-    getScopedStorageKey("expense_app_ui_prefs_v1", userId)
+    getScopedStorageKey("expense_app_ui_prefs_v1", userId),
+    getScopedStorageKey("expense_app_goals_v1", userId),
+    getScopedStorageKey("expense_app_merchant_memory_v1", userId),
+    getScopedStorageKey("expense_app_monthly_categories_v1", userId),
+    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId)
   ];
 }
 function getBackupKeys(){
@@ -2786,7 +2820,19 @@ function getLocalRecoveryPoints(){
   }
 }
 function saveLocalRecoveryPoints(list){
-  localStorage.setItem(LOCAL_RECOVERY_POINTS_KEY, JSON.stringify((Array.isArray(list) ? list : []).slice(0, MAX_LOCAL_RECOVERY_POINTS)));
+  let trimmed = (Array.isArray(list) ? list : []).slice(0, MAX_LOCAL_RECOVERY_POINTS);
+  // Recovery points hold full data snapshots — old/accumulated ones can blow the
+  // ~5-10MB localStorage quota. If a write fails, keep halving the kept count
+  // (newest first) until it fits, rather than crashing whatever action triggered it.
+  while(trimmed.length){
+    try {
+      localStorage.setItem(LOCAL_RECOVERY_POINTS_KEY, JSON.stringify(trimmed));
+      return;
+    } catch(e){
+      trimmed = trimmed.slice(0, Math.max(0, Math.floor(trimmed.length / 2)));
+    }
+  }
+  try { localStorage.removeItem(LOCAL_RECOVERY_POINTS_KEY); } catch(e){ /* nothing more we can do */ }
 }
 function rememberLocalRecoveryPoint(reason, snapshot=collectCloudSnapshot()){
   const point = {
@@ -2893,7 +2939,7 @@ function cloudFetch(url, options){
 
 /* ── Supabase Auth (email/password) ──
    Real login gating access to app_state, on top of RLS enforced
-   server-side. Session is stored per-namespace (demo__) so it never mixes
+   server-side. Session is stored per-namespace (see build mode above) so it never mixes
    with a future production session. Each Supabase auth user must carry
    app_metadata.app_user_key = "raz" | "shira" (set once via SQL/dashboard)
    so the client knows which local identity a login maps to. */
@@ -3428,20 +3474,81 @@ function normalizeBudgetValue(value){
 function getPreferenceSafeId(value){
   return encodeURIComponent(String(value || "").trim());
 }
+function normalizeFixedType(value){ return value === "monthly" ? "monthly" : "fixed"; }
 function getCategoryDefinitions(){
   try {
     const parsed = JSON.parse(localStorage.getItem(getCategoriesStorageKey()) || "null");
     if(Array.isArray(parsed) && parsed.length){
       return parsed
-        .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget)}))
+        .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget), fixedType:normalizeFixedType(item.fixedType)}))
         .filter(item=>item.name);
     }
   } catch(e){}
-  return clone(currentUser === "shira" ? DEFAULT_CATEGORIES_SHIRA : DEFAULT_CATEGORIES_TEMPLATE);
+  return clone(currentUser === "shira" ? DEFAULT_CATEGORIES_SHIRA : DEFAULT_CATEGORIES_TEMPLATE).map(c => ({...c, fixedType:"fixed"}));
+}
+/* Categories relevant to a specific month: every "fixed" (always-on) category,
+   plus any "monthly" (opt-in) category the user activated for this sheet —
+   this is the real per-month budget-building list. Effective budget amount
+   is the per-sheet override if set, otherwise the category's default. */
+function getActiveCategoriesForSheet(sheet=selectedSheet){
+  const pool = getCategoryDefinitions();
+  const state = getMonthlyCategoryState(sheet);
+  return pool
+    .filter(c => c.fixedType !== "monthly" || state.activeNames.includes(c.name))
+    .map(c => ({
+      name: c.name,
+      fixedType: c.fixedType,
+      budget: Object.prototype.hasOwnProperty.call(state.overrides, c.name) ? state.overrides[c.name] : c.budget
+    }));
+}
+/* One storage key holding every sheet's monthly-category state (not a key
+   per sheet — a per-sheet key naming scheme would be invisible to the cloud
+   sync key list, which is a fixed array, and would silently never sync). */
+function getMonthlyCategoryStorageKey(){ return getScopedStorageKey("expense_app_monthly_categories_v1"); }
+function getAllMonthlyCategoryStates(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getMonthlyCategoryStorageKey()) || "null");
+    return (parsed && typeof parsed === "object") ? parsed : {};
+  } catch(e){ return {}; }
+}
+function getMonthlyCategoryState(sheet=selectedSheet){
+  const all = getAllMonthlyCategoryStates();
+  const parsed = all[sheet];
+  if(parsed && typeof parsed === "object"){
+    return {
+      activeNames: Array.isArray(parsed.activeNames) ? parsed.activeNames : [],
+      overrides: (parsed.overrides && typeof parsed.overrides === "object") ? parsed.overrides : {}
+    };
+  }
+  return {activeNames:[], overrides:{}};
+}
+function saveMonthlyCategoryState(sheet, state){
+  const all = getAllMonthlyCategoryStates();
+  all[sheet] = {
+    activeNames: Array.isArray(state.activeNames) ? state.activeNames : [],
+    overrides: (state.overrides && typeof state.overrides === "object") ? state.overrides : {}
+  };
+  localStorage.setItem(getMonthlyCategoryStorageKey(), JSON.stringify(all));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+function toggleMonthlyCategoryActive(name, sheet=selectedSheet){
+  const state = getMonthlyCategoryState(sheet);
+  const idx = state.activeNames.indexOf(name);
+  if(idx >= 0) state.activeNames.splice(idx, 1);
+  else state.activeNames.push(name);
+  saveMonthlyCategoryState(sheet, state);
+  render();
+}
+function updateCategoryBudgetForSheet(name, value, sheet=selectedSheet){
+  const state = getMonthlyCategoryState(sheet);
+  state.overrides[name] = normalizeBudgetValue(value);
+  saveMonthlyCategoryState(sheet, state);
+  render();
 }
 function saveCategoryDefinitions(list){
   const normalized = (Array.isArray(list) ? list : [])
-    .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget)}))
+    .map(item=>({name:String(item.name || "").trim(), budget:normalizeBudgetValue(item.budget), fixedType:normalizeFixedType(item.fixedType)}))
     .filter(item=>item.name);
   localStorage.setItem(getCategoriesStorageKey(), JSON.stringify(normalized));
   markLocalDataChanged();
@@ -4922,12 +5029,32 @@ function inferCategoryForMerchant(merchant){
    expense history, and it's the only place fixed/variable ("קבוע/משתנה") gets
    remembered at all — inferCategoryForMerchant/guessPaymentMethodForImport never
    touch that field. Namespaced + synced like other per-user settings. */
-const MERCHANT_MEMORY_STORAGE_KEY = STORAGE_NS_PREFIX + "expense_app_merchant_memory_v1";
+function getMerchantMemoryStorageKey(){ return getScopedStorageKey("expense_app_merchant_memory_v1"); }
+/* This key used to be a single global one shared by both users. Scoping it per
+   user is what lets it sync and back up, but it also renames it
+   (..._v1 → ..._v1_raz), which would silently orphan months of accumulated
+   merchant→category learning. Carry the old blob over once per user. Existing
+   per-user entries win, and the legacy key is read rather than deleted so a
+   rollback still finds its data. */
+const MERCHANT_MEMORY_SCOPE_MIGRATION_FLAG = STORAGE_NS_PREFIX + "merchant_memory_scope_migration_v1";
+function migrateLegacyMerchantMemory(){
+  const flagKey = `${MERCHANT_MEMORY_SCOPE_MIGRATION_FLAG}_${currentUser}`;
+  if(localStorage.getItem(flagKey)) return;
+  try {
+    const legacyRaw = localStorage.getItem(STORAGE_NS_PREFIX + "expense_app_merchant_memory_v1");
+    const legacy = legacyRaw ? JSON.parse(legacyRaw) : null;
+    if(legacy && typeof legacy === "object" && Object.keys(legacy).length){
+      const current = getMerchantMemoryMap();
+      localStorage.setItem(getMerchantMemoryStorageKey(), JSON.stringify({...legacy, ...current}));
+    }
+  } catch(e){ /* a malformed legacy blob must never block startup */ }
+  localStorage.setItem(flagKey, "done");
+}
 function getMerchantMemoryMap(){
-  try { return JSON.parse(localStorage.getItem(MERCHANT_MEMORY_STORAGE_KEY) || "{}"); } catch(e){ return {}; }
+  try { return JSON.parse(localStorage.getItem(getMerchantMemoryStorageKey()) || "{}"); } catch(e){ return {}; }
 }
 function saveMerchantMemoryMap(map){
-  localStorage.setItem(MERCHANT_MEMORY_STORAGE_KEY, JSON.stringify(map));
+  localStorage.setItem(getMerchantMemoryStorageKey(), JSON.stringify(map));
   markLocalDataChanged();
   scheduleCloudSync();
 }
@@ -5550,10 +5677,12 @@ function getCategoryOptionsForEditing(){
   if(!options.includes("דלק")) options.push("דלק");
   return options;
 }
-function addCategoryRow(){
+function addCategoryRow(fixedType="fixed"){
   const categories = getCategoryDefinitions();
-  categories.push({name:"קטגוריה חדשה", budget:null});
+  const name = "קטגוריה חדשה";
+  categories.push({name, budget:null, fixedType:normalizeFixedType(fixedType)});
   saveCategoryDefinitions(categories);
+  if(fixedType === "monthly") toggleMonthlyCategoryActive(name, selectedSheet);
   render();
 }
 function updateCategoryRow(index, field, value){
@@ -5561,6 +5690,8 @@ function updateCategoryRow(index, field, value){
   if(!categories[index]) return;
   if(field === "budget"){
     categories[index].budget = normalizeBudgetValue(value);
+  } else if(field === "fixedType"){
+    categories[index].fixedType = normalizeFixedType(value);
   } else {
     categories[index].name = String(value || "").trim() || `קטגוריה ${index + 1}`;
   }
@@ -5883,6 +6014,30 @@ function renderDashboardHero(){
   if(incomeMetric) incomeMetric.textContent = fmt(monthlyIncome);
   if(expenseMetric) expenseMetric.textContent = fmt(monthlyExpenses);
   if(debtMetric) debtMetric.textContent = fmt(monthlyDebt);
+  const debtChip = document.getElementById("dashboardDebtChip");
+  if(debtChip){
+    const debtSummary = getTotalDebtRemainingSummary();
+    if(debtSummary && debtSummary.total > 0){
+      debtChip.style.display = "flex";
+      debtChip.innerHTML = `<span>יתרת חוב כוללת (בנק + אבא)</span><strong>${fmt(debtSummary.total)}</strong>`;
+    } else {
+      debtChip.style.display = "none";
+    }
+  }
+  const forecastLine = document.getElementById("heroForecastLine");
+  if(forecastLine){
+    const fc = buildForecast();
+    const mi = getSheetMonthYear(selectedSheet);
+    const today = new Date();
+    const isCurrentMonth = mi.year === today.getFullYear() && mi.month === (today.getMonth() + 1);
+    if(isCurrentMonth && fc.closing != null && fc.remainingDays > 0){
+      forecastLine.style.display = "block";
+      const tone = fc.projected < 0 ? "var(--bad)" : "var(--text-2)";
+      forecastLine.innerHTML = `📈 בקצב ההוצאות הנוכחי (${fmt(fc.avgDaily)}/יום), צפוי להישאר <strong style="color:${tone}">${fmt(fc.projected)}</strong> בסוף החודש`;
+    } else {
+      forecastLine.style.display = "none";
+    }
+  }
   heroEl.classList.toggle("is-negative", value < 0);
   const prevTarget = Number(balEl.dataset.target || 0);
   if(prevTarget !== value || !balEl.dataset.initialized){
@@ -5938,6 +6093,26 @@ function renderDashboardHero(){
   }
 }
 
+/* Compares this month's rows against last month's "קבועה" (fixed) rows and
+   flags fixed merchants that had no matching row imported/entered yet this
+   month — catches a missed credit-card statement or a manual entry you forgot. */
+function getMissingFixedExpenses(){
+  const prevSheet = getPrevSheet(selectedSheet);
+  if(!prevSheet) return [];
+  const prevFixed = getEditableRows(prevSheet).filter(row => row.type === "קבועה" && row.merchant);
+  if(!prevFixed.length) return [];
+  const currentRows = getEditableRows(selectedSheet);
+  const missing = [];
+  const seen = new Set();
+  prevFixed.forEach(row => {
+    const key = normalizeMerchantName(row.merchant);
+    if(seen.has(key)) return;
+    seen.add(key);
+    const found = currentRows.some(r => merchantNamesFuzzyMatch(r.merchant, row.merchant));
+    if(!found) missing.push(row.merchant);
+  });
+  return missing;
+}
 function getDashboardReviewItems(){
   const rows = getEditableRows(selectedSheet);
   const missingCategory = rows.filter(row => !normalizeCategory(row.category)).length;
@@ -5950,6 +6125,7 @@ function getDashboardReviewItems(){
   const items = [];
   if(invalidRows){
     items.push({
+      id:`invalidRows:${selectedSheet}:${invalidRows}`,
       tone:"warn",
       title:`${invalidRows} הוצאות עם מידע חסר`,
       sub:"צריך להשלים בית עסק או סכום לפני שהדוחות יהיו אמינים.",
@@ -5959,6 +6135,7 @@ function getDashboardReviewItems(){
   }
   if(missingCategory){
     items.push({
+      id:`missingCategory:${selectedSheet}:${missingCategory}`,
       tone:"warn",
       title:`${missingCategory} הוצאות ללא קטגוריה`,
       sub:"הסיווג ישפר את התקציב, התחזית והסיכום השנתי.",
@@ -5968,6 +6145,7 @@ function getDashboardReviewItems(){
   }
   if(Math.abs(Number(sharedSummary.netBalance || 0)) >= 1){
     items.push({
+      id:`sharedBalance:${selectedSheet}`,
       tone:"warn",
       title:`התחשבנות זוגית פתוחה · ${fmt(Math.abs(sharedSummary.netBalance))}`,
       sub:"המאזן מחושב מכל ההוצאות המשותפות והאיזונים הישירים.",
@@ -5975,8 +6153,20 @@ function getDashboardReviewItems(){
       label:"בדוק חלוקה"
     });
   }
+  const missingFixed = getMissingFixedExpenses();
+  if(missingFixed.length){
+    items.push({
+      id:`missingFixed:${selectedSheet}:${missingFixed.join("|")}`,
+      tone:"warn",
+      title:`${missingFixed.length} הוצאות קבועות שלא יובאו החודש`,
+      sub:`מהחודש הקודם: ${missingFixed.slice(0,3).map(m=>escapeHtmlAttr(m)).join(", ")}${missingFixed.length>3 ? "..." : ""}`,
+      action:"switchToTab('expenses')",
+      label:"בדוק הוצאות"
+    });
+  }
   if(syncNeedsReview){
     items.push({
+      id:`sync:${selectedSheet}:${loggedIn?1:0}`,
       tone:"warn",
       title:loggedIn ? "הסנכרון האחרון לא הושלם" : "הכניסה לענן ממתינה",
       sub:loggedIn ? (syncMessage || "בדוק את מצב החיבור לפני עריכה ממכשיר נוסף.") : "התחבר כדי לראות ולעדכן את הנתונים משני המכשירים.",
@@ -5984,7 +6174,23 @@ function getDashboardReviewItems(){
       label:"בדוק חיבור"
     });
   }
-  return items;
+  const dismissed = getDismissedReviewItemIds();
+  return items.filter(item => !dismissed.includes(item.id));
+}
+function getDismissedReviewItemsStorageKey(){ return getScopedStorageKey("expense_app_dismissed_review_items_v1"); }
+function getDismissedReviewItemIds(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getDismissedReviewItemsStorageKey()) || "[]");
+    return Array.isArray(parsed) ? parsed : [];
+  } catch(e){ return []; }
+}
+function dismissReviewItem(id){
+  const dismissed = getDismissedReviewItemIds();
+  if(!dismissed.includes(id)) dismissed.push(id);
+  localStorage.setItem(getDismissedReviewItemsStorageKey(), JSON.stringify(dismissed.slice(-100)));
+  markLocalDataChanged();
+  scheduleCloudSync();
+  render();
 }
 function reviewExpensesNeedingAttention(){
   activeTab = "expenses";
@@ -5999,6 +6205,7 @@ function goToFirstDashboardReviewItem(){
   if(!first) return;
   if(first.action === "reviewExpensesNeedingAttention()") reviewExpensesNeedingAttention();
   else if(first.action.includes("'shared'")) switchToTab("shared");
+  else if(first.action.includes("'expenses'")) switchToTab("expenses");
   else switchToTab("backup");
 }
 function renderDashboardReviewQueue(){
@@ -6017,11 +6224,17 @@ function renderDashboardReviewQueue(){
       <div class="review-item">
         <span class="review-marker ${item.tone === "good" ? "good" : ""}" aria-hidden="true"></span>
         <div><strong>${escapeHtmlAttr(item.title)}</strong><small>${escapeHtmlAttr(item.sub)}</small></div>
-        <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+        <div class="review-item-actions">
+          <button class="review-action" type="button" onclick="${item.action}">${escapeHtmlAttr(item.label)}</button>
+          <button class="review-dismiss" type="button" data-dismiss-id="${escapeHtmlAttr(item.id)}" title="סמן כטופל" aria-label="סמן כטופל">✕</button>
+        </div>
       </div>`).join("")}</div>
       <button class="review-primary" type="button" onclick="goToFirstDashboardReviewItem()">בדוק את הפריט הראשון</button>`
       : `<div class="review-all-clear">הכול מסודר — אין כרגע פריטים שממתינים לבדיקה.</div>`}
   `;
+  root.querySelectorAll("[data-dismiss-id]").forEach(btn => {
+    btn.onclick = () => dismissReviewItem(btn.dataset.dismissId);
+  });
 }
 
 function renderBudgetOverview(rows){
@@ -6032,7 +6245,7 @@ function renderBudgetOverview(rows){
     const key=normalizeCategory(e.category);
     sums[key]=(sums[key]||0)+Number(e.amount||0);
   });
-  const cats = getCategoryDefinitions();
+  const cats = getActiveCategoriesForSheet(selectedSheet);
   const totalBudget = cats.reduce((s,c)=>s+(c.budget!=null ? Number(c.budget)||0 : 0),0);
   const totalSpent  = cats.reduce((s,c)=>s+(sums[c.name]||0),0);
   const totalRemain = totalBudget - totalSpent;
@@ -6116,7 +6329,50 @@ function renderCategorySummary(rows){
   const summaryRoot = document.getElementById("categorySummary");
   const summaryCard = summaryRoot.closest(".summary-card");
   if(summaryCard) summaryCard.classList.toggle("editing", categoryEditMode);
-  summaryRoot.innerHTML=getCategoryDefinitions().map((c,index)=>{
+  if(categoryEditMode){
+    const monthLabel = formatSheetLabel(selectedSheet);
+    const monthlyState = getMonthlyCategoryState(selectedSheet);
+    summaryRoot.innerHTML = `<div class="info-box" style="margin-bottom:10px">קטגוריות "קבועה" מופיעות כל חודש אוטומטית. קטגוריות "חודשית" צריך להפעיל בכל חודש בנפרד — כך אפשר לבנות תקציב עם רק מה שרלוונטי ל${monthLabel}. הסכום שתקבע כאן הוא התקציב הספציפי לחודש ${monthLabel} בלבד.</div>` +
+    getCategoryDefinitions().map((c,index)=>{
+      const isMonthly = c.fixedType === "monthly";
+      const isActiveThisMonth = !isMonthly || monthlyState.activeNames.includes(c.name);
+      const effectiveBudget = Object.prototype.hasOwnProperty.call(monthlyState.overrides, c.name) ? monthlyState.overrides[c.name] : c.budget;
+      const used = sums[c.name] || 0;
+      const remainingValue = effectiveBudget==null ? null : (effectiveBudget || 0)-used;
+      const remainText = effectiveBudget==null ? "-" : fmt(remainingValue);
+      const cls = effectiveBudget==null ? "" : (remainingValue<0 ? "bad" : "good");
+      return `<div class="summary-row budget-card${isMonthly && !isActiveThisMonth ? "" : ""}" style="${isMonthly && !isActiveThisMonth ? "opacity:.55" : ""}">
+        <div class="budget-card-top">
+          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)" style="border:1px solid var(--border,var(--line));border-radius:8px;padding:6px 10px;background:var(--surface,var(--bg));font-weight:800;font-size:15px;color:var(--text);flex:1;box-sizing:border-box">
+          <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
+        </div>
+        <div class="budget-card-grid">
+          <div class="budget-card-stat">
+            <span>סוג</span>
+            <select onchange="updateCategoryRow(${index}, 'fixedType', this.value)" style="width:100%;box-sizing:border-box">
+              <option value="fixed"${!isMonthly ? " selected" : ""}>קבועה</option>
+              <option value="monthly"${isMonthly ? " selected" : ""}>חודשית</option>
+            </select>
+          </div>
+          <div class="budget-card-stat">
+            <span>תקציב ל${monthLabel}</span>
+            <div class="field-currency-wrap"><input value="${effectiveBudget == null ? "" : Number(effectiveBudget)}" placeholder="0" onchange="updateCategoryBudgetForSheet('${escapeHtmlAttr(c.name)}', this.value, selectedSheet)" style="width:100%;box-sizing:border-box"></div>
+          </div>
+          ${isMonthly ? `<div class="budget-card-stat">
+            <span>פעילה ב${monthLabel}</span>
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;height:38px">
+              <input type="checkbox" ${isActiveThisMonth ? "checked" : ""} onchange="toggleMonthlyCategoryActive('${escapeHtmlAttr(c.name)}', selectedSheet)">
+              <span style="font-size:12px">${isActiveThisMonth ? "פעילה" : "לא פעילה"}</span>
+            </label>
+          </div>` : `<div class="budget-card-stat"><span>יצא</span><strong>${fmt(used)}</strong></div>`}
+          <div class="budget-card-stat"><span>נשאר</span><strong class="${cls}">${remainText}</strong></div>
+        </div>
+      </div>`;
+    }).join("");
+    renderMobileExpenseList(rows);
+    return;
+  }
+  summaryRoot.innerHTML=getActiveCategoriesForSheet(selectedSheet).map((c)=>{
     const used=sums[c.name] || 0;
     const budgetText=c.budget==null ? "ללא תקציב" : fmt(c.budget);
     const remainingValue = c.budget==null ? null : (c.budget || 0)-used;
@@ -6125,25 +6381,6 @@ function renderCategorySummary(rows){
     const progressRaw = c.budget ? Math.round((used / c.budget) * 100) : 0;
     const progress = c.budget ? Math.max(0, Math.min(progressRaw, 100)) : 0;
     const badgeLabel = c.budget == null ? "ללא תקציב" : (remainingValue < 0 ? `חריגה של ${fmt(Math.abs(remainingValue))}` : `נשארו ${remainText}`);
-    if(categoryEditMode){
-      return `<div class="summary-row editing">
-        <div class="summary-category">
-          <span>קטגוריה</span>
-          <input value="${escapeHtmlAttr(c.name)}" placeholder="שם קטגוריה" onchange="updateCategoryRow(${index}, 'name', this.value)">
-        </div>
-        <div class="summary-metric">
-          <span>תקציב</span>
-          <div class="field-currency-wrap"><input value="${c.budget == null ? "" : Number(c.budget)}" placeholder="סכום, 0 או -" onchange="updateCategoryRow(${index}, 'budget', this.value)"><button type="button" class="field-clear-btn" onclick="clearCurrencyField(this)" title="נקה" aria-label="נקה שדה">✕</button></div>
-        </div>
-        <div class="summary-metric"><span>יצא</span><strong>${fmt(used)}</strong></div>
-        <div class="summary-metric summary-actions">
-          <span>נשאר</span><strong class="${cls}">${remainText}</strong>
-        </div>
-        <div class="summary-delete">
-          <button class="row-delete-btn" type="button" onclick="deleteCategoryRow(${index})" title="מחק קטגוריה" aria-label="מחק קטגוריה">🗑️</button>
-        </div>
-      </div>`;
-    }
     /* Stage 8 — compact card: name + badge on top, progress + amount inline */
     const amountLabel = c.budget == null
       ? fmt(used)
@@ -6310,7 +6547,7 @@ function renderChart(rows){
     return;
   }
   if(type === "budgetProgress"){
-    const budgetRows=getCategoryDefinitions().map(c=>{
+    const budgetRows=getActiveCategoriesForSheet(selectedSheet).map(c=>{
       const used=sums[c.name] || 0;
       const budget=Number(c.budget || 0);
       const percent=budget ? Math.round((used / budget) * 100) : 0;
@@ -7409,15 +7646,17 @@ function renderTable(rows){
     const moveShiftBtn = canShiftBilling ? `<button type="button" class="secondary" onclick="moveRowToNextMonth(${rowId})">העבר חריג לחודש הבא</button>` : "";
     const resetShiftBtn = billingShiftMonths > 0 ? `<button type="button" class="secondary" onclick="resetRowBillingShift(${rowId})">בטל חריג</button>` : "";
     if(!rowEditActive){
+      const hasCategory = Boolean(normalizeCategory(e.category) || e.category);
       const dotColor=getCategoryColor(normalizeCategory(e.category)||e.category);
       const catLabel=normalizeCategory(e.category)||e.category||"ללא קטגוריה";
+      const catLabelHtml = hasCategory ? catLabel : `<span style="color:var(--expense);font-weight:700">⚠️ ${catLabel}</span>`;
       const payLabel=e.payment||"העברה בנקאית";
       const sharedTag=isSharedExpenseRow(e)?'<span class="compact-badge" style="font-size:10px">משותפת</span>':'';
       return `<div class="feed-row" data-row="${rowId}">
         <div class="feed-dot" style="background:${dotColor}"></div>
         <div class="feed-info">
           <span class="feed-merchant">${e.merchant||"—"} ${sharedTag}</span>
-          <span class="feed-meta">${catLabel} · ${payLabel}${e.type?" · "+e.type:""}</span>
+          <span class="feed-meta">${catLabelHtml} · ${payLabel}${e.type?" · "+e.type:""}</span>
         </div>
         <div class="feed-right">
           <span class="feed-amount">${fmt(e.amount)}</span>
@@ -7890,8 +8129,8 @@ function renderDebts(){
       if(debtEditMode && editable){
         return `<div class="income-edit-card${isIncrease ? " is-increase" : ""}">
           <button class="income-edit-delete" type="button" onclick="deleteFatherHistoryRow('${rowId}')" title="מחק רישום" aria-label="מחק רישום">🗑️</button>
-          <div class="income-edit-grid">
-            <div class="field">
+          <div class="income-edit-grid father-edit-grid">
+            <div class="field field-span-2">
               <label>תיאור</label>
               <input value="${escapeHtmlAttr(row.description || row.merchant)}" placeholder="למה זה קשור" onchange="updateFatherHistoryRow('${rowId}', 'description', this.value)">
             </div>
@@ -7903,7 +8142,7 @@ function renderDebts(){
               <label>תאריך</label>
               <input type="date" value="${toIsoDate(row.date_raw)}" onchange="updateFatherHistoryRow('${rowId}', 'date_raw', formatDateForStorage(this.value))">
             </div>
-            <div class="field">
+            <div class="field field-span-2">
               <label>סוג</label>
               <select onchange="updateFatherHistoryRow('${rowId}', 'direction', this.value)">
                 <option value="repayment"${!isIncrease ? " selected" : ""}>החזר (מקטין את היתרה)</option>
@@ -8121,6 +8360,10 @@ function render(){
     if(addCategoryBtn){
       addCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
     }
+    const addMonthlyCategoryBtn = document.getElementById("addMonthlyCategoryBtn");
+    if(addMonthlyCategoryBtn){
+      addMonthlyCategoryBtn.style.display = categoryEditMode ? "inline-flex" : "none";
+    }
     const cardBtn = document.getElementById("toggleCardEditBtn");
     if(cardBtn){
       cardBtn.textContent = `מצב עריכה: ${cardEditMode ? "פעיל" : "כבוי"}`;
@@ -8194,7 +8437,8 @@ document.getElementById("toggleDashboardPrefsBtn").onclick=()=>{ dashboardPrefsO
 document.getElementById("toggleYearlyPrefsBtn").onclick=()=>{ yearlyPrefsOpen=!yearlyPrefsOpen; render(); };
 document.getElementById("addIncomeBtn").onclick=addIncomeRow;
 document.getElementById("addCardBtn").onclick=addPaymentMethodRow;
-document.getElementById("addCategoryBtn").onclick=addCategoryRow;
+document.getElementById("addCategoryBtn").onclick=()=>addCategoryRow("fixed");
+document.getElementById("addMonthlyCategoryBtn").onclick=()=>addCategoryRow("monthly");
 document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
 document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
 document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
@@ -8294,7 +8538,7 @@ function renderMobileExpenseList(rows){
         </div>
         <div style="overflow:hidden">
           <div class="mxp-merchant">${e.merchant||""}</div>
-          <div class="mxp-cat">${badge}${sharedBadge}${normalizeCategory(e.category)||""}</div>
+          <div class="mxp-cat">${badge}${sharedBadge}${normalizeCategory(e.category) || `<span style="color:var(--expense);font-weight:700">⚠️ ללא קטגוריה</span>`}</div>
         </div>
         <div style="display:flex;align-items:center;gap:4px">
           <div class="mxp-amount">${fmt(e.amount)}</div>
@@ -8932,7 +9176,7 @@ function buildCCImportTable(){
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
   const paymentOptionDefs = getImportPaymentOptions();
 
-  const cardStyle = "padding:8px 8px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
+  const selectStyle = "padding:7px 8px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
 
   const html = ccImportRows.map((row, i) => {
     const isDup = row._isDuplicate;
@@ -8941,25 +9185,31 @@ function buildCCImportTable(){
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
     const dupBadge = isDup ? `<span title="\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4" style="display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05db\u05e4\u05d5\u05dc?</span>` : "";
-    const cardWrap = isDup ? "background:rgba(220,150,50,.10);border-color:rgba(220,150,50,.35)" : "";
-    return `<div style="border:1px solid var(--line);border-radius:14px;padding:10px;margin-bottom:10px;${cardWrap}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+    const isImmediateChecked = String(row.immediate || "").trim() === "\u05db\u05df";
+    const isSharedChecked = Boolean(row.sharedExpense);
+    return `<div class="summary-row${isDup ? " status-bad" : ""}" style="margin-bottom:10px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <input type="checkbox" ${checked?"checked":""} onchange="toggleCCImportRow(${i}, this.checked)" style="width:18px;height:18px;flex-shrink:0">
         <div style="flex:1;min-width:0">
-          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:6px 9px;border-radius:9px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
+          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
         </div>
+        <strong style="font-size:14px;color:var(--accent);white-space:nowrap">${fmt(row.amount)}${amtExtra}</strong>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;font-size:12px;color:var(--muted)">
-        <span>${row.date_raw}</span>
-        <strong style="font-size:14px;color:var(--accent)">${fmt(row.amount)}${amtExtra}</strong>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}</div>
+      <div class="budget-card-grid">
+        <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
+        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
+        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <div>
-          <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
-          ${row.sourceCardLabel ? `<div style="margin-top:3px;font-size:10px;color:var(--muted)">${escapeHtmlAttr(row.sourceCardLabel)}</div>` : ""}
-        </div>
-        <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${cardStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
-        <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${cardStyle};grid-column:1/-1">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
+      <div style="display:flex;gap:16px;margin-top:10px">
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2)">
+          <input type="checkbox" ${isImmediateChecked ? "checked" : ""} onchange="updateCCImportField(${i}, 'immediate', this.checked ? '\u05db\u05df' : '')">
+          \u05de\u05d9\u05d9\u05d3\u05d9
+        </label>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2)">
+          <input type="checkbox" ${isSharedChecked ? "checked" : ""} onchange="updateCCImportField(${i}, 'sharedExpense', this.checked)">
+          \u05de\u05e9\u05d5\u05ea\u05e3
+        </label>
       </div>
     </div>`;
   }).join("");
@@ -8969,10 +9219,11 @@ function buildCCImportTable(){
 
 
 function confirmCCImport(){
+ try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
   const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
-  if(!toImport.length){ showToast("אין עסקאות לייבוא.", "error"); return; }
+  if(!toImport.length){ showToast("אין עסקאות לייבוא. סמן לפחות שורה אחת (ה-checkbox בצד).", "error"); return; }
   const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
   if(unresolved.length){
     showToast("יש עסקאות בלי כרטיס משויך. בחר כרטיס לכל שורה או הגדר כרטיס ברירת מחדל למעלה.", "error");
@@ -8980,7 +9231,7 @@ function confirmCCImport(){
   }
   const overrides = getOverrides();
   if(!overrides[sheet]) overrides[sheet] = [];
-  rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
+  const preImportRecoveryPoint = rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
   const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
   // Find max existing row number
@@ -8989,7 +9240,7 @@ function confirmCCImport(){
 
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
-    const isImm = isPaymentMethodImmediate(payment);
+    const isImm = isPaymentMethodImmediate(payment) || String(r.immediate || "").trim() === "\u05db\u05df";
     if(r.category || payment || r.type){
       rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
     }
@@ -9002,6 +9253,7 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
+      sharedExpense: Boolean(r.sharedExpense),
       notes: r.notes || "",
       sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
       importMeta: {
@@ -9021,7 +9273,14 @@ function confirmCCImport(){
   // Switch to the imported sheet
   selectedSheet = sheet;
   render();
-  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success");
+  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success", {
+    actionLabel: "בטל ייבוא",
+    onAction: () => restoreLocalRecoveryPoint(preImportRecoveryPoint.id)
+  });
+ } catch(error){
+   console.error("confirmCCImport failed:", error);
+   showToast("הייבוא נכשל: " + (error && error.message || error), "error", {duration:8000});
+ }
 }
 
 </script>
