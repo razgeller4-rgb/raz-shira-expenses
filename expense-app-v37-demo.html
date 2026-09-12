@@ -456,8 +456,55 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .edit-card-title { font-weight: 800; font-size: 14px; color: var(--text); margin-bottom: 8px; }
 .edit-card-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 14px; margin-top: 14px; }
 .edit-card-grid .field input,
-.edit-card-grid .field select { height: 42px; }
+.edit-card-grid .field select { height: 44px; }
 .edit-card-grid .field label { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; }
+
+/* Quick section: amount and merchant are the two fields edited alongside
+   category on almost every visit, so they sit above the fold at full size.
+   Everything else (date, type, payment, sharing, notes) moves behind
+   "פרטים נוספים" - present, not competing for the first tap. */
+.edit-quick { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+.edit-quick .field input { height: 44px; }
+.edit-quick .field-amount input { font-size: 17px; font-weight: 800; }
+.field-label-standalone { font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .03em; margin: 14px 0 8px; }
+
+/* Category fix is the single most common edit, so it is a tap on a chip
+   instead of open-select-scroll-pick-close on a <select>. */
+.category-chip-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.category-chip-row::-webkit-scrollbar { display:none; }
+.category-chip {
+  flex:none; display:inline-flex; align-items:center; gap:6px;
+  min-height:44px; padding:0 15px; border-radius:999px;
+  border:1.5px solid var(--border); background:var(--card);
+  font-family:inherit; font-size:13px; font-weight:700; color:var(--text);
+  cursor:pointer;
+  transition: border-color .15s cubic-bezier(.2,0,0,1), background-color .15s cubic-bezier(.2,0,0,1);
+}
+.category-chip .chip-dot { width:9px; height:9px; border-radius:50%; flex:none; }
+.category-chip[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-light); color: var(--accent); }
+@media (prefers-reduced-motion: reduce) { .category-chip { transition: none; } }
+
+/* Insurance-grade fields (date, payment, sharing...) - worth having, not
+   worth looking at by default. Same fold pattern as the recovery-points
+   list in the backup tab. */
+.edit-details { margin-top: 14px; }
+.edit-details-toggle {
+  list-style:none; cursor:pointer;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  min-height:44px; font-size:13px; font-weight:700; color:var(--muted);
+}
+.edit-details-toggle::-webkit-details-marker { display:none; }
+.edit-details-toggle span:first-child::before {
+  content:"\25B8"; display:inline-block; margin-inline-end:7px; font-weight:400;
+  transition: transform .15s cubic-bezier(.2,0,0,1);
+}
+.edit-details[open] > .edit-details-toggle span:first-child::before { transform: rotate(90deg); }
+.edit-details-hint { font-size:11px; font-weight:400; color: var(--muted); opacity:.75; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+@media (prefers-reduced-motion: reduce) { .edit-details-toggle span:first-child::before { transition: none; } }
+@media (max-width: 480px) {
+  .edit-quick { grid-template-columns: 1fr 1fr; }
+  .edit-details-hint { display:none; }
+}
 .category-field-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
 
 /* ── Table Shell (yearly, CC import, etc.) ───────────────────── */
@@ -7748,37 +7795,57 @@ function renderTable(rows){
             <button type="button" class="secondary" onclick="deleteRow(${rowId})">מחק הוצאה</button>
           </div>
         </div>
-        <div class="edit-card-grid">
-          <div class="field"><label>תאריך</label><input type="date" value="${toIsoDate(draft.date_raw)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'date_raw', formatDateForStorage(this.value))` : `updateRow(${rowId}, 'date_raw', formatDateForStorage(this.value))`}"></div>
+        <div class="edit-quick">
+          <div class="field field-amount"><label>סכום</label><input type="number" step="0.01" inputmode="decimal" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
           <div class="field"><label>בית עסק</label><input value="${escapeHtmlAttr(draft.merchant)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'merchant', this.value)` : `updateRow(${rowId}, 'merchant', this.value)`}"></div>
-          <div class="field"><label>סכום</label><input type="number" step="0.01" value="${Number(draft.amount || 0)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'amount', this.value)` : `updateRow(${rowId}, 'amount', this.value)`}"></div>
-          <div class="field"><label><span class="category-field-swatch" style="background:${getCategoryColor(normalizeCategory(draft.category)||draft.category)}"></span>קטגוריה</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'category', this.value)` : `updateRow(${rowId}, 'category', this.value)`}">${getCategoryOptionsForEditing().map(opt=>`<option value="${opt}" ${normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category) ? "selected" : ""}>${opt || "ללא קטגוריה"}</option>`).join("")}</select></div>
-          <div class="field"><label>סוג</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'type', this.value)` : `updateRow(${rowId}, 'type', this.value)`}"><option value="" ${!draft.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${draft.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${draft.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
-          <div class="field"><label>אשראי</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'payment', this.value)` : `updateRow(${rowId}, 'payment', this.value)`}">${paymentOptions.map(opt=>`<option value="${opt.value}" ${draft.payment===opt.value || (!draft.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
-          <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'immediate', this.value)` : `updateRow(${rowId}, 'immediate', this.value)`}"><option value="" ${!isRowImmediate(draft) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(draft) ? "selected" : ""}>כן</option></select></div>
-          ${shiftControl}
-          <div class="field field-checkbox">
-            <label>הוצאה משותפת</label>
-            <label class="toggle-check">
-              <input type="checkbox" ${isSharedExpenseRow(draft) ? "checked" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'sharedExpense', this.checked)` : `updateRowSharedExpense(${rowId}, this.checked)`}">
-              <span>סמן אם זה הוצאה משותפת</span>
-            </label>
-          </div>
-          ${isSharedExpenseRow(draft) ? `
-            <div class="field">
-              <label>חלוקה לפי</label>
-              <select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)` : `updateRowSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)`}">
-                <option value="percent" ${((draft.sharedSplitMode || "percent") === "percent") ? "selected" : ""}>אחוזים</option>
-                <option value="amount" ${draft.sharedSplitMode === "amount" ? "selected" : ""}>סכום</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>${draft.sharedSplitMode === "amount" ? "החלק שלי בסכום" : "החלק שלי באחוזים"}</label>
-              <input id="sharedSplitValue-${rowId}" type="number" step="0.01" value="${draft.sharedSplitMode === "amount" ? sharedSplit.ownerAmount : sharedSplit.ownerPercent}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)` : `updateRowSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)`}">
-            </div>
-          ` : ""}
-          <div class="field" style="grid-column:span 2"><label>הערות</label><input value="${String(draft.notes || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'notes', this.value)` : `updateRow(${rowId}, 'notes', this.value)`}"></div>
         </div>
+        <div class="field-label-standalone">קטגוריה</div>
+        <div class="category-chip-row" role="group" aria-label="בחירת קטגוריה">
+          ${getCategoryOptionsForEditing().map(opt=>{
+            const isActive = normalizeCategory(draft.category)===normalizeCategory(opt) && (opt!=="" || !draft.category);
+            const chipHandler = rowEditActive && !editMode
+              ? `updateInlineExpenseDraft(${rowId}, 'category', '${String(opt).replace(/'/g,"\\'")}')`
+              : `updateRow(${rowId}, 'category', '${String(opt).replace(/'/g,"\\'")}')`;
+            return `<button type="button" class="category-chip" aria-pressed="${isActive}" onclick="${chipHandler}">
+              ${opt ? `<span class="chip-dot" style="background:${getCategoryColor(opt)}"></span>` : ""}
+              <span>${opt || "ללא קטגוריה"}</span>
+            </button>`;
+          }).join("")}
+        </div>
+        <details class="edit-details">
+          <summary class="edit-details-toggle">
+            <span>פרטים נוספים</span>
+            <span class="edit-details-hint">תאריך · סוג · אשראי · שיתוף · הערות</span>
+          </summary>
+          <div class="edit-card-grid">
+            <div class="field"><label>תאריך</label><input type="date" value="${toIsoDate(draft.date_raw)}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'date_raw', formatDateForStorage(this.value))` : `updateRow(${rowId}, 'date_raw', formatDateForStorage(this.value))`}"></div>
+            <div class="field"><label>סוג</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'type', this.value)` : `updateRow(${rowId}, 'type', this.value)`}"><option value="" ${!draft.type ? "selected" : ""}>ללא סוג</option><option value="קבועה" ${draft.type==="קבועה" ? "selected" : ""}>קבועה</option><option value="משתנה" ${draft.type==="משתנה" ? "selected" : ""}>משתנה</option></select></div>
+            <div class="field"><label>אשראי</label><select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'payment', this.value)` : `updateRow(${rowId}, 'payment', this.value)`}">${paymentOptions.map(opt=>`<option value="${opt.value}" ${draft.payment===opt.value || (!draft.payment && opt.value==="") ? "selected" : ""}>${opt.label}</option>`).join("")}</select></div>
+            <div class="field"><label>מיידי</label><select ${paymentMethod && paymentMethod.isImmediate ? "disabled" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'immediate', this.value)` : `updateRow(${rowId}, 'immediate', this.value)`}"><option value="" ${!isRowImmediate(draft) ? "selected" : ""}>לא</option><option value="כן" ${isRowImmediate(draft) ? "selected" : ""}>כן</option></select></div>
+            ${shiftControl}
+            <div class="field field-checkbox">
+              <label>הוצאה משותפת</label>
+              <label class="toggle-check">
+                <input type="checkbox" ${isSharedExpenseRow(draft) ? "checked" : ""} onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'sharedExpense', this.checked)` : `updateRowSharedExpense(${rowId}, this.checked)`}">
+                <span>סמן אם זה הוצאה משותפת</span>
+              </label>
+            </div>
+            ${isSharedExpenseRow(draft) ? `
+              <div class="field">
+                <label>חלוקה לפי</label>
+                <select onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)` : `updateRowSharedSplit(${rowId}, this.value, document.getElementById('sharedSplitValue-${rowId}').value)`}">
+                  <option value="percent" ${((draft.sharedSplitMode || "percent") === "percent") ? "selected" : ""}>אחוזים</option>
+                  <option value="amount" ${draft.sharedSplitMode === "amount" ? "selected" : ""}>סכום</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>${draft.sharedSplitMode === "amount" ? "החלק שלי בסכום" : "החלק שלי באחוזים"}</label>
+                <input id="sharedSplitValue-${rowId}" type="number" step="0.01" value="${draft.sharedSplitMode === "amount" ? sharedSplit.ownerAmount : sharedSplit.ownerPercent}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraftSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)` : `updateRowSharedSplit(${rowId}, '${draft.sharedSplitMode || "percent"}', this.value)`}">
+              </div>
+            ` : ""}
+            <div class="field" style="grid-column:span 2"><label>הערות</label><input value="${String(draft.notes || "").replace(/"/g,"&quot;")}" onchange="${rowEditActive && !editMode ? `updateInlineExpenseDraft(${rowId}, 'notes', this.value)` : `updateRow(${rowId}, 'notes', this.value)`}"></div>
+          </div>
+        </details>
       </div></div>`;
     }).join("");
     return `<div class="feed-day">
