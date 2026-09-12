@@ -9043,7 +9043,12 @@ function parseCCStatement(rows, filename){
   let chargeDate = "";
   let last4 = "";
 
-  for(let i = 0; i < Math.min(rows.length, 15); i++){
+  /* Excel exports put the header near the top, but a PDF carries marketing
+     copy and account metadata first - in Shira's AmEx statement the table
+     header sits at row 16, past the old 15-row window, so detection never
+     reached it. The conditions below are specific enough that scanning
+     further costs nothing. */
+  for(let i = 0; i < Math.min(rows.length, 40); i++){
     const r = rows[i];
     if(!r) continue;
     const c0 = normalizeStatementCell(r[0]);
