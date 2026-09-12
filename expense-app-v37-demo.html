@@ -1790,6 +1790,42 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
 @keyframes warmModalIn { from{opacity:0;transform:translateY(10px) scale(.99)} to{opacity:1;transform:none} }
 @media (prefers-reduced-motion:reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
 @media (max-width:600px){.workspace-switch{width:100%;margin-bottom:12px}.workspace-btn{min-height:40px}.dashboard-quick-actions{gap:8px;padding:9px;border-radius:19px}.dashboard-quick-actions button{min-height:78px;border-radius:14px;padding:9px 5px}.dashboard-quick-actions span{font-size:11px}.dashboard-quick-actions small{display:none}.monthly-status-card .hero-balance{font-size:clamp(42px,13vw,56px)}}
+
+.icon-action {
+  width: 44px; height: 44px;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 12px;
+  border: 1px solid var(--border, var(--line));
+  background: var(--card, var(--surface));
+  color: var(--muted);
+  cursor: pointer;
+  transition: color .18s cubic-bezier(.2,0,0,1), border-color .18s cubic-bezier(.2,0,0,1), transform .18s cubic-bezier(.2,0,0,1);
+}
+.icon-action:hover { color: var(--accent); border-color: var(--accent); }
+.icon-action:active { transform: rotate(-90deg); }
+.icon-action:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (prefers-reduced-motion: reduce) {
+  .icon-action { transition: none; }
+  .icon-action:active { transform: none; }
+}
+
+.recovery-summary {
+  list-style: none; cursor: pointer;
+  display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  min-height: 44px; padding: 4px 0;
+  font-size: 15px; font-weight: 700; color: var(--text);
+}
+.recovery-summary::-webkit-details-marker { display: none; }
+.recovery-summary-main::before {
+  content: "\25B8"; display: inline-block; margin-inline-end: 8px;
+  color: var(--muted); font-weight: 400;
+  transition: transform .18s cubic-bezier(.2,0,0,1);
+}
+details[open] > .recovery-summary .recovery-summary-main::before { transform: rotate(90deg); }
+.recovery-summary-meta { font-size: 12.5px; font-weight: 400; color: var(--muted); }
+@media (prefers-reduced-motion: reduce) {
+  .recovery-summary-main::before { transition: none; }
+}
 </style>
 </head>
 <body>
@@ -2382,10 +2418,17 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
                 <button id="authLogoutBtn" class="secondary" type="button">התנתק</button>
               </div>
               <div class="sync-actions" style="margin-top:10px">
-                <button id="pullCloudSyncBtn" class="secondary" type="button">משוך מהענן עכשיו</button>
-                <button id="pushCloudSyncBtn" class="secondary" type="button">דחוף לענן עכשיו</button>
-                <button id="clearAppCacheBtn" class="secondary" type="button" title="מרענן את קבצי האתר בלי למחוק נתונים">נקה מטמון ורענן</button>
-                <button id="clearCloudSyncBtn" class="secondary" type="button">נתק סנכרון במכשיר זה</button>
+                <button id="clearAppCacheBtn" class="icon-action" type="button"
+                        title="רענון קבצי האתר. הנתונים לא נמחקים."
+                        aria-label="רענון קבצי האתר">
+                  <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor"
+                       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                    <path d="M21 2v6h-6"></path>
+                    <path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path>
+                    <path d="M3 22v-6h6"></path>
+                    <path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path>
+                  </svg>
+                </button>
               </div>
               <!-- hidden inputs kept for internal use -->
               <input id="cloudSyncUrl" style="display:none">
@@ -2398,18 +2441,18 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
               <input id="backupFileInput" type="file" accept="application/json,.json" style="display:none">
             </div>
             <div class="recovery-card">
-              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
-                <div>
-                  <h3 style="margin:0 0 4px">🛟 נקודות שחזור</h3>
-                  <div class="small">האתר ישמור נקודות שחזור אוטומטיות לפני משיכה מהענן, לפני ייבוא, וגם אחרי שמירה לענן. אם משהו נמחק, נוכל לחזור לנקודה קודמת מתוך האתר.</div>
-                </div>
+              <details id="recoveryDetails">
+                <summary class="recovery-summary">
+                  <span class="recovery-summary-main">שחזור</span>
+                  <span id="recoveryPointsSummary" class="recovery-summary-meta"></span>
+                </summary>
+                <div class="small" style="margin:10px 0 12px">נקודות שחזור נשמרות מאליהן לפני משיכה מהענן, לפני ייבוא, ואחרי שמירה. אם משהו נמחק בטעות, אפשר לחזור לנקודה קודמת מכאן.</div>
                 <div class="sync-actions" style="margin-top:0">
-                  <button id="createRecoveryPointBtn" class="secondary" type="button">צור נקודת שחזור עכשיו</button>
-                  <button id="refreshRecoveryPointsBtn" class="secondary" type="button">רענן רשימה</button>
+                  <button id="createRecoveryPointBtn" class="secondary" type="button">צור נקודת שחזור</button>
+                  <button id="refreshRecoveryPointsBtn" class="secondary" type="button">רענן</button>
                 </div>
-              </div>
-              <div id="recoveryPointsSummary" class="sync-status"></div>
-              <div id="recoveryPointsList" class="recovery-list"></div>
+                <div id="recoveryPointsList" class="recovery-list"></div>
+              </details>
             </div>
             <div class="backup-preview" id="backupStatus">עדיין לא בוצעה פעולת גיבוי בסשן הזה.</div>
           </div>
@@ -4258,6 +4301,11 @@ async function saveCloudSyncConnection(){
     setCloudSyncState({status:"error", message:`החיבור נשמר אבל הבדיקה נכשלה: ${error.message}`});
   }
 }
+/* No longer reachable from the UI. The manual pull and push buttons were removed
+   because the app already does both on its own: every save schedules a push, and
+   both load and tab-focus pull. Kept rather than deleted - they are a working
+   escape hatch worth having from the console if sync ever misbehaves, and
+   deleting them risks taking a live dependency with them. */
 async function pullCloudSyncNow(){
   if(!hasCloudSyncConfig()){
     showToast("קודם שמור פרטי חיבור לענן.", "error");
@@ -4271,6 +4319,11 @@ async function pullCloudSyncNow(){
     setCloudSyncState({status:"error", message:`משיכה מהענן נכשלה: ${error.message}`});
   }
 }
+/* No longer reachable from the UI. The manual pull and push buttons were removed
+   because the app already does both on its own: every save schedules a push, and
+   both load and tab-focus pull. Kept rather than deleted - they are a working
+   escape hatch worth having from the console if sync ever misbehaves, and
+   deleting them risks taking a live dependency with them. */
 async function pushCloudSyncNow(){
   if(!hasCloudSyncConfig()){
     showToast("קודם שמור פרטי חיבור לענן.", "error");
@@ -4285,6 +4338,11 @@ async function pushCloudSyncNow(){
     setCloudSyncState({status:"error", message:`דחיפה לענן נכשלה: ${error.message}`});
   }
 }
+/* No longer reachable from the UI. The manual pull and push buttons were removed
+   because the app already does both on its own: every save schedules a push, and
+   both load and tab-focus pull. Kept rather than deleted - they are a working
+   escape hatch worth having from the console if sync ever misbehaves, and
+   deleting them risks taking a live dependency with them. */
 function clearCloudSyncConnection(){
   if(!confirm("לכבות את החיבור ל־Supabase במכשיר הזה? הנתונים המקומיים יישארו, אבל לא יתבצע סנכרון אוטומטי.")) return;
   clearCloudSyncConfig();
@@ -8447,10 +8505,7 @@ document.getElementById("addCardBtn").onclick=addPaymentMethodRow;
 document.getElementById("addCategoryBtn").onclick=()=>addCategoryRow("fixed");
 document.getElementById("addMonthlyCategoryBtn").onclick=()=>addCategoryRow("monthly");
 document.getElementById("saveCloudSyncBtn").onclick=saveCloudSyncConnection;
-document.getElementById("pullCloudSyncBtn").onclick=pullCloudSyncNow;
-document.getElementById("pushCloudSyncBtn").onclick=pushCloudSyncNow;
 document.getElementById("clearAppCacheBtn").onclick=clearAppCacheAndRefresh;
-document.getElementById("clearCloudSyncBtn").onclick=clearCloudSyncConnection;
 document.getElementById("authLoginBtn").onclick=handleAuthLoginClick;
 document.getElementById("authLogoutBtn").onclick=handleAuthLogoutClick;
 document.getElementById("authGateForm").onsubmit=handleAuthGateLogin;

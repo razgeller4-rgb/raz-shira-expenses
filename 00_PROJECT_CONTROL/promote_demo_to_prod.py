@@ -49,6 +49,21 @@ ALLOWED_REMOVALS = {
         "and backs up. Only shira's key is actually renamed (raz's stays "
         "unsuffixed), and migrateLegacyMerchantMemory() seeds hers from the "
         "shared blob.",
+
+    # The backup tab offered manual pull and push buttons alongside automation
+    # that already did both: every save schedules a push, and load plus
+    # tab-focus each pull. The buttons implied the automation could not be
+    # trusted. The underlying functions are kept and annotated - only the UI
+    # entry points are gone.
+    "pullCloudSyncBtn":
+        "manual pull button; the app already pulls on load and on tab focus "
+        "via maybePullOnFocus, so the button was redundant.",
+    "pushCloudSyncBtn":
+        "manual push button; scheduleCloudSync already fires from every save "
+        "path, so the button was redundant.",
+    "clearCloudSyncBtn":
+        "disconnect-sync button; Raz judged it irrelevant for a two-person "
+        "household app, and logging out already stops syncing.",
 }
 
 CHECK_ONLY = "--check" in sys.argv
