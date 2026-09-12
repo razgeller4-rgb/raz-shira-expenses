@@ -9231,6 +9231,55 @@ function parseCCStatement(rows, filename){
 }
 
 
+/* Suggests whether an imported merchant is a recurring charge, for issuers that
+   do not say so themselves. AmEx marks standing orders in the statement and that
+   always wins; this covers the rest, which previously all defaulted to variable,
+   so a first-time subscription or insurance premium arrived mis-typed. The
+   fixed/variable split feeds getExpenseStats, the forecast and the
+   missing-fixed-expense alert, so getting it wrong propagates.
+
+   A merchant counts as recurring when it appears in at least RECURRING_MIN_MONTHS
+   distinct earlier months at a comparable amount. Same-month repeats are ignored:
+   three coffees in one week are not a standing order. The amount test is
+   proportional with a small floor, because a 12 percent swing on a 30-shekel
+   charge is noise while the same swing on a 500-shekel one is not.
+
+   This suggests; it never decides. The review table keeps the field editable and
+   an explicit merchant-memory entry still takes precedence. */
+const RECURRING_MIN_MONTHS = 2;
+const RECURRING_AMOUNT_TOLERANCE = 0.12;
+const RECURRING_AMOUNT_FLOOR = 8;
+function inferTypeForMerchant(merchant, amount){
+  const name = String(merchant || "").trim();
+  const value = Number(amount);
+  if(!name || !Number.isFinite(value) || value <= 0) return "";
+  let sheets;
+  try { sheets = getSheetNames(); } catch(e){ return ""; }
+  if(!Array.isArray(sheets) || !sheets.length) return "";
+
+  const tolerance = Math.max(RECURRING_AMOUNT_FLOOR, value * RECURRING_AMOUNT_TOLERANCE);
+  const monthsSeen = new Set();
+  let explicitlyFixed = 0;
+
+  for(let i = 0; i < sheets.length; i++){
+    const sheet = sheets[i];
+    if(sheet === selectedSheet) continue;
+    let rows;
+    try { rows = getEditableRows(sheet); } catch(e){ continue; }
+    for(let j = 0; j < rows.length; j++){
+      const row = rows[j];
+      if(!row || !row.merchant) continue;
+      if(!merchantNamesFuzzyMatch(row.merchant, name)) continue;
+      if(row.type === "\u05e7\u05d1\u05d5\u05e2\u05d4"){ explicitlyFixed++; monthsSeen.add(sheet); continue; }
+      const past = Number(row.amount);
+      if(!Number.isFinite(past)) continue;
+      if(Math.abs(past - value) <= tolerance) monthsSeen.add(sheet);
+    }
+  }
+
+  if(explicitlyFixed > 0 && monthsSeen.size >= 1) return "\u05e7\u05d1\u05d5\u05e2\u05d4";
+  return monthsSeen.size >= RECURRING_MIN_MONTHS ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : "";
+}
 function showCCImportModal(result, filename){
   ccImportSourceFileName = String(filename || "");
   const knownCategories = new Set(getCategoryDefinitions().map(c => c.name));
@@ -9238,7 +9287,7 @@ function showCCImportModal(result, filename){
     const match = lookupMerchantMapping(t.merchant);
     return Object.assign({}, t, {
       category: knownCategories.has(match.category) ? match.category : "",
-      type: match.type || t.suggestedType || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      type: match.type || t.suggestedType || inferTypeForMerchant(t.merchant, t.amount) || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: t.payment || match.payment || "",
       immediate: ""
     });
