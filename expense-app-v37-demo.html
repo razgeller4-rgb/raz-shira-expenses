@@ -9253,9 +9253,16 @@ function inferTypeForMerchant(merchant, amount){
   const name = String(merchant || "").trim();
   const value = Number(amount);
   if(!name || !Number.isFinite(value) || value <= 0) return "";
-  let sheets;
-  try { sheets = getSheetNames(); } catch(e){ return ""; }
-  if(!Array.isArray(sheets) || !sheets.length) return "";
+  /* SHEET_OPTIONS is the app's own list of known months, kept current by
+     syncSheetOptions. Overrides keys are unioned in because a sheet can hold
+     rows before it reaches that list. There is no getSheetNames() - an earlier
+     version of this function called one, and the surrounding try/catch swallowed
+     the ReferenceError so the heuristic silently never ran. */
+  const sheets = [...new Set([].concat(
+    Array.isArray(SHEET_OPTIONS) ? SHEET_OPTIONS : [],
+    Object.keys(getOverrides() || {})
+  ))].filter(Boolean);
+  if(!sheets.length) return "";
 
   const tolerance = Math.max(RECURRING_AMOUNT_FLOOR, value * RECURRING_AMOUNT_TOLERANCE);
   const monthsSeen = new Set();
