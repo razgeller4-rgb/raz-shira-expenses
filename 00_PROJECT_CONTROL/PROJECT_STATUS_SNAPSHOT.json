@@ -1,28 +1,14 @@
 {
   "schema_version": 2,
   "project": "Expense App — Raz & Shira",
-  "generated_at": "2026-09-10T14:30:00+03:00",
+  "generated_at": "2026-09-12T18:05:00+03:00",
   "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
   "owner": "Raz",
-  "headline": "production חי ומתעדכן בפועל — 8 קומיטים ל-v37 מאז 28/08. הדמו מקדים ב-227 שורות עם 3 קומיטים שטרם הועברו, כולל תיקון שבירת ייבוא. גיבויי הנתונים אינם תחת git.",
-  "stage": "V38 shipped incrementally to production; demo ahead",
+  "headline": "Import path fixed and shipped; design system built and audited. Screens not yet designed.",
+  "stage": "Stage 5 complete. Next: stage 6, designing the ten screens.",
   "git": {
     "branch": "main",
-    "head": "d87d2c0",
-    "sync_vs_origin": "0 ahead / 0 behind",
-    "commits_since_last_control_update": 29,
-    "production_changed": true,
-    "production_commits_since_2026_08_28": [
-      "b137383 feat: add safe cache refresh control",
-      "c7ece29 fix: harden household sync identity and revisions",
-      "7e50b91 feat: Google OAuth + מסך כניסה מלא ל-v37",
-      "ab34c7f feat: סנכרון כל שדרוגי העיצוב מ-demo ל-v37",
-      "06a8521 feat: סנכרון פיצ'רי A-D + תיקוני UX ומצב לילה",
-      "201bd2d feat: סטטיסטיקות וגרפים לטאב הכנסות",
-      "ba96b3a feat: גרף מגמה שנתי + פילוח קטגוריות שנתי + גריד KPI",
-      "548bc22 fix: טאב חובות — שורות קומפקטיות בנייד, תיקון RTL"
-    ],
-    "verified_at": "2026-09-10T14:30:00+03:00"
+    "head": "66f9a8f"
   },
   "demo_vs_production": {
     "demo_file": "expense-app-v37-demo.html",
@@ -31,48 +17,58 @@
     "production_lines": 8994,
     "demo_ahead_lines": 227,
     "unported_commits": [
-      { "sha": "2e4bc93", "summary": "ריבוי פריטי בדיקה בדשבורד + סימון כטופל, עיצוב טופס קטגוריות וכרטיסי ייבוא, מיידי/משותף בייבוא" },
-      { "sha": "18f64dc", "summary": "רישום מפתחות סנכרון חסרים (יעדים/זיכרון עסק/קטגוריות חודשיות/בדיקות שנדחו) + הגנה משגיאה שקטה בייבוא אשראי" },
-      { "sha": "d87d2c0", "summary": "הגנה מחריגת מכסת localStorage בנקודות שחזור — היה שובר את הייבוא לגמרי" }
+      {
+        "sha": "2e4bc93",
+        "summary": "ריבוי פריטי בדיקה בדשבורד + סימון כטופל, עיצוב טופס קטגוריות וכרטיסי ייבוא, מיידי/משותף בייבוא"
+      },
+      {
+        "sha": "18f64dc",
+        "summary": "רישום מפתחות סנכרון חסרים (יעדים/זיכרון עסק/קטגוריות חודשיות/בדיקות שנדחו) + הגנה משגיאה שקטה בייבוא אשראי"
+      },
+      {
+        "sha": "d87d2c0",
+        "summary": "הגנה מחריגת מכסת localStorage בנקודות שחזור — היה שובר את הייבוא לגמרי"
+      }
     ],
     "iphone_verified": "UNKNOWN — טרם אושר על ידי רז"
   },
   "verification": {
-    "javascript_syntax": "UNKNOWN — לא הורץ בסבב הזה",
-    "live_demo_mobile": "UNKNOWN",
-    "iphone_review": "UNKNOWN",
-    "two_device_sync_acceptance": "NOT_REPORTED — המטריצה ב-TWO_DEVICE_SYNC_ACCEPTANCE.md מעולם לא דווחה כמבוצעת"
+    "import_routing": "Shira's eight dates split two to July, six to August. No fallback rows.",
+    "amex_pdf": "Eight transactions totalling 1550.47, matching the printed total.",
+    "recurring_heuristic": "Five of five seeded cases correct.",
+    "dark_mode_is_real": "bg/surface 255,255,255 under Light and 27,24,19 under Dark. Three of three probes changed.",
+    "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints."
   },
   "open_risks": [
     {
       "id": "R-01",
       "severity": "high",
-      "title": "גיבויי נתונים ללא היסטוריית גרסאות",
-      "detail": ".gitignore מכיל '*.json' — 12 קבצי backups/raz-expenses-backup-*.json קיימים ב-iCloud בלבד. CLAUDE.md מגדיר אותם אזור סיכון גבוה."
-    },
-    {
-      "id": "R-02",
-      "severity": "high",
-      "title": "פקודת הגיבוי ב-CLAUDE.md שבורה",
-      "detail": "מפנה ל-backups/raz-expenses-backup-LATEST.json שאינו קיים. הפקודה שאמורה לרוץ לפני כל שינוי נתונים נכשלת."
+      "title": "Backups are not under version control",
+      "note": "Blanket json rule in gitignore. Pending D-04."
     },
     {
       "id": "R-03",
       "severity": "medium",
-      "title": "פער 190 ₪ לא סגור",
-      "detail": "TWO_DEVICE_SYNC_ACCEPTANCE.md מתנה 'sync green' בפתרון או ייחוס של הפרש 190 ₪. אין רישום שזה נסגר."
+      "title": "Shira has not tested the PDF import on her own device",
+      "note": "Verified programmatically against the live code, never in her hands."
     },
     {
       "id": "R-04",
       "severity": "medium",
-      "title": "ה-gate לשחרור production לא נאכף",
-      "detail": "V38 הועבר ל-production בחלקים דרך קומיטים נקודתיים, ולא דרך EXPENSE_APP_V38_LAUNCH_PACKET.md כפי שתוכנן."
+      "title": "cycleDay means cycle-start in code but charge-day on the statement",
+      "note": "Under D-08 this is a full month of drift. Not acted on - would mean remapping roughly 880 historical rows."
     },
     {
       "id": "R-05",
+      "severity": "medium",
+      "title": "Three calculation suspicions still unverified",
+      "note": "C-2 interest, C-3 forecast double-count, C-4 repayment dedup. C-1 was refuted by Raz."
+    },
+    {
+      "id": "R-06",
       "severity": "low",
-      "title": "קבצים מחוץ למעקב git",
-      "detail": "CLOUD_DATA_RELIABILITY_PLAN.md (מצוטט כהוכחה), business-plan/, friend-setup/, backups/, 3 קבצי SQL, 5 קבצי archive/*.html"
+      "title": "Design system has no icons and no density axis",
+      "note": "Tab item uses a placeholder circle."
     }
   ],
   "stale_reference_docs": {
@@ -85,5 +81,53 @@
       "HOUSEHOLD_AUTHORIZATION_DESIGN.md"
     ]
   },
-  "decision_queue": ["D-01", "D-02", "D-03", "D-04", "D-05"]
+  "decision_queue": [
+    {
+      "id": "D-01",
+      "status": "open",
+      "title": "Couple privacy model"
+    },
+    {
+      "id": "D-02",
+      "status": "open",
+      "title": "First automated import source"
+    },
+    {
+      "id": "D-04",
+      "status": "open",
+      "title": "Backups under git"
+    },
+    {
+      "id": "D-06",
+      "status": "open",
+      "title": "Single file or split architecture"
+    },
+    {
+      "id": "D-05",
+      "status": "closed",
+      "resolution": "Direction C"
+    },
+    {
+      "id": "D-08",
+      "status": "closed",
+      "resolution": "Billing month; historical model left intact"
+    },
+    {
+      "id": "D-09",
+      "status": "closed",
+      "resolution": "Lazy pdf.js from CDN"
+    }
+  ],
+  "design_system": {
+    "file": "https://www.figma.com/design/QqheTbOibd4HAO0rbyzJ9M",
+    "variables": 107,
+    "components": {
+      "Button": 15,
+      "Card": 6,
+      "Stat cell": 3,
+      "Category row": 3,
+      "Tab item": 3
+    },
+    "self_audit": "design/design-system/SELF_AUDIT.md"
+  }
 }
