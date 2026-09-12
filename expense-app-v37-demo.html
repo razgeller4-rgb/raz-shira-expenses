@@ -9059,9 +9059,13 @@ function parseCCStatement(rows, filename){
       }
       break;
     }
-    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4" && c1 === "\u05db\u05e8\u05d8\u05d9\u05e1 \u05d1\u05e2\u05e1\u05e7\u05d4" && c2 === "\u05e9\u05dd \u05d1\u05d9\u05ea \u05e2\u05e1\u05e7"){
-      // American Express. Must be tested before the Max branch below, which
-      // matches on the date header alone and would otherwise swallow this.
+    /* American Express. The PDF renderer splits the two-line header across two
+       extracted rows, so matching a single joined cell does not work - this
+       tests the whole row for the three column names that only appear together
+       in the AmEx table. Must run before the Max branch, which matches on the
+       date header alone and would otherwise swallow it. */
+    const joinedHdr = (r || []).map(normalizeStatementCell).join(" ");
+    if(joinedHdr.indexOf("\u05ea\u05d0\u05e8\u05d9\u05da") !== -1 && joinedHdr.indexOf("\u05e9\u05dd \u05d1\u05d9\u05ea \u05e2\u05e1\u05e7") !== -1 && joinedHdr.indexOf("\u05e2\u05e0\u05e3") !== -1){
       format = "amex";
       headerRow = i;
       break;
@@ -9144,21 +9148,41 @@ function parseCCStatement(rows, filename){
       const year = yy.length === 2 ? "20"+yy : yy;
       dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+year;
     } else if(format === "amex"){
-      // AmEx columns: 0=date(DD/MM/YY) 1=card used 2=merchant 3=sector
-      //               4=transaction amount 5=charge amount in ILS
-      const d = normalizeStatementCell(r[0]);
-      if(!/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(d)) continue;
-      merchant = normalizeStatementCell(r[2]);
-      if(!merchant || merchant.includes("\u05e1\u05d4\u0022\u05db")) continue;
-      // Prefer the ILS charge column; fall back to the transaction amount when
-      // the statement omits it for same-currency purchases.
-      amtCharge = parseFloat(r[5]);
-      if(isNaN(amtCharge) || amtCharge <= 0) amtCharge = parseFloat(r[4]);
+      /* Column positions are not dependable here. The extractor sometimes merges
+         the card marker into the merchant, sometimes merges the sector into the
+         amount, and row width varies between four and six cells. So the row is
+         joined and read structurally instead: date at the front, one or two
+         amounts at the back, and the middle holding card marker, merchant and
+         sector in that order. Verified against a real statement - see F-19. */
+      const line = (r || []).map(normalizeStatementCell).join(" ").replace(/\s+/g, " ").trim();
+      if(!line || line.indexOf("\u05e1\u05d4\u0022\u05db") !== -1) continue;
+      const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(.*?)\s+([\d,]+\.\d{2})(?:\s+([\d,]+\.\d{2}))?$/);
+      if(!m) continue;
+      const dAmex = m[1];
+      let middle = m[2] || "";
+      // Where two amounts appear the second is the ILS charge, which is the one
+      // that should reach the ledger.
+      amtCharge = parseFloat((m[4] || m[3]).replace(/,/g, ""));
       if(isNaN(amtCharge) || amtCharge <= 0) continue;
-      sourceTxnType = normalizeStatementCell(r[1]);
-      notes = normalizeStatementCell(r[3]);
+
+      // The renderer pads the dots inside these markers, so normalise first.
+      const flat = middle.replace(/\s*\.\s*/g, ".");
+      const markers = ["\u05d4.\u05e7\u05d1\u05e2", "\u05ea\u05e9.\u05e0\u05d9\u05d9\u05d3", "\u05dc\u05d0 \u05d4\u05d5\u05e6\u05d2"];
+      sourceTxnType = "";
+      for(let mi = 0; mi < markers.length; mi++){
+        if(flat.indexOf(markers[mi]) === 0){
+          sourceTxnType = markers[mi];
+          middle = flat.slice(markers[mi].length).trim();
+          break;
+        }
+      }
+      // The sector is the trailing token; everything before it is the merchant.
+      const parts = middle.split(" ").filter(Boolean);
+      notes = parts.length > 1 ? parts[parts.length - 1] : "";
+      merchant = (parts.length > 1 ? parts.slice(0, -1) : parts).join(" ");
+      if(!merchant) continue;
       payment = guessPaymentMethodForImport(cardName, last4, cardName, sourceTxnType);
-      const ap = d.split("/");
+      const ap = dAmex.split("/");
       const ayy = ap[2];
       dateStr = ap[0].padStart(2,"0")+"/"+ap[1].padStart(2,"0")+"/"+(ayy.length === 2 ? "20"+ayy : ayy);
     } else if(format === "cal"){
@@ -9194,7 +9218,7 @@ function parseCCStatement(rows, filename){
       // The issuer states outright which charges are standing orders. That beats
       // guessing from history, so it is passed through as a suggestion the
       // review table can still override.
-      suggestedType: String(sourceTxnType || "").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
+      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
     });
   }
 
