@@ -2111,7 +2111,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
             <div>
               <button id="addExpenseBtn" class="primary-cta" type="button">הוצאה חדשה</button>
               <button id="importCCBtn" class="secondary" type="button">ייבוא מאשראי ↑</button>
-              <input id="importCCFile" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+              <input id="importCCFile" type="file" accept=".xlsx,.xls,.csv,.pdf" style="display:none">
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button id="copySelectedExpensesBtn" class="secondary" type="button" style="display:none">העתק מסומנות לחודש הבא</button>
@@ -8928,11 +8928,100 @@ function getImportPaymentOptions(){
   return [{value:"", label:"בחר כרטיס"}, ...getPaymentOptions(true)];
 }
 
+/* pdf.js is fetched on first use only. The app already pulls xlsx and chart.js
+   from this CDN, so this adds no dependency class that was not already there,
+   and costs nothing on page load for sessions that never import a PDF. */
+const PDFJS_SRC = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+let pdfjsLoading = null;
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = PDFJS_SRC;
+    s.onload = () => {
+      if(!window.pdfjsLib){ reject(new Error("pdf.js loaded but did not register")); return; }
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = () => reject(new Error("\u05dc\u05d0 \u05d4\u05e6\u05dc\u05d7\u05ea\u05d9 \u05dc\u05d8\u05e2\u05d5\u05df \u05d0\u05ea \u05e7\u05d5\u05e8\u05d0 \u05d4-PDF"));
+    document.head.appendChild(s);
+  });
+  return pdfjsLoading;
+}
+
+/* Rebuilds a PDF page as rows of cells, matching the shape XLSX hands back, so
+   parseCCStatement remains the only place that knows about statement layouts.
+
+   Items are grouped into rows by y position within a tolerance, because a single
+   visual row is rarely at one exact y. Within a row they are ordered by x
+   descending: these statements are right-to-left, so the rightmost item is
+   column 0. Runs sitting close together horizontally are joined into one cell,
+   which stops merchant names the renderer split across several text items from
+   becoming separate columns. */
+const PDF_ROW_TOLERANCE = 3.2;
+const PDF_CELL_GAP = 9;
+async function extractPdfRows(arrayBuffer){
+  const pdfjsLib = await loadPdfJs();
+  const doc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const rows = [];
+  for(let p = 1; p <= doc.numPages; p++){
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    const buckets = [];
+    content.items.forEach(item => {
+      const str = String(item.str || "");
+      if(!str.trim()) return;
+      const x = item.transform[4];
+      const y = item.transform[5];
+      let bucket = buckets.find(b => Math.abs(b.y - y) <= PDF_ROW_TOLERANCE);
+      if(!bucket){ bucket = {y: y, items: []}; buckets.push(bucket); }
+      bucket.items.push({x: x, w: item.width || 0, str: str});
+    });
+    buckets.sort((a, b) => b.y - a.y);
+    buckets.forEach(bucket => {
+      bucket.items.sort((a, b) => b.x - a.x);
+      const cells = [];
+      let current = null;
+      bucket.items.forEach(it => {
+        if(current && (current.left - (it.x + it.w)) <= PDF_CELL_GAP){
+          current.parts.push(it.str);
+          current.left = it.x;
+        } else {
+          if(current) cells.push(current.parts.join(" ").replace(/\s+/g, " ").trim());
+          current = {parts: [it.str], left: it.x};
+        }
+      });
+      if(current) cells.push(current.parts.join(" ").replace(/\s+/g, " ").trim());
+      if(cells.some(c => c)) rows.push(cells);
+    });
+  }
+  return rows;
+}
 function handleCCFile(e){
   const file = e.target.files[0];
   if(!file) return;
+  const isPdf = /\.pdf$/i.test(file.name || "") || file.type === "application/pdf";
   const reader = new FileReader();
   reader.onload = function(ev){
+    if(isPdf){
+      showToast("\u05e7\u05d5\u05e8\u05d0 \u05d0\u05ea \u05e7\u05d5\u05d1\u05e5 \u05d4-PDF...", "success", {duration:4000});
+      extractPdfRows(ev.target.result)
+        .then(rows => {
+          const result = parseCCStatement(rows, file.name);
+          if(!result.format){
+            showToast("\u05e7\u05e8\u05d0\u05ea\u05d9 \u05d0\u05ea \u05d4-PDF \u05d0\u05d1\u05dc \u05dc\u05d0 \u05d6\u05d9\u05d4\u05d9\u05ea\u05d9 \u05d0\u05ea \u05de\u05d1\u05e0\u05d4 \u05d4\u05d3\u05e3", "error", {duration:9000});
+            return;
+          }
+          showCCImportModal(result, file.name);
+        })
+        .catch(err => {
+          console.error("PDF import failed:", err);
+          showToast("\u05e7\u05e8\u05d9\u05d0\u05ea \u05d4-PDF \u05e0\u05db\u05e9\u05dc\u05d4: " + (err && err.message || err), "error", {duration:9000});
+        });
+      return;
+    }
     try {
       const wb = XLSX.read(ev.target.result, {type:"array"});
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -8954,11 +9043,17 @@ function parseCCStatement(rows, filename){
   let chargeDate = "";
   let last4 = "";
 
-  for(let i = 0; i < Math.min(rows.length, 15); i++){
+  /* Excel exports put the header near the top, but a PDF carries marketing
+     copy and account metadata first - in Shira's AmEx statement the table
+     header sits at row 16, past the old 15-row window, so detection never
+     reached it. The conditions below are specific enough that scanning
+     further costs nothing. */
+  for(let i = 0; i < Math.min(rows.length, 40); i++){
     const r = rows[i];
     if(!r) continue;
     const c0 = normalizeStatementCell(r[0]);
     const c1 = normalizeStatementCell(r[1]);
+    const c2 = normalizeStatementCell(r[2]);
     const c3 = normalizeStatementCell(r[3]);
     const c4 = normalizeStatementCell(r[4]);
     if(c0 === "תאריך עסקה" && c1 === "שם בית עסק" && c3 === "כרטיס" && c4 === "מועד חיוב"){
@@ -8967,6 +9062,17 @@ function parseCCStatement(rows, filename){
       if(i >= 1 && rows[i-1] && rows[i-1][0]){
         cardName = normalizeStatementCell(rows[i-1][0]);
       }
+      break;
+    }
+    /* American Express. The PDF renderer splits the two-line header across two
+       extracted rows, so matching a single joined cell does not work - this
+       tests the whole row for the three column names that only appear together
+       in the AmEx table. Must run before the Max branch, which matches on the
+       date header alone and would otherwise swallow it. */
+    const joinedHdr = (r || []).map(normalizeStatementCell).join(" ");
+    if(joinedHdr.indexOf("\u05ea\u05d0\u05e8\u05d9\u05da") !== -1 && joinedHdr.indexOf("\u05e9\u05dd \u05d1\u05d9\u05ea \u05e2\u05e1\u05e7") !== -1 && joinedHdr.indexOf("\u05e2\u05e0\u05e3") !== -1){
+      format = "amex";
+      headerRow = i;
       break;
     }
     if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
@@ -9046,6 +9152,44 @@ function parseCCStatement(rows, filename){
       const yy = parts[2];
       const year = yy.length === 2 ? "20"+yy : yy;
       dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+year;
+    } else if(format === "amex"){
+      /* Column positions are not dependable here. The extractor sometimes merges
+         the card marker into the merchant, sometimes merges the sector into the
+         amount, and row width varies between four and six cells. So the row is
+         joined and read structurally instead: date at the front, one or two
+         amounts at the back, and the middle holding card marker, merchant and
+         sector in that order. Verified against a real statement - see F-19. */
+      const line = (r || []).map(normalizeStatementCell).join(" ").replace(/\s+/g, " ").trim();
+      if(!line || line.indexOf("\u05e1\u05d4\u0022\u05db") !== -1) continue;
+      const m = line.match(/^(\d{1,2}\/\d{1,2}\/\d{2,4})\s+(.*?)\s+([\d,]+\.\d{2})(?:\s+([\d,]+\.\d{2}))?$/);
+      if(!m) continue;
+      const dAmex = m[1];
+      let middle = m[2] || "";
+      // Where two amounts appear the second is the ILS charge, which is the one
+      // that should reach the ledger.
+      amtCharge = parseFloat((m[4] || m[3]).replace(/,/g, ""));
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
+
+      // The renderer pads the dots inside these markers, so normalise first.
+      const flat = middle.replace(/\s*\.\s*/g, ".");
+      const markers = ["\u05d4.\u05e7\u05d1\u05e2", "\u05ea\u05e9.\u05e0\u05d9\u05d9\u05d3", "\u05dc\u05d0 \u05d4\u05d5\u05e6\u05d2"];
+      sourceTxnType = "";
+      for(let mi = 0; mi < markers.length; mi++){
+        if(flat.indexOf(markers[mi]) === 0){
+          sourceTxnType = markers[mi];
+          middle = flat.slice(markers[mi].length).trim();
+          break;
+        }
+      }
+      // The sector is the trailing token; everything before it is the merchant.
+      const parts = middle.split(" ").filter(Boolean);
+      notes = parts.length > 1 ? parts[parts.length - 1] : "";
+      merchant = (parts.length > 1 ? parts.slice(0, -1) : parts).join(" ");
+      if(!merchant) continue;
+      payment = guessPaymentMethodForImport(cardName, last4, cardName, sourceTxnType);
+      const ap = dAmex.split("/");
+      const ayy = ap[2];
+      dateStr = ap[0].padStart(2,"0")+"/"+ap[1].padStart(2,"0")+"/"+(ayy.length === 2 ? "20"+ayy : ayy);
     } else if(format === "cal"){
       dateStr = excelSerialToDisplayDate(r[0]);
       merchant = normalizeStatementCell(r[1]);
@@ -9075,7 +9219,11 @@ function parseCCStatement(rows, filename){
       payment,
       sourceCardLabel,
       sourceCardLast4,
-      sourceTxnType
+      sourceTxnType,
+      // The issuer states outright which charges are standing orders. That beats
+      // guessing from history, so it is passed through as a suggestion the
+      // review table can still override.
+      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
     });
   }
 
@@ -9090,7 +9238,7 @@ function showCCImportModal(result, filename){
     const match = lookupMerchantMapping(t.merchant);
     return Object.assign({}, t, {
       category: knownCategories.has(match.category) ? match.category : "",
-      type: match.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      type: match.type || t.suggestedType || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: t.payment || match.payment || "",
       immediate: ""
     });
@@ -9176,6 +9324,28 @@ function findDuplicateExpense(txn){
   return false;
 }
 
+/* Renders the month an import row will land in, next to its date. The routing
+   itself is done by resolveImportTargetSheet; this is purely so the user can
+   see it before committing. The badge is highlighted when the destination is
+   not the month the dropdown shows, since that is the case worth noticing. */
+function describeImportTargetSheet(row, index){
+  try {
+    const fallback = (document.getElementById("ccImportSheet") || {}).value || selectedSheet;
+    const payment = row.payment || (document.getElementById("ccImportPayment") || {}).value || "";
+    if(!payment) return "";
+    const isImm = isPaymentMethodImmediate(payment) || String(row.immediate || "").trim() === "\u05db\u05df";
+    const shift = Math.max(0, Number(row.billingShiftMonths || 0));
+    const target = resolveImportTargetSheet(row, payment, isImm, shift, fallback);
+    if(!target) return "";
+    const differs = target !== fallback;
+    const style = differs
+      ? "background:#d4833a;color:#fff;font-weight:800"
+      : "background:var(--line,#ddd);color:var(--text-2,#555);font-weight:700";
+    return ` <span style="display:inline-block;${style};font-size:10px;border-radius:6px;padding:1px 6px;margin-inline-start:6px">\u2190 ${escapeHtmlAttr(target)}</span>`;
+  } catch(e){
+    return "";
+  }
+}
 function buildCCImportTable(){
   const cats = getCategoryDefinitions().map(c => c.name);
   const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
@@ -9202,7 +9372,7 @@ function buildCCImportTable(){
         </div>
         <strong style="font-size:14px;color:var(--accent);white-space:nowrap">${fmt(row.amount)}${amtExtra}</strong>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}${describeImportTargetSheet(row, i)}</div>
       <div class="budget-card-grid">
         <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
         <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
@@ -9225,6 +9395,23 @@ function buildCCImportTable(){
 }
 
 
+/* Works out which sheet an imported row belongs to. Mirrors what the manual-add
+   path has always done via getBillingSheetForExpense, which the import path
+   never called - that is why a statement crossing a cycle boundary used to land
+   entirely in whichever month the dropdown happened to show.
+   Returns the dropdown value only when routing genuinely cannot be determined:
+   no card, or a date the parser could not read. Those rows are still imported,
+   so nothing is silently dropped. */
+function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
+  try {
+    const iso = toIsoDate(row.date_raw);
+    if(!iso) return fallbackSheet;
+    const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
+    return computed || fallbackSheet;
+  } catch(e){
+    return fallbackSheet;
+  }
+}
 function confirmCCImport(){
  try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
@@ -9237,13 +9424,20 @@ function confirmCCImport(){
     return;
   }
   const overrides = getOverrides();
-  if(!overrides[sheet]) overrides[sheet] = [];
   const preImportRecoveryPoint = rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
   const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
-  // Find max existing row number
-  const allRows = getEditableRows(sheet);
-  let nextRow = allRows.length ? Math.max(...allRows.map(r => r.row||0)) + 1 : 14;
+  // Row numbers are per sheet, so an import spanning months keeps each sheet's
+  // numbering contiguous instead of sharing one counter.
+  const nextRowBySheet = {};
+  function allocateRow(targetSheet){
+    if(nextRowBySheet[targetSheet] == null){
+      const existing = getEditableRows(targetSheet);
+      nextRowBySheet[targetSheet] = existing.length ? Math.max(...existing.map(r => r.row || 0)) + 1 : 14;
+    }
+    return nextRowBySheet[targetSheet]++;
+  }
+  const countBySheet = {};
 
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
@@ -9251,8 +9445,13 @@ function confirmCCImport(){
     if(r.category || payment || r.type){
       rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
     }
-    overrides[sheet].push({
-      row: nextRow++,
+    const shift = Math.max(0, Number(r.billingShiftMonths || 0));
+    const targetSheet = resolveImportTargetSheet(r, payment, isImm, shift, sheet);
+    if(!overrides[targetSheet]) overrides[targetSheet] = [];
+    countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;
+
+    overrides[targetSheet].push({
+      row: allocateRow(targetSheet),
       date_raw: r.date_raw,
       merchant: r.merchant,
       amount: r.amount,
@@ -9260,6 +9459,7 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
+      billingShiftMonths: shift,
       sharedExpense: Boolean(r.sharedExpense),
       notes: r.notes || "",
       sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
@@ -9278,7 +9478,10 @@ function confirmCCImport(){
   closeCCImport();
 
   // Switch to the imported sheet
-  selectedSheet = sheet;
+  // Land on whichever sheet received the most rows, so the user sees the bulk of
+  // what was just imported rather than an arbitrary month.
+  const importedSheets = Object.keys(countBySheet);
+  selectedSheet = importedSheets.sort((x, y) => countBySheet[y] - countBySheet[x])[0] || sheet;
   render();
   showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success", {
     actionLabel: "בטל ייבוא",
