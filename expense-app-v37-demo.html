@@ -9176,6 +9176,28 @@ function findDuplicateExpense(txn){
   return false;
 }
 
+/* Renders the month an import row will land in, next to its date. The routing
+   itself is done by resolveImportTargetSheet; this is purely so the user can
+   see it before committing. The badge is highlighted when the destination is
+   not the month the dropdown shows, since that is the case worth noticing. */
+function describeImportTargetSheet(row, index){
+  try {
+    const fallback = (document.getElementById("ccImportSheet") || {}).value || selectedSheet;
+    const payment = row.payment || (document.getElementById("ccImportPayment") || {}).value || "";
+    if(!payment) return "";
+    const isImm = isPaymentMethodImmediate(payment) || String(row.immediate || "").trim() === "\u05db\u05df";
+    const shift = Math.max(0, Number(row.billingShiftMonths || 0));
+    const target = resolveImportTargetSheet(row, payment, isImm, shift, fallback);
+    if(!target) return "";
+    const differs = target !== fallback;
+    const style = differs
+      ? "background:#d4833a;color:#fff;font-weight:800"
+      : "background:var(--line,#ddd);color:var(--text-2,#555);font-weight:700";
+    return ` <span style="display:inline-block;${style};font-size:10px;border-radius:6px;padding:1px 6px;margin-inline-start:6px">\u2190 ${escapeHtmlAttr(target)}</span>`;
+  } catch(e){
+    return "";
+  }
+}
 function buildCCImportTable(){
   const cats = getCategoryDefinitions().map(c => c.name);
   const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
@@ -9202,7 +9224,7 @@ function buildCCImportTable(){
         </div>
         <strong style="font-size:14px;color:var(--accent);white-space:nowrap">${fmt(row.amount)}${amtExtra}</strong>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:8px">${row.date_raw}${row.sourceCardLabel ? ` \u00b7 ${escapeHtmlAttr(row.sourceCardLabel)}` : ""}${describeImportTargetSheet(row, i)}</div>
       <div class="budget-card-grid">
         <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
         <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
@@ -9225,6 +9247,23 @@ function buildCCImportTable(){
 }
 
 
+/* Works out which sheet an imported row belongs to. Mirrors what the manual-add
+   path has always done via getBillingSheetForExpense, which the import path
+   never called - that is why a statement crossing a cycle boundary used to land
+   entirely in whichever month the dropdown happened to show.
+   Returns the dropdown value only when routing genuinely cannot be determined:
+   no card, or a date the parser could not read. Those rows are still imported,
+   so nothing is silently dropped. */
+function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
+  try {
+    const iso = toIsoDate(row.date_raw);
+    if(!iso) return fallbackSheet;
+    const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
+    return computed || fallbackSheet;
+  } catch(e){
+    return fallbackSheet;
+  }
+}
 function confirmCCImport(){
  try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
@@ -9237,13 +9276,20 @@ function confirmCCImport(){
     return;
   }
   const overrides = getOverrides();
-  if(!overrides[sheet]) overrides[sheet] = [];
   const preImportRecoveryPoint = rememberLocalRecoveryPoint("לפני ייבוא עסקאות אשראי");
   const importBatchId = `cc-${Date.now()}-${Math.random().toString(36).slice(2,8)}`;
 
-  // Find max existing row number
-  const allRows = getEditableRows(sheet);
-  let nextRow = allRows.length ? Math.max(...allRows.map(r => r.row||0)) + 1 : 14;
+  // Row numbers are per sheet, so an import spanning months keeps each sheet's
+  // numbering contiguous instead of sharing one counter.
+  const nextRowBySheet = {};
+  function allocateRow(targetSheet){
+    if(nextRowBySheet[targetSheet] == null){
+      const existing = getEditableRows(targetSheet);
+      nextRowBySheet[targetSheet] = existing.length ? Math.max(...existing.map(r => r.row || 0)) + 1 : 14;
+    }
+    return nextRowBySheet[targetSheet]++;
+  }
+  const countBySheet = {};
 
   toImport.forEach(r => {
     const payment = r.payment || defaultPayment || "";
@@ -9251,8 +9297,13 @@ function confirmCCImport(){
     if(r.category || payment || r.type){
       rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
     }
-    overrides[sheet].push({
-      row: nextRow++,
+    const shift = Math.max(0, Number(r.billingShiftMonths || 0));
+    const targetSheet = resolveImportTargetSheet(r, payment, isImm, shift, sheet);
+    if(!overrides[targetSheet]) overrides[targetSheet] = [];
+    countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;
+
+    overrides[targetSheet].push({
+      row: allocateRow(targetSheet),
       date_raw: r.date_raw,
       merchant: r.merchant,
       amount: r.amount,
@@ -9260,6 +9311,7 @@ function confirmCCImport(){
       type: r.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: payment,
       immediate: isImm ? "\u05db\u05df" : "",
+      billingShiftMonths: shift,
       sharedExpense: Boolean(r.sharedExpense),
       notes: r.notes || "",
       sourceFingerprint: r._sourceFingerprint || createImportFingerprint({...r,payment}),
@@ -9278,7 +9330,10 @@ function confirmCCImport(){
   closeCCImport();
 
   // Switch to the imported sheet
-  selectedSheet = sheet;
+  // Land on whichever sheet received the most rows, so the user sees the bulk of
+  // what was just imported rather than an arbitrary month.
+  const importedSheets = Object.keys(countBySheet);
+  selectedSheet = importedSheets.sort((x, y) => countBySheet[y] - countBySheet[x])[0] || sheet;
   render();
   showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success", {
     actionLabel: "בטל ייבוא",
