@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#FAF7F1">
+<title>בחירת כיוון עיצוב</title>
+<style>
+:root{
+  --bg:#FAF7F1; --surface:#FFFFFF; --raised:#F4EFE5;
+  --ink:#211C16; --ink-2:#574F43; --ink-3:#6E6454;
+  --accent:#4C7340; --border:#E3DACA;
+  --r:16px; --tap:44px;
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{
+  margin:0;background:var(--bg);color:var(--ink);
+  font-family:var(--font);font-size:15px;line-height:1.55;
+  padding:22px 16px 44px;
+}
+.wrap{max-width:430px;margin:0 auto}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin:0 0 6px}
+.lede{font-size:13.5px;color:var(--ink-2);margin:0 0 22px}
+
+.card{
+  display:block;text-decoration:none;color:inherit;
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);overflow:hidden;margin-bottom:14px;
+}
+.card:active{border-color:var(--accent)}
+.shot{display:block;width:100%;height:auto;border-bottom:1px solid var(--border);background:var(--raised)}
+.body{padding:15px 16px}
+.tag{
+  display:inline-block;font-size:11px;font-weight:700;letter-spacing:.03em;
+  padding:4px 10px;border-radius:999px;margin-bottom:9px;
+}
+.tag-a{background:#1F2732;color:#9EE646}
+.tag-b{background:#E8F0E4;color:#3A5C31}
+.card h2{font-size:17px;font-weight:700;margin:0 0 5px;letter-spacing:-.01em}
+.card p{font-size:13px;color:var(--ink-2);margin:0 0 12px;line-height:1.55}
+.open{
+  display:flex;align-items:center;justify-content:center;
+  min-height:var(--tap);border-radius:11px;
+  background:var(--accent);color:#fff;font-size:14.5px;font-weight:700;
+}
+
+.metrics{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r);padding:16px;margin:22px 0 0;
+}
+.metrics h3{font-size:15px;font-weight:700;margin:0 0 4px}
+.metrics > p{font-size:12.5px;color:var(--ink-2);margin:0 0 14px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:9px 6px;text-align:right;border-bottom:1px solid var(--border)}
+th{font-size:11.5px;font-weight:700;color:var(--ink-3);text-align:center}
+th:first-child{text-align:right}
+td{text-align:center}
+td:first-child{text-align:right;color:var(--ink-2);font-size:12.5px}
+tr:last-child td{border-bottom:0}
+.bad{color:#9A3B27;font-weight:700}
+.good{color:#2F6B44;font-weight:700}
+.note{
+  background:var(--raised);border-radius:12px;padding:13px 15px;
+  font-size:12.5px;color:var(--ink-2);line-height:1.6;margin-top:16px;
+}
+.note b{color:var(--ink)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <h1>בחירת כיוון עיצוב</h1>
+  <p class="lede">אותו מסך, אותם נתונים, אותה פריסה. שונה רק בלוק הטוקנים.</p>
+
+  <a class="card" href="directions/direction-a-dark.html">
+    <img class="shot" src="directions/preview-a-dark.png" alt="תצוגה מקדימה של כיוון א׳ — כהה" loading="lazy">
+    <div class="body">
+      <span class="tag tag-a">כיוון א׳</span>
+      <h2>כהה · פינטק</h2>
+      <p>רקע פחם, אקסנט ליים, מספרים בולטים. נראה כמו כלי. קר יותר.</p>
+      <div class="open">פתח כיוון א׳</div>
+    </div>
+  </a>
+
+  <a class="card" href="directions/direction-b-light.html">
+    <img class="shot" src="directions/preview-b-light.png" alt="תצוגה מקדימה של כיוון ב׳ — בהיר" loading="lazy">
+    <div class="body">
+      <span class="tag tag-b">כיוון ב׳</span>
+      <h2>בהיר · חם</h2>
+      <p>הפלטה שכבר קיימת באפליקציה — מתוקנת. ממשיך את הזהות הנוכחית.</p>
+      <div class="open">פתח כיוון ב׳</div>
+    </div>
+  </a>
+
+  <div class="metrics">
+    <h3>המדידה</h3>
+    <p>אותו סקריפט שמדד את האפליקציה החיה, על 390×844.</p>
+    <table>
+      <thead>
+        <tr><th>מדד</th><th>היום</th><th>א׳</th><th>ב׳</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>כשלי ניגודיות</td><td class="bad">18 · 6</td><td class="good">0</td><td class="good">0</td></tr>
+        <tr><td>היחס הנמוך</td><td class="bad">2.22</td><td class="good">5.64</td><td class="good">5.43</td></tr>
+        <tr><td>יעדי מגע קטנים</td><td class="bad">11/32</td><td class="good">0/11</td><td class="good">0/11</td></tr>
+        <tr><td>פקדים ללא שם</td><td class="bad">4</td><td class="good">0</td><td class="good">0</td></tr>
+      </tbody>
+    </table>
+    <div class="note">
+      <b>שניהם עוברים AA.</b> כלומר הבחירה היא טעם, לא נגישות — המערכת מבטיחה את הרצפה בשני המקרים.
+    </div>
+  </div>
+
+</div>
+</body>
+</html>
