@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F7F2E9">
+<title>כיוון ב׳ מועשר — בהיר / חם</title>
+<style>
+/* ─────────────────────────────────────────────────────────
+   DIRECTION B+ — the warm palette, given depth.
+   B was correct but flat: one accent, no elevation, no data
+   visualisation, everything a bordered white rectangle.
+   This keeps the identity and adds hierarchy, a category
+   palette, and charts. Accessibility floor is unchanged.
+   ───────────────────────────────────────────────────────── */
+:root{
+  --bg:#F7F2E9;
+  --surface:#FFFFFF;
+  --surface-warm:#FDFAF4;
+  --raised:#F2EBDD;
+  --sunken:#E8DFCC;
+
+  --ink:#1E1912;
+  --ink-2:#554C3F;
+  --ink-3:#6B6152;
+  --on-accent:#FFFFFF;
+
+  --accent:#47703C;
+  --accent-deep:#31522A;
+  --accent-tint:#E6EFE1;
+
+  --good:#2C6740;   --good-bg:#E2F0E6;
+  --bad:#95371F;    --bad-bg:#FAE6DF;
+  --warn:#845410;   --warn-bg:#FBEDD6;
+
+  --c-home:#B35C36;
+  --c-food:#5F8545;
+  --c-fun:#7E5273;
+  --c-health:#2F6F6C;
+  --c-car:#A77822;
+
+  --border:#E6DCC8;
+  --border-2:#CFC2A7;
+
+  --r-s:10px; --r-m:14px; --r-l:20px; --r-xl:26px; --pill:999px;
+  --tap:44px;
+  --sh-1:0 1px 2px rgba(65,50,25,.05);
+  --sh-2:0 4px 14px rgba(65,50,25,.07);
+  --font:-apple-system,BlinkMacSystemFont,"Segoe UI",system-ui,"Helvetica Neue",Arial,sans-serif;
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--ink);
+  font-family:var(--font);font-size:15px;line-height:1.5;
+  padding-bottom:44px;-webkit-font-smoothing:antialiased;
+}
+.num{font-variant-numeric:tabular-nums;font-feature-settings:"tnum";direction:ltr}
+.wrap{max-width:430px;margin:0 auto;padding:0 16px}
+
+/* ── top bar ── */
+.topbar{
+  display:flex;align-items:center;gap:11px;
+  padding:14px 16px 12px;position:sticky;top:0;z-index:30;
+  background:rgba(247,242,233,.92);
+  backdrop-filter:saturate(1.5) blur(12px);
+  -webkit-backdrop-filter:saturate(1.5) blur(12px);
+  border-bottom:1px solid var(--border);
+}
+.logo{
+  width:38px;height:38px;border-radius:12px;flex:none;
+  background:linear-gradient(150deg,var(--accent),var(--accent-deep));
+  color:var(--on-accent);display:grid;place-items:center;
+  font-weight:700;font-size:15px;box-shadow:var(--sh-1);
+}
+.brand{flex:1;min-width:0}
+.brand b{display:block;font-size:14.5px;font-weight:700;letter-spacing:-.015em}
+.brand span{display:block;font-size:11.5px;color:var(--ink-3);margin-top:1px}
+.icon-btn{
+  width:var(--tap);height:var(--tap);flex:none;
+  border-radius:13px;border:1px solid var(--border);
+  background:var(--surface);color:var(--ink-2);
+  font-size:17px;display:grid;place-items:center;cursor:pointer;
+  box-shadow:var(--sh-1);
+}
+.icon-btn:active{background:var(--raised)}
+
+/* ── workspace ── */
+.workspace{
+  display:grid;grid-template-columns:1fr 1fr;gap:4px;
+  background:var(--raised);border-radius:15px;padding:4px;
+  margin:16px 0 18px;
+}
+.workspace button{
+  min-height:var(--tap);border:0;border-radius:11px;background:transparent;
+  color:var(--ink-2);font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+}
+.workspace button[aria-pressed="true"]{
+  background:var(--surface);color:var(--accent-deep);box-shadow:var(--sh-1);
+}
+
+/* ── hero ── */
+.hero{
+  position:relative;overflow:hidden;
+  background:linear-gradient(168deg,#FFFFFF 0%,var(--surface-warm) 55%,var(--accent-tint) 100%);
+  border:1px solid var(--border);border-radius:var(--r-xl);
+  padding:20px 19px 0;margin-bottom:14px;box-shadow:var(--sh-2);
+}
+.hero-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:15px}
+.hero-head h2{margin:0;font-size:12.5px;font-weight:700;color:var(--ink-2);letter-spacing:.02em}
+.hero-amount{display:flex;align-items:baseline;gap:7px;justify-content:flex-end}
+.hero-amount b{font-size:47px;font-weight:700;letter-spacing:-.035em;line-height:1}
+.hero-amount i{font-size:23px;font-style:normal;color:var(--ink-2);font-weight:600}
+.hero-cap{font-size:12.5px;color:var(--ink-3);margin-top:9px}
+.chips{display:flex;gap:7px;margin-top:13px;flex-wrap:wrap}
+.chip{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:6px 11px;border-radius:var(--pill);
+  font-size:12.5px;font-weight:700;
+}
+.chip-good{background:var(--good-bg);color:var(--good)}
+.chip-mute{background:var(--raised);color:var(--ink-2)}
+.spark{display:block;width:calc(100% + 38px);margin:14px -19px 0}
+
+/* ── kpis ── */
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.kpi{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-m);padding:13px 12px;min-height:96px;
+  display:flex;flex-direction:column;justify-content:space-between;
+  box-shadow:var(--sh-1);
+}
+.kpi-top{display:flex;align-items:center;gap:6px;margin-bottom:9px}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.kpi small{font-size:11.5px;color:var(--ink-2);font-weight:600}
+.kpi b{display:block;font-size:18px;font-weight:700;letter-spacing:-.025em;text-align:right}
+.kpi .track{height:4px;border-radius:var(--pill);background:var(--sunken);margin-top:9px;overflow:hidden}
+.kpi .track i{display:block;height:100%;border-radius:var(--pill)}
+
+/* ── debt strip ── */
+.strip{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  min-height:var(--tap);background:var(--bad-bg);
+  border-radius:var(--r-m);padding:13px 16px;margin-bottom:24px;
+  color:var(--bad);font-size:13px;font-weight:700;
+}
+.strip b{font-size:17px}
+
+/* ── section heads ── */
+.sec{display:flex;align-items:baseline;justify-content:space-between;margin:0 0 12px}
+.sec h3{margin:0;font-size:16.5px;font-weight:700;letter-spacing:-.02em}
+.sec span{font-size:12px;color:var(--ink-3);font-weight:600}
+
+/* ── review ── */
+.review{
+  background:var(--surface);border:1px solid var(--warn);
+  border-right:4px solid var(--warn);border-radius:0 var(--r-l) var(--r-l) 0;
+  padding:17px;margin-bottom:24px;box-shadow:var(--sh-1);
+}
+.review-top{display:flex;align-items:center;gap:10px;margin-bottom:5px}
+.badge{
+  min-width:28px;height:28px;padding:0 9px;border-radius:var(--pill);
+  background:var(--warn);color:#fff;display:grid;place-items:center;
+  font-size:13.5px;font-weight:700;flex:none;
+}
+.review-top h3{margin:0;font-size:15px;font-weight:700;flex:1}
+.review > p{margin:0 0 15px;font-size:12.5px;color:var(--ink-2)}
+.review-item{background:var(--raised);border-radius:var(--r-m);padding:14px 15px}
+.review-item b{display:block;font-size:14px;font-weight:700;margin-bottom:4px}
+.review-item p{margin:0 0 13px;font-size:12.5px;color:var(--ink-2);line-height:1.55}
+.acts{display:flex;gap:8px}
+.btn{
+  min-height:var(--tap);padding:0 17px;border-radius:12px;
+  font-family:inherit;font-size:14px;font-weight:700;cursor:pointer;
+  display:inline-flex;align-items:center;justify-content:center;
+  border:1px solid var(--border-2);background:var(--surface);color:var(--ink);
+}
+.btn-primary{
+  flex:1;background:linear-gradient(160deg,var(--accent),var(--accent-deep));
+  color:var(--on-accent);border-color:var(--accent-deep);box-shadow:var(--sh-1);
+}
+.btn-ghost{flex:none;min-width:var(--tap)}
+
+/* ── quick nav ── */
+.quick{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:26px}
+.quick a{
+  min-height:74px;display:flex;flex-direction:column;justify-content:center;gap:3px;
+  background:var(--surface);border:1px solid var(--border);border-radius:var(--r-m);
+  padding:13px 15px;text-decoration:none;box-shadow:var(--sh-1);
+}
+.quick .q-ico{font-size:17px;line-height:1;margin-bottom:5px}
+.quick b{font-size:14.5px;font-weight:700;color:var(--ink)}
+.quick span{font-size:11.5px;color:var(--ink-2)}
+
+/* ── cards ── */
+.card{
+  background:var(--surface);border:1px solid var(--border);
+  border-radius:var(--r-l);padding:18px;margin-bottom:13px;box-shadow:var(--sh-1);
+}
+.card-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:16px}
+.card-head h3{margin:0 0 3px;font-size:15.5px;font-weight:700;letter-spacing:-.01em}
+.card-head p{margin:0;font-size:12px;color:var(--ink-2);line-height:1.45}
+.big{font-size:33px;font-weight:700;letter-spacing:-.03em;text-align:right}
+.sub{font-size:12.5px;color:var(--ink-3);margin-top:6px}
+
+/* donut + legend */
+.donut-row{display:flex;align-items:center;gap:18px}
+.legend{flex:1;min-width:0;display:flex;flex-direction:column;gap:9px}
+.leg{display:flex;align-items:center;gap:8px;font-size:13px}
+.leg b{flex:1;font-weight:600;color:var(--ink)}
+.leg span{font-weight:700;color:var(--ink-2)}
+
+/* category bars */
+.cat{margin-bottom:15px}
+.cat:last-child{margin-bottom:0}
+.cat-row{display:flex;align-items:center;gap:8px;margin-bottom:7px}
+.cat-row b{flex:1;font-size:13.5px;font-weight:600}
+.cat-row span{font-size:12.5px;font-weight:700;color:var(--ink-2)}
+.bar{height:9px;border-radius:var(--pill);background:var(--sunken);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:var(--pill)}
+
+/* goals */
+.goal{display:flex;align-items:center;gap:15px;padding:13px 0;border-bottom:1px solid var(--border)}
+.goal:last-child{border-bottom:0;padding-bottom:0}
+.goal:first-of-type{padding-top:0}
+.goal-txt{flex:1;min-width:0}
+.goal-txt b{display:block;font-size:14px;font-weight:700;margin-bottom:2px}
+.goal-txt span{font-size:12px;color:var(--ink-2)}
+
+.foot{text-align:center;font-size:11.5px;color:var(--ink-3);padding:28px 0 8px;line-height:1.75}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="logo" aria-hidden="true">ר</div>
+  <div class="brand">
+    <b>לוח הבקרה</b>
+    <span>רז ושירה · מרץ 26</span>
+  </div>
+  <button class="icon-btn" aria-label="מצב תצוגה">☾</button>
+  <button class="icon-btn" aria-label="פתיחת תפריט">☰</button>
+</header>
+
+<main class="wrap">
+  <h1 class="sr">לוח הבקרה — מרץ 26</h1>
+
+  <div class="workspace" role="group" aria-label="בחירת מרחב עבודה">
+    <button aria-pressed="true">אישי</button>
+    <button aria-pressed="false">זוגי</button>
+  </div>
+
+  <section class="hero" aria-labelledby="heroH">
+    <div class="hero-head">
+      <h2 id="heroH">מצב החודש</h2>
+      <button class="icon-btn" aria-label="התאמת כרטיסיות">⚙</button>
+    </div>
+    <div class="hero-amount"><b class="num">41,447</b><i>₪</i></div>
+    <div class="hero-cap">יתרה נוכחית — הכנסות פחות הוצאות עד היום</div>
+    <div class="chips">
+      <span class="chip chip-good"><span aria-hidden="true">↑</span> 27.3% מהחודש שעבר</span>
+      <span class="chip chip-mute">12 תנועות</span>
+    </div>
+    <svg class="spark" viewBox="0 0 430 92" preserveAspectRatio="none" role="img" aria-label="מגמת היתרה לאורך החודש — עלייה">
+      <defs>
+        <linearGradient id="sg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#47703C" stop-opacity=".26"/>
+          <stop offset="100%" stop-color="#47703C" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <path d="M0,74 L36,71 L72,66 L108,68 L144,58 L180,52 L216,55 L252,41 L288,36 L324,30 L360,22 L396,17 L430,12 L430,92 L0,92 Z" fill="url(#sg)"/>
+      <path d="M0,74 L36,71 L72,66 L108,68 L144,58 L180,52 L216,55 L252,41 L288,36 L324,30 L360,22 L396,17 L430,12"
+            fill="none" stroke="#47703C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="430" cy="12" r="4" fill="#47703C"/>
+    </svg>
+  </section>
+
+  <div class="kpis">
+    <div class="kpi">
+      <div>
+        <div class="kpi-top"><span class="dot" style="background:var(--good)"></span><small>הכנסות</small></div>
+        <b class="num">21,600</b>
+      </div>
+      <div class="track"><i style="width:100%;background:var(--good)"></i></div>
+    </div>
+    <div class="kpi">
+      <div>
+        <div class="kpi-top"><span class="dot" style="background:var(--c-home)"></span><small>הוצאות</small></div>
+        <b class="num">4,170</b>
+      </div>
+      <div class="track"><i style="width:19%;background:var(--c-home)"></i></div>
+    </div>
+    <div class="kpi">
+      <div>
+        <div class="kpi-top"><span class="dot" style="background:var(--bad)"></span><small>חובות</small></div>
+        <b class="num">1,784</b>
+      </div>
+      <div class="track"><i style="width:8%;background:var(--bad)"></i></div>
+    </div>
+  </div>
+
+  <div class="strip">
+    <span>יתרת חוב כוללת · בנק ואבא</span>
+    <b class="num">7,250 ₪</b>
+  </div>
+
+  <div class="sec"><h3>ממתינות לבדיקה</h3></div>
+  <section class="review">
+    <div class="review-top">
+      <span class="badge num">1</span>
+      <h3>פריט אחד דורש תשומת לב</h3>
+    </div>
+    <p>רק פריטים שמשפיעים על אמינות הנתונים או על הסנכרון.</p>
+    <div class="review-item">
+      <b>הוצאה אחת ללא קטגוריה</b>
+      <p>הסיווג ישפר את התקציב, התחזית והסיכום השנתי.</p>
+      <div class="acts">
+        <button class="btn btn-primary">סווג עכשיו</button>
+        <button class="btn btn-ghost" aria-label="סמן כטופל">✓</button>
+      </div>
+    </div>
+  </section>
+
+  <div class="sec"><h3>תכנון ובקרה</h3></div>
+  <nav class="quick" aria-label="ניווט מהיר">
+    <a href="#"><span class="q-ico" aria-hidden="true">◎</span><b>תקציב</b><span>תקציב ומגמה</span></a>
+    <a href="#"><span class="q-ico" aria-hidden="true">▤</span><b>אשראיים</b><span>חיובים וייבוא</span></a>
+    <a href="#"><span class="q-ico" aria-hidden="true">◈</span><b>יעדים</b><span>חיסכון ומטרות</span></a>
+    <a href="#"><span class="q-ico" aria-hidden="true">▦</span><b>דוחות</b><span>סיכום וייצוא</span></a>
+  </nav>
+
+  <div class="sec"><h3>תמונת מצב</h3><span>מרץ 26</span></div>
+
+  <div class="card">
+    <div class="card-head">
+      <div><h3>הוצאות החודש</h3><p>לפי קטגוריה</p></div>
+      <div style="text-align:left"><div class="big num">4,170</div><div class="sub">מתוך 8,900 ₪</div></div>
+    </div>
+    <div class="donut-row">
+      <svg width="112" height="112" viewBox="0 0 42 42" role="img" aria-label="פילוח הוצאות לפי קטגוריה">
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#E8DFCC" stroke-width="6"/>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#B35C36" stroke-width="6"
+                stroke-dasharray="29.6 70.4" stroke-dashoffset="0" transform="rotate(-90 21 21)"/>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#5F8545" stroke-width="6"
+                stroke-dasharray="17.7 82.3" stroke-dashoffset="-29.6" transform="rotate(-90 21 21)"/>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#7E5273" stroke-width="6"
+                stroke-dasharray="10.4 89.6" stroke-dashoffset="-47.3" transform="rotate(-90 21 21)"/>
+        <circle cx="21" cy="21" r="15.9" fill="none" stroke="#2F6F6C" stroke-width="6"
+                stroke-dasharray="2.2 97.8" stroke-dashoffset="-57.7" transform="rotate(-90 21 21)"/>
+      </svg>
+      <div class="legend">
+        <div class="leg"><span class="dot" style="background:var(--c-home)"></span><b>בית</b><span class="num">1,235</span></div>
+        <div class="leg"><span class="dot" style="background:var(--c-food)"></span><b>מזון</b><span class="num">737</span></div>
+        <div class="leg"><span class="dot" style="background:var(--c-fun)"></span><b>בילויים</b><span class="num">434</span></div>
+        <div class="leg"><span class="dot" style="background:var(--c-health)"></span><b>בריאות</b><span class="num">90</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div><h3>מול התקציב</h3><p>כמה נוצל מכל קטגוריה</p></div></div>
+    <div class="cat">
+      <div class="cat-row"><span class="dot" style="background:var(--c-home)"></span><b>בית</b><span class="num">1,235 / 3,500</span></div>
+      <div class="bar"><i style="width:35%;background:var(--c-home)"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><span class="dot" style="background:var(--c-food)"></span><b>מזון</b><span class="num">737 / 2,800</span></div>
+      <div class="bar"><i style="width:26%;background:var(--c-food)"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><span class="dot" style="background:var(--c-fun)"></span><b>בילויים</b><span class="num">434 / 1,200</span></div>
+      <div class="bar"><i style="width:36%;background:var(--c-fun)"></i></div>
+    </div>
+    <div class="cat">
+      <div class="cat-row"><span class="dot" style="background:var(--c-health)"></span><b>בריאות</b><span class="num">90 / 600</span></div>
+      <div class="bar"><i style="width:15%;background:var(--c-health)"></i></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div><h3>יעדים</h3><p>ההתקדמות שלכם</p></div></div>
+    <div class="goal">
+      <svg width="52" height="52" viewBox="0 0 42 42" role="img" aria-label="חופשה ביוון — 37 אחוז">
+        <circle cx="21" cy="21" r="16.5" fill="none" stroke="#E8DFCC" stroke-width="5"/>
+        <circle cx="21" cy="21" r="16.5" fill="none" stroke="#7E5273" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="38.4 65.2" transform="rotate(-90 21 21)"/>
+        <text x="21" y="24.5" text-anchor="middle" font-size="10" font-weight="700" fill="#1E1912">37%</text>
+      </svg>
+      <div class="goal-txt"><b>חופשה ביוון</b><span class="num">5,200 / 14,000 ₪</span></div>
+    </div>
+    <div class="goal">
+      <svg width="52" height="52" viewBox="0 0 42 42" role="img" aria-label="קרן חירום — 53 אחוז">
+        <circle cx="21" cy="21" r="16.5" fill="none" stroke="#E8DFCC" stroke-width="5"/>
+        <circle cx="21" cy="21" r="16.5" fill="none" stroke="#47703C" stroke-width="5" stroke-linecap="round"
+                stroke-dasharray="54.9 48.7" transform="rotate(-90 21 21)"/>
+        <text x="21" y="24.5" text-anchor="middle" font-size="10" font-weight="700" fill="#1E1912">53%</text>
+      </svg>
+      <div class="goal-txt"><b>קרן חירום</b><span class="num">31,500 / 60,000 ₪</span></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head"><div><h3>צפי סוף חודש</h3><p>בקצב ההוצאות הנוכחי</p></div></div>
+    <div class="big num">41,447 ₪</div>
+    <div class="sub">ללא שינוי מהיתרה הנוכחית</div>
+  </div>
+
+  <p class="foot">
+    כיוון ב׳ מועשר — בהיר / חם<br>
+    אב־טיפוס לבחירה. הנתונים לדוגמה.
+  </p>
+</main>
+
+</body>
+</html>
