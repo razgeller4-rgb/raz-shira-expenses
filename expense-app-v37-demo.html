@@ -489,9 +489,13 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
    list in the backup tab. */
 .edit-details { margin-top: 14px; }
 .edit-details-toggle {
+  /* Not var(--muted): that token measured 3.79:1 in light mode across the live
+     app (BASELINE_AUDIT.md, one token behind 12 of 18 contrast failures found
+     there). Using var(--text) with lighter weight keeps this visually secondary
+     without inheriting a token already known to fail AA. */
   list-style:none; cursor:pointer;
   display:flex; align-items:center; justify-content:space-between; gap:10px;
-  min-height:44px; font-size:13px; font-weight:700; color:var(--muted);
+  min-height:44px; font-size:13px; font-weight:600; color:var(--text);
 }
 .edit-details-toggle::-webkit-details-marker { display:none; }
 .edit-details-toggle span:first-child::before {
@@ -499,7 +503,10 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   transition: transform .15s cubic-bezier(.2,0,0,1);
 }
 .edit-details[open] > .edit-details-toggle span:first-child::before { transform: rotate(90deg); }
-.edit-details-hint { font-size:11px; font-weight:400; color: var(--muted); opacity:.75; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+/* Hidden under 480px anyway (see below), so this only ever shows on a wider
+   viewport - but var(--muted) plus opacity would have stacked two contrast
+   reductions on top of each other. De-emphasis comes from size alone. */
+.edit-details-hint { font-size:11px; font-weight:400; color: var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 @media (prefers-reduced-motion: reduce) { .edit-details-toggle span:first-child::before { transition: none; } }
 @media (max-width: 480px) {
   .edit-quick { grid-template-columns: 1fr 1fr; }
