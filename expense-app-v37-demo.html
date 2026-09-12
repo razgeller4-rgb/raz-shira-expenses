@@ -2111,7 +2111,7 @@ button.primary-cta:hover,button.success-btn:hover,button.primary:hover,.review-p
             <div>
               <button id="addExpenseBtn" class="primary-cta" type="button">הוצאה חדשה</button>
               <button id="importCCBtn" class="secondary" type="button">ייבוא מאשראי ↑</button>
-              <input id="importCCFile" type="file" accept=".xlsx,.xls,.csv" style="display:none">
+              <input id="importCCFile" type="file" accept=".xlsx,.xls,.csv,.pdf" style="display:none">
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button id="copySelectedExpensesBtn" class="secondary" type="button" style="display:none">העתק מסומנות לחודש הבא</button>
@@ -8928,11 +8928,100 @@ function getImportPaymentOptions(){
   return [{value:"", label:"בחר כרטיס"}, ...getPaymentOptions(true)];
 }
 
+/* pdf.js is fetched on first use only. The app already pulls xlsx and chart.js
+   from this CDN, so this adds no dependency class that was not already there,
+   and costs nothing on page load for sessions that never import a PDF. */
+const PDFJS_SRC = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js";
+const PDFJS_WORKER = "https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.worker.min.js";
+let pdfjsLoading = null;
+function loadPdfJs(){
+  if(window.pdfjsLib) return Promise.resolve(window.pdfjsLib);
+  if(pdfjsLoading) return pdfjsLoading;
+  pdfjsLoading = new Promise((resolve, reject) => {
+    const s = document.createElement("script");
+    s.src = PDFJS_SRC;
+    s.onload = () => {
+      if(!window.pdfjsLib){ reject(new Error("pdf.js loaded but did not register")); return; }
+      window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS_WORKER;
+      resolve(window.pdfjsLib);
+    };
+    s.onerror = () => reject(new Error("\u05dc\u05d0 \u05d4\u05e6\u05dc\u05d7\u05ea\u05d9 \u05dc\u05d8\u05e2\u05d5\u05df \u05d0\u05ea \u05e7\u05d5\u05e8\u05d0 \u05d4-PDF"));
+    document.head.appendChild(s);
+  });
+  return pdfjsLoading;
+}
+
+/* Rebuilds a PDF page as rows of cells, matching the shape XLSX hands back, so
+   parseCCStatement remains the only place that knows about statement layouts.
+
+   Items are grouped into rows by y position within a tolerance, because a single
+   visual row is rarely at one exact y. Within a row they are ordered by x
+   descending: these statements are right-to-left, so the rightmost item is
+   column 0. Runs sitting close together horizontally are joined into one cell,
+   which stops merchant names the renderer split across several text items from
+   becoming separate columns. */
+const PDF_ROW_TOLERANCE = 3.2;
+const PDF_CELL_GAP = 9;
+async function extractPdfRows(arrayBuffer){
+  const pdfjsLib = await loadPdfJs();
+  const doc = await pdfjsLib.getDocument({data: arrayBuffer}).promise;
+  const rows = [];
+  for(let p = 1; p <= doc.numPages; p++){
+    const page = await doc.getPage(p);
+    const content = await page.getTextContent();
+    const buckets = [];
+    content.items.forEach(item => {
+      const str = String(item.str || "");
+      if(!str.trim()) return;
+      const x = item.transform[4];
+      const y = item.transform[5];
+      let bucket = buckets.find(b => Math.abs(b.y - y) <= PDF_ROW_TOLERANCE);
+      if(!bucket){ bucket = {y: y, items: []}; buckets.push(bucket); }
+      bucket.items.push({x: x, w: item.width || 0, str: str});
+    });
+    buckets.sort((a, b) => b.y - a.y);
+    buckets.forEach(bucket => {
+      bucket.items.sort((a, b) => b.x - a.x);
+      const cells = [];
+      let current = null;
+      bucket.items.forEach(it => {
+        if(current && (current.left - (it.x + it.w)) <= PDF_CELL_GAP){
+          current.parts.push(it.str);
+          current.left = it.x;
+        } else {
+          if(current) cells.push(current.parts.join(" ").replace(/\s+/g, " ").trim());
+          current = {parts: [it.str], left: it.x};
+        }
+      });
+      if(current) cells.push(current.parts.join(" ").replace(/\s+/g, " ").trim());
+      if(cells.some(c => c)) rows.push(cells);
+    });
+  }
+  return rows;
+}
 function handleCCFile(e){
   const file = e.target.files[0];
   if(!file) return;
+  const isPdf = /\.pdf$/i.test(file.name || "") || file.type === "application/pdf";
   const reader = new FileReader();
   reader.onload = function(ev){
+    if(isPdf){
+      showToast("\u05e7\u05d5\u05e8\u05d0 \u05d0\u05ea \u05e7\u05d5\u05d1\u05e5 \u05d4-PDF...", "success", {duration:4000});
+      extractPdfRows(ev.target.result)
+        .then(rows => {
+          const result = parseCCStatement(rows, file.name);
+          if(!result.format){
+            showToast("\u05e7\u05e8\u05d0\u05ea\u05d9 \u05d0\u05ea \u05d4-PDF \u05d0\u05d1\u05dc \u05dc\u05d0 \u05d6\u05d9\u05d4\u05d9\u05ea\u05d9 \u05d0\u05ea \u05de\u05d1\u05e0\u05d4 \u05d4\u05d3\u05e3", "error", {duration:9000});
+            return;
+          }
+          showCCImportModal(result, file.name);
+        })
+        .catch(err => {
+          console.error("PDF import failed:", err);
+          showToast("\u05e7\u05e8\u05d9\u05d0\u05ea \u05d4-PDF \u05e0\u05db\u05e9\u05dc\u05d4: " + (err && err.message || err), "error", {duration:9000});
+        });
+      return;
+    }
     try {
       const wb = XLSX.read(ev.target.result, {type:"array"});
       const ws = wb.Sheets[wb.SheetNames[0]];
@@ -8959,6 +9048,7 @@ function parseCCStatement(rows, filename){
     if(!r) continue;
     const c0 = normalizeStatementCell(r[0]);
     const c1 = normalizeStatementCell(r[1]);
+    const c2 = normalizeStatementCell(r[2]);
     const c3 = normalizeStatementCell(r[3]);
     const c4 = normalizeStatementCell(r[4]);
     if(c0 === "תאריך עסקה" && c1 === "שם בית עסק" && c3 === "כרטיס" && c4 === "מועד חיוב"){
@@ -8967,6 +9057,13 @@ function parseCCStatement(rows, filename){
       if(i >= 1 && rows[i-1] && rows[i-1][0]){
         cardName = normalizeStatementCell(rows[i-1][0]);
       }
+      break;
+    }
+    if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4" && c1 === "\u05db\u05e8\u05d8\u05d9\u05e1 \u05d1\u05e2\u05e1\u05e7\u05d4" && c2 === "\u05e9\u05dd \u05d1\u05d9\u05ea \u05e2\u05e1\u05e7"){
+      // American Express. Must be tested before the Max branch below, which
+      // matches on the date header alone and would otherwise swallow this.
+      format = "amex";
+      headerRow = i;
       break;
     }
     if(c0 === "\u05ea\u05d0\u05e8\u05d9\u05da \u05e2\u05e1\u05e7\u05d4"){
@@ -9046,6 +9143,24 @@ function parseCCStatement(rows, filename){
       const yy = parts[2];
       const year = yy.length === 2 ? "20"+yy : yy;
       dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+year;
+    } else if(format === "amex"){
+      // AmEx columns: 0=date(DD/MM/YY) 1=card used 2=merchant 3=sector
+      //               4=transaction amount 5=charge amount in ILS
+      const d = normalizeStatementCell(r[0]);
+      if(!/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(d)) continue;
+      merchant = normalizeStatementCell(r[2]);
+      if(!merchant || merchant.includes("\u05e1\u05d4\u0022\u05db")) continue;
+      // Prefer the ILS charge column; fall back to the transaction amount when
+      // the statement omits it for same-currency purchases.
+      amtCharge = parseFloat(r[5]);
+      if(isNaN(amtCharge) || amtCharge <= 0) amtCharge = parseFloat(r[4]);
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
+      sourceTxnType = normalizeStatementCell(r[1]);
+      notes = normalizeStatementCell(r[3]);
+      payment = guessPaymentMethodForImport(cardName, last4, cardName, sourceTxnType);
+      const ap = d.split("/");
+      const ayy = ap[2];
+      dateStr = ap[0].padStart(2,"0")+"/"+ap[1].padStart(2,"0")+"/"+(ayy.length === 2 ? "20"+ayy : ayy);
     } else if(format === "cal"){
       dateStr = excelSerialToDisplayDate(r[0]);
       merchant = normalizeStatementCell(r[1]);
@@ -9075,7 +9190,11 @@ function parseCCStatement(rows, filename){
       payment,
       sourceCardLabel,
       sourceCardLast4,
-      sourceTxnType
+      sourceTxnType,
+      // The issuer states outright which charges are standing orders. That beats
+      // guessing from history, so it is passed through as a suggestion the
+      // review table can still override.
+      suggestedType: String(sourceTxnType || "").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
     });
   }
 
@@ -9090,7 +9209,7 @@ function showCCImportModal(result, filename){
     const match = lookupMerchantMapping(t.merchant);
     return Object.assign({}, t, {
       category: knownCategories.has(match.category) ? match.category : "",
-      type: match.type || "\u05de\u05e9\u05ea\u05e0\u05d4",
+      type: match.type || t.suggestedType || "\u05de\u05e9\u05ea\u05e0\u05d4",
       payment: t.payment || match.payment || "",
       immediate: ""
     });
