@@ -1,7 +1,7 @@
 {
   "schema_version": 2,
   "project": "Expense App — Raz & Shira",
-  "generated_at": "2026-09-12T18:05:00+03:00",
+  "generated_at": "2026-09-12T19:20:00+03:00",
   "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
   "owner": "Raz",
   "headline": "Import path fixed and shipped; design system built and audited. Screens not yet designed.",
@@ -37,7 +37,8 @@
     "amex_pdf": "Eight transactions totalling 1550.47, matching the printed total.",
     "recurring_heuristic": "Five of five seeded cases correct.",
     "dark_mode_is_real": "bg/surface 255,255,255 under Light and 27,24,19 under Dark. Three of three probes changed.",
-    "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints."
+    "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints.",
+    "shira_on_device": "Confirmed by Shira on her own device, 12/09. The import path is verified end to end, not only programmatically."
   },
   "open_risks": [
     {
@@ -45,12 +46,6 @@
       "severity": "high",
       "title": "Backups are not under version control",
       "note": "Blanket json rule in gitignore. Pending D-04."
-    },
-    {
-      "id": "R-03",
-      "severity": "medium",
-      "title": "Shira has not tested the PDF import on her own device",
-      "note": "Verified programmatically against the live code, never in her hands."
     },
     {
       "id": "R-04",
