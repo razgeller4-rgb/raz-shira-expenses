@@ -98,17 +98,22 @@ body{
   background:linear-gradient(158deg,#24482D 0%,#2F5D3A 48%,#3C7046 100%);
   color:#fff;padding:20px 18px 0;box-shadow:var(--sh-2);
 }
-.bal-lbl{font-size:12px;font-weight:600;color:#C6DCC8;letter-spacing:.02em}
+/* Text sitting on the balance gradient is scored against its lightest
+   stop (#3C7046), not an average - that end is where contrast is worst. */
+.bal-lbl{font-size:12px;font-weight:600;color:#DCEBDC;letter-spacing:.02em}
 .bal-amt{display:flex;align-items:baseline;gap:7px;justify-content:flex-end;margin-top:10px}
 .bal-amt b{font-size:52px;font-weight:700;letter-spacing:-.04em;line-height:.95}
-.bal-amt i{font-size:22px;font-style:normal;font-weight:600;color:#C6DCC8}
+.bal-amt i{font-size:22px;font-style:normal;font-weight:600;color:#DCEBDC}
 .bal-meta{display:flex;align-items:center;gap:9px;margin-top:13px;flex-wrap:wrap}
 .pill{
   display:inline-flex;align-items:center;gap:5px;padding:5px 11px;
   border-radius:var(--pill);font-size:12px;font-weight:700;
 }
-.pill-up{background:rgba(148,193,31,.22);color:#CDE86F}
-.pill-dim{background:rgba(255,255,255,.13);color:#D8E7D9}
+/* A lime tint over a green gradient could not reach 4.5:1 at any text
+   colour - the two are too close in luminance. Solid lime with dark ink
+   instead, which also makes the headline delta read first. */
+.pill-up{background:var(--lime);color:#16220A}
+.pill-dim{background:rgba(12,26,14,.45);color:#E6EFE6}
 .bal svg{display:block;width:calc(100% + 36px);margin:14px -18px 0}
 
 /* insight */
@@ -133,9 +138,15 @@ body{
 .mini{margin-top:11px;height:26px;width:100%;display:block}
 
 /* section */
-.sec{display:flex;align-items:baseline;justify-content:space-between;margin:22px 2px 11px}
+.sec{display:flex;align-items:center;justify-content:space-between;margin:18px 2px 8px}
 .sec h3{margin:0;font-size:18px;font-weight:700;letter-spacing:-.025em}
-.sec a{font-size:12.5px;color:var(--brand);font-weight:700;text-decoration:none}
+/* The link text is small, so the tap area is grown with padding and a
+   negative margin - the target reaches 44px without moving the layout. */
+.sec a{
+  font-size:12.5px;color:var(--brand);font-weight:700;text-decoration:none;
+  min-height:var(--tap);display:inline-flex;align-items:center;
+  padding:0 8px;margin:0 -8px;border-radius:var(--r-s);
+}
 
 /* category rail */
 .rail{display:flex;gap:10px;overflow-x:auto;padding:2px 14px 6px;margin:0 -14px;scrollbar-width:none}
