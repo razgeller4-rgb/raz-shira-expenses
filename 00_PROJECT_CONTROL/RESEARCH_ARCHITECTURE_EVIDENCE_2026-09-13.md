@@ -46,11 +46,17 @@
 
 המלצה: לאחר אישור היקף לבדיקה חיה, לאסוף schema/policies/grants בלבד, ללא payload; לבדוק anon, משתמש לא מורשה, כל אחד משני המשתמשים, cross-owner write ושורות משותפות. לשמור migration קנוני משחזר ולהוציא setup הפתוח משימוש.
 
+> **עדכון 13.09.2026, אחרי כתיבת הסעיף למעלה:** מצב ה-RLS החי **כן נקבע** — פעמיים, בשתי בדיקות נפרדות. F-6 (`RESEARCH_LOG_AND_LESSONS.md`) כבר תיעד ב-2026-09-10 בדיקת `pg_policies` חיה: 9 policies, כולן `{authenticated}` בלבד, אין policy ל-`anon`. היום (`get_advisors(type=security)`, לא קובץ) אישר שוב שאין ליקויי RLS-פתיחות — שתי האזהרות היחידות הן `function_search_path_mutable` (על `set_app_state_updated_at`) ו-`auth_leaked_password_protection` מושבת, שתיהן כבר מתועדות כ-F-12 ופתוחות.
+>
+> **ממצא ביצועים חדש מאותה בדיקה (`get_advisors(type=performance)`):** 10 policies על `app_state`, `app_state_demo` ו-שתי טבלאות ה-allowed_users מריצות מחדש `auth.<function>()` (כנראה `auth.uid()`) **על כל שורה בטבלה**, במקום פעם אחת לשאילתה — תיקון סטנדרטי של Supabase הוא לעטוף ב-`(select auth.<function>())`. **זה מועמד סביר להסבר הקונקרטי ל-F-11** ("Disk IO Budget מתרוקן", מעולם לא הוסבר) — יישום לא-יעיל של RLS גורם בדיוק לתבנית הזו (CPU/IO גבוהים ביחס לעומס אמיתי). **לא תוקן** — רז ביקש לתעד בלבד, לא ליישם `apply_migration` על schema של נתונים אמיתיים בלי אישור נפרד.
+
 ### גבול ההגנה המקומית — מוכח
 session עם access/refresh token נשמר ב-localStorage (2990–3006), והנתונים אינם מוצפנים. יציאה מוחקת session אך לא את נתוני המפות (3128–3139). מצב offline מסיר שער כניסה ומציג נתונים מקומיים במכוון (3268–3281). לכן authentication הוא הגנת גישה לענן; הוא אינו בידוד סודות ממשתמש אחר באותו פרופיל דפדפן. namespaces של demo ו-prod אינם גבול אבטחה בין scripts באותו origin.
 
 ### משטח הזרקת תוכן ותלויות — מועמד לבדיקה, לא exploit מאומת
 נמצאו בניית innerHTML ו-inline handlers עם תוכן דינמי. לדוגמה שמות קטגוריות מוזרקים ללא escape ב-filter chips (5729), וקיימים שימושי escapeHtmlAttr בהקשר של JavaScript inline (6424, 6429), המחייבים בדיקה נפרדת של הקשר הפלט. אין להסיק שכל rendering פגיע; חלקים רבים משתמשים ב-escapeHtmlAttr. Chart.js נטען מ-CDN ללא גרסה קבועה, XLSX נעול לגרסה (18–19 בשני קבצי האפליקציה). בתגיות אלה לא מוגדר integrity. מאחר שגם מידע וגם session זמינים ל-JavaScript, בדיקת DOM-XSS ושרשרת טעינת scripts היא בעלת ערך גבוה.
+
+> **תוקן 13.09.2026:** Chart.js ננעל ל-4.5.1 (זהה בייט-לבייט למה שהיה נטען קודם, אומת ב-diff) + נוסף SRI hash. `crossorigin="anonymous"` נוסף גם כן. אומת חי שהגרפים עדיין נטענים ללא שגיאת קונסולה. שאלת ה-innerHTML/escapeHtmlAttr **לא נבדקה** — עדיין מועמד לבדיקה, לא exploit מאומת ולא הופרך.
 
 ## מוכנות ומסמכי אמת
 `TWO_DEVICE_SYNC_ACCEPTANCE.md:12–27` הוא תסריט קבלה, לא תוצאות הרצה: אין תיעוד pass/fail, גרסת build או זמן לכל תרחיש. לכן אין בסיס מקומי להכריז שהסנכרון ירוק במכשירים אמיתיים. מפות קוד ישנות מציינות מספרי שורות/אורך קובץ קודמים (`DATA_MODEL_MAP.md:3`), ולכן ההפניות העדכניות בדוח זה עדיפות לסקירה הנוכחית.
