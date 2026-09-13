@@ -6077,21 +6077,38 @@ function buildBentoPinnedTiles(){
   return spendTile + gardenTile + forecastTile + settleTile;
 }
 /* Render-only forecast: projects closing balance to month-end by avg daily burn.
-   Reads getDisplayedClosingBalance + getExpenseStats only; does NOT modify calc fns. */
+   Reads getDisplayedClosingBalance + getEditableRows only; does NOT modify calc fns.
+
+   C-3 fix (CALC_LOGIC_MAP.md): avgDaily used to come from stats.total, which is
+   ALL of the sheet's rows regardless of date - including future-dated charges
+   (this app imports a full credit-card cycle in advance, so "future rows this
+   month" is a normal, common case, not an edge case). closing already
+   subtracts those future rows in full. Averaging the same total over days
+   *elapsed* and projecting it over days *remaining* subtracted them a second
+   time - confirmed empirically (not just by reading the code) against a live
+   scenario: a known 6,000 future charge turned a -817.57 closing balance into
+   a projected -13,894.49, when the correct projection (below) is -6,048.34.
+   avgDaily is now the pace of spending that has actually already happened
+   (date <= today), projected forward as an estimate of further, still-unknown
+   spending - additive to what closing already knows about, not a repeat of it. */
 function buildForecast(){
   const closing = getDisplayedClosingBalance(selectedSheet);
   if(closing==null) return {closing:null};
-  const stats = getExpenseStats(selectedSheet);
   const mi = getSheetMonthYear(selectedSheet);
   const daysInMonth = (mi.month && mi.year) ? new Date(mi.year, mi.month, 0).getDate() : 30;
   const today = new Date();
   const isCurrent = mi.year===today.getFullYear() && mi.month===(today.getMonth()+1);
   const dayNow = isCurrent ? today.getDate() : daysInMonth;
   const remainingDays = Math.max(0, daysInMonth - dayNow);
-  const avgDaily = dayNow>0 ? stats.total/dayNow : 0;
+  const todayIso = getTodayIso();
+  const pastSpend = getEditableRows(selectedSheet).reduce((sum,row) => {
+    const iso = toIsoDate(row.date_raw);
+    return (iso && iso <= todayIso) ? sum + Number(row.amount || 0) : sum;
+  }, 0);
+  const avgDaily = dayNow>0 ? pastSpend/dayNow : 0;
   const projectedSpendRest = avgDaily * remainingDays;
   const projected = closing - projectedSpendRest;
-  return { closing, projected, delta: projected-closing, daysInMonth, dayNow, avgDaily, remainingDays };
+  return { closing, projected, delta: projected-closing, daysInMonth, dayNow, avgDaily, remainingDays, pastSpend };
 }
 
 /* ── Phase 1: Dashboard hero — balance + sparkline + count-up ───── */
