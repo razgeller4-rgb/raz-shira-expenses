@@ -1,23 +1,23 @@
 {
   "schema_version": 2,
   "project": "Expense App — Raz & Shira",
-  "generated_at": "2026-09-13T09:10:00+03:00",
+  "generated_at": "2026-09-13T10:05:00+03:00",
   "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
   "owner": "Raz",
-  "headline": "Forecast double-count bug (C-3+C-5) fixed in production - it was live and showing a wrong number. Mobile edit form, backup tab, and sync indicator also reworked this round. Screens (stage 6) not yet designed.",
-  "stage": "Stage 5 (design system) complete. Stage 6 (designing the ten screens) not started - this round went to tactical UX fixes and a calculation bug instead, per Raz's steer toward autonomous forward work.",
+  "headline": "Forecast double-count bug (C-3+C-5) fixed in production - it was live and showing a wrong number. C-4 (father-debt dedup) reviewed, confirmed correct for the one real case, given a transparency fix. Mobile edit form, backup tab, and sync indicator also reworked this round. Screens (stage 6) not yet designed.",
+  "stage": "Stage 5 (design system) complete. Stage 6 (designing the ten screens) not started - this round went to tactical UX fixes and calculation-suspicion verification instead, per Raz's steer toward autonomous forward work. Only C-2 remains unverified from the original three suspicions.",
   "git": {
     "branch": "main",
-    "head": "b4f0f92"
+    "head": "f0abab5"
   },
   "demo_vs_production": {
     "demo_file": "expense-app-v37-demo.html",
-    "demo_lines": 9805,
+    "demo_lines": 9821,
     "production_file": "expense-app-v37.html",
-    "production_lines": 9805,
+    "production_lines": 9821,
     "demo_ahead_lines": 0,
     "unported_commits": [],
-    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז לגבי השינויים מ-13/09 (טופס עריכה, לשונית גיבוי, תחזית)"
+    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז לגבי השינויים מ-13/09 (טופס עריכה, לשונית גיבוי, תחזית, תג מיזוג חוב לאבא)"
   },
   "verification": {
     "import_routing": "Shira's eight dates split two to July, six to August. No fallback rows.",
@@ -26,7 +26,8 @@
     "dark_mode_is_real": "bg/surface 255,255,255 under Light and 27,24,19 under Dark. Three of three probes changed.",
     "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints.",
     "shira_on_device": "Confirmed by Shira on her own device, 12/09. The import path is verified end to end, not only programmatically.",
-    "forecast_fix_c3_c5": "Live scenario (opening 10000, past expense 4000, known future expense 6000, day 13/30): projected went from -13894.49 to -6048.34 (card) and the forecast chart's month-end point from +769 (sign-flipped vs the card) to -5230.77 (same sign). Reviewed by domain-risk-reviewer before implementation. Full numbers in CALC_LOGIC_MAP.md section 3."
+    "forecast_fix_c3_c5": "Live scenario (opening 10000, past expense 4000, known future expense 6000, day 13/30): projected went from -13894.49 to -6048.34 (card) and the forecast chart's month-end point from +769 (sign-flipped vs the card) to -5230.77 (same sign). Reviewed by domain-risk-reviewer before implementation. Full numbers in CALC_LOGIC_MAP.md section 3.",
+    "father_debt_dedup_c4": "domain-risk-reviewer found the exact date+amount collision C-4 describes already live in the latest production backup (23/03/2026, 1000). Asked Raz directly whether it was one transfer or two - confirmed one, so the existing merge/total was already correct. Added a merge-transparency badge (getCombinedFatherRepayments now records mergedWith) with zero change to any total, so a future wrong merge is visible instead of silent."
   },
   "open_risks": [
     {
@@ -43,9 +44,9 @@
     },
     {
       "id": "R-05",
-      "severity": "medium",
-      "title": "Two calculation suspicions still unverified (was three)",
-      "note": "C-2 interest not subtracted from balance (also affects the forecast chart's baseline, a smaller residual gap left over from fixing C-5). C-4 repayment dedup key can collide on two identical same-day repayments. C-1 was refuted by Raz; C-3 and C-5 were confirmed and fixed 13/09 - see CALC_LOGIC_MAP.md."
+      "severity": "low",
+      "title": "One calculation suspicion still unverified (was three)",
+      "note": "C-2 interest not subtracted from balance (also affects the forecast chart's baseline, a smaller residual gap left over from fixing C-5). C-1 refuted by Raz; C-3+C-5 confirmed and fixed 13/09; C-4 confirmed correct for its one real instance and given a transparency fix 13/09 - see CALC_LOGIC_MAP.md. New low-severity display-only finding from the C-4 review: C-6, a father-debt expense row shows in both the dashboard's expense card and its debt card."
     },
     {
       "id": "R-06",
