@@ -32,7 +32,12 @@
   --surface-3: #EAE1CD; --border: #E6DCC8; --border-2: #D8CBB0;
   --border-3: #D8CBB0;
   /* Text — walnut ink */
-  --text: #2E2A22; --text-2: #5C5446; --muted: #8A8170; --c-text-sub: var(--muted);
+  /* --muted was #8A8170 - measured 3.32-3.79:1 against real card/page
+     backgrounds (below the 4.5 AA minimum), used as color:var(--muted) in
+     50+ selectors across every tab (BASELINE_AUDIT.md: one token behind most
+     of the app's contrast failures). Darkened to clear AA with margin while
+     staying visibly lighter than --text-2, preserving the 3-step hierarchy. */
+  --text: #2E2A22; --text-2: #5C5446; --muted: #6B6354; --c-text-sub: var(--muted);
   /* Brand accent — sage / forest */
   --accent: #7E9B6E; --accent-2: #9DB68F; --accent-strong: #5E7A50;
   --accent-light: rgba(126,155,110,.14); --accent-ring: rgba(94,122,80,.34);
@@ -932,7 +937,10 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   /* Night Garden — forest floor at night */
   --bg:#1A1E17; --surface:#232820; --surface-2:#2C322A; --surface-3:#1F231C;
   --border:#3A4136; --border-2:#4A5244; --border-3:#4A5244;
-  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#9A9382; --c-text-sub: var(--muted);
+  /* Dark --muted (#9A9382) measured 4.92:1 - technically passing but with
+     almost no margin. Lightened slightly for consistency with the light-mode
+     fix above, same reasoning. */
+  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#A8A190; --c-text-sub: var(--muted);
   --accent:#A6C08F; --accent-2:#BFD4AC; --accent-strong:#8AAA72;
   --accent-light:rgba(166,192,143,.16); --accent-ring:rgba(166,192,143,.42);
   --wood:#C99B72; --wood-strong:#A6764C; --wood-light:rgba(201,155,114,.16);
