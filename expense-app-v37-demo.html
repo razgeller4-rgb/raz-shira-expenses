@@ -470,7 +470,14 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 
 /* Category fix is the single most common edit, so it is a tap on a chip
    instead of open-select-scroll-pick-close on a <select>. */
-.category-chip-row { display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.category-chip-row {
+  display:flex; gap:8px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none;
+  /* A cut-off chip at the edge with no visual cue reads as broken, not
+     scrollable. Fading both edges (direction-agnostic, works under RTL) turns
+     it into "there's more" instead. */
+  mask-image: linear-gradient(to right, transparent 0, black 20px, black calc(100% - 20px), transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0, black 20px, black calc(100% - 20px), transparent 100%);
+}
 .category-chip-row::-webkit-scrollbar { display:none; }
 .category-chip {
   flex:none; display:inline-flex; align-items:center; gap:6px;
