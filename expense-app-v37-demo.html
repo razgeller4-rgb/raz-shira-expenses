@@ -6666,13 +6666,22 @@ function renderChart(rows){
       if(day>dayNow) return null;
       return opening + income - runExp;
     });
-    /* projection: from today's actual to month-end at avg daily burn */
+    /* projection: from today's actual to month-end at avg daily burn, plus any
+       already-known future charges landing on their real day (expByDay past
+       today) - found during the C-3 review: without this, a known future
+       charge is invisible to the chart's trend line but still fully counted
+       in the card's `closing`, so the two would end the month on opposite
+       signs for the same data. Applying it on its real day (not folded into
+       avgDaily) keeps the two count it exactly once each. */
     const lastActual = actual[Math.min(dayNow,daysInMonth)-1];
+    const baseline = lastActual==null ? opening+income : lastActual;
+    let runFutureExp = 0;
     const projData = dayLabels.map((_,i)=>{
       const day=i+1;
       if(day<dayNow) return null;
+      if(day>dayNow) runFutureExp += (expByDay[day]||0);
       const stepsFromNow = day - dayNow;
-      return (lastActual==null?opening+income:lastActual) - (fc.avgDaily||0)*stepsFromNow;
+      return baseline - runFutureExp - (fc.avgDaily||0)*stepsFromNow;
     });
     setChartBoxHeight(isMobile ? 300 : 340);
     chartInstance=new Chart(ctx,{
