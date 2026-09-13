@@ -1,36 +1,23 @@
 {
   "schema_version": 2,
   "project": "Expense App — Raz & Shira",
-  "generated_at": "2026-09-12T19:20:00+03:00",
+  "generated_at": "2026-09-13T09:10:00+03:00",
   "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
   "owner": "Raz",
-  "headline": "Import path fixed and shipped; design system built and audited. Screens not yet designed.",
-  "stage": "Stage 5 complete. Next: stage 6, designing the ten screens.",
+  "headline": "Forecast double-count bug (C-3+C-5) fixed in production - it was live and showing a wrong number. Mobile edit form, backup tab, and sync indicator also reworked this round. Screens (stage 6) not yet designed.",
+  "stage": "Stage 5 (design system) complete. Stage 6 (designing the ten screens) not started - this round went to tactical UX fixes and a calculation bug instead, per Raz's steer toward autonomous forward work.",
   "git": {
     "branch": "main",
-    "head": "66f9a8f"
+    "head": "b4f0f92"
   },
   "demo_vs_production": {
     "demo_file": "expense-app-v37-demo.html",
-    "demo_lines": 9221,
+    "demo_lines": 9805,
     "production_file": "expense-app-v37.html",
-    "production_lines": 8994,
-    "demo_ahead_lines": 227,
-    "unported_commits": [
-      {
-        "sha": "2e4bc93",
-        "summary": "ריבוי פריטי בדיקה בדשבורד + סימון כטופל, עיצוב טופס קטגוריות וכרטיסי ייבוא, מיידי/משותף בייבוא"
-      },
-      {
-        "sha": "18f64dc",
-        "summary": "רישום מפתחות סנכרון חסרים (יעדים/זיכרון עסק/קטגוריות חודשיות/בדיקות שנדחו) + הגנה משגיאה שקטה בייבוא אשראי"
-      },
-      {
-        "sha": "d87d2c0",
-        "summary": "הגנה מחריגת מכסת localStorage בנקודות שחזור — היה שובר את הייבוא לגמרי"
-      }
-    ],
-    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז"
+    "production_lines": 9805,
+    "demo_ahead_lines": 0,
+    "unported_commits": [],
+    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז לגבי השינויים מ-13/09 (טופס עריכה, לשונית גיבוי, תחזית)"
   },
   "verification": {
     "import_routing": "Shira's eight dates split two to July, six to August. No fallback rows.",
@@ -38,7 +25,8 @@
     "recurring_heuristic": "Five of five seeded cases correct.",
     "dark_mode_is_real": "bg/surface 255,255,255 under Light and 27,24,19 under Dark. Three of three probes changed.",
     "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints.",
-    "shira_on_device": "Confirmed by Shira on her own device, 12/09. The import path is verified end to end, not only programmatically."
+    "shira_on_device": "Confirmed by Shira on her own device, 12/09. The import path is verified end to end, not only programmatically.",
+    "forecast_fix_c3_c5": "Live scenario (opening 10000, past expense 4000, known future expense 6000, day 13/30): projected went from -13894.49 to -6048.34 (card) and the forecast chart's month-end point from +769 (sign-flipped vs the card) to -5230.77 (same sign). Reviewed by domain-risk-reviewer before implementation. Full numbers in CALC_LOGIC_MAP.md section 3."
   },
   "open_risks": [
     {
@@ -56,8 +44,8 @@
     {
       "id": "R-05",
       "severity": "medium",
-      "title": "Three calculation suspicions still unverified",
-      "note": "C-2 interest, C-3 forecast double-count, C-4 repayment dedup. C-1 was refuted by Raz."
+      "title": "Two calculation suspicions still unverified (was three)",
+      "note": "C-2 interest not subtracted from balance (also affects the forecast chart's baseline, a smaller residual gap left over from fixing C-5). C-4 repayment dedup key can collide on two identical same-day repayments. C-1 was refuted by Raz; C-3 and C-5 were confirmed and fixed 13/09 - see CALC_LOGIC_MAP.md."
     },
     {
       "id": "R-06",
