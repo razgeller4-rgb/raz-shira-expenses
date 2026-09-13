@@ -1598,6 +1598,9 @@ body { background:var(--bg); }
 .status-dot { width:11px; height:11px; border-radius:50%; background:var(--warn); flex:0 0 auto; box-shadow:0 0 0 4px var(--warn-light); }
 .app-status-strip.is-connected .status-dot { background:var(--accent); box-shadow:0 0 0 4px var(--accent-light); }
 .app-status-strip.is-error .status-dot { background:var(--expense); box-shadow:0 0 0 4px var(--expense-light); }
+.app-status-strip.is-syncing .status-dot { background:var(--warn); box-shadow:0 0 0 4px var(--warn-light); animation:status-dot-pulse 1.1s ease-in-out infinite; }
+@keyframes status-dot-pulse { 0%,100% { opacity:1; } 50% { opacity:.35; } }
+@media (prefers-reduced-motion: reduce) { .app-status-strip.is-syncing .status-dot { animation:none; } }
 .app-status-copy { display:flex; flex-direction:column; min-width:0; flex:1; }
 .app-status-copy strong { font-size:13px; color:var(--text); }
 .app-status-copy span { font-size:11px; color:var(--muted); }
@@ -3259,9 +3262,19 @@ function renderAppConnectionSummary(){
   const loggedIn = isSupabaseSessionValid(session);
   const message = String(cloudSyncState.message || "");
   const hasSyncError = /נכשל|שגיאה|צריך להתחבר|401|403/i.test(message);
-  strip.classList.toggle("is-connected", loggedIn && hasCloudSyncConfig() && !config.disabled && !hasSyncError);
-  strip.classList.toggle("is-error", hasSyncError);
-  if(config.disabled){
+  // "syncing" is transient (a push/pull in flight, usually a couple of
+  // seconds) so it pre-empts the steady-state text below rather than being
+  // folded into it - otherwise the strip always reads "מסונכרן עכשיו" even
+  // while a save is actively happening, which is the one moment a sync
+  // indicator most needs to say something.
+  const isSyncing = cloudSyncState.status === "syncing";
+  strip.classList.toggle("is-connected", loggedIn && hasCloudSyncConfig() && !config.disabled && !hasSyncError && !isSyncing);
+  strip.classList.toggle("is-error", hasSyncError && !isSyncing);
+  strip.classList.toggle("is-syncing", isSyncing);
+  if(isSyncing){
+    title.textContent = "מסנכרן…";
+    meta.textContent = message || "מעדכן מול הענן…";
+  } else if(config.disabled){
     title.textContent = "הסנכרון כבוי במכשיר הזה";
     meta.textContent = "הנתונים נשמרים כרגע רק בדפדפן המקומי.";
   } else if(!loggedIn){
