@@ -2828,9 +2828,18 @@ if(SHOW_DEBUG_PANEL){
 function clone(x){ return JSON.parse(JSON.stringify(x)); }
 function getFatherDebtStart(){ return Number(getDebtData().fatherDebtStart || 0); }
 function getTotalDebtRemainingSummary(){
+  // C-7: bankPaidPrincipal summed every installment regardless of due date -
+  // identical to getLoanPrincipalBase() itself, so bankRemaining was always
+  // exactly 0, no matter today's date. The three other places this same
+  // "principal paid so far" idea is computed (getDashboardWidgetCatalog,
+  // getYearlySummaryData, renderDebtTab's bankPaidPrincipal) all correctly
+  // filter to dueDate <= today; this is the one that didn't.
   if(!isDebtTrackingEnabled()) return null;
   const fatherRemaining = Math.max(0, getFatherDebtStart() - getCombinedFatherRepayments().reduce((sum,row)=>sum + getFatherNetAmount(row),0));
-  const bankPaidPrincipal = getLoanSchedule().reduce((sum,entry)=>sum + Number(entry.principal || 0),0);
+  const todayIso = getTodayIso();
+  const bankPaidPrincipal = getLoanSchedule()
+    .filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso)
+    .reduce((sum,entry)=>sum + Number(entry.principal || 0),0);
   const bankRemaining = Math.max(0, getLoanPrincipalBase() - bankPaidPrincipal);
   return { bankRemaining, fatherRemaining, total: bankRemaining + fatherRemaining };
 }
