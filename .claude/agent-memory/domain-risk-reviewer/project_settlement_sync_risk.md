@@ -1,15 +1,15 @@
 ---
 name: project-settlement-sync-risk
-description: Known structural risk in expense-app-v37 settlement cloud-sync (no tombstones, weak id scheme) — check before approving any future settlement/sync change
+description: RESOLVED 2026-09 — settlement sync tombstones + strong id scheme now implemented; historical record only, do not re-flag as a new finding
 metadata:
   type: project
 ---
 
-Reviewed 2026-06-25 on `expense-app-v37-demo.html` (sync fix: single blob → per-user rows + shared `shared-settlements` row).
+Originally reviewed 2026-06-25 on `expense-app-v37-demo.html`: found no delete-tombstones and a weak id (`settle-${Date.now()}` only, ms timestamp) in `pushSettlementsRow` / `applySettlementsRow` / `addSharedSettlement` / `deleteSharedSettlement`.
 
-Two structural issues found in the settlement merge logic (`pushSettlementsRow` / `applySettlementsRow`, ~line 2469-2512), independent of whether the specific sync fix under review is promoted:
+**Status 2026-09-13: confirmed resolved by direct code re-check** (not just trusting other memory/docs):
+- Tombstones exist end-to-end: `getSharedSettlementTombstones` / `saveSharedSettlementTombstones`, applied in both merge functions (`pushSettlementsRow` ~line 4153, `applySettlementsRow` ~line 4185) and in the read path `getSharedSettlements()` (~line 4747-4751, filters out tombstoned ids). `deleteSharedSettlement` (~4781) writes a tombstone before removing the item and requires an explicit `confirm()` (irreversible, cross-device).
+- Id is now strong: `addSharedSettlement` (~4769) uses `settle-${currentUser}-${Date.now()}-${Math.random().toString(36).slice(2,8)}` — user + timestamp + random suffix, not timestamp alone.
+- Independently corroborated by `00_PROJECT_CONTROL/CALC_LOGIC_MAP.md` (dated 2026-09-10, §4): "שני הסיכונים שתועדו ב-06/2025 ... נסגרו."
 
-1. **No delete tombstones.** `deleteSharedSettlement` (~line 3012) does a pure local array filter. Both merge functions are append-only unions keyed by `item.id` — they never know an id was intentionally removed. A stale device that still has the deleted item locally will resurrect it on its next push/pull. This is **not** the same as the documented "self-heals" race (which converges to correct); this can make a *correct* deleted state flip back to *wrong* indefinitely.
-2. **Weak settlement id.** `addSharedSettlement` (~line 3000) uses `id: \`settle-${Date.now()}\`` — ms timestamp only, no user id, no randomness. Double-submit (double click, retry) within the same ms could create two ids for the same logical payment, both of which sum into `netBalance` in `getSharedExpenseSummary` with no other dedup safeguard.
-
-**How to apply:** Before approving any future change that touches `pushSettlementsRow`, `applySettlementsRow`, `addSharedSettlement`, or `deleteSharedSettlement`, check whether tombstones / a stronger id scheme have been added yet. If not, these two issues are still open and should be re-flagged, not treated as new findings. See also [[feedback_data_safety]] if it exists — v37 is the real-money source of truth.
+**How to apply:** Do not re-raise "no tombstones" / "weak id" for settlement sync as a new finding. If a future change touches `pushSettlementsRow`, `applySettlementsRow`, `addSharedSettlement`, or `deleteSharedSettlement`, just confirm (quick grep) these two mechanisms are still intact — don't assume they're missing based on the old 2026-06-25 review.

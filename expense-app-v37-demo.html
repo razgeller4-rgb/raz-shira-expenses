@@ -1265,6 +1265,9 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   background: var(--good-light); color: var(--good);
 }
 .debt-direction-badge.increase { background: var(--bad-light); color: var(--bad); }
+/* C-4: surfaces which expense row a history entry silently absorbed, so a
+   wrong date+amount match is something to notice and fix, not a silent one. */
+.debt-merge-note { color: var(--warn); font-weight: 600; margin-top: 3px; cursor: help; }
 .debt-amount-increase { color: var(--bad) !important; }
 .debt-row.is-increase { border-color: rgba(220,38,38,.25); }
 
@@ -5886,18 +5889,27 @@ function normalizeRepaymentKey(dateRaw, amount){
 function getFatherRows(sheet){
   return getEditableRows(sheet)
     .filter(isFatherRepayment)
-    .map(row => ({...row, source:"מהוצאות"}));
+    .map(row => ({...row, source:"מהוצאות", sheet}));
 }
 function getFatherNetAmount(row){
   // repayment מקטין את היתרה (חיובי), increase מגדיל אותה (שלילי בסכימה).
   return row && row.direction === "increase" ? -Number(row.amount || 0) : Number(row && row.amount || 0);
 }
 function getCombinedFatherRepayments(){
-  const historical = getFatherHistory().map(item => ({...item, source:item.source || "היסטורי"}));
-  const existingKeys = new Set(historical.map(item => normalizeRepaymentKey(item.date_raw, item.amount)));
+  // C-4 (CALC_LOGIC_MAP.md): the date+amount key can't tell "same transfer,
+  // logged twice" from "two different transfers that happen to match" - a real
+  // instance of the first case was confirmed with Raz on 2026-09-13 (23/03/2026,
+  // 1,000, correctly merged). Rather than guess differently, this keeps the
+  // merge exactly as before and instead records what got absorbed into what,
+  // so a *wrong* merge is something Raz/Shira can actually see and fix
+  // (delete the bad history row) instead of a silent, undetectable one.
+  const historical = getFatherHistory().map(item => ({...item, source:item.source || "היסטורי", mergedWith:[]}));
+  const byKey = new Map(historical.map(item => [normalizeRepaymentKey(item.date_raw, item.amount), item]));
   const expenseRows = SHEET_OPTIONS.flatMap(sheet => getFatherRows(sheet)).filter(row => {
     const key = normalizeRepaymentKey(row.date_raw, row.amount);
-    return !existingKeys.has(key);
+    const match = byKey.get(key);
+    if(match) match.mergedWith.push({merchant:row.merchant, notes:row.notes, sheet:row.sheet});
+    return !match;
   });
   return [...historical, ...expenseRows].sort((a,b)=>toIsoDate(a.date_raw).localeCompare(toIsoDate(b.date_raw)));
 }
@@ -8369,11 +8381,15 @@ function renderDebts(){
           </div>
         </div>`;
       }
+      const mergeNote = (row.mergedWith && row.mergedWith.length)
+        ? `<div class="micro debt-merge-note" title="נמצאה שורת הוצאה באותו תאריך וסכום — הונחה שזו אותה העברה ולא נספרה פעמיים. אם זו טעות, זו הוצאה נפרדת שנעלמת מהסכום.">🔗 מוזג עם: ${row.mergedWith.map(m => escapeHtmlAttr(m.merchant || m.notes || "הוצאה ללא שם") + (m.sheet ? ` (${escapeHtmlAttr(m.sheet)})` : "")).join(", ")}</div>`
+        : "";
       return `<div class="debt-row${isIncrease ? " is-increase" : ""}">
         <div>
           <strong>${escapeHtmlAttr(row.merchant || row.description) || "ללא שם"}</strong>
           <span class="debt-direction-badge${isIncrease ? " increase" : ""}">${isIncrease ? "הלוואה נוספה" : "הוחזר"}</span>
           <div class="micro">${escapeHtmlAttr(row.notes || row.description) || "ללא הערה"} · ${escapeHtmlAttr(row.source) || "מערכת"}${toIsoDate(row.date_raw).slice(0,7) === currentMonthKey ? " · החודש הנוכחי" : ""}</div>
+          ${mergeNote}
         </div>
         <div class="mobile-metric"><span class="mobile-label">תאריך</span>${row.date_raw || "—"}</div>
         <div class="mobile-metric"><span class="mobile-label">אמצעי</span>${row.payment || "העברה"}</div>
