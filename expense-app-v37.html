@@ -32,14 +32,23 @@
   --surface-3: #EAE1CD; --border: #E6DCC8; --border-2: #D8CBB0;
   --border-3: #D8CBB0;
   /* Text — walnut ink */
-  --text: #2E2A22; --text-2: #5C5446; --muted: #8A8170; --c-text-sub: var(--muted);
+  /* --muted was #8A8170 - measured 3.32-3.79:1 against real card/page
+     backgrounds (below the 4.5 AA minimum), used as color:var(--muted) in
+     50+ selectors across every tab (BASELINE_AUDIT.md: one token behind most
+     of the app's contrast failures). Darkened to clear AA with margin while
+     staying visibly lighter than --text-2, preserving the 3-step hierarchy. */
+  --text: #2E2A22; --text-2: #5C5446; --muted: #6B6354; --c-text-sub: var(--muted);
   /* Brand accent — sage / forest */
   --accent: #7E9B6E; --accent-2: #9DB68F; --accent-strong: #5E7A50;
   --accent-light: rgba(126,155,110,.14); --accent-ring: rgba(94,122,80,.34);
   /* Wood — walnut warm structural accents */
   --wood: #B07D56; --wood-strong: #8A5E3C; --wood-light: rgba(176,125,86,.14);
   /* Semantic income / expense / warning / info */
-  --income: #4E7A4A; --income-light: #E8F0E2;
+  /* --income-light was #E8F0E2 - measured 4.28:1 for --income text on it
+     (the .good badge pattern), just under the 4.5 AA minimum. Lightened the
+     tint (not the --income text token itself, which is used far more
+     broadly) to 4.63:1. */
+  --income: #4E7A4A; --income-light: #F3F8EF;
   --expense: #C16A4F; --expense-light: #F8E9E2;
   --warn: #D9A441; --warn-light: #FBF1DC;
   --info: #6E8B8A; --info-light: #E4EDEC;
@@ -932,7 +941,10 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   /* Night Garden — forest floor at night */
   --bg:#1A1E17; --surface:#232820; --surface-2:#2C322A; --surface-3:#1F231C;
   --border:#3A4136; --border-2:#4A5244; --border-3:#4A5244;
-  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#9A9382; --c-text-sub: var(--muted);
+  /* Dark --muted (#9A9382) measured 4.92:1 - technically passing but with
+     almost no margin. Lightened slightly for consistency with the light-mode
+     fix above, same reasoning. */
+  --text:#ECE6D8; --text-2:#C9C2B0; --muted:#A8A190; --c-text-sub: var(--muted);
   --accent:#A6C08F; --accent-2:#BFD4AC; --accent-strong:#8AAA72;
   --accent-light:rgba(166,192,143,.16); --accent-ring:rgba(166,192,143,.42);
   --wood:#C99B72; --wood-strong:#A6764C; --wood-light:rgba(201,155,114,.16);
@@ -1277,7 +1289,11 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .debt-direction-badge.increase { background: var(--bad-light); color: var(--bad); }
 /* C-4: surfaces which expense row a history entry silently absorbed, so a
    wrong date+amount match is something to notice and fix, not a silent one. */
-.debt-merge-note { color: var(--warn); font-weight: 600; margin-top: 3px; cursor: help; }
+/* --warn measured 2.03:1 here - a failure I introduced with this feature
+   earlier today and only caught during a full-app audit. --text-2 measured
+   6.74:1 in the same spot; the 🔗 emoji still carries the "notice this"
+   signal without leaning on text color for it. */
+.debt-merge-note { color: var(--text-2); font-weight: 600; margin-top: 3px; cursor: help; }
 .debt-amount-increase { color: var(--bad) !important; }
 .debt-row.is-increase { border-color: rgba(220,38,38,.25); }
 
@@ -1823,7 +1839,12 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
 :root { --font-sans:'Rubik','Heebo',system-ui,sans-serif; --font-num:'Rubik','Heebo',system-ui,sans-serif; --font-serif:'Rubik','Heebo',sans-serif; }
 body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacing:-.01em; }
 .topbar { background:rgba(255,253,249,.92); backdrop-filter:blur(18px); }
-.pill-nav { background:rgba(255,253,249,.78); border-bottom:1px solid var(--border); }
+/* .78 alpha let the body's gradient (line above) bleed through unpredictably -
+   measured .pill-btn inactive-icon contrast ranging 2.35-4.14 depending on
+   which tab/scroll position sat behind the sticky nav, never reliably
+   passing. Raised to a near-opaque value so the nav's own background - not
+   whatever gradient stop happens to be behind it - determines contrast. */
+.pill-nav { background:rgba(255,253,249,.96); border-bottom:1px solid var(--border); }
 .pill-btn { border-radius:14px; transition:transform .2s var(--ease-out),background .2s var(--ease-out),color .2s var(--ease-out); }
 .pill-btn.active { background:var(--accent-light); color:var(--accent-strong); box-shadow:none; }
 .pill-btn:hover { transform:translateY(-1px); }
