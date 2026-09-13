@@ -7373,6 +7373,14 @@ function toggleAddExpenseForm(force){
   if(addExpenseOpen && !wasOpen) prefillNewExpenseFromFilters();
 }
 function prefillNewExpenseFromFilters(){
+  // Most expenses entered are for today - defaulting to it removes a manual
+  // step for the common case (still fully editable for a back-dated entry),
+  // and avoids relying on the browser's native empty-date-input rendering,
+  // which varies a lot (Chrome shows a placeholder+icon when empty; Safari on
+  // iOS shows nothing at all, which reads as a broken/missing field next to
+  // the amount input beside it).
+  const dateEl = document.getElementById("newDate");
+  if(dateEl && !dateEl.value) dateEl.value = getTodayIso();
   const fpEl = document.getElementById("filterPayment");
   const ftEl = document.getElementById("filterType");
   const fpVal = fpEl ? fpEl.value : "";
@@ -7393,7 +7401,9 @@ function prefillNewExpenseFromFilters(){
   }
 }
 function clearNewExpenseForm(){
-  ["newDate","newMerchant","newAmount","newNotes"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  ["newMerchant","newAmount","newNotes"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
+  const dateEl = document.getElementById("newDate");
+  if(dateEl) dateEl.value = getTodayIso(); // same reasoning as prefillNewExpenseFromFilters
   document.getElementById("newCategory").value="";
   renderNewCategoryChips();
   document.getElementById("newType").value="משתנה";
