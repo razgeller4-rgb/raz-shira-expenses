@@ -5029,6 +5029,45 @@ function exportBackup(){
   downloadBackupFile(backup, filename);
   setBackupStatus(`נוצר קובץ גיבוי: ${filename}`);
 }
+/* Turns the old yes/no "this will replace your data" confirm into something
+   the user can actually sanity-check against what they remember: the backup's
+   date, how much it holds, and - the case that actually loses work if waved
+   through - whether the device already has changes made *after* that date. */
+function describeImportImpact(backup){
+  const lines = [];
+  const exportedAt = backup && backup.exportedAt ? new Date(backup.exportedAt) : null;
+  const exportedValid = exportedAt && !isNaN(exportedAt.getTime());
+  if(exportedValid){
+    const ageDays = Math.floor((Date.now() - exportedAt.getTime()) / 86400000);
+    const ageLabel = ageDays <= 0 ? "היום" : ageDays === 1 ? "אתמול" : `לפני ${ageDays} ימים`;
+    const dateLabel = exportedAt.toLocaleDateString("he-IL", {day:"numeric", month:"long", year:"numeric"});
+    lines.push(`תאריך הגיבוי: ${dateLabel} (${ageLabel})`);
+  }
+
+  let sheetCount = 0, rowCount = 0;
+  const data = (backup && backup.data) || {};
+  USERS.forEach(user => {
+    const overrides = data[stripDemoPrefix(getScopedStorageKey("expense_app_overrides_v29", user.id))];
+    if(overrides && typeof overrides === "object"){
+      Object.keys(overrides).forEach(sheet => {
+        if(Array.isArray(overrides[sheet]) && overrides[sheet].length){
+          sheetCount++;
+          rowCount += overrides[sheet].length;
+        }
+      });
+    }
+  });
+  lines.push(`מכיל ${sheetCount} גיליונות ו-${rowCount} שורות הוצאה (רז ושירה).`);
+
+  if(exportedValid){
+    const newestLocalChangeMs = Math.max(0, ...USERS.map(user => getTimeMs(getLocalDataChangedAt(user.id))));
+    if(newestLocalChangeMs > exportedAt.getTime() + 60000){
+      lines.push("⚠️ הנתונים במכשיר עודכנו אחרי תאריך הגיבוי הזה - ייבוא יחזיר אותם אחורה וימחק שינויים שנעשו מאז.");
+    }
+  }
+
+  return lines.join("\n");
+}
 function importBackupFile(file){
   if(!file) return;
   const reader = new FileReader();
@@ -5039,7 +5078,7 @@ function importBackupFile(file){
         showToast("קובץ הגיבוי לא נראה כמו גיבוי תקין של האתר הזה.", "error");
         return;
       }
-      const ok = confirm("ייבוא הגיבוי יחליף את הנתונים המקומיים ששמורים בדפדפן. להמשיך?");
+      const ok = confirm(describeImportImpact(backup) + "\n\nהפעולה תחליף את הנתונים המקומיים בדפדפן. להמשיך?");
       if(!ok) return;
       rememberLocalRecoveryPoint("לפני ייבוא קובץ גיבוי");
       const beforeImportFilename = `raz-expenses-before-import-${getNowStamp()}.json`;
@@ -8644,6 +8683,17 @@ function exportBackupFromBanner(){
   exportBackup();
   dismissBackupBanner();
 }
+/* Recovery points already fire on data changes, pre-pull, pre-push, and
+   pre-import - but someone who only opens the app to look, without changing
+   anything, never triggers any of those. This closes that gap on a timer
+   instead of an event, so a passive week still leaves a point behind. */
+function maybeRunWeeklyBackup(){
+  if(IS_LOCAL_DRAFT_FILE || !hasAnyLocalExpenses()) return;
+  const newestPointMs = Math.max(0, ...getLocalRecoveryPoints().map(p => getTimeMs(p.createdAt)));
+  const sevenDaysMs = 7 * 24 * 60 * 60 * 1000;
+  if(Date.now() - newestPointMs < sevenDaysMs) return;
+  rememberLocalRecoveryPoint("גיבוי שבועי אוטומטי");
+}
 
 
 /* ── Mobile expense list ─────────────────────── */
@@ -8858,6 +8908,7 @@ handleOAuthRedirectCallback().finally(() => bootstrapCloudSync()).finally(() => 
   if(IS_LOCAL_DRAFT_FILE) appendLocalDraftDebug("bootstrap finished, calling render()");
   render(); initMobileFilterState();
   setTimeout(maybeShowBackupBanner, 1200);
+  setTimeout(maybeRunWeeklyBackup, 1500);
   setTimeout(keepSupabaseAlive, 3000);
   checkCloudReachability();
 });
