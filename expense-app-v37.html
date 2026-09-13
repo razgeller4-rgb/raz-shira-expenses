@@ -4984,8 +4984,19 @@ function addLoanScheduleRow(){
   render();
 }
 function updateLoanScheduleRow(installment, field, value){
+  // C-2: total is now what every balance/cash-flow figure in the app actually
+  // reads (see getDisplayedClosingBalance etc.) - if principal is edited
+  // without keeping total in sync, those figures would silently drift from
+  // total = principal + interest without any input in this form to notice it.
   const data = getDebtData();
-  data.loanSchedule = data.loanSchedule.map(row => row.installment === installment ? {...row, [field]: field === "principal" ? Number(value || 0) : value} : row);
+  data.loanSchedule = data.loanSchedule.map(row => {
+    if(row.installment !== installment) return row;
+    if(field === "principal"){
+      const principal = Number(value || 0);
+      return {...row, principal, total: principal + Number(row.interest || 0)};
+    }
+    return {...row, [field]: value};
+  });
   saveDebtData(data);
   render();
 }
@@ -5489,9 +5500,14 @@ function getDisplayedOpeningBalance(sheet){
   return null;
 }
 function getDisplayedClosingBalance(sheet){
+  // C-2: this is cash actually leaving the account, so it's .total (principal
+  // + interest), not .principal alone - the bank does not lend you the
+  // interest portion for free. getLoanPrincipalBase()/bankRemaining/
+  // bankProgress (the loan-payoff-progress figures elsewhere) correctly stay
+  // on .principal - paying interest doesn't reduce what you owe the bank.
   const opening = getDisplayedOpeningBalance(sheet);
   if(opening == null) return null;
-  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
   return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
 function getAvailableYears(){
@@ -5513,7 +5529,7 @@ function getDashboardWidgetCatalog(sheet){
   const openingBalance = getDisplayedOpeningBalance(sheet);
   const closingBalance = getDisplayedClosingBalance(sheet);
   const debtEnabled = isDebtTrackingEnabled();
-  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
+  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0; // C-2: cash out, not principal alone
   const monthlyBalance = income - stats.total - bankMonthly;
   const categorySums = getMonthlyCategorySums(sheet);
   const biggestExpense = rows.reduce((max,row)=>Number(row.amount || 0) > Number(max.amount || 0) ? row : max, {amount:0, merchant:""});
@@ -5572,7 +5588,10 @@ function getYearlyRowsData(year){
     const loanEntry = getLoanScheduleEntryForSheet(sheet);
     const stats = getExpenseStats(sheet);
     const income = getIncomeTotal(sheet);
-    const monthlyBalance = income - stats.total - Number(loanEntry?.principal || 0);
+    // C-2: both the running balance and the displayed "loan" column must use
+    // the same field, or the yearly table's own numbers stop adding up on
+    // the same row.
+    const monthlyBalance = income - stats.total - Number(loanEntry?.total || 0);
     runningBalance += monthlyBalance;
     return {
       sheet,
@@ -5584,7 +5603,7 @@ function getYearlyRowsData(year){
       cumulativeBalance: runningBalance,
       immediate: stats.immediate,
       transfers: stats.transfers,
-      loan: loanEntry?.principal || null,
+      loan: loanEntry?.total || null,
       father: getFatherRepaymentTotal(sheet)
     };
   });
@@ -5752,7 +5771,7 @@ function openDebtDetailsModal(){
   const modal = document.getElementById("debtDetailsModal");
   const body = document.getElementById("debtDetailsModalBody");
   const summary = getYearlySummaryData(selectedYear);
-  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0;
+  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.total || 0; // C-2: "charges this month" is cash out, not principal alone
   const currentFather = getFatherRepaymentTotal(selectedSheet) || 0;
   body.innerHTML = `
     <div class="modal-grid">
@@ -6215,7 +6234,7 @@ function renderDashboardHero(){
   const monthlyIncome = getIncomeTotal(selectedSheet);
   const monthlyExpenses = getExpenseStats(selectedSheet).total;
   const monthlyDebt = isDebtTrackingEnabled()
-    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0)
+    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-2
     : 0;
   const incomeMetric = document.getElementById("dashboardIncomeMetric");
   const expenseMetric = document.getElementById("dashboardExpenseMetric");
@@ -8310,7 +8329,7 @@ function renderDebts(){
     : loanSchedule.filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso);
   const bankProgress = getLoanPrincipalBase() ? Math.max(0, Math.min(100, Math.round((bankPaidPrincipal / getLoanPrincipalBase()) * 100))) : 0;
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
-  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal);
+  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.total); // C-2: "החזר בנק בחודש" means the full payment, not principal alone
   document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
   countUpIfChanged(document.getElementById("debtBankRemainingHero"), bankRemaining);
   countUpIfChanged(document.getElementById("debtFatherRemainingHero"), fatherRemaining);
