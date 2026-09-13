@@ -2222,37 +2222,47 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
 
           <div id="addExpenseForm" class="add-expense-form">
             <div class="small edit-mode-note">ההוצאה נשמרת בתוך הדפדפן שלך ונכנסת אוטומטית לחודש המתאים לפי מחזור החיוב.</div>
-            <div class="add-expense-grid">
+            <div class="edit-quick">
               <div class="field"><label>תאריך</label><input id="newDate" type="date"></div>
-              <div class="field"><label>בית עסק</label><input id="newMerchant" placeholder="בית עסק"></div>
-              <div class="field"><label>סכום</label><input id="newAmount" type="number" step="0.01" placeholder="0.00"></div>
-              <div class="field"><label>קטגוריה</label><select id="newCategory"></select></div>
-              <div class="field"><label>סוג</label><select id="newType"><option value="משתנה">משתנה</option><option value="קבועה">קבועה</option></select></div>
-              <div class="field"><label>אשראי</label><select id="newPayment"><option value="__unset__">בחר אשראי</option><option value="">העברה בנקאית</option></select></div>
-              <div class="field"><label>מיידי</label><select id="newImmediate"><option value="">לא</option><option value="כן">כן</option></select></div>
-              <div class="field"><label>שיוך חיוב</label><select id="newBillingShift"><option value="0">רגיל / אוטומטי</option><option value="1">חריג: לחודש הבא</option></select></div>
-              <div class="field field-checkbox">
-                <label>הוצאה משותפת</label>
-                <label class="toggle-check">
-                  <input id="newSharedExpense" type="checkbox">
-                  <span id="newSharedExpenseLabel">סמן אם זה הוצאה משותפת</span>
-                </label>
-                <div class="micro" id="newSharedExpenseSub">ברירת מחדל היא 50% / 50% ותוכל לשנות את זה.</div>
-              </div>
-              <div class="field" id="newSharedSplitModeField" style="display:none">
-                <label>חלוקה לפי</label>
-                <select id="newSharedSplitMode">
-                  <option value="percent">אחוזים</option>
-                  <option value="amount">סכום</option>
-                </select>
-              </div>
-              <div class="field" id="newSharedSplitValueField" style="display:none">
-                <label id="newSharedSplitValueLabel">החלק שלי באחוזים</label>
-                <input id="newSharedSplitValue" type="number" step="0.01" value="50" placeholder="50">
-                <div class="micro" id="newSharedSplitHint">אם שילמת 100 ש״ח, 50% אומר שכל אחד סופג 50 ש״ח.</div>
-              </div>
-              <div class="field"><label>הערות</label><input id="newNotes" placeholder="הערות"></div>
+              <div class="field field-amount"><label>סכום</label><input id="newAmount" type="number" step="0.01" placeholder="0.00"></div>
             </div>
+            <div class="field"><label>בית עסק</label><input id="newMerchant" placeholder="בית עסק"></div>
+            <div class="field-label-standalone">קטגוריה</div>
+            <div class="category-chip-row" role="group" aria-label="בחירת קטגוריה" id="newCategoryChipRow"></div>
+            <select id="newCategory" style="display:none" aria-hidden="true" tabindex="-1"></select>
+            <details class="edit-details">
+              <summary class="edit-details-toggle">
+                <span>פרטים נוספים</span>
+                <span class="edit-details-hint">סוג · אשראי · מיידי · שיתוף · הערות</span>
+              </summary>
+              <div class="add-expense-grid">
+                <div class="field"><label>סוג</label><select id="newType"><option value="משתנה">משתנה</option><option value="קבועה">קבועה</option></select></div>
+                <div class="field"><label>אשראי</label><select id="newPayment"><option value="__unset__">בחר אשראי</option><option value="">העברה בנקאית</option></select></div>
+                <div class="field"><label>מיידי</label><select id="newImmediate"><option value="">לא</option><option value="כן">כן</option></select></div>
+                <div class="field"><label>שיוך חיוב</label><select id="newBillingShift"><option value="0">רגיל / אוטומטי</option><option value="1">חריג: לחודש הבא</option></select></div>
+                <div class="field field-checkbox">
+                  <label>הוצאה משותפת</label>
+                  <label class="toggle-check">
+                    <input id="newSharedExpense" type="checkbox">
+                    <span id="newSharedExpenseLabel">סמן אם זה הוצאה משותפת</span>
+                  </label>
+                  <div class="micro" id="newSharedExpenseSub">ברירת מחדל היא 50% / 50% ותוכל לשנות את זה.</div>
+                </div>
+                <div class="field" id="newSharedSplitModeField" style="display:none">
+                  <label>חלוקה לפי</label>
+                  <select id="newSharedSplitMode">
+                    <option value="percent">אחוזים</option>
+                    <option value="amount">סכום</option>
+                  </select>
+                </div>
+                <div class="field" id="newSharedSplitValueField" style="display:none">
+                  <label id="newSharedSplitValueLabel">החלק שלי באחוזים</label>
+                  <input id="newSharedSplitValue" type="number" step="0.01" value="50" placeholder="50">
+                  <div class="micro" id="newSharedSplitHint">אם שילמת 100 ש״ח, 50% אומר שכל אחד סופג 50 ש״ח.</div>
+                </div>
+                <div class="field"><label>הערות</label><input id="newNotes" placeholder="הערות"></div>
+              </div>
+            </details>
             <div class="actions">
               <button id="saveNewExpenseBtn" class="success-btn" type="button">שמור הוצאה</button>
               <button id="cancelNewExpenseBtn" class="secondary" type="button">ביטול</button>
@@ -6927,6 +6937,29 @@ function renderNewCategoryOptions(){
   if(!select) return;
   const options=["",...getCategoryDefinitions().map(c=>c.name)];
   select.innerHTML=options.map(opt=>`<option value="${opt}">${opt || "ללא קטגוריה"}</option>`).join("");
+  renderNewCategoryChips(options);
+}
+/* The <select id="newCategory"> stays the real source of truth (addNewExpense
+   reads its .value directly) - chips are just a nicer way to set it than a
+   dropdown, same pattern as the inline expense-edit category chips. */
+function renderNewCategoryChips(options){
+  const row = document.getElementById("newCategoryChipRow");
+  const select = document.getElementById("newCategory");
+  if(!row || !select) return;
+  const opts = options || ["",...getCategoryDefinitions().map(c=>c.name)];
+  const current = select.value;
+  row.innerHTML = opts.map(opt => {
+    const isActive = current === opt;
+    return `<button type="button" class="category-chip" aria-pressed="${isActive}" onclick="selectNewExpenseCategory('${String(opt).replace(/'/g,"\\'")}')">
+      ${opt ? `<span class="chip-dot" style="background:${getCategoryColor(opt)}"></span>` : ""}
+      <span>${opt || "ללא קטגוריה"}</span>
+    </button>`;
+  }).join("");
+}
+function selectNewExpenseCategory(value){
+  const select = document.getElementById("newCategory");
+  if(select) select.value = value;
+  renderNewCategoryChips();
 }
 function renderPaymentSelectOptions(){
   const newPayment = document.getElementById("newPayment");
@@ -7362,6 +7395,7 @@ function prefillNewExpenseFromFilters(){
 function clearNewExpenseForm(){
   ["newDate","newMerchant","newAmount","newNotes"].forEach(id=>{ const el=document.getElementById(id); if(el) el.value=""; });
   document.getElementById("newCategory").value="";
+  renderNewCategoryChips();
   document.getElementById("newType").value="משתנה";
   document.getElementById("newPayment").value="__unset__";
   document.getElementById("newImmediate").value="";
