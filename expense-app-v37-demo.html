@@ -5850,11 +5850,13 @@ function openDebtDetailsModal(){
     </div>
   `;
   modal.classList.add("open");
+  trapFocus(modal);
 }
 function closeDebtDetailsModal(event){
   if(event && event.target && event.target !== event.currentTarget) return;
   const modal = document.getElementById("debtDetailsModal");
   if(modal) modal.classList.remove("open");
+  releaseFocusTrap();
 }
 function renderUserSelect(){
   const select = document.getElementById("userSelect");
@@ -8938,6 +8940,7 @@ function openMoreSheet(){
   if(sh){ sh.classList.add("open"); }
   document.querySelector(".btab-more")?.setAttribute("aria-expanded", "true");
   document.addEventListener("keydown", moreSheetEsc);
+  trapFocus(sh);
 }
 function closeMoreSheet(){
   const bd=document.getElementById("moreBackdrop");
@@ -8946,6 +8949,7 @@ function closeMoreSheet(){
   if(sh) sh.classList.remove("open");
   document.querySelector(".btab-more")?.setAttribute("aria-expanded", "false");
   document.removeEventListener("keydown", moreSheetEsc);
+  releaseFocusTrap();
 }
 function moreSheetEsc(e){ if(e.key==="Escape") closeMoreSheet(); }
 
@@ -9103,6 +9107,35 @@ function openCCImport(){
   input.click();
 }
 
+/* Focus trap for the 3 modal-style overlays (CC import, debt details, more
+   sheet) - was flagged UNKNOWN in PRODUCT_SURFACE_MAP_V2.md and confirmed
+   missing (grep for a Tab-key handler anywhere in the file found none).
+   Without it, Tab/Shift+Tab escapes the modal into the dimmed background
+   content behind it - confusing for a keyboard user regardless of whether
+   they use a screen reader. */
+let __focusTrapState = null;
+function trapFocus(modalEl){
+  if(!modalEl) return;
+  const focusable = [...modalEl.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')]
+    .filter(el => el.offsetParent !== null);
+  if(!focusable.length) return;
+  const first = focusable[0], last = focusable[focusable.length-1];
+  __focusTrapState = { returnFocusTo: document.activeElement, handler: null };
+  __focusTrapState.handler = (e) => {
+    if(e.key !== "Tab") return;
+    if(e.shiftKey && document.activeElement === first){ e.preventDefault(); last.focus(); }
+    else if(!e.shiftKey && document.activeElement === last){ e.preventDefault(); first.focus(); }
+  };
+  document.addEventListener("keydown", __focusTrapState.handler);
+  first.focus();
+}
+function releaseFocusTrap(){
+  if(!__focusTrapState) return;
+  document.removeEventListener("keydown", __focusTrapState.handler);
+  const returnTo = __focusTrapState.returnFocusTo;
+  __focusTrapState = null;
+  if(returnTo && typeof returnTo.focus === "function") returnTo.focus();
+}
 function ccImportEsc(event){ if(event.key === "Escape") closeCCImport(); }
 
 function closeCCImport(){
@@ -9110,6 +9143,7 @@ function closeCCImport(){
   ccImportRows = [];
   ccImportSourceFileName = "";
   document.removeEventListener("keydown", ccImportEsc);
+  releaseFocusTrap();
 }
 
 function escapeHtmlAttr(value){
@@ -9693,8 +9727,10 @@ function showCCImportModal(result, filename){
   }
 
   buildCCImportTable();
-  document.getElementById("ccImportModal").style.display = "block";
+  const ccModalEl = document.getElementById("ccImportModal");
+  ccModalEl.style.display = "block";
   document.addEventListener("keydown", ccImportEsc);
+  trapFocus(ccModalEl);
 }
 
 
