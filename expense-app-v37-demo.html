@@ -5470,14 +5470,14 @@ function openBalanceAnchorSheet(sheetOverride){
       <p class="anchor-help">${escapeHtmlAttr(copy.help)}</p>
       <input class="anchor-amount-input" id="anchorAmountInput" inputmode="decimal" autocomplete="off"
              placeholder="0" value="${escapeHtmlAttr(String(prefill))}" aria-label="היתרה בעו״ש">
-      <div class="anchor-date-row"><span>נרשם כיתרת הפתיחה של ${escapeHtmlAttr(formatSheetLabel(sheet))} (${escapeHtmlAttr(dateIso)})</span></div>
+      <div class="anchor-date-row"><span>נרשם כיתרת הפתיחה של ${escapeHtmlAttr(formatSheetLabel(sheet))} — היום הראשון בחודש</span></div>
       <div class="anchor-error" id="anchorSheetError" role="alert"></div>
       <div class="anchor-actions">
         <button type="submit" class="anchor-save">שמור כיתרה מהבנק</button>
         <button type="button" class="anchor-cancel" onclick="closeBalanceAnchorSheet()">ביטול</button>
       </div>
       <p class="anchor-note">אפשר להדביק ישירות מאפליקציית הבנק או מ-SMS — נחלץ את המספר ונציג אותו כאן לאישור לפני השמירה.${
-        existing ? `<br>קריאה קודמת: ${escapeHtmlAttr(fmt(existing.amount))}, נרשמה ב-${escapeHtmlAttr(String(existing.enteredAtIso).slice(0,10))}. רישום חדש אינו מוחק אותה — הוא נוסף אחריה.` : ""
+        existing ? `<br>קריאה קודמת: ${escapeHtmlAttr(fmt(existing.amount))}, נרשמה ב-<bdi>${escapeHtmlAttr(String(existing.enteredAtIso).slice(0,10))}</bdi>. רישום חדש אינו מוחק אותה — הוא נוסף אחריה.` : ""
       }</p>
     </form>`;
   back.classList.add("open");
@@ -6849,7 +6849,12 @@ function renderBalanceAnchorState(){
     // The anchor is always the opening of the selected month in v1, so the
     // month label carries no information here - what is useful is when the
     // observation was made, which is how stale it is.
-    const when = anchor ? String(anchor.enteredAtIso || "").slice(0, 10) : "";
+    // ⁦…⁩ (LTR isolate) around the ISO date: inside an RTL run
+    // "2026-09-14" is reordered to "14-09-2026", which still reads as a valid
+    // date — in a different format. Correct by luck today, silently wrong the
+    // moment the day and the month are both under 13.
+    const raw = anchor ? String(anchor.enteredAtIso || "").slice(0, 10) : "";
+    const when = raw ? `⁦${raw}⁩` : "";
     chip.textContent = anchor
       ? `מעוגן: ${fmt(anchor.amount)}${when ? ` · נרשם ${when}` : ""}`
       : `לא עוגן מעולם · פתיחה ${BALANCE_SOURCE_LABEL[source] || "—"}`;
