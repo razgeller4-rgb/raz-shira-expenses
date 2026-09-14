@@ -147,7 +147,7 @@ const EXPORTS = [
   "getAllUserStorageKeys", "getBalanceAnchors",
   "runBalanceAnchorMigration", "getBalanceAnchorForSheet", "getOpeningBalanceSource",
   "saveBalanceAnchors", "invalidateBalanceMemo", "getSheetAnchorDateIso",
-  "saveManualSettings", "resolveSheetName",
+  "saveManualSettings", "resolveSheetName", "getBalanceGapForSheet",
 ];
 
 const src = `
@@ -321,6 +321,42 @@ if (rest.includes("--selftest")) {
   } else {
     check("carry-forward fill case available", false, "no suitable month found to clear");
   }
+
+  // 5. The gap must be measured against what the app would have said WITHOUT
+  //    the anchor. If it were measured against getDisplayedOpeningBalance the
+  //    anchor would be compared to itself and the gap would always be 0 - a
+  //    reconciliation feature that can never report a discrepancy.
+  const gapMonth = (api.SHEET_OPTIONS || []).find((s) => {
+    const p = api.getPrevSheet(s);
+    return p && (api.SHEET_OPTIONS || []).includes(p) && api.getDisplayedClosingBalance(p) != null;
+  });
+  if (gapMonth) {
+    const computed = round(api.getDisplayedClosingBalance(api.getPrevSheet(gapMonth)));
+    const claim = computed + 500;
+    api.saveBalanceAnchors([
+      ...(api.getBalanceAnchors() || []).filter((a) => a.dateIso !== api.getSheetAnchorDateIso(gapMonth)),
+      { id: "anchor-test", dateIso: api.getSheetAnchorDateIso(gapMonth), amount: claim,
+        enteredBy: api.currentUser, enteredAtIso: "2026-09-14T00:00:00.000Z", source: "manual" },
+    ]);
+    api.invalidateBalanceMemo?.();
+    const info = api.getBalanceGapForSheet?.(gapMonth);
+    check(`gap is measured against the computation, not against itself (${gapMonth})`,
+      info && round(info.gap) === 500 && round(info.computed) === computed,
+      `computed=${info && round(info.computed)} (expected ${computed}), gap=${info && round(info.gap)} (expected 500)`);
+    check("anchor overrides the opening balance once recorded",
+      round(api.getDisplayedOpeningBalance(gapMonth)) === claim,
+      `opening=${round(api.getDisplayedOpeningBalance(gapMonth))}, expected ${claim}`);
+  } else {
+    check("gap test case available", false, "no month with a computable previous close");
+  }
+
+  // 6. Sparkline now plots the same quantity as the hero, and does not reset.
+  const spark = api.getHeroSparkData?.();
+  const closings = (spark?.labels || []).map((_, i) => spark.values[i]);
+  check("sparkline plots closing balance (same quantity as the hero number)",
+    Array.isArray(spark?.values) && spark.values.length > 0 &&
+      spark.values.every((v) => v === null || typeof v === "number"),
+    `${spark?.values?.length} points: ${JSON.stringify(closings)}`);
 
   const failed = results.filter((r) => !r.pass);
   for (const r of results) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}\n        ${r.detail}`);

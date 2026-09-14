@@ -265,6 +265,24 @@ input, select, textarea { font: inherit; }
 .hero.is-unknown .hero-balance{ opacity:.85; }
 .hero-unknown-hint{ display:none; font-size:var(--fs-sm); opacity:.92; margin-top:6px; }
 .hero.is-unknown .hero-unknown-hint{ display:block; }
+/* D-10: anchor state is always visible. BALANCE_ANCHOR_SPEC §2.5 — "never
+   anchored" must be a shown state, otherwise an un-anchored balance looks
+   exactly like a verified one. */
+.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.hero-anchor-chip{ font-size:var(--fs-sm); padding:3px 10px; border-radius:999px;
+  background:rgba(255,255,255,.16); white-space:nowrap; }
+.hero-anchor-chip.is-gap{ background:rgba(255,255,255,.28); font-weight:var(--fw-semi); }
+.hero-anchor-btn{ font-size:var(--fs-sm); font-weight:var(--fw-semi); padding:6px 12px;
+  min-height:32px; border-radius:999px; cursor:pointer; color:inherit;
+  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.34); }
+.hero-anchor-btn:hover{ background:rgba(255,255,255,.24); }
+/* The gap is a state, not an event — a persistent banner, not a toast. */
+.balance-gap-banner{ display:none; align-items:flex-start; gap:10px; margin:0 0 14px;
+  padding:12px 14px; border-radius:14px; font-size:var(--fs-sm); line-height:1.5;
+  background:rgba(212,130,50,.15); border:1px solid rgba(212,130,50,.45); color:var(--text); }
+.balance-gap-banner.is-visible{ display:flex; }
+.balance-gap-banner.is-match{ background:rgba(126,155,110,.15); border-color:rgba(126,155,110,.45); }
+.balance-gap-banner strong{ font-variant-numeric:tabular-nums; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -2077,6 +2095,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <button type="button" class="workspace-btn active" id="personalWorkspaceBtn" onclick="openPersonalWorkspace()">אישי</button>
           <button type="button" class="workspace-btn" id="coupleWorkspaceBtn" onclick="openCoupleWorkspace()">זוגי</button>
         </div>
+        <div class="balance-gap-banner" id="balanceGapBanner" role="status"></div>
         <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
           <div class="hero-top">
             <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
@@ -2087,6 +2106,10 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           </div>
           <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
+          <div class="hero-anchor-row" id="heroAnchorRow">
+            <span class="hero-anchor-chip" id="heroAnchorChip"></span>
+            <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="recordBalanceAnchor()">עדכן יתרה מהבנק</button>
+          </div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
           <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
@@ -5244,6 +5267,63 @@ function editOpeningBalance(){
   render();
 }
 
+/* D-10 / DATA-04 — record what the bank actually said.
+   BALANCE_ANCHOR_SPEC §3.3 is explicit that editing a carried month must ask
+   WHICH of two things the user means, because the two have different meanings:
+   an observation of reality (anchor, and therefore something the computed
+   balance can be wrong against), or a correction to the computation (manual).
+   Collapsing them would make the anchor just another editable number and
+   destroy the only thing that makes it useful as a source of truth. */
+function recordBalanceAnchor(){
+  const dateIso = getSheetAnchorDateIso(selectedSheet);
+  if(!dateIso){
+    showToast("לא הצלחתי לזהות את החודש הנבחר.", "error");
+    return;
+  }
+  const existing = getBalanceAnchorForSheet(selectedSheet);
+  const label = formatSheetLabel(selectedSheet);
+  const raw = prompt(
+    `כמה באמת היה בעו״ש בתחילת ${label}?\n\nמה שתזין כאן נחשב לתצפית מהבנק — האפליקציה תשווה אליו את החישוב שלה ותציג פער אם יש.`,
+    existing ? existing.amount : ""
+  );
+  if(raw === null) return;
+  const parsed = parseCurrencyInput(raw);
+  if(!parsed.ok || parsed.value == null){
+    showToast(`"${raw}" אינו מספר תקין — לא נרשם עוגן.`, "error");
+    return;
+  }
+  // Append, never overwrite: an anchor is a dated claim about money, and the
+  // history of claims is what lets us answer "when did the gap open?".
+  saveBalanceAnchors([...getBalanceAnchors(), {
+    id:`anchor-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    dateIso,
+    amount: parsed.value,
+    enteredBy: currentUser,
+    enteredAtIso: getIsoNow(),
+    source:"manual"
+  }]);
+  invalidateBalanceMemo();
+  render();
+  showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(parsed.value)}`, "success");
+}
+/* The gap is a STATE, not an event - so it is never a toast (which disappears
+   after 4.2s). It is computed against what the app would have said on its own,
+   i.e. explicitly ignoring the anchor that is being checked. */
+function getBalanceGapForSheet(sheet){
+  const anchor = getBalanceAnchorForSheet(sheet);
+  if(!anchor) return null;
+  const prev = getPrevSheet(sheet);
+  let computed = null;
+  if(prev && (SHEET_OPTIONS || []).includes(prev)){
+    computed = getDisplayedClosingBalance(prev);
+  } else if(currentUser === "raz"){
+    const summary = getSheetSummaryByName(sheet);
+    if(summary.opening != null) computed = Number(summary.opening);
+  }
+  if(computed == null) return null;
+  return { anchor, computed, gap: anchor.amount - computed };
+}
+
 function toggleSection(el){ el.parentElement.classList.toggle("open"); }
 function toggleDebtSection(id){
   const el = document.getElementById(id);
@@ -5905,7 +5985,11 @@ function getYearlyColumnCatalog(){
     {id:"variable", label:"משתנות"},
     {id:"income", label:"הכנסות"},
     {id:"monthlyBalance", label:"מאזן חודשי"},
-    {id:"cumulativeBalance", label:"מאזן מצטבר"},
+    // D-10 wave 3, item B: renamed, formula untouched and no number moved.
+    // "מאזן מצטבר" reads like a bank balance; it is actually a running sum of
+    // monthly deltas that restarts every January. Now that the hero is anchored
+    // to the real account, the two must not be confusable.
+    {id:"cumulativeBalance", label:"נצבר מתחילת השנה"},
     {id:"immediate", label:"מיידי"},
     {id:"transfers", label:"העברות בנקאיות"},
     {id:"loan", label:"הלוואה חודשית"},
@@ -6455,20 +6539,82 @@ function countUpIfChanged(el, value){
     el.dataset.initialized = "1";
   }
 }
+/* D-10 wave 3, item A. This used to plot cumulativeBalance - a running sum of
+   monthly deltas that restarts at 0 each year (getYearlyRowsData). Two problems,
+   both real:
+
+   1. It is a DIFFERENT QUANTITY from the big number above it. The hero shows the
+      closing balance; the curve showed "how much was saved since January". Once
+      the hero can say "anchored to the bank", a curve underneath it measuring
+      something else becomes an actively false claim. This is the same shape as
+      C-5, where an independent calculation path disagreed in SIGN with the card
+      on the same screen.
+   2. CARRY-15: crossing a year boundary concatenated two series that each start
+      at 0, so the line plunged every January and the alt text announced a
+      "decrease" for what was a counter reset.
+
+   Plotting the closing balance directly fixes both: same quantity as the hero,
+   and continuous across years because it is an absolute balance, not a tally.
+   Months with no balance are null, which Chart.js renders as a gap - correct,
+   since we must not draw a zero we do not know. */
 function getHeroSparkData(){
-  /* Reuse existing yearly running-balance data (getYearlyRowsData) — last up-to-6 months
-     of cumulativeBalance, spanning year boundary by combining current + previous year if needed. */
   const {year: curYear} = getSheetMonthYear(selectedSheet);
-  let rows = getYearlyRowsData(curYear).filter(r => getSheetSortValue(r.sheet) <= getSheetSortValue(selectedSheet));
-  if(rows.length < 6){
-    const prevRows = getYearlyRowsData(curYear - 1);
-    rows = [...prevRows, ...rows];
-  }
-  rows = rows.slice(-6);
+  let sheets = (SHEET_OPTIONS || []).filter(s => getSheetSortValue(s) <= getSheetSortValue(selectedSheet));
+  sheets = sheets.slice(-6);
   return {
-    labels: rows.map(r => formatSheetLabel(r.sheet)),
-    values: rows.map(r => r.cumulativeBalance)
+    labels: sheets.map(s => formatSheetLabel(s)),
+    values: sheets.map(s => getDisplayedClosingBalance(s))
   };
+}
+/* D-10 — the anchor chip and the gap banner.
+   Both are permanent states rather than notifications, per BALANCE_ANCHOR_SPEC
+   §2.5: a toast vanishes in 4.2s, but a discrepancy against the bank persists
+   until someone resolves it. "Never anchored" is shown for the same reason -
+   silence would make an unverified number look verified. */
+const BALANCE_SOURCE_LABEL = {
+  anchored:"מעוגן לבנק", manual:"הוזן ידנית", summary:"מהגיליון", carried:"מועבר מהחודש הקודם", none:"—"
+};
+function renderBalanceAnchorState(){
+  const chip = document.getElementById("heroAnchorChip");
+  const banner = document.getElementById("balanceGapBanner");
+  const source = getOpeningBalanceSource(selectedSheet);
+  const anchor = getBalanceAnchorForSheet(selectedSheet);
+
+  if(chip){
+    // The anchor is always the opening of the selected month in v1, so the
+    // month label carries no information here - what is useful is when the
+    // observation was made, which is how stale it is.
+    const when = anchor ? String(anchor.enteredAtIso || "").slice(0, 10) : "";
+    chip.textContent = anchor
+      ? `מעוגן: ${fmt(anchor.amount)}${when ? ` · נרשם ${when}` : ""}`
+      : `לא עוגן מעולם · פתיחה ${BALANCE_SOURCE_LABEL[source] || "—"}`;
+    chip.classList.toggle("is-gap", Boolean(anchor));
+  }
+  if(!banner) return;
+
+  const info = getBalanceGapForSheet(selectedSheet);
+  if(!info){
+    banner.className = "balance-gap-banner";
+    banner.textContent = "";
+    return;
+  }
+  // Below a shekel is rounding, not a discrepancy.
+  if(Math.abs(info.gap) <= 1){
+    banner.className = "balance-gap-banner is-visible is-match";
+    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת למה שראית בבנק (${fmt(info.anchor.amount)}).</span>`;
+    return;
+  }
+  // Say the direction in words. A signed number alone is read wrong under
+  // stress, and this banner exists precisely for the stressful case.
+  const bankHasLess = info.gap < 0;
+  const words = bankHasLess
+    ? `בבנק יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
+    : `בבנק יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+  banner.className = "balance-gap-banner is-visible";
+  banner.innerHTML =
+    `<span>⚠️</span><span><strong>${words}.</strong> ` +
+    `החישוב: ${fmt(info.computed)} · מהבנק: ${fmt(info.anchor.amount)}. ` +
+    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.</span>`;
 }
 function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
@@ -6523,6 +6669,7 @@ function renderDashboardHero(){
   const hasBalance = closing != null;
   heroEl.classList.toggle("is-negative", hasBalance && value < 0);
   heroEl.classList.toggle("is-unknown", !hasBalance);
+  renderBalanceAnchorState();
   if(!hasBalance){
     const intEl = balEl.querySelector('.hero-int') || balEl;
     intEl.textContent = "—";
@@ -6963,13 +7110,24 @@ function renderChart(rows){
     const income = getIncomeTotal(selectedSheet);
     const dayLabels=Array.from({length:daysInMonth},(_,i)=>String(i+1));
     const dayNow = fc.dayNow || daysInMonth;
-    /* actual: opening + (income spread isn't dated, so apply at day 1) - cumulative expense up to today */
+    /* D-10 wave 3, item C — close the last inherited gap from C-2/C-5.
+       getDisplayedClosingBalance subtracts the month's bank loan payment, but
+       this chart never did, so the card and the graph disagreed by exactly that
+       payment (~948 for the month reviewed under C-2). While the balance was an
+       unanchored projection that discrepancy was merely confusing; now that the
+       hero can say "anchored to the bank", the first gap the anchor surfaces
+       would have been OUR OWN known bug, and the user would reasonably blame
+       the bank. Same field as the card - .total, i.e. principal + interest,
+       because that is the cash that actually leaves the account. Applied at day
+       1 alongside income, which shares the same "not reliably dated" caveat. */
+    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) : 0;
+    /* actual: opening + (income spread isn't dated, so apply at day 1) - bank loan - cumulative expense up to today */
     let runExp=0;
     const actual = dayLabels.map((_,i)=>{
       const day=i+1;
       runExp += (expByDay[day]||0);
       if(day>dayNow) return null;
-      return opening + income - runExp;
+      return opening + income - bankMonthly - runExp;
     });
     /* projection: from today's actual to month-end at avg daily burn, plus any
        already-known future charges landing on their real day (expByDay past
@@ -6979,7 +7137,7 @@ function renderChart(rows){
        signs for the same data. Applying it on its real day (not folded into
        avgDaily) keeps the two count it exactly once each. */
     const lastActual = actual[Math.min(dayNow,daysInMonth)-1];
-    const baseline = lastActual==null ? opening+income : lastActual;
+    const baseline = lastActual==null ? opening+income-bankMonthly : lastActual;
     let runFutureExp = 0;
     const projData = dayLabels.map((_,i)=>{
       const day=i+1;
@@ -8749,7 +8907,7 @@ function renderYearlyStats(summary){
       datasets:[
         { label:"הכנסות", data:summary.rows.map(r=>r.income), borderColor:_css("--income"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
         { label:"הוצאות", data:summary.rows.map(r=>r.totalExpenses), borderColor:_css("--expense"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
-        { label:"מאזן מצטבר", data:summary.rows.map(r=>r.cumulativeBalance), borderColor:_css("--wood-strong"), backgroundColor:"transparent", borderWidth:2, borderDash:[5,4], tension:.25 }
+        { label:"נצבר מתחילת השנה", data:summary.rows.map(r=>r.cumulativeBalance), borderColor:_css("--wood-strong"), backgroundColor:"transparent", borderWidth:2, borderDash:[5,4], tension:.25 }
       ]
     },
     options:{
