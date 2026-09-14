@@ -148,6 +148,9 @@ const EXPORTS = [
   "runBalanceAnchorMigration", "getBalanceAnchorForSheet", "getOpeningBalanceSource",
   "saveBalanceAnchors", "invalidateBalanceMemo", "getSheetAnchorDateIso",
   "saveManualSettings", "resolveSheetName", "getBalanceGapForSheet",
+  // wave 3.5 — the ask, the paste parser and the gap leads
+  "getAnchorReadingState", "getAnchorAskCopy", "extractAmountFromPastedText",
+  "findGapSuspects", "getLatestBalanceAnchor", "getCurrentMonthSheet",
 ];
 
 const src = `
@@ -357,6 +360,48 @@ if (rest.includes("--selftest")) {
     Array.isArray(spark?.values) && spark.values.length > 0 &&
       spark.values.every((v) => v === null || typeof v === "number"),
     `${spark?.values?.length} points: ${JSON.stringify(closings)}`);
+
+  // 7. Paste extraction (wave 3.5). This is the highest-risk new code: it turns
+  //    arbitrary clipboard text into the number the whole reconciliation rests
+  //    on. The account-number case is the one that matters — bank text almost
+  //    always has a digit run BEFORE the amount, so "first number wins" would
+  //    quietly anchor the month to an account number.
+  const paste = api.extractAmountFromPastedText;
+  const pasteCases = [
+    ["12,345.67 ₪", 12345.67, "plain amount with separator and shekel"],
+    ["יתרה בחשבון: 12,345.67 ₪", 12345.67, "bank-app line"],
+    ["חשבון 123-456 יתרה 12,345.67 ₪", 12345.67, "account number appears FIRST"],
+    ["‏-1,204.30 ₪", -1204.3, "overdraft, with an RTL mark"],
+    ["אין כאן מספר", null, "no number at all"],
+  ];
+  pasteCases.forEach(([input, expected, why]) => {
+    const got = paste ? paste(input) : undefined;
+    check(`paste: ${why}`, got === expected, `${JSON.stringify(input)} -> ${got} (expected ${expected})`);
+  });
+
+  // 8. The reading state is what makes the feature run without being
+  //    remembered. Assert it actually fires when no anchor exists for the
+  //    current month — a silent false here means the queue item never appears
+  //    and wave 3.5 degrades back into the hidden button it replaced.
+  const readingBefore = api.getAnchorReadingState?.();
+  check("reading state reports a reason and a current-month sheet",
+    readingBefore && typeof readingBefore.due === "boolean" &&
+      ["window", "stale", "ok"].includes(readingBefore.reason),
+    `due=${readingBefore?.due}, reason=${readingBefore?.reason}, sheet=${readingBefore?.currentSheet}, daysSince=${readingBefore?.daysSince}`);
+  api.saveBalanceAnchors((api.getBalanceAnchors() || []).filter((a) => a.source !== "manual" && a.source !== "legacy-manual"));
+  api.invalidateBalanceMemo?.();
+  const readingEmpty = api.getAnchorReadingState?.();
+  check("with no real anchor anywhere, a reading is always due",
+    readingEmpty && readingEmpty.due === true,
+    `due=${readingEmpty?.due}, reason=${readingEmpty?.reason}`);
+
+  // 9. Gap suspects are LEADS. The only hard requirement is that they never
+  //    fire on a zero gap, which would turn a clean reconciliation into a
+  //    list of accusations about correct rows.
+  const suspectMonth = gapMonth;
+  check("no suspects are offered when there is no gap",
+    suspectMonth ? (api.findGapSuspects?.(suspectMonth, 0) || []).length === 0 : false,
+    suspectMonth ? "gap 0 -> 0 leads" : "no month available");
 
   const failed = results.filter((r) => !r.pass);
   for (const r of results) console.log(`${r.pass ? "PASS" : "FAIL"}  ${r.name}\n        ${r.detail}`);

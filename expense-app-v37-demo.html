@@ -268,14 +268,29 @@ input, select, textarea { font: inherit; }
 /* D-10: anchor state is always visible. BALANCE_ANCHOR_SPEC §2.5 — "never
    anchored" must be a shown state, otherwise an un-anchored balance looks
    exactly like a verified one. */
-.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:10px; }
-.hero-anchor-chip{ font-size:var(--fs-sm); padding:3px 10px; border-radius:999px;
-  background:rgba(255,255,255,.16); white-space:nowrap; }
-.hero-anchor-chip.is-gap{ background:rgba(255,255,255,.28); font-weight:var(--fw-semi); }
-.hero-anchor-btn{ font-size:var(--fs-sm); font-weight:var(--fw-semi); padding:6px 12px;
-  min-height:32px; border-radius:999px; cursor:pointer; color:inherit;
-  background:rgba(255,255,255,.14); border:1px solid rgba(255,255,255,.34); }
-.hero-anchor-btn:hover{ background:rgba(255,255,255,.24); }
+/* DATA-04 wave 3.5 — the chip is a LABEL and the button is an ACTION, so they
+   must not look alike. Before this they were two translucent-white pills of the
+   same size side by side, and the button's fill (.14) was actually FAINTER than
+   the chip's (.16): the only tappable thing on the card was also its quietest
+   element, at 33.5px tall (under the 44px target) and 167px down a 428px card.
+   It was reported as missing, which is the correct reading of that design. */
+.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.hero-anchor-chip{ font-size:var(--fs-sm); opacity:.9; white-space:nowrap; }
+.hero-anchor-chip.is-gap{ font-weight:var(--fw-semi); opacity:1; }
+.hero-anchor-btn{ display:inline-flex; align-items:center; gap:7px; font-size:15px;
+  font-weight:var(--fw-bold); padding:11px 18px; min-height:44px; border:none;
+  border-radius:999px; cursor:pointer; background:#fff; color:#3E5233;
+  box-shadow:0 2px 10px rgba(0,0,0,.18); transition:transform .12s var(--ease-out); }
+.hero-anchor-btn:hover{ transform:translateY(-1px); }
+.hero-anchor-btn:active{ transform:translateY(0); }
+/* "Due" is the state the whole feature depends on: a reconciliation tool that
+   waits to be remembered never runs, because not noticing drift is the problem
+   it exists to solve. Three pulses, then it stops nagging. */
+.hero-anchor-btn.is-due{ animation:anchorDuePulse 2.2s var(--ease-out) 3; }
+@keyframes anchorDuePulse{
+  0%,100%{ box-shadow:0 2px 10px rgba(0,0,0,.18); }
+  50%{ box-shadow:0 2px 10px rgba(0,0,0,.18), 0 0 0 7px rgba(255,255,255,.32); } }
+@media (prefers-reduced-motion: reduce){ .hero-anchor-btn.is-due{ animation:none; } }
 /* The gap is a state, not an event — a persistent banner, not a toast. */
 .balance-gap-banner{ display:none; align-items:flex-start; gap:10px; margin:0 0 14px;
   padding:12px 14px; border-radius:14px; font-size:var(--fs-sm); line-height:1.5;
@@ -283,6 +298,38 @@ input, select, textarea { font: inherit; }
 .balance-gap-banner.is-visible{ display:flex; }
 .balance-gap-banner.is-match{ background:rgba(126,155,110,.15); border-color:rgba(126,155,110,.45); }
 .balance-gap-banner strong{ font-variant-numeric:tabular-nums; }
+.balance-gap-banner .gap-lead{ display:block; margin-top:6px; opacity:.92; }
+/* ── Anchor sheet (DATA-04 wave 3.5) ──────────────────────────────────────
+   prompt() was the wrong surface: on iOS it is a cramped system dialog with no
+   number keypad, no date, no paste handling and no room to say what the number
+   means. This is the one screen where a wrong entry silently corrupts the
+   reference point everything else is measured against. */
+.anchor-sheet-back{ position:fixed; inset:0; z-index:320; background:rgba(0,0,0,.5);
+  display:none; align-items:flex-end; }
+.anchor-sheet-back.open{ display:flex; }
+.anchor-sheet{ background:var(--surface); width:100%; border-radius:24px 24px 0 0;
+  padding:20px 18px max(28px, calc(18px + env(safe-area-inset-bottom)));
+  max-height:92dvh; overflow-y:auto; }
+.anchor-sheet h2{ margin:0 0 4px; font-size:19px; font-weight:var(--fw-black); color:var(--text); }
+.anchor-sheet .anchor-help{ margin:0 0 16px; font-size:var(--fs-sm); line-height:1.55; color:var(--text-2); }
+.anchor-amount-input{ width:100%; box-sizing:border-box; font-family:var(--font-num);
+  font-size:34px; font-weight:var(--fw-black); text-align:center; letter-spacing:-.01em;
+  padding:14px 12px; border-radius:16px; border:2px solid var(--line);
+  background:var(--surface-2); color:var(--text); font-variant-numeric:tabular-nums; }
+.anchor-amount-input:focus{ outline:none; border-color:var(--accent); }
+.anchor-sheet .anchor-date-row{ display:flex; align-items:center; gap:10px; margin-top:12px;
+  font-size:var(--fs-sm); color:var(--text-2); }
+.anchor-sheet .anchor-date-row input{ flex:1; min-height:44px; padding:8px 12px;
+  border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
+.anchor-sheet .anchor-actions{ display:flex; gap:10px; margin-top:18px; }
+.anchor-sheet .anchor-save{ flex:1; min-height:50px; border:none; border-radius:15px;
+  background:var(--accent); color:#fff; font-size:16px; font-weight:var(--fw-black); cursor:pointer; }
+.anchor-sheet .anchor-cancel{ min-height:50px; padding:0 20px; border:none; border-radius:15px;
+  background:var(--line); color:var(--text); font-weight:var(--fw-bold); cursor:pointer; }
+.anchor-sheet .anchor-note{ margin-top:14px; font-size:var(--fs-xs); line-height:1.6; color:var(--muted); }
+.anchor-sheet .anchor-error{ display:none; margin-top:10px; font-size:var(--fs-sm);
+  font-weight:var(--fw-semi); color:var(--bad); }
+.anchor-sheet .anchor-error.is-visible{ display:block; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -2107,8 +2154,8 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <div class="hero-anchor-row" id="heroAnchorRow">
+            <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
             <span class="hero-anchor-chip" id="heroAnchorChip"></span>
-            <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="recordBalanceAnchor()">עדכן יתרה מהבנק</button>
           </div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
           <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
@@ -5274,38 +5321,223 @@ function editOpeningBalance(){
    balance can be wrong against), or a correction to the computation (manual).
    Collapsing them would make the anchor just another editable number and
    destroy the only thing that makes it useful as a source of truth. */
-function recordBalanceAnchor(){
-  const dateIso = getSheetAnchorDateIso(selectedSheet);
+function recordBalanceAnchor(sheet, amount, source){
+  const dateIso = getSheetAnchorDateIso(sheet);
   if(!dateIso){
     showToast("לא הצלחתי לזהות את החודש הנבחר.", "error");
-    return;
-  }
-  const existing = getBalanceAnchorForSheet(selectedSheet);
-  const label = formatSheetLabel(selectedSheet);
-  const raw = prompt(
-    `כמה באמת היה בעו״ש בתחילת ${label}?\n\nמה שתזין כאן נחשב לתצפית מהבנק — האפליקציה תשווה אליו את החישוב שלה ותציג פער אם יש.`,
-    existing ? existing.amount : ""
-  );
-  if(raw === null) return;
-  const parsed = parseCurrencyInput(raw);
-  if(!parsed.ok || parsed.value == null){
-    showToast(`"${raw}" אינו מספר תקין — לא נרשם עוגן.`, "error");
-    return;
+    return false;
   }
   // Append, never overwrite: an anchor is a dated claim about money, and the
   // history of claims is what lets us answer "when did the gap open?".
   saveBalanceAnchors([...getBalanceAnchors(), {
     id:`anchor-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
     dateIso,
-    amount: parsed.value,
+    amount,
     enteredBy: currentUser,
     enteredAtIso: getIsoNow(),
-    source:"manual"
+    source: source || "manual"
   }]);
   invalidateBalanceMemo();
   render();
-  showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(parsed.value)}`, "success");
+  // Report the OUTCOME, not the keystroke. "נשמר" tells the user nothing they
+  // did not already know; whether the app agrees with their bank is the entire
+  // reason they were asked.
+  const info = getBalanceGapForSheet(sheet);
+  const label = formatSheetLabel(sheet);
+  if(!info){
+    showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(amount)}`, "success");
+  } else if(Math.abs(info.gap) <= 1){
+    showToast(`תואם — החישוב של האפליקציה ל${label} זהה למה שבבנק.`, "success");
+  } else {
+    showToast(`נמצא פער של ${fmt(Math.abs(info.gap))} מול הבנק. ההסבר בראש הדשבורד.`, "error", {duration:7000});
+  }
+  return true;
 }
+
+/* ── DATA-04 wave 3.5 — the anchor as a habit, not a hidden button ──────────
+   Wave 3 shipped a reconciliation tool that only runs when the user remembers
+   to run it. That is self-defeating: the reason silent drift is dangerous is
+   precisely that nobody notices it, so a check gated on suspicion never fires.
+   The app has to do the asking, and it has to ask at the one moment when the
+   answer is both easy to get and semantically correct. */
+
+/* §2.4 blocks mid-month anchoring: income rows carry no date (inferIncomeRows
+   writes date_raw:""), so the app cannot state what it expects on the 17th and
+   any gap it reported would be an artifact of the missing salary date rather
+   than a real discrepancy. Asking in the first days of the month dissolves that
+   constraint instead of guessing around it — on the 2nd, "how much is in the
+   account right now" IS this month's opening balance. Correctness and
+   convenience point the same way here, which is why this is the default moment
+   rather than a reminder the user configures. */
+const ANCHOR_WINDOW_LAST_DAY = 5;
+const ANCHOR_STALE_DAYS = 35;
+
+function getLatestBalanceAnchor(){
+  return getBalanceAnchors()
+    .filter(a => a.source !== "legacy-manual")  // migrated openingBalances were never a bank observation
+    .sort((a,b) => String(a.enteredAtIso).localeCompare(String(b.enteredAtIso)))
+    .pop() || null;
+}
+function getCurrentMonthSheet(){
+  const now = new Date();
+  return resolveSheetName(formatSheetFromMonth(now.getFullYear(), now.getMonth() + 1));
+}
+function getAnchorReadingState(){
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const currentSheet = getCurrentMonthSheet();
+  const hasCurrentAnchor = Boolean(getBalanceAnchorForSheet(currentSheet));
+  const latest = getLatestBalanceAnchor();
+  const latestMs = latest ? new Date(latest.enteredAtIso).getTime() : NaN;
+  const daysSince = Number.isFinite(latestMs)
+    ? Math.max(0, Math.floor((now.getTime() - latestMs) / 86400000))
+    : null;
+  if(!hasCurrentAnchor && dayOfMonth <= ANCHOR_WINDOW_LAST_DAY){
+    return {due:true, reason:"window", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+  }
+  if(daysSince == null || daysSince > ANCHOR_STALE_DAYS){
+    return {due:true, reason:"stale", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+  }
+  return {due:false, reason:"ok", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+}
+/* The question changes with the date, because only inside the window can we
+   honestly ask about "now". Outside it we must ask the user to recall the 1st,
+   and must say plainly that guessing is worse than skipping - a wrong anchor
+   makes the app report a discrepancy that never happened. */
+function getAnchorAskCopy(sheet){
+  const state = getAnchorReadingState();
+  const inWindow = sheet === state.currentSheet && state.dayOfMonth <= ANCHOR_WINDOW_LAST_DAY;
+  const label = formatSheetLabel(sheet);
+  return inWindow
+    ? { inWindow:true,
+        title:"כמה יש עכשיו בעו״ש?",
+        help:`פתחו את אפליקציית הבנק והעתיקו את היתרה. אנחנו בתחילת ${label}, ולכן מה שיש עכשיו הוא גם היתרה שאיתה החודש נפתח — אין צורך לזכור אחורה.` }
+    : { inWindow:false,
+        title:`כמה היה בעו״ש בתחילת ${label}?`,
+        help:`היתרה בבנק ביום הראשון של ${label}. אם אינכם יודעים בוודאות — עדיף לדלג: מספר משוער כאן יגרום לאפליקציה לדווח על פער שלא קיים.` };
+}
+
+/* Nobody retypes a balance they are looking at - they copy it. Bank apps and
+   bank SMS hand over strings like "יתרה בחשבון: 12,345.67 ₪". Prefer the number
+   that sits next to the shekel sign, then fall back to the longest digit run,
+   because an account number ("123-456") often appears before the amount. The
+   parsed result is written into the field for the user to confirm, so a wrong
+   guess is visible before it is ever saved. */
+function extractAmountFromPastedText(text){
+  const clean = String(text || "").replace(/[‎‏]/g, "");
+  const nearShekel = clean.match(/(-?\d[\d,.   ]*)\s*₪|₪\s*(-?\d[\d,.   ]*)/);
+  const candidates = [];
+  if(nearShekel) candidates.push(nearShekel[1] || nearShekel[2]);
+  const runs = clean.match(/-?\d[\d,٬.   ]*/g) || [];
+  candidates.push(...runs.slice().sort((a,b) => b.replace(/\D/g,"").length - a.replace(/\D/g,"").length));
+  for(const candidate of candidates){
+    const parsed = parseCurrencyInput(candidate);
+    if(parsed.ok && parsed.value != null) return parsed.value;
+  }
+  return null;
+}
+
+/* prompt() was the wrong surface for the one number the whole reconciliation
+   rests on: no numeric keypad on iOS, no paste handling, no room to explain
+   what is being asked, and no way to show that a previous reading exists. */
+function openBalanceAnchorSheet(sheetOverride){
+  const sheet = sheetOverride || selectedSheet;
+  const dateIso = getSheetAnchorDateIso(sheet);
+  if(!dateIso){ showToast("לא הצלחתי לזהות את החודש הנבחר.", "error"); return; }
+  const copy = getAnchorAskCopy(sheet);
+  const existing = getBalanceAnchorForSheet(sheet);
+  const prefill = anchorSheetPrefill != null ? anchorSheetPrefill : (existing ? existing.amount : "");
+  anchorSheetPrefill = null;
+  let back = document.getElementById("anchorSheetBack");
+  if(!back){
+    back = document.createElement("div");
+    back.id = "anchorSheetBack";
+    back.className = "anchor-sheet-back";
+    back.setAttribute("role", "dialog");
+    back.setAttribute("aria-modal", "true");
+    back.setAttribute("aria-labelledby", "anchorSheetTitle");
+    back.addEventListener("click", e => { if(e.target === back) closeBalanceAnchorSheet(); });
+    document.body.appendChild(back);
+  }
+  back.dataset.sheet = sheet;
+  // Deliberately NOT showing the computed balance before entry. Displaying the
+  // expected number first would anchor the answer to it (the literal bias this
+  // feature is named after) and the user would "confirm" the app's own guess,
+  // which destroys the only independent observation in the system.
+  back.innerHTML = `
+    <form class="anchor-sheet" onsubmit="event.preventDefault(); submitBalanceAnchorSheet();">
+      <h2 id="anchorSheetTitle">${escapeHtmlAttr(copy.title)}</h2>
+      <p class="anchor-help">${escapeHtmlAttr(copy.help)}</p>
+      <input class="anchor-amount-input" id="anchorAmountInput" inputmode="decimal" autocomplete="off"
+             placeholder="0" value="${escapeHtmlAttr(String(prefill))}" aria-label="היתרה בעו״ש">
+      <div class="anchor-date-row"><span>נרשם כיתרת הפתיחה של ${escapeHtmlAttr(formatSheetLabel(sheet))} (${escapeHtmlAttr(dateIso)})</span></div>
+      <div class="anchor-error" id="anchorSheetError" role="alert"></div>
+      <div class="anchor-actions">
+        <button type="submit" class="anchor-save">שמור כיתרה מהבנק</button>
+        <button type="button" class="anchor-cancel" onclick="closeBalanceAnchorSheet()">ביטול</button>
+      </div>
+      <p class="anchor-note">אפשר להדביק ישירות מאפליקציית הבנק או מ-SMS — נחלץ את המספר ונציג אותו כאן לאישור לפני השמירה.${
+        existing ? `<br>קריאה קודמת: ${escapeHtmlAttr(fmt(existing.amount))}, נרשמה ב-${escapeHtmlAttr(String(existing.enteredAtIso).slice(0,10))}. רישום חדש אינו מוחק אותה — הוא נוסף אחריה.` : ""
+      }</p>
+    </form>`;
+  back.classList.add("open");
+  const input = document.getElementById("anchorAmountInput");
+  input.addEventListener("paste", e => {
+    const text = (e.clipboardData || window.clipboardData || {}).getData?.("text") || "";
+    const value = extractAmountFromPastedText(text);
+    if(value != null){ e.preventDefault(); input.value = String(value); }
+  });
+  document.addEventListener("keydown", anchorSheetEsc);
+  setTimeout(() => { input.focus(); input.select(); }, 60);
+}
+let anchorSheetPrefill = null;
+function anchorSheetEsc(e){ if(e.key === "Escape") closeBalanceAnchorSheet(); }
+function closeBalanceAnchorSheet(){
+  document.getElementById("anchorSheetBack")?.classList.remove("open");
+  document.removeEventListener("keydown", anchorSheetEsc);
+}
+function openAnchorSheetForCurrentMonth(){
+  const sheet = getCurrentMonthSheet();
+  if((SHEET_OPTIONS || []).includes(sheet)){ selectedSheet = sheet; }
+  openBalanceAnchorSheet(selectedSheet);
+}
+function submitBalanceAnchorSheet(){
+  const back = document.getElementById("anchorSheetBack");
+  const sheet = (back && back.dataset.sheet) || selectedSheet;
+  const input = document.getElementById("anchorAmountInput");
+  const errEl = document.getElementById("anchorSheetError");
+  const raw = input ? input.value : "";
+  const parsed = parseCurrencyInput(raw);
+  if(!parsed.ok || parsed.value == null){
+    if(errEl){
+      errEl.textContent = `"${raw}" אינו מספר תקין. הזינו את הסכום בלבד, למשל 12,345.67`;
+      errEl.classList.add("is-visible");
+    }
+    return;
+  }
+  if(recordBalanceAnchor(sheet, parsed.value)) closeBalanceAnchorSheet();
+}
+
+/* An iOS Shortcut can read the balance out of a bank SMS and open the app at
+   #anchor=12345; this is as close to automatic as a static page with no backend
+   can get (D-10: Israeli Open Banking needs a licensed provider and a server).
+   It still opens the confirmation sheet rather than writing straight to
+   storage - a URL is not an observation, and anything can put one there. */
+function ingestAnchorFromUrl(){
+  const hash = String(window.location.hash || "");
+  const match = hash.match(/(?:^#|[&#])anchor=([^&]+)/);
+  if(!match) return;
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const parsed = parseCurrencyInput(decodeURIComponent(match[1]));
+  if(!parsed.ok || parsed.value == null){
+    showToast("הקישור הכיל יתרה שאינה מספר תקין — לא נרשם עוגן.", "error");
+    return;
+  }
+  anchorSheetPrefill = parsed.value;
+  openAnchorSheetForCurrentMonth();
+}
+window.addEventListener("load", () => { setTimeout(ingestAnchorFromUrl, 400); });
+
 /* The gap is a STATE, not an event - so it is never a toast (which disappears
    after 4.2s). It is computed against what the app would have said on its own,
    i.e. explicitly ignoring the anchor that is being checked. */
@@ -5322,6 +5554,39 @@ function getBalanceGapForSheet(sheet){
   }
   if(computed == null) return null;
   return { anchor, computed, gap: anchor.amount - computed };
+}
+
+/* A gap without a lead is just an accusation. The previous month is where the
+   discrepancy was created, so look there for a row that matches the gap exactly
+   - a duplicate charge and a missed one both produce a gap of precisely that
+   amount. These are LEADS, never verdicts: the wording must stay interrogative,
+   because an identical amount is suggestive and not proof. */
+function findGapSuspects(sheet, gap){
+  const prev = getPrevSheet(sheet);
+  if(!prev || !(SHEET_OPTIONS || []).includes(prev)) return [];
+  const target = Math.abs(gap);
+  if(!(target > 1)) return [];
+  const rows = getEditableRows(prev);
+  const counts = new Map();
+  rows.forEach(row => {
+    const sig = `${normalizeMerchantName(row.merchant)}|${Number(row.amount || 0)}`;
+    counts.set(sig, (counts.get(sig) || 0) + 1);
+  });
+  const leads = [];
+  const seen = new Set();
+  rows.forEach(row => {
+    const amount = Number(row.amount || 0);
+    if(Math.abs(Math.abs(amount) - target) > 1) return;
+    const sig = `${normalizeMerchantName(row.merchant)}|${amount}`;
+    if(seen.has(sig)) return;
+    seen.add(sig);
+    const name = String(row.merchant || "").trim() || "ללא שם";
+    const when = toIsoDate(row.date_raw || "");
+    leads.push((counts.get(sig) || 0) > 1
+      ? `${name} ${fmt(amount)} מופיע ${counts.get(sig)} פעמים ב${formatSheetLabel(prev)} — כפילות?`
+      : `${name} ${fmt(amount)}${when ? ` (${when})` : ""} ב${formatSheetLabel(prev)} — בסכום בדיוק של הפער.`);
+  });
+  return leads.slice(0, 3);
 }
 
 function toggleSection(el){ el.parentElement.classList.toggle("open"); }
@@ -6590,6 +6855,15 @@ function renderBalanceAnchorState(){
       : `לא עוגן מעולם · פתיחה ${BALANCE_SOURCE_LABEL[source] || "—"}`;
     chip.classList.toggle("is-gap", Boolean(anchor));
   }
+  // The button has to say which of the two questions it is about to ask, since
+  // "now" and "the 1st of the month" are different things to go look up.
+  const btnLabel = document.getElementById("heroAnchorBtnLabel");
+  const btn = document.getElementById("heroAnchorBtn");
+  const reading = getAnchorReadingState();
+  if(btnLabel) btnLabel.textContent = getAnchorAskCopy(selectedSheet).inWindow
+    ? "כמה יש עכשיו בבנק?"
+    : (anchor ? "עדכן יתרה מהבנק" : "הזן יתרה מהבנק");
+  if(btn) btn.classList.toggle("is-due", reading.due && !anchor);
   if(!banner) return;
 
   const info = getBalanceGapForSheet(selectedSheet);
@@ -6610,11 +6884,16 @@ function renderBalanceAnchorState(){
   const words = bankHasLess
     ? `בבנק יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
     : `בבנק יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+  const leads = findGapSuspects(selectedSheet, info.gap);
   banner.className = "balance-gap-banner is-visible";
   banner.innerHTML =
     `<span>⚠️</span><span><strong>${words}.</strong> ` +
     `החישוב: ${fmt(info.computed)} · מהבנק: ${fmt(info.anchor.amount)}. ` +
-    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.</span>`;
+    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.` +
+    (leads.length
+      ? `<span class="gap-lead">🔎 אולי קשור: ${leads.map(escapeHtmlAttr).join(" · ")}</span>`
+      : "") +
+    `</span>`;
 }
 function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
@@ -6791,6 +7070,26 @@ function getDashboardReviewItems(){
       sub:"המאזן מחושב מכל ההוצאות המשותפות והאיזונים הישירים.",
       action:"switchToTab('shared')",
       label:"בדוק חלוקה"
+    });
+  }
+  // DATA-04 wave 3.5: this is the item that turns the anchor from a feature
+  // into a habit. Everything else in this queue reacts to data the user already
+  // entered; this one asks for the only number the app cannot derive.
+  const anchorState = getAnchorReadingState();
+  if(anchorState.due){
+    items.push({
+      id: `anchorDue:${anchorState.currentSheet}:${anchorState.reason}`,
+      tone: "warn",
+      title: anchorState.reason === "window"
+        ? "עכשיו הרגע הנכון לבדוק מול הבנק"
+        : "היתרה לא נבדקה מול הבנק",
+      sub: anchorState.reason === "window"
+        ? "בתחילת החודש היתרה שבבנק היא גם יתרת הפתיחה — דקה אחת עכשיו הופכת את כל החודש לבדוק."
+        : (anchorState.daysSince == null
+            ? "לא הוזנה מעולם יתרה אמיתית מהבנק, ולכן אין דרך לדעת אם החישוב סטה."
+            : `הקריאה האחרונה הייתה לפני ${anchorState.daysSince} ימים.`),
+      action: "openAnchorSheetForCurrentMonth()",
+      label: "הזן יתרה"
     });
   }
   const missingFixed = getMissingFixedExpenses();
