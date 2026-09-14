@@ -257,6 +257,14 @@ input, select, textarea { font: inherit; }
 .hero.is-negative{ background:
   radial-gradient(120% 120% at 100% 0, rgba(255,255,255,.12), transparent 55%),
   linear-gradient(135deg,#9A4E36,#C16A4F 55%,#D4906F); }
+/* CARRY-14: יתרה לא ידועה (אין עו״ש פתיחה) — לא אדום ולא ירוק, כדי שלא תיקרא
+   כמצב כספי. אפור ניטרלי + הסבר, במקום ₪0 שנראה כמו יתרה אמיתית. */
+.hero.is-unknown{ background:
+  radial-gradient(120% 120% at 100% 0, rgba(255,255,255,.10), transparent 55%),
+  linear-gradient(135deg,#6E6A63,#8A857C 55%,#A39D93); }
+.hero.is-unknown .hero-balance{ opacity:.85; }
+.hero-unknown-hint{ display:none; font-size:var(--fs-sm); opacity:.92; margin-top:6px; }
+.hero.is-unknown .hero-unknown-hint{ display:block; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -2078,6 +2086,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
           <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
+          <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
           <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
@@ -5193,13 +5202,33 @@ function importBackupFile(file){
   };
   reader.readAsText(file);
 }
+// CARRY-13 (BALANCE_ANCHOR_SPEC R-1): Number("9,000") is NaN, and JSON.stringify
+// turns NaN into null - so typing a thousands separator, a shekel sign, or a
+// stray space silently WIPED the opening balance with no error. Suspected cause
+// of "מרץ 26": {"openingBalance": null} in the backups. Strip the formatting
+// characters a person actually types, then reject anything still non-numeric
+// instead of persisting NaN.
+function parseCurrencyInput(raw){
+  const cleaned = String(raw == null ? "" : raw)
+    .replace(/[,٬  \s]/g, "")  // separators: comma, Arabic thousands, thin/narrow nbsp, whitespace
+    .replace(/[₪‏‎]/g, "")          // shekel sign + RTL/LTR marks (pasted from bank sites)
+    .trim();
+  if(cleaned === "") return {ok:true, value:null};
+  const num = Number(cleaned);
+  return Number.isFinite(num) ? {ok:true, value:num} : {ok:false, value:null};
+}
 function editOpeningBalance(){
   const manual = getManualSettings(selectedSheet);
   const currentValue = manual.openingBalance ?? "";
   const nextValue = prompt("עו״ש פתיחה לחודש הנבחר", currentValue);
   if(nextValue === null) return;
+  const parsed = parseCurrencyInput(nextValue);
+  if(!parsed.ok){
+    showToast(`"${nextValue}" אינו מספר תקין — היתרה לא שונתה.`, "error");
+    return;
+  }
   saveManualSettings(selectedSheet, {
-    openingBalance: nextValue === "" ? null : Number(nextValue),
+    openingBalance: parsed.value,
     salary: manual.salary
   });
   render();
@@ -6314,16 +6343,35 @@ function renderDashboardHero(){
       forecastLine.style.display = "none";
     }
   }
-  heroEl.classList.toggle("is-negative", value < 0);
-  const prevTarget = Number(balEl.dataset.target || 0);
-  if(prevTarget !== value || !balEl.dataset.initialized){
-    countUp(balEl, value);
-    balEl.dataset.initialized = "1";
+  // CARRY-14 (BALANCE_ANCHOR_SPEC R-2): closing == null means "we have no opening
+  // balance for this month", not "the balance is zero" - but the hero rendered it
+  // as a confident ₪0. That is the single number on the dashboard, and per
+  // DEFAULT_UI_PREFS neither user has the opening/closing widgets on by default,
+  // so this is the ONLY place a missing balance could surface. Combined with C-1
+  // (the getSheetSummaryByName fallback is gated on currentUser === "raz", so
+  // Shira has no second path) an unknown balance looked identical to a real zero.
+  // Show an em dash and suppress the derived delta/negative styling instead.
+  const hasBalance = closing != null;
+  heroEl.classList.toggle("is-negative", hasBalance && value < 0);
+  heroEl.classList.toggle("is-unknown", !hasBalance);
+  if(!hasBalance){
+    const intEl = balEl.querySelector('.hero-int') || balEl;
+    intEl.textContent = "—";
+    balEl.dataset.target = "";
+    balEl.dataset.initialized = "";
+    balEl.setAttribute("aria-label", "אין יתרת פתיחה לחודש הזה — לא ניתן לחשב יתרה");
+  } else {
+    balEl.removeAttribute("aria-label");
+    const prevTarget = Number(balEl.dataset.target || 0);
+    if(prevTarget !== value || !balEl.dataset.initialized){
+      countUp(balEl, value);
+      balEl.dataset.initialized = "1";
+    }
   }
   /* delta vs previous month */
   const prevSheet = getPrevSheet(selectedSheet);
   const deltaEl = document.getElementById("heroDelta");
-  if(prevSheet && deltaEl){
+  if(prevSheet && deltaEl && hasBalance){
     const prevClosing = getDisplayedClosingBalance(prevSheet);
     if(prevClosing != null && prevClosing !== 0){
       const diff = value - prevClosing;
