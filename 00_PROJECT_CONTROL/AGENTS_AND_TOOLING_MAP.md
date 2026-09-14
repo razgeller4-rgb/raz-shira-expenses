@@ -1,3 +1,5 @@
+> **מעמד מ־13.09.2026: חומר עזר מתוארך, לא מקור מצב פעיל.** לתוכנית ולהחלטות העדכניות: [00_START_HERE.md](00_START_HERE.md). טענות על כיוון ג׳, סטטוס ייצור או תוצאות בדיקה נדרשות להצלבה; התוכן ההיסטורי נשמר להלן.
+
 # מפת סוכנים, פלאגינים, סקילים וקונקטורים
 
 **נוצר:** 2026-09-10 · **שיטה:** קריאה ישירה של `.claude/agents/*.md`, `~/.claude/plugins/installed_plugins.json`, `~/.claude/plugins/cache/`, ורשימת ה-MCP הזמינה בסשן. **לא מהזיכרון.**
@@ -21,8 +23,8 @@
 | `solution-architect` | חוזים, גבולות | +WebFetch | plan | — | 🟡 מותנה |
 | `product-strategist` | scope, MVP | Read, Glob, Grep, LS, Skill | plan | — | 🟡 מותנה |
 | `context-optimizer` | ייעול prompts | Read, Glob, Grep, LS, Edit | plan | — | 🟡 מותנה |
-| `accessibility-expert` | WCAG | **כל הכלים** ⚠️ | default ⚠️ | — | 🔴 ר' פער A-1 |
-| `agent-researcher` | מחקר סוכנים | WebSearch, WebFetch, Read, **Write** ⚠️ | default ⚠️ | — | 🔴 ר' פער A-2 |
+| `accessibility-expert` | WCAG | Read, Glob, Grep, LS, Bash, Write | default | — | ✅ **תוקן 14.09** — בלי Edit |
+| `agent-researcher` | מחקר סוכנים | WebSearch, WebFetch, Read, Write | **plan** | — | ✅ **תוקן 14.09** |
 | `ui-designer` | עיצוב ממשק | Write, Read, MultiEdit, WebSearch, WebFetch | default | 🟡 `reports/design-*.md` | 🟡 |
 | `frontend-developer` | קומפוננטות | Write, Read, MultiEdit, Bash, Grep, Glob | default | — | 🟡 חופף ל-`feature-builder` |
 | `brand-guardian` | עקביות מותג | Write, Read, MultiEdit, WebSearch, WebFetch | default | 🟡 `reports/botanic-*.md` | 🟡 |
@@ -30,7 +32,9 @@
 
 **כל 17 מוגדרים `model: inherit`** — אין בקרת עלות/latency לאף סוכן.
 
-### 🔴 פערי הרשאה שנמצאו
+### פערי הרשאה שנמצאו
+
+> ✅ **A-1 ו-A-2 נסגרו 14.09.2026** (CARRY-01). `accessibility-expert` → `tools: Read, Glob, Grep, LS, Bash, Write` — **בלי Edit**; `Bash` הושאר במכוון כדי שיוכל להריץ כלי מדידה (axe וכד'), ו-`Write` כדי לכתוב דוח ביקורת. `agent-researcher` → `permissionMode: plan` (ה-`Write` נשאר, השער הוא שמגן). שתי העריכות בוצעו ידנית על ידי רז — מסווג הבטיחות חוסם עריכת `.claude/agents/*.md` ברמת ה-harness ואישור בצ'אט אינו עוקף אותו. ה-frontmatter אומת ב-YAML parser אחרי העריכה. הטקסט ההיסטורי להלן נשמר כראיה.
 
 **A-1 — `accessibility-expert` ללא הגבלת כלים.** אין שדה `tools:` ב-frontmatter כלל → יורש **את כל הכלים**, כולל `Write`, `Edit` ו-`Bash`. סוכן שתפקידו *לבקר* נגישות יכול לשכתב את הקוד שהוא מבקר.
 **תיקון:** להוסיף `tools: Read, Glob, Grep, LS` ו-`permissionMode: plan`.
