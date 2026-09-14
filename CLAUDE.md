@@ -1,3 +1,17 @@
+<!-- SHARED_RESEARCH_HANDOFF_START -->
+> **הנחיית רז — שיתוף מחקר עם קלוד, מנהל הפרויקט והקוד (14.09.2026):** לפני תכנון או שינוי קוד, קרא את [שער המחקרים והניהול](00_PROJECT_CONTROL/00_START_HERE.md), את [הפעולה הבאה](00_PROJECT_CONTROL/CLAUDE_NEXT_ACTION.md) ואת המקורות הרלוונטיים המקושרים שם. אלו תוצרי העבודה המשותפת עם Codex, בתוך אותה תיקיית פרויקט; יש לשלב אותם בניהול ובמימוש.
+>
+> **החלטת העיצוב העדכנית:** רז אהב את החומריות והתמונה של [refinement-02/1](design/fresh-start-2026-09-13/refinement-02/option-01.png) ואת ממשק הטופס של [refinement-02/3](design/fresh-start-2026-09-13/refinement-02/option-03.png). ארבע דוגמאות הטאבים ב־[tabs-03](design/fresh-start-2026-09-13/tabs-03/REVIEW.md) ממשיכות שילוב זה. כיוון ג׳ דחוי. הכיוון התקבל להעמקה; המפרט המלא והפריסה אינם מאושרים כגמורים.
+>
+> **לפני שינוי UI:** קרא את [השוואת 57 קבוצות היכולות](design/specification/parity-2026-09-13/COMPARISON_HE.md) ואת [חוזי השימור העדכניים](design/specification/contracts-2026-09-14/README.md). אסור לאבד שדה, חישוב או פעולה בגלל שאינם בסקיצה. שיוך 151 הפקדים הפתוחים נסגר ברמת מקור; אימות חי וכיסוי חזותי מלא עדיין פתוחים. ממצאים בקוד אינם בהכרח באגים מאומתים; המלצות מחקר אינן החלטות משתמש.
+>
+> **המשך שיתוף:** כל מחקר חדש יירשם בשער הניהול עם נתיב, תאריך, מסקנה ומעמד (ממצא/הצעה/החלטה/פתוח); עדכן את הפעולה הבאה ואת יומן השינויים. אין ליצור תוכנית מקבילה הסותרת את המקור הפעיל. יש לבדוק freshness של hash לפני הסתמכות על מספרי שורות.
+<!-- SHARED_RESEARCH_HANDOFF_END -->
+
+> **עדכון פעיל 14.09.2026:** מקור התוכנית הוא [00_PROJECT_CONTROL/00_START_HERE.md](00_PROJECT_CONTROL/00_START_HERE.md). כיוון ג׳ נדחה מפורשות; נדרש עיצוב מחדש באמצעות Product Design. הוראות המשתמש העדכניות גוברות על מדיניות היסטורית; הגנות הנתונים ואישור תוכן הדמו לפני קידום נשמרים.
+>
+> **תוקן 14.09.2026 (אומת ישירות מול הקוד, לא מהיסטוריה):** פקודת הגיבוי הייתה שבורה (מפנה לקובץ `LATEST.json` שלא קיים) — תוקנה למטה בשני המקומות. התיאור "הדמו ללא Supabase" היה שגוי — הדמו מחובר לטבלה נפרדת `app_state_demo`; תוקן בארכיטקטורה ובטבלת הקבצים למטה. שם ה-skill לביקורת עיצוב תוקן. סעיף עדיפויות מיוני 2026 הוחלף בהפניה למקור החי כדי לא לשמר שני מקורות אמת.
+
 # CLAUDE.md — אפליקציית הוצאות רז ושירה
 
 ## Project Identity
@@ -15,7 +29,7 @@
 - HTML יחיד עם vanilla JS (ללא build step)
 - Chart.js לגרפים
 - XLSX library לייבוא/ייצוא Excel
-- Supabase כ-cloud sync — מחובר ל-**v37** בלבד
+- Supabase כ-cloud sync — v37 (production) מסונכרן לטבלת `app_state`; **הדמו מסונכרן גם הוא**, לטבלה נפרדת `app_state_demo` (הפרדה גם ברמת ה-DB, לא רק namespace). אומת מול הקוד 14.09.2026
 - מתארח ב-GitHub Pages: `https://razgeller4-rgb.github.io/raz-shira-expenses/`
 
 ---
@@ -25,7 +39,7 @@
 ### 1. v37 = נתונים אמיתיים — לא לגעת בלי גיבוי
 המידע ב-v37 (דרך Supabase) הוא **המקור היחיד**. לפני כל שינוי שנוגע בלוגיקת נתונים — לגבות **בלי לשאול**:
 ```bash
-cp "backups/raz-expenses-backup-LATEST.json" "backups/raz-expenses-backup-$(date +%Y-%m-%d_%H-%M).json"
+cp "$(ls -t backups/raz-expenses-backup-*.json | head -1)" "backups/raz-expenses-backup-$(date +%Y-%m-%d_%H-%M).json"
 ```
 
 ### 2. זרימת עבודה: demo קודם, v37 אחרי אישור על התוכן (לא על ה-push)
@@ -33,7 +47,7 @@ cp "backups/raz-expenses-backup-LATEST.json" "backups/raz-expenses-backup-$(date
 | קובץ | תפקיד | Supabase | namespace |
 |------|--------|----------|-----------|
 | `expense-app-v37.html` | **production** — נתונים אמיתיים | ✅ | ללא prefix |
-| `expense-app-v37-demo.html` | **sandbox** — בודקים כל שינוי פה קודם | ❌ | `demo__` |
+| `expense-app-v37-demo.html` | **sandbox** — בודקים כל שינוי פה קודם | ✅ (טבלת `app_state_demo`, נפרדת מ-production) | `demo__` |
 | `archive/` | גרסאות ישנות (v34/v35/v36) — לעיון בלבד | ❌ | — |
 
 **זרימת עבודה חובה:**
@@ -135,7 +149,7 @@ payroll/                   ← כלי שכר
 | `chief-of-staff` | כל מטרה גדולה — תמיד ראשון |
 | `feature-builder` | בניית פיצ'ר חדש על demo |
 | `qa-release-reviewer` | לפני כל העברה מ-demo ל-v37 |
-| `design:design-critique` | סקירת UX, עיצוב, שמישות — דורש screenshots |
+| `/design-critique` | סקירת UX, עיצוב, שמישות — נותן framework/checklist בלבד; המדידה בפועל (ניגודיות, יעדי מגע) דרך `chrome-devtools` מול עמוד חי |
 | `expense-ops-expert` | שאלות על לוגיקת הוצאות, קטגוריות, חישובים |
 | `domain-risk-reviewer` | לפני שינוי בחישובי מאזן או חיזוי |
 | `security-privacy-reviewer` | אם נוגעים ב-Supabase keys או PII |
@@ -160,20 +174,11 @@ git add "expense-app-v37-demo.html" && git commit -m "feat(demo): <תיאור>" 
 git add "expense-app-v37.html" && git commit -m "feat: <תיאור>" && git push
 
 # גיבוי נתונים לפני שינוי:
-cp "backups/raz-expenses-backup-LATEST.json" "backups/raz-expenses-backup-$(date +%Y-%m-%d_%H-%M).json"
+cp "$(ls -t backups/raz-expenses-backup-*.json | head -1)" "backups/raz-expenses-backup-$(date +%Y-%m-%d_%H-%M).json"
 ```
 
 ---
 
-## Current Priorities (נכון ל-2026-06-04)
+## Current Priorities
 
-**הושלם בסשן הנוכחי:**
-- ✅ מודל הכנסות מאוחד — type, recurring, migration מ-salary, העתקה אוטומטית לחודש חדש
-- ✅ Settlement הוצאות משותפות — רז ↔ שירה, מאזן מתעדכן בזמן אמת
-- ✅ סידור קבצים — archive/, backups/, data/
-- ✅ workflow דמו — `expense-app-v37-demo.html`
-
-**פתוח לפיצ'רים הבאים:**
-1. סקירת UX/עיצוב (`design:design-critique`) — צילומי מסך + המלצות
-2. חיזוי סוף חודש — כמה יישאר לפי קצב הוצאות נוכחי
-3. שיפורים נוספים לפי שיקול דעת רז
+מקור העדיפויות החי: [00_PROJECT_CONTROL/00_START_HERE.md](00_PROJECT_CONTROL/00_START_HERE.md) ו-[00_PROJECT_CONTROL/FEATURE_MASTER_BACKLOG.md](00_PROJECT_CONTROL/FEATURE_MASTER_BACKLOG.md). רשימה מתוארכת ליוני 2026 הוסרה מכאן ב-14.09.2026 — היא תיארה מצב שכבר לא נכון (למשל "workflow דמו" כפתוח, כשהוא בפועל core practice מזה חודשים) ויצרה שני מקורות אמת סותרים. אין לשחזר רשימת עדיפויות מקבילה בקובץ הזה; הוא מגדיר workflow וסיכונים, לא סטטוס פיצ'רים.

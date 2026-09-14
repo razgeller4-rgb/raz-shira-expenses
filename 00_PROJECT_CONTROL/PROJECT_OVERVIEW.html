@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>תמונת מצב מלאה — אפליקציית הוצאות רז ושירה</title>
+<style>
+  :root {
+    --bg: #FAF6EE; --surface: #FFFFFF; --surface-2: #F3ECDC; --surface-3: #EDE3CD;
+    --border: #E6DBC3; --border-2: #D9C9A8;
+    --text: #2B2620; --text-2: #5C5347; --muted: #6B6354;
+    --wood: #C9A46B; --wood-dark: #9C7940; --wood-light: #F1E4CC;
+    --green: #5C7C53; --green-dark: #33472D; --green-light: #E7EFE2;
+    --amber-dark: #6B4A0A; --amber-light: #FAEEDA;
+    --red-dark: #7A2E1E; --red-light: #FBE8E3;
+    --gray-dark: #4A453B; --gray-light: #EFEBE3;
+    --shadow: 0 1px 2px rgba(60,45,20,.05), 0 2px 10px rgba(60,45,20,.06);
+    --r-sm: 8px; --r-md: 12px; --r-lg: 18px; --r-pill: 999px;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Heebo, Rubik, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.55;
+  }
+  a { color: var(--green-dark); }
+  header.top {
+    position: sticky; top: 0; z-index: 40; background: rgba(255,253,248,.97); backdrop-filter: blur(10px);
+    border-bottom: 1px solid var(--border); padding: 14px 20px;
+  }
+  .top-inner { max-width: 1180px; margin: 0 auto; display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+  .top-title { font-size: 18px; font-weight: 800; margin: 0; }
+  .top-sub { font-size: 12px; color: var(--muted); margin: 2px 0 0; }
+  .top-spacer { flex: 1; }
+  nav.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+  nav.tabs button {
+    border: 1px solid transparent; background: transparent; color: var(--text-2);
+    font-size: 13px; font-weight: 700; padding: 9px 14px; border-radius: var(--r-pill);
+    cursor: pointer; font-family: inherit; white-space: nowrap;
+  }
+  nav.tabs button:hover { background: var(--surface-2); color: var(--text); }
+  nav.tabs button.active { background: var(--green); color: #fff; }
+
+  main { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
+  section.panel { display: none; }
+  section.panel.active { display: block; animation: fadeIn .2s ease; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+  h2.section-title { font-size: 20px; font-weight: 800; margin: 0 0 4px; }
+  p.section-sub { color: var(--muted); font-size: 13.5px; margin: 0 0 20px; }
+
+  .grid { display: grid; gap: 14px; }
+  .grid-4 { grid-template-columns: repeat(4, 1fr); }
+  .grid-3 { grid-template-columns: repeat(3, 1fr); }
+  .grid-2 { grid-template-columns: repeat(2, 1fr); }
+  @media (max-width: 900px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr 1fr; } }
+  @media (max-width: 600px) { .grid-4, .grid-3, .grid-2 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-lg);
+    padding: 16px 18px; box-shadow: var(--shadow);
+  }
+  .metric .label { font-size: 11.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: .03em; }
+  .metric .value { font-size: 26px; font-weight: 800; margin-top: 4px; }
+  .metric .sub { font-size: 12px; color: var(--muted); margin-top: 3px; }
+
+  .badge { display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px; border-radius: var(--r-pill); font-size: 11.5px; font-weight: 700; }
+  .badge.done { background: var(--green-light); color: var(--green-dark); }
+  .badge.pending { background: var(--amber-light); color: var(--amber-dark); }
+  .badge.blocked { background: var(--red-light); color: var(--red-dark); }
+  .badge.future { background: var(--gray-light); color: var(--gray-dark); }
+  .badge.wood { background: var(--wood-light); color: var(--wood-dark); }
+
+  .roadmap { display: flex; flex-direction: column; gap: 2px; margin: 18px 0 28px; }
+  .roadmap-row { display: grid; grid-template-columns: 90px 1fr; gap: 12px; align-items: stretch; }
+  .roadmap-id { display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 13px; color: var(--muted); }
+  .roadmap-bar {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md);
+    padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; position: relative;
+  }
+  .roadmap-bar.done { border-inline-start: 5px solid var(--green); }
+  .roadmap-bar.progress { border-inline-start: 5px solid var(--wood-dark); }
+  .roadmap-bar.pending { border-inline-start: 5px solid var(--border-2); opacity: .85; }
+  .roadmap-name { font-weight: 700; font-size: 13.5px; }
+  .roadmap-desc { font-size: 12px; color: var(--muted); }
+
+  .cal-strip { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin: 16px 0 28px; }
+  @media (max-width: 700px) { .cal-strip { grid-template-columns: repeat(2, 1fr); } }
+  .cal-day { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); padding: 12px 14px; }
+  .cal-day.today { border-color: var(--green); box-shadow: 0 0 0 2px var(--green-light); }
+  .cal-date { font-size: 11.5px; font-weight: 800; color: var(--muted); text-transform: uppercase; }
+  .cal-day.today .cal-date { color: var(--green-dark); }
+  .cal-events { margin-top: 8px; display: flex; flex-direction: column; gap: 5px; }
+  .cal-event { font-size: 12px; color: var(--text-2); }
+  .cal-count { font-size: 20px; font-weight: 800; margin-top: 2px; }
+
+  details.acc { background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); margin-bottom: 8px; overflow: hidden; }
+  details.acc > summary {
+    list-style: none; cursor: pointer; padding: 13px 16px; display: flex; align-items: center;
+    justify-content: space-between; gap: 10px; font-weight: 700; font-size: 14px;
+  }
+  details.acc > summary::-webkit-details-marker { display: none; }
+  details.acc > summary::before { content: "▸"; display: inline-block; margin-inline-end: 8px; color: var(--muted); transition: transform .15s; font-weight: 400; }
+  details.acc[open] > summary::before { transform: rotate(90deg); }
+  details.acc .acc-body { padding: 0 16px 16px; font-size: 13.5px; color: var(--text-2); }
+  details.acc .acc-body table { width: 100%; border-collapse: collapse; font-size: 12.5px; margin-top: 6px; }
+  details.acc .acc-body td, details.acc .acc-body th { padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: start; }
+  details.nested { margin: 8px 0 0; border-color: var(--border); }
+  details.nested > summary { font-size: 13px; padding: 9px 12px; }
+
+  code { background: var(--surface-2); padding: 1px 6px; border-radius: 5px; font-size: 12px; }
+
+  .gallery { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 14px; }
+  @media (max-width: 800px) { .gallery { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 520px) { .gallery { grid-template-columns: 1fr; } }
+  .gallery figure { margin: 0; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r-md); overflow: hidden; }
+  .gallery img { width: 100%; display: block; aspect-ratio: 9/16; object-fit: cover; background: var(--surface-2); cursor: zoom-in; }
+  .gallery figcaption { padding: 8px 10px; font-size: 12px; color: var(--muted); }
+  .lightbox { position: fixed; inset: 0; background: rgba(20,15,5,.85); display: none; align-items: center; justify-content: center; z-index: 100; padding: 30px; cursor: zoom-out; }
+  .lightbox.open { display: flex; }
+  .lightbox img { max-width: 100%; max-height: 100%; border-radius: var(--r-md); }
+
+  .placeholder-slot { border: 2px dashed var(--border-2); border-radius: var(--r-lg); padding: 22px; text-align: center; color: var(--muted); font-size: 13.5px; margin-top: 16px; }
+
+  .flow-item { display: flex; gap: 10px; align-items: flex-start; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .flow-item:last-child { border-bottom: none; }
+  .flow-dot { width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; flex: none; }
+  .flow-dot.done { background: var(--green); }
+  .flow-dot.docs { background: var(--wood-dark); }
+  .flow-text { font-size: 13px; }
+
+  .tool-row { display: grid; grid-template-columns: 1.3fr 2fr 1fr; gap: 10px; padding: 9px 0; border-bottom: 1px solid var(--border); font-size: 13px; align-items: center; }
+  .tool-row:first-child { font-weight: 800; color: var(--muted); font-size: 11.5px; text-transform: uppercase; }
+  @media (max-width: 700px) { .tool-row { grid-template-columns: 1fr; gap: 2px; } .tool-row:first-child { display: none; } }
+
+  footer.foot { max-width: 1180px; margin: 0 auto; padding: 30px 20px 60px; color: var(--muted); font-size: 12px; text-align: center; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-inner">
+    <div>
+      <p class="top-title">תמונת מצב מלאה — אפליקציית הוצאות רז ושירה</p>
+      <p class="top-sub">עודכן 13.09.2026 · נבנה מהתיעוד בפועל בפרויקט (00_PROJECT_CONTROL, research/, design/) — לא מהמצאה</p>
+    </div>
+    <div class="top-spacer"></div>
+    <nav class="tabs" id="tabs">
+      <button data-tab="overview" class="active">סקירה</button>
+      <button data-tab="roadmap">ציר זמן ותוכנית</button>
+      <button data-tab="detail">פירוט מלא</button>
+      <button data-tab="design">עיצוב (קודקס)</button>
+      <button data-tab="research">מחקרים</button>
+      <button data-tab="tools">כלים וסוכנים</button>
+      <button data-tab="decisions">החלטות</button>
+      <button data-tab="log">יומן עבודה</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="panel active" id="panel-overview">
+  <h2 class="section-title">איפה עומדים עכשיו</h2>
+  <p class="section-sub">שני מסלולים רצים במקביל: תיקוני נכונות/נגישות על האפליקציה הקיימת (המסלול שלי, עם Claude), ועיצוב מחדש מלא עם קודקס (שלב C בתוכנית העל). שניהם עצמאיים זה מזה — אף אחד לא חוסם את השני.</p>
+
+  <div class="grid grid-4">
+    <div class="card metric"><div class="label">שלבי תוכנית-על שהושלמו</div><div class="value">2 <span style="font-size:15px;color:var(--muted)">מתוך 11</span></div><div class="sub">A (מיפוי קבצים) · B (איפוס ניהולי)</div></div>
+    <div class="card metric"><div class="label">חשדות חישוב (C-1..C-7)</div><div class="value">6 <span style="font-size:15px;color:var(--muted)">מתוך 7 נסגרו</span></div><div class="sub">C-6 פתוח (תצוגה בלבד, לא מאזן)</div></div>
+    <div class="card metric"><div class="label">תיקוני production היום</div><div class="value">~14</div><div class="sub">חישוב + ניגודיות + מגע + אבטחה + נגישות</div></div>
+    <div class="card metric"><div class="label">החלטות פתוחות הממתינות לך</div><div class="value">7</div><div class="sub">D-01, D-02, D-04, D-07, RESET-06, RESET-09, ותיקון RLS</div></div>
+  </div>
+
+  <div class="grid grid-2" style="margin-top:20px">
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:15px">חוסמים קריטיים</h3>
+      <div class="flow-item"><span class="flow-dot" style="background:var(--red-dark)"></span><div class="flow-text"><strong>D-07 — Supabase הושהה בעבר אוטומטית</strong><br>7 ימי חוסר פעילות = השהיה אוטומטית ב-tier החינמי. קרה פעם, חזר ל-ACTIVE_HEALTHY. עדיין לא הוחלט: שדרוג / keep-alive מתוזמן / קבלה + באנר אזהרה.</div></div>
+      <div class="flow-item"><span class="flow-dot" style="background:var(--red-dark)"></span><div class="flow-text"><strong>RLS מריץ מחדש auth.uid() על כל שורה</strong><br>10 מדיניויות ב-app_state/app_state_demo. מועמד סביר להסביר את F-11 (Disk IO מתרוקן, פתוח מאז שהתגלה). תיקון ידוע, ממתין לאישור שלך על שינוי schema.</div></div>
+      <div class="flow-item"><span class="flow-dot" style="background:var(--red-dark)"></span><div class="flow-text"><strong>שלב C תקוע — טרם נבחר כיוון עיצוב</strong><br>חוסם את שלבים D–K (המסכים בפועל). שלושה קונספטים + refinement-02 + tabs-03 קיימים, ממתינים להכרעה שלך.</div></div>
+    </div>
+    <div class="card">
+      <h3 style="margin:0 0 10px;font-size:15px">נסגר לאחרונה (13.09)</h3>
+      <div class="flow-item"><span class="flow-dot done"></span><div class="flow-text">C-2, C-3, C-5, C-7 — כל אלה היו <strong>חיים ב-production</strong> (לא רק חשד), עכשיו מתוקנים ומאומתים</div></div>
+      <div class="flow-item"><span class="flow-dot done"></span><div class="flow-text">ניגודיות + יעדי מגע על 10 הטאבים — כולל תיקון טוקן <code>--muted</code> יחיד שפתר 50+ מקומות</div></div>
+      <div class="flow-item"><span class="flow-dot done"></span><div class="flow-text">Focus-trap בשלושת המודאלים, Chart.js ננעל עם SRI</div></div>
+      <div class="flow-item"><span class="flow-dot docs"></span><div class="flow-text">מסמכי איפוס תוקנו לשקף שכן בוצע מימוש (היו אומרים "לא בוצע כלום")</div></div>
+    </div>
+  </div>
+
+  <div class="placeholder-slot" style="margin-top:20px">
+    <strong>מקום שמור — עדכון סטטוס הבא</strong><br>
+    כשתחליט על כיוון עיצוב (טאב "עיצוב") או תאשר תיקון RLS/D-07, האזור הזה יתעדכן. המסמך הזה נועד להיקרא שוב ושוב, לא רק היום — עדכן אותו אחרי כל אבן דרך.
+  </div>
+</section>
+
+<section class="panel" id="panel-roadmap">
+  <h2 class="section-title">ציר זמן — מה קרה, מה קורה, מה בתור</h2>
+  <p class="section-sub">שבוע אחרון בפועל, ואז 11 השלבים של תוכנית העל (A–K) קדימה. אין תאריכי יעד בדויים לשלבים שטרם התחילו.</p>
+
+  <h3 style="font-size:14px;margin:22px 0 4px">השבוע האחרון — מה קרה בפועל בכל יום</h3>
+  <div class="cal-strip">
+    <div class="cal-day"><div class="cal-date">09/09 ג׳</div><div class="cal-count">—</div><div class="cal-events"><div class="cal-event">מודל הכנסות מאוחד</div></div></div>
+    <div class="cal-day"><div class="cal-date">10/09 ד׳</div><div class="cal-count">—</div><div class="cal-events"><div class="cal-event">F-1/F-2 לייצור · מערכת עיצוב Figma · באסליין ניגודיות</div></div></div>
+    <div class="cal-day"><div class="cal-date">11–12/09</div><div class="cal-count">—</div><div class="cal-events"><div class="cal-event">D-05 כיוון ג׳ נבחר → נדחה · F-17/18/19 ייבוא אשראי</div></div></div>
+    <div class="cal-day today"><div class="cal-date">13/09 א׳ · היום</div><div class="cal-count">~30</div><div class="cal-events">
+      <div class="cal-event">איפוס ניהולי + 3 קונספטים חדשים (מסלול קודקס)</div>
+      <div class="cal-event">C-2/C-3/C-4/C-5/C-7 תוקנו, קודמו ל-production</div>
+      <div class="cal-event">ניגודיות+מגע 10 טאבים, focus-trap, Chart.js SRI</div>
+      <div class="cal-event">refinement-02 + tabs-03 (מסלול קודקס, מאוחר יותר היום)</div>
+    </div></div>
+    <div class="cal-day"><div class="cal-date">קדימה</div><div class="cal-count">?</div><div class="cal-events"><div class="cal-event">תלוי בחירת כיוון (שלב C) והחלטות פתוחות</div></div></div>
+  </div>
+
+  <h3 style="font-size:14px;margin:26px 0 4px">תוכנית העל — 11 שלבים (A–K)</h3>
+  <div class="roadmap" id="roadmap-list"></div>
+</section>
+
+<section class="panel" id="panel-detail">
+  <h2 class="section-title">פירוט מלא — שלבים, תתי-שלבים, מסכים וטפסים</h2>
+  <p class="section-sub">מבוסס FEATURE_MASTER_BACKLOG.md ו-MASTER_PLAN_TO_FINISHED_APP.md. לחץ לפתיחה.</p>
+  <div id="detail-list"></div>
+</section>
+
+<section class="panel" id="panel-design">
+  <h2 class="section-title">מסלול עיצוב — קודקס</h2>
+  <p class="section-sub">זה המקום השמור למה שאתה בונה עם קודקס. אני לא נוגע בקבצים האלה — רק מציג אותם כאן כדי שהכל יהיה במקום אחד. עדכן כשיש חדש ואשלב.</p>
+
+  <div class="card" style="margin-bottom:18px">
+    <h3 style="margin:0 0 6px;font-size:15px">החלטה מרכזית</h3>
+    <p style="margin:0;font-size:13.5px">כיוון ג׳ (הבחירה הקודמת מ-D-05) <strong>נדחה במפורש</strong> על ידך. כיוון חדש: <strong>עץ בהיר, ירוק, לבן ובז׳</strong>, נבנה מ-Product Design (קודקס), לא ממשיך מכיוון ג׳ כברירת מחדל.</p>
+    <p style="margin:10px 0 0;font-size:13.5px">לאחרונה (מאוחר יותר ב-13.09): בחרת להעמיק בשילוב <strong>חומריות/תמונה מ-refinement-02 / option-01</strong> עם <strong>ממשק הטופס מ-option-03</strong>. ארבע דוגמאות טאבים (tabs-03) — אישרת שהכיוון "נראה מדהים".</p>
+    <p style="margin:10px 0 0;font-size:13.5px">אבל ביקשת השוואת כיסוי מול האתר האמיתי לפני קיבוע — כדי לוודא ששום פונקציה לא נעלמת בסקיצה. זה כבר הוליד את <strong>מטריצת CAPABILITY_PARITY.csv</strong> (RESET-09), אבל האימות המלא שלה מול tabs-03 עדיין פתוח — זו ההחלטה הבאה שממתינה לך, לא רק "משוב כללי".</p>
+  </div>
+
+  <h3 style="font-size:14px;margin:20px 0 8px">שלושת הקונספטים הראשוניים</h3>
+  <div class="gallery" id="gallery-concepts"></div>
+
+  <h3 style="font-size:14px;margin:24px 0 8px">עידון — refinement-02 (שלושה אופציות)</h3>
+  <div class="gallery" id="gallery-refinement"></div>
+
+  <h3 style="font-size:14px;margin:24px 0 8px">דוגמאות טאבים — tabs-03</h3>
+  <div class="gallery" id="gallery-tabs"></div>
+
+  <details class="acc" style="margin-top:20px">
+    <summary>הערות מ-RESEARCH_AND_REVIEW.md ו-DESIGN_BRIEF.md</summary>
+    <div class="acc-body">
+      <p><strong>מגבלות שתועדו:</strong> אלו תמונות כיוון בלבד, לא מפרט מדויק. בתמונה 2 התקציב לא מדויק; בתמונה 3 התקדמות היעד דורשת תיקון. בטקסט שנוצר ב-AI עלולות להיות שגיאות.</p>
+      <p><strong>מקורות השראה:</strong> Copilot (יחסי היררכיה בלבד, לא העתקה), Monarch (תמונה משותפת, יעדים).</p>
+      <p><strong>סקירה חיה שבוצעה:</strong> צילום שער כניסה בדמו ב-390×844 בלבד. פנים האפליקציה לא נבדק במסגרת מחקר העיצוב (חסום ע"י שער כניסה) — זה נבדק בנפרד, בהרחבה, במסלול שלי (טאב "מחקרים").</p>
+    </div>
+  </details>
+
+  <div class="placeholder-slot">
+    <strong>המשך עבודה איתי, אחרי בחירת כיוון</strong><br>
+    לפי CLAUDE_NEXT_ACTION.md: קריאת tabs-03/REVIEW.md → שילוב משוב → פירוט שלישיית ליבה (בית + טופס הוצאה + שורת תנועה) → Foundations ב-Figma → כל המסכים. שלב זה עדיין לא התחיל.
+  </div>
+</section>
+
+<section class="panel" id="panel-research">
+  <h2 class="section-title">מחקרים ותוצאותיהם</h2>
+  <p class="section-sub">כל מחקר, מה נמצא, והאם זה מומש בפועל — לא רק תועד.</p>
+  <div id="research-list"></div>
+</section>
+
+<section class="panel" id="panel-tools">
+  <h2 class="section-title">סל הכלים — סוכנים, skills, קונקטורים</h2>
+  <p class="section-sub">מבוסס AGENTS_AND_TOOLING_MAP.md. מסומן "חומר עזר מתוארך" אבל התוכן העובדתי עדיין נכון.</p>
+
+  <h3 style="font-size:14px;margin:18px 0 6px">17 סוכנים מקומיים — נבחרים</h3>
+  <div class="card">
+    <div class="tool-row"><span>סוכן</span><span>תפקיד</span><span>הערכה</span></div>
+    <div class="tool-row"><span><code>chief-of-staff</code></span><span>יעד גדול → תכנית מובנית</span><span class="badge pending">חופף חלקית</span></div>
+    <div class="tool-row"><span><code>feature-builder</code></span><span>מימוש פיצ'ר ממוקד על דמו</span><span class="badge done">ליבה</span></div>
+    <div class="tool-row"><span><code>qa-release-reviewer</code></span><span>סקירה לפני מעבר לייצור</span><span class="badge done">ליבה</span></div>
+    <div class="tool-row"><span><code>domain-risk-reviewer</code></span><span>סיכון חישוב/דומיין — שימש היום ל-C-2/C-3/C-4</span><span class="badge done">ליבה, בשימוש היום</span></div>
+    <div class="tool-row"><span><code>security-privacy-reviewer</code></span><span>PII, auth, מפתחות</span><span class="badge done">ליבה</span></div>
+    <div class="tool-row"><span><code>codebase-cartographer</code></span><span>מיפוי קוד לפני שינוי גדול</span><span class="badge wood">רלוונטי</span></div>
+    <div class="tool-row"><span><code>accessibility-expert</code></span><span>WCAG</span><span class="badge blocked">פער הרשאות — כל הכלים פתוחים, יכול לכתוב קוד שהוא אמור לבקר</span></div>
+    <div class="tool-row"><span><code>agent-researcher</code></span><span>מחקר על agents אחרים</span><span class="badge blocked">פער הרשאות — WebSearch+Write בלי plan mode</span></div>
+    <div class="tool-row"><span><code>ui-designer</code></span><span>עיצוב ממשק</span><span class="badge pending">חופף עם frontend-developer</span></div>
+  </div>
+
+  <h3 style="font-size:14px;margin:20px 0 6px">קונקטורים</h3>
+  <div class="grid grid-3">
+    <div class="card"><strong style="font-size:13px">פעילים ובשימוש היום</strong><p style="font-size:12.5px;margin:8px 0 0;color:var(--text-2)">Supabase (execute_sql, get_advisors) · Playwright · Chrome DevTools · Claude in Chrome</p></div>
+    <div class="card"><strong style="font-size:13px">פעילים, לא נוצלו היום</strong><p style="font-size:12.5px;margin:8px 0 0;color:var(--text-2)">Figma · Context7 · Gmail</p></div>
+    <div class="card"><strong style="font-size:13px">זמינים, לא מחוברים</strong><p style="font-size:12.5px;margin:8px 0 0;color:var(--text-2)">Cloudflare, BigQuery, Datadog, Linear, Slack, Notion — חושפים authenticate בלבד</p></div>
+  </div>
+
+  <h3 style="font-size:14px;margin:20px 0 6px">פערים שכבר זוהו ולא תוקנו</h3>
+  <div class="card">
+    <div class="flow-item"><span class="flow-dot" style="background:var(--amber-dark)"></span><div class="flow-text">הרשאות <code>accessibility-expert</code> ו-<code>agent-researcher</code> רחבות מדי ביחס לתפקידן</div></div>
+    <div class="flow-item"><span class="flow-dot" style="background:var(--amber-dark)"></span><div class="flow-text">שם שגוי ל-skill ב-CLAUDE.md: <code>design:design-critique</code> אמור להיות <code>/design-critique</code></div></div>
+    <div class="flow-item"><span class="flow-dot" style="background:var(--amber-dark)"></span><div class="flow-text">לא ברור אם קונקטור <code>axe-accessibility</code> פעיל בפועל</div></div>
+    <div class="flow-item"><span class="flow-dot" style="background:var(--amber-dark)"></span><div class="flow-text">חפיפת תפקידים בין agents (feature-builder/frontend-developer, ui-designer/brand-guardian/whimsy-injector) — לא הוכרע</div></div>
+    <div class="flow-item"><span class="flow-dot" style="background:var(--amber-dark)"></span><div class="flow-text">6 פלאגינים לא-רלוונטיים לפרויקט הזה (payroll, trading וכו') עדיין מותקנים</div></div>
+  </div>
+</section>
+
+<section class="panel" id="panel-decisions">
+  <h2 class="section-title">החלטות — מה סגור, מה ממתין לך</h2>
+  <div class="grid grid-2">
+    <div>
+      <h3 style="font-size:14px;margin:0 0 8px">פתוחות — צריכות אותך</h3>
+      <div class="card" id="decisions-open"></div>
+    </div>
+    <div>
+      <h3 style="font-size:14px;margin:0 0 8px">סגורות</h3>
+      <div class="card" id="decisions-closed"></div>
+    </div>
+  </div>
+</section>
+
+<section class="panel" id="panel-log">
+  <h2 class="section-title">יומן עבודה — היום, 13.09.2026</h2>
+  <p class="section-sub">30 הקומיטים האחרונים במסלול שלי, לפי נושא. כל commit שכתוב "promoted to production" עבר: תרחיש בדיקה חי → מספרים אמיתיים → סקירת domain-risk-reviewer (לשינויי חישוב) → אימות חוזר חי → קידום.</p>
+  <div id="log-list"></div>
+</section>
+
+</main>
+
+<div class="lightbox" id="lightbox"><img id="lightbox-img" src="" alt=""></div>
+
+<footer class="foot">מסמך זה נבנה מתוך התיעוד הקיים בפועל בפרויקט (00_PROJECT_CONTROL, research/, design/). לא מומצא. לעדכן אותו שוב אחרי כל אבן דרך משמעותית.</footer>
+
+<script>
+const ROADMAP = [
+  {id:'A', name:'מיפוי קבצים ותלות', desc:'283 קבצים, אינדקס UI (506 מופעים), hashes', status:'done'},
+  {id:'B', name:'איפוס ניהולי', desc:'תוכנית אחת, תור אחד, יומן החלטות מרוכז', status:'done'},
+  {id:'C', name:'מחקר והכרעת עיצוב', desc:'3 קונספטים + refinement-02 + tabs-03 קיימים — ממתין לבחירתך הסופית', status:'progress'},
+  {id:'D', name:'פירוט שלישיית ליבה', desc:'בית, טופס הוצאה, שורת תנועה — אותו סגנון גם בתוכן צפוף', status:'pending'},
+  {id:'E', name:'Foundations ורכיבים', desc:'טוקנים סמנטיים, רכיבים ו-variants ב-Figma', status:'pending'},
+  {id:'F', name:'כל המסכים והטפסים', desc:'14 מסכים, 31 טפסים — כולם מחוברים למקור אמת', status:'pending'},
+  {id:'G', name:'מקרי קצה ורוחבים', desc:'שגיאות, ריק, טעינה, offline, מקלדת, 320–430px', status:'pending'},
+  {id:'H', name:'רשת ביטחון נתונים', desc:'בדיקות חישוב, התנגשות, הרשאה, שחזור — ממצאים קיימים (המסלול שלי), אימות מלא חסר', status:'progress'},
+  {id:'I', name:'מימוש בדמו', desc:'לפי הכיוון החדש שייבחר — לא לפי כיוון ג׳', status:'pending'},
+  {id:'J', name:'קידום ואימות', desc:'אישור תוכן, גיבוי, diff, בדיקת מכשיר אחרי קידום', status:'pending'},
+  {id:'K', name:'משפחות נוספות', desc:'שער הרחבה עתידי, אחרי הצלחת המוצר אצל רז ושירה', status:'pending'},
+];
+
+const DETAIL = [
+  {title:'שלב C — מחקר והכרעת עיצוב', status:'progress', body:`
+    <p><strong>מה קיים:</strong> שער כניסה נבדק חי (390×844). שלושה קונספטים נוצרו, כיוון ג׳ נבדק ונדחה. עידון שני (refinement-02, 3 אופציות) ואחריו 4 דוגמאות טאבים (tabs-03).</p>
+    <p><strong>מה נותר:</strong> משוב סופי על tabs-03, איחוד ניווט/שדות/נתוני דוגמה, החלטה רשמית שנרשמת ב-DECISION_REGISTER.</p>
+    <details class="acc nested"><summary>תתי-סעיפים</summary><div class="acc-body">
+      <p>C.1 — סקירת שער כניסה חי (בוצע)</p>
+      <p>C.2 — 3 קונספטים ראשוניים + דחיית כיוון ג׳ (בוצע)</p>
+      <p>C.3 — עידון refinement-02 (בוצע, 3 אופציות)</p>
+      <p>C.4 — 4 דוגמאות טאבים tabs-03 (בוצע, ממתין למשוב)</p>
+      <p>C.5 — הכרעה רשמית + עדכון DECISION_REGISTER (פתוח)</p>
+    </div></details>`},
+  {title:'שלב D — פירוט שלישיית ליבה', status:'pending', body:`
+    <p><strong>מטרה:</strong> בית (דשבורד), טופס הוספת הוצאה, ושורת תנועה בפיד — אותו סגנון עובד גם בתוכן צפוף (הרבה שורות, קטגוריות ארוכות).</p>
+    <p><strong>תנאי מעבר:</strong> רז ושירה מאשרים; אותו דפוס עיצובי לא נשבר במסכי קצה (הרבה נתונים, מעט נתונים, ריק).</p>
+    <p style="color:var(--muted);font-size:12.5px;margin-top:8px">הערה מהמסלול שלי: היום מצאתי בפועל שיש כרגע <strong>שני</strong> טפסי הוספת/עריכת הוצאה נפרדים בקוד הקיים, ועוד קוד מת של טופס שלישי (renderMobileExpenseList) שלא נטען בפועל. שווה לקחת בחשבון בתכנון D — כדי שהעיצוב החדש לא ייצור שוב כפילות בטעות.</p>`},
+  {title:'שלב E — Foundations ורכיבים', status:'pending', body:`<p>טוקנים סמנטיים (צבע, ריווח, טיפוגרפיה), רכיבים ו-variants ב-Figma. תנאי מעבר: רינדור, ניגודיות, טיפוגרפיה, RTL ומגע נבדקו — לא רק "נוצר ב-Figma".</p>`},
+  {title:'שלב F — כל המסכים והטפסים (14 מסכים, 31 טפסים)', status:'pending', body:`
+    <p><strong>14 מסכים (S01–S14):</strong> בית, תנועות, תקציב, משותף, הכנסות, כרטיסים, חובות, יעדים, שנתי, גיבוי/סנכרון, ייבוא, כניסה, "עוד", וכלי שכר (כיסוי נפרד, לא חלק מהעיצוב הזה).</p>
+    <p><strong>31 טפסים (F01–F31):</strong> כל טופס עובר תכנון שדות → רינדור → שגיאות → מובייל → אישור, לפני שהוא DESIGN_READY.</p>`},
+  {title:'שלב G — מקרי קצה ורוחבים', status:'pending', body:`<p>שגיאות, מצבי ריק, טעינה, offline, מקלדת, 320–430px, טקסט מוגדל. תנאי מעבר: מטריצת כיסוי עם ראיות בפועל — לא סימון אוטומטי.</p>`},
+  {title:'שלב H — רשת ביטחון נתונים', status:'progress', body:`
+    <p><strong>זה בדיוק המסלול שלי.</strong> ר' טאב "מחקרים" לפירוט המלא: C-1 עד C-7 (חישוב), 4 סיכוני סנכרון (settlements לא אטומי, חיווי הצלחה חלקי, dirty flag לא עמיד, טריות לפי שעון לקוח), RLS (אומת, תקין), 2 אזהרות אבטחה פתוחות.</p>
+    <p><strong>מה עדיין חסר:</strong> בדיקת קונפליקט אמיתית (שני "מכשירים" בו-זמנית), 5 תרחישי הרשאה (anon, לא מורשה, כל משתמש, cross-owner, שורות משותפות).</p>`},
+  {title:'שלב I — מימוש בדמו', status:'pending', body:`<p>תהליך אחד בכל שינוי, התאמה מלאה לתכנון. תנאי: בדיקות מכשיר אמיתי, ללא שינוי חישוב סמוי (חובת domain-risk-reviewer + before/after מספרי לכל שינוי חישוב — כמו שכבר נעשה ב-C-2 עד C-7).</p>`},
+  {title:'שלב J — קידום ואימות', status:'pending', body:`<p>אישור תוכן, גיבוי בר-שחזור, diff מלא, ואימות אחרי קידום. אותו תהליך שכבר עובד היום (demo → אישור → promote_demo_to_prod.py → אימות חי).</p>`},
+  {title:'שלב K — משפחות נוספות', status:'pending', body:`<p>שער הרחבה עתידי. כלל ברזל: בית A לא מקבל מידע של בית B, גם דרך API. אין שכפול קובץ HTML לפי משפחה, אין שמות אנשים כמפתחות הרשאה.</p>`},
+];
+
+const RESEARCH = [
+  {title:'EXPENSE_APP_DEEP_RESEARCH_HE.md — מחקר מוצר עומק', date:'13.09', status:'partial', statusLabel:'משפיע על עיצוב, טרם מומש',
+    body:`<p>המלצה מרכזית: חוויית מובייל משפחתית חמה — לבן חם+בז׳ בבסיס, עץ בהיר לזהות, ירוק עמוק לפעולות. 14 עקרונות: הגדרת מוצר, עיצוב, מובייל, מסכים, רכיבים, הפרדת נתונים, מודל נתונים, אבטחה, סנכרון, כלי ניהול, עדיפויות (50% עיצוב/30% אמינות/20% בדיקות), תכנית בדיקה (10 תרחישים).</p>
+    <p><strong>מומש:</strong> הכיוון הצבעוני (עץ/ירוק/בז׳/לבן) כבר אומץ כהחלטה. שאר ה-14 העקרונות — עדיין בשלב תכנון (שלבים D-G).</p>`},
+  {title:'RESEARCH_ARCHITECTURE_EVIDENCE — ארכיטקטורה, סנכרון, אבטחה', date:'13.09', status:'mixed', statusLabel:'2 תוקנו, 4 פתוחים',
+    body:`<p><strong>תוקן:</strong> RLS אומת חי כתקין (F-6 היה שגוי, RLS למעשה סגור ל-authenticated בלבד) · Chart.js ננעל עם SRI.</p>
+    <p><strong>פתוח, לא תוקן:</strong></p>
+    <ul style="margin:6px 0;padding-inline-start:20px">
+      <li>Settlements אינה אטומית — שתי כתיבות מקבילות יכולות להחליף שורה</li>
+      <li>הודעת הצלחה כוללת כשל חלקי — settlements יכול להיכשל בשקט</li>
+      <li>Dirty flag בזיכרון בלבד — לא עמיד לרענון</li>
+      <li>טריות משתמש נשענת על שעון מכשיר לא מכויל</li>
+      <li>RLS מריץ מחדש auth.uid() על כל שורה (10 מדיניויות) — מועמד להסביר F-11</li>
+    </ul>`},
+  {title:'CALC_LOGIC_MAP.md — לוגיקת חישוב (C-1 עד C-7)', date:'10.09 → 13.09', status:'done', statusLabel:'6/7 נסגרו',
+    body:`<p>C-1 הופרך (שירה בדקה, תקין). C-2 (ריבית), C-3+C-5 (ספירה כפולה בתחזית), C-7 (יתרת חוב) — כולם תוקנו והועברו ל-production ב-13.09, עם מספרים אמיתיים לפני/אחרי. C-4 (dedup חובות) — אומת שהמקרה האמיתי תקין, נוספה שקיפות בלבד. <strong>פתוח:</strong> C-6 — כפילות תצוגה (הוצאת "חוב לאבא" מוצגת גם בכרטיסיית הוצאות וגם בחוב) — לא נוגע במאזן, עדיפות נמוכה.</p>`},
+  {title:'RESEARCH_LOG_AND_LESSONS.md — F-1 עד F-16', date:'10.09', status:'mixed', statusLabel:'רוב תוקן, כמה פתוח',
+    body:`<p><strong>תוקן:</strong> F-1/F-2 (מפתחות סנכרון+הגנת מכסה חסרים ב-production), F-3 (פקודת גיבוי שבורה), F-6 (הופרך — RLS תקין), F-15 (קריסת מסד).</p>
+    <p><strong>פתוח:</strong> F-4/D-04 (גיבויים מחוץ ל-git), F-5 (3 מפתחות ללא namespace), F-8 (פער 190₪ מ-08/2026), F-10/D-07 (השהיית Supabase), F-11 (Disk IO — עכשיו עם מועמד הסבר קונקרטי), F-12 (2 אזהרות אבטחה), F-13 (אזור שרת טוקיו).</p>`},
+  {title:'STATE_VS_TARGET_MAP.md — פער דמו↔production', date:'לפני 13.09', status:'blocked', statusLabel:'ממצא קריטי, לא ברור אם עדיין רלוונטי',
+    body:`<p><strong>ממצא:</strong> <code>getAllUserStorageKeys()</code> החזיר 11 מפתחות בדמו אך 7 בלבד ב-production בזמן הבדיקה — חסרים goals, merchant_memory, monthly_categories, dismissed_review_items.</p>
+    <p style="color:var(--muted)">המסמך מסומן "חומר עזר מתוארך" מ-13.09 — כדאי לוודא שהפער הזה עדיין קיים בפועל, בהתחשב שהיום עברו הרבה קומיטים נוספים ל-production.</p>`},
+];
+
+const DECISIONS_OPEN = [
+  {id:'D-01', text:'מודל פרטיות זוגי: הכול משותף או אישי/משותף — קובע RLS, מסכים ומיגרציה'},
+  {id:'D-02', text:'מקור הייבוא האוטומטי הראשון: קובץ, מייל/Drive, או Open Banking'},
+  {id:'D-04', text:'האם להוציא backups/*.json מ-.gitignore (12 גיבויים כרגע ב-iCloud בלבד, ללא היסטוריית גרסאות)'},
+  {id:'D-07', text:'השהיית Supabase: שדרוג בתשלום / keep-alive מתוזמן / קבלה + באנר אזהרה'},
+  {id:'RESET-06', text:'פרטיות אישי/משותף בעיצוב החדש (חופף עם D-01)'},
+  {id:'RLS', text:'לאשר תיקון 10 מדיניויות RLS (עטיפת auth.uid() ב-select) — תיקון ידוע, ממתין לאישור schema'},
+  {id:'RESET-09', text:'אימות tabs-03 מול מטריצת CAPABILITY_PARITY.csv — לוודא שכל פונקציה קיימת נשמרת לפני קיבוע הכיוון'},
+];
+const DECISIONS_CLOSED = [
+  {id:'D-03', text:'קידום V38 ל-production — התייתר בפועל, הועבר ב-8 קומיטים נפרדים'},
+  {id:'D-05', text:'כיוון עיצוב — כיוון ג׳ נבחר 12.09, נדחה מפורשות 13.09'},
+  {id:'D-08', text:'שיוך הוצאת אשראי לפי חודש חיוב (לא מחזור) — C-2 תיקן את הבאג הנלווה'},
+  {id:'D-09', text:'תמיכת PDF — pdf.js מ-CDN עצל, נעול לגרסה'},
+  {id:'RESET-01..05', text:'רז ושירה תחילה · כיוון ג׳ נדחה · עץ/ירוק/בז׳/לבן · 00_START_HERE כמקור יחיד · שילוב תמונה+טופס'},
+];
+
+const LOG = [
+  {group:'תיקוני חישוב פיננסי (C-2, C-3, C-4, C-5, C-7)', items:[
+    'C-3+C-5 — ספירה כפולה בתחזית, היה חי ב-production (-13,894 → -6,048)',
+    'C-4 — שקיפות למיזוג חוב-לאבא, אומת מול רז שהמקרה האמיתי תקין',
+    'C-7 — יתרת חוב כוללת תמיד 0 לבנק, תת-דיווח של 18,441.50 ₪',
+    'C-2 — ריבית הלוואה (4,206 ₪ על פני חיי ההלוואה) נכנסה לכל חישובי תזרים',
+  ]},
+  {group:'ניגודיות ומגע — 10 טאבים', items:[
+    'טוקן --muted הוכהה: 3.32-3.79:1 → 5.65-6.74:1, פתר 50+ מקומות בבת אחת',
+    '--income-light הובהר: badge של "נשאר X ₪" עבר מ-4.28 ל-4.63',
+    'תיקון תקלת מדידה: color-mix()/color(srgb) לא זוהו על ידי הסקריפט — תוקן',
+    'תיקון מתודולוגי: viewport התאפס לדסקטופ (1200px) באמצע הסבב — נתפס ותוקן',
+  ]},
+  {group:'אבטחה ותלויות', items:[
+    'Chart.js ננעל לגרסה 4.5.1 (זהה בייט-לבייט למה שהיה) + SRI hash',
+    'get_advisors חי אישר: RLS תקין, אבל 10 מדיניויות לא-יעילות — מועמד ל-F-11 (לא תוקן, ממתין לאישור)',
+  ]},
+  {group:'נגישות מעבר לניגודיות', items:[
+    'Focus-trap נוסף לשלושת המודאלים (ייבוא אשראי, פירוט חוב, תפריט "עוד") — אומת עם הקלדת Tab אמיתית',
+    'כפתורי אייקון נבדקו על 7 טאבים — כולם עם aria-label תקין',
+  ]},
+  {group:'ממצאי קוד', items:[
+    'renderMobileExpenseList וכל מה שתלוי בו — קוד מת מוכח (האלמנט שהוא מחפש לא קיים ב-HTML), לא נמחק עדיין',
+    'טופס "הוספת הוצאה" עבר עיצוב מחדש נפרד מטופס העריכה — התגלה שהיו שני קוד-נתיבים שונים',
+  ]},
+];
+
+function el(html){ const t = document.createElement('template'); t.innerHTML = html.trim(); return t.content.firstElementChild; }
+const statusLabel = {done:'הושלם', progress:'בתהליך', pending:'בתור', blocked:'חסום', future:'עתידי'};
+const statusBadgeClass = {done:'done', progress:'wood', pending:'pending', blocked:'blocked', future:'future', mixed:'pending', partial:'pending'};
+
+document.getElementById('roadmap-list').append(...ROADMAP.map(s => el(`
+  <div class="roadmap-row">
+    <div class="roadmap-id">${s.id}</div>
+    <div class="roadmap-bar ${s.status}">
+      <span class="badge ${statusBadgeClass[s.status]}">${statusLabel[s.status]}</span>
+      <span class="roadmap-name">${s.name}</span>
+      <span class="roadmap-desc">${s.desc}</span>
+    </div>
+  </div>`)));
+
+document.getElementById('detail-list').append(...DETAIL.map(d => el(`
+  <details class="acc">
+    <summary><span>${d.title}</span><span class="badge ${statusBadgeClass[d.status]}">${statusLabel[d.status]}</span></summary>
+    <div class="acc-body">${d.body}</div>
+  </details>`)));
+
+document.getElementById('research-list').append(...RESEARCH.map(r => el(`
+  <details class="acc">
+    <summary><span>${r.title} <span style="color:var(--muted);font-weight:400;font-size:12px">· ${r.date}</span></span><span class="badge ${statusBadgeClass[r.status]}">${r.statusLabel}</span></summary>
+    <div class="acc-body">${r.body}</div>
+  </details>`)));
+
+function decisionRow(d){ return `<div class="flow-item"><span class="flow-dot docs"></span><div class="flow-text"><strong>${d.id}</strong> — ${d.text}</div></div>`; }
+document.getElementById('decisions-open').innerHTML = DECISIONS_OPEN.map(decisionRow).join('');
+document.getElementById('decisions-closed').innerHTML = DECISIONS_CLOSED.map(decisionRow).join('');
+
+document.getElementById('log-list').append(...LOG.map(g => el(`
+  <details class="acc" open>
+    <summary>${g.group}</summary>
+    <div class="acc-body">${g.items.map(i => `<div class="flow-item"><span class="flow-dot done"></span><div class="flow-text">${i}</div></div>`).join('')}</div>
+  </details>`)));
+
+function gallery(targetId, files, base){
+  const g = document.getElementById(targetId);
+  g.append(...files.map(f => el(`
+    <figure>
+      <img src="${base}${f.file}" alt="${f.caption}" onclick="openLightbox('${base}${f.file}')" onerror="this.closest('figure').style.display='none'">
+      <figcaption>${f.caption}</figcaption>
+    </figure>`)));
+}
+gallery('gallery-concepts', [
+  {file:'concept-01.png', caption:'concept-01'},
+  {file:'concept-02.png', caption:'concept-02'},
+  {file:'concept-03.png', caption:'concept-03'},
+], '../design/fresh-start-2026-09-13/');
+gallery('gallery-refinement', [
+  {file:'option-01.png', caption:'option-01 — נבחר לחומריות/תמונה'},
+  {file:'option-02.png', caption:'option-02'},
+  {file:'option-03.png', caption:'option-03 — נבחר לממשק הטופס'},
+], '../design/fresh-start-2026-09-13/refinement-02/');
+gallery('gallery-tabs', [
+  {file:'01-expenses.png', caption:'הוצאות'},
+  {file:'02-budget.png', caption:'תקציב'},
+  {file:'03-income.png', caption:'הכנסות'},
+  {file:'04-annual.png', caption:'שנתי'},
+], '../design/fresh-start-2026-09-13/tabs-03/');
+
+function openLightbox(src){
+  document.getElementById('lightbox-img').src = src;
+  document.getElementById('lightbox').classList.add('open');
+}
+document.getElementById('lightbox').onclick = () => document.getElementById('lightbox').classList.remove('open');
+
+document.getElementById('tabs').addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-tab]');
+  if(!btn) return;
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('section.panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + btn.dataset.tab));
+  window.scrollTo({top:0, behavior:'instant'});
+});
+</script>
+
+</body>
+</html>

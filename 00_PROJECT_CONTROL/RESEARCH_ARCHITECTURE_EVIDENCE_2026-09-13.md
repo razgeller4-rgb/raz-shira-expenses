@@ -50,6 +50,10 @@
 >
 > **ממצא ביצועים חדש מאותה בדיקה (`get_advisors(type=performance)`):** 10 policies על `app_state`, `app_state_demo` ו-שתי טבלאות ה-allowed_users מריצות מחדש `auth.<function>()` (כנראה `auth.uid()`) **על כל שורה בטבלה**, במקום פעם אחת לשאילתה — תיקון סטנדרטי של Supabase הוא לעטוף ב-`(select auth.<function>())`. **זה מועמד סביר להסבר הקונקרטי ל-F-11** ("Disk IO Budget מתרוקן", מעולם לא הוסבר) — יישום לא-יעיל של RLS גורם בדיוק לתבנית הזו (CPU/IO גבוהים ביחס לעומס אמיתי). **לא תוקן** — רז ביקש לתעד בלבד, לא ליישם `apply_migration` על schema של נתונים אמיתיים בלי אישור נפרד.
 
+> 🔴 **הייחוס ל-F-11 מוערער — 14.09.2026.** `database-designer` העלה טענת-נגד סבירה: `auth_rls_initplan` משמעותי בטבלאות עם **הרבה שורות**, ואילו `app_state` מכילה יחידות-עשרות שורות. חיסכון של N קריאות `auth.uid()` כש-N קטן אינו מרוקן תקציב IO. חשודים חלופיים שהוצעו: כל sync כותב את **כל** ה-`payload jsonb` ולא delta (TOAST rewrite + WAL בכל UPDATE), הצטברות `backup-snapshot-*` אם ה-prune לא רץ, ו-autovacuum שרודף אחרי bloat.
+>
+> **המצב האמיתי: מוערער, לא הופרך** — גם טענת-הנגד לא נמדדה (לאותו סוכן לא היו כלי Supabase בסשן). התיקון עצמו נכון כהיגיינה, אבל **אין לסגור את F-11 על סמכו** בלי מדידה בפועל (`n_dead_tup`, `pg_total_relation_size`, ספירת snapshots) — אחרת נסגור ממצא בלי לתקן סיבה. שאילתות המדידה מוכנות בראש `supabase-rls-initplan-optimization.sql`.
+
 ### גבול ההגנה המקומית — מוכח
 session עם access/refresh token נשמר ב-localStorage (2990–3006), והנתונים אינם מוצפנים. יציאה מוחקת session אך לא את נתוני המפות (3128–3139). מצב offline מסיר שער כניסה ומציג נתונים מקומיים במכוון (3268–3281). לכן authentication הוא הגנת גישה לענן; הוא אינו בידוד סודות ממשתמש אחר באותו פרופיל דפדפן. namespaces של demo ו-prod אינם גבול אבטחה בין scripts באותו origin.
 
