@@ -305,11 +305,18 @@ input, select, textarea { font: inherit; }
    means. This is the one screen where a wrong entry silently corrupts the
    reference point everything else is measured against. */
 .anchor-sheet-back{ position:fixed; inset:0; z-index:320; background:rgba(0,0,0,.5);
-  display:none; align-items:flex-end; }
+  display:none; align-items:flex-end; justify-content:center; }
 .anchor-sheet-back.open{ display:flex; }
-.anchor-sheet{ background:var(--surface); width:100%; border-radius:24px 24px 0 0;
+/* width:100% with no cap was fine on a phone and stretched edge-to-edge on a
+   desktop window (reported: "נראה מזעזע במסך מחשב") — the app has an existing
+   convention for exactly this (.modal-card: max-width:620px; margin:0 auto),
+   this sheet just didn't follow it. 480px keeps it a full-width bottom sheet on
+   any real phone (this never engages under that width) and only kicks in on
+   viewports wider than a phone. */
+.anchor-sheet{ background:var(--surface); width:100%; max-width:480px; border-radius:24px 24px 0 0;
   padding:20px 18px max(28px, calc(18px + env(safe-area-inset-bottom)));
   max-height:92dvh; overflow-y:auto; }
+@media (min-width:481px){ .anchor-sheet{ border-radius:24px; margin-bottom:24px; } }
 .anchor-sheet h2{ margin:0 0 4px; font-size:19px; font-weight:var(--fw-black); color:var(--text); }
 .anchor-sheet .anchor-help{ margin:0 0 16px; font-size:var(--fs-sm); line-height:1.55; color:var(--text-2); }
 .anchor-amount-input{ width:100%; box-sizing:border-box; font-family:var(--font-num);
