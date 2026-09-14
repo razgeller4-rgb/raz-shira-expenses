@@ -5351,10 +5351,15 @@ function recordBalanceAnchor(sheet, amount, source){
   // reason they were asked.
   const info = getBalanceGapForSheet(sheet);
   const label = formatSheetLabel(sheet);
+  // Default toast duration (4200ms) is tuned for a short status line, not a
+  // confirmation with a number in it that's worth actually reading — reported:
+  // "קפצה התראה שנעלמה מהר". The banner is the durable record either way
+  // (getBalanceGapForSheet persists until resolved); this only affects the
+  // immediate ping.
   if(!info){
-    showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(amount)}`, "success");
+    showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(amount)}`, "success", {duration:6000});
   } else if(Math.abs(info.gap) <= 1){
-    showToast(`תואם — החישוב של האפליקציה ל${label} זהה למה שבבנק.`, "success");
+    showToast(`תואם — החישוב של האפליקציה ל${label} זהה למה שבבנק.`, "success", {duration:6000});
   } else {
     showToast(`נמצא פער של ${fmt(Math.abs(info.gap))} מול הבנק. ההסבר בראש הדשבורד.`, "error", {duration:7000});
   }
