@@ -1,119 +1,32 @@
 {
   "schema_version": 2,
-  "project": "Expense App — Raz & Shira",
-  "generated_at": "2026-09-13T11:15:00+03:00",
-  "source_policy": "Projection only. git, the running app and STATUS_CHANGELOG.md win whenever they disagree with this file.",
-  "owner": "Raz",
-  "headline": "Stage 2 (verify in data) fully closed: all four original calculation suspicions (C-1 through C-4) resolved, plus two more found and fixed along the way (C-5, C-7). Two of these (C-3+C-5, C-7) were live wrong numbers in production, not just theoretical - C-7 alone understated the dashboard's most prominent debt figure by ~18,441. Mobile edit form, backup tab, and sync indicator also reworked this round. Screens (stage 6) not yet designed.",
-  "stage": "Stage 2 (verify in data) closed 13/09. Stage 5 (design system) complete. Stage 6 (designing the ten screens) not started - this round went to tactical UX fixes and calculation-suspicion verification instead, per Raz's steer toward autonomous forward work.",
-  "git": {
-    "branch": "main",
-    "head": "05ccc62"
-  },
-  "demo_vs_production": {
-    "demo_file": "expense-app-v37-demo.html",
-    "demo_lines": 9849,
-    "production_file": "expense-app-v37.html",
-    "production_lines": 9849,
-    "demo_ahead_lines": 0,
-    "unported_commits": [],
-    "iphone_verified": "UNKNOWN — טרם אושר על ידי רז לגבי כל שינויי 13/09 (טופס עריכה, לשונית גיבוי, תחזית, מיזוג חוב לאבא, ריבית הלוואה, יתרת חוב כוללת). התיקונים הכספיים (C-2/C-3/C-5/C-7) ישנו מספרים היסטוריים אמיתיים בפעם הראשונה שהם פותחים את האתר"
-  },
-  "verification": {
-    "import_routing": "Shira's eight dates split two to July, six to August. No fallback rows.",
-    "amex_pdf": "Eight transactions totalling 1550.47, matching the printed total.",
-    "recurring_heuristic": "Five of five seeded cases correct.",
-    "dark_mode_is_real": "bg/surface 255,255,255 under Light and 27,24,19 under Dark. Three of three probes changed.",
-    "design_system": "107 variables, 5 component sets, 30 variants, zero hardcoded paints.",
-    "shira_on_device": "Confirmed by Shira on her own device, 12/09. The import path is verified end to end, not only programmatically.",
-    "forecast_fix_c3_c5": "Live scenario (opening 10000, past expense 4000, known future expense 6000, day 13/30): projected went from -13894.49 to -6048.34 (card) and the forecast chart's month-end point from +769 (sign-flipped vs the card) to -5230.77 (same sign). Reviewed by domain-risk-reviewer before implementation. Full numbers in CALC_LOGIC_MAP.md section 3.",
-    "father_debt_dedup_c4": "domain-risk-reviewer found the exact date+amount collision C-4 describes already live in the latest production backup (23/03/2026, 1000). Asked Raz directly whether it was one transfer or two - confirmed one, so the existing merge/total was already correct. Added a merge-transparency badge (getCombinedFatherRepayments now records mergedWith) with zero change to any total, so a future wrong merge is visible instead of silent.",
-    "loan_interest_c2": "LOAN_SCHEDULE has always carried total/interest/principal per installment (36 installments, June 2025-May 2028, 4206.43 total interest) but every consumer read .principal only. Fixed across all 7 read sites (closing balance, dashboard widgets, yearly table, debt modal, dashboard hero, direct display) - confirmed live: March 2026 test sheet's closing balance dropped by exactly 164.53 (that installment's interest) after the fix. Loan-payoff-progress figures (bankRemaining, loanPrincipalBase) confirmed unchanged, correctly still principal-only. One-time historical jump for every month back to June 2025 - real and correct, not a new bug.",
-    "debt_remaining_chip_c7": "getTotalDebtRemainingSummary()'s bankPaidPrincipal summed all 36 installments unconditionally (identical to getLoanPrincipalBase()), so bankRemaining was always exactly 0. Confirmed against the real backup: the dashboard's total-debt chip showed 16500 instead of the correct ~34941 (understating by ~18441). Fixed with the same date filter already correct in three sibling implementations; post-fix the dashboard chip and the debts tab agree (18441.50 both)."
-  },
-  "open_risks": [
-    {
-      "id": "R-01",
-      "severity": "high",
-      "title": "Backups are not under version control",
-      "note": "Blanket json rule in gitignore. Pending D-04."
-    },
-    {
-      "id": "R-04",
-      "severity": "medium",
-      "title": "cycleDay means cycle-start in code but charge-day on the statement",
-      "note": "Under D-08 this is a full month of drift. Not acted on - would mean remapping roughly 880 historical rows."
-    },
-    {
-      "id": "R-05",
-      "severity": "low",
-      "title": "All four original calculation suspicions resolved; one low-severity display-only finding remains open",
-      "note": "C-6: a father-debt expense row shows in both the dashboard's expense card and its debt card (display only, does not touch getDisplayedClosingBalance). Also documented, not fixed: the forecast chart still doesn't subtract any loan figure, so its gap against the closing-balance card grew from ~818 to ~948 after C-2 (same pre-existing gap, not a new sign contradiction). See CALC_LOGIC_MAP.md."
-    },
-    {
-      "id": "R-06",
-      "severity": "low",
-      "title": "Design system has no icons and no density axis",
-      "note": "Tab item uses a placeholder circle."
-    }
+  "as_of": "2026-09-13",
+  "source_of_truth": "00_START_HERE.md",
+  "design_direction": "PENDING_SELECTION",
+  "rejected_direction": "C",
+  "concepts": 4,
+  "management_reset": "completed_local",
+  "file_inventory_count_at_scan": 283,
+  "ui_control_occurrences": 506,
+  "ui_semantic_review_remaining": 151,
+  "live_internal_audit": "blocked_by_auth_gate",
+  "cloud_policies": "not_reverified",
+  "new_design_implementation": "not_started",
+  "production_modified_in_this_work": false,
+  "last_verified_commit": "see design/specification/SOURCE_BASELINE.csv hashes; local checkout changed during concurrent work",
+  "limits": [
+    "Counts refer to dated snapshots, not the current total after new artifacts.",
+    "Images are concepts, not measured complete interface specifications."
   ],
-  "stale_reference_docs": {
-    "note": "לא עודכנו — דורשים הכרעת Owner, לא עדכון טכני",
-    "files": [
-      "FEATURE_MASTER_BACKLOG.md — מצהיר כיוון עיצוב כהה/electric-lime בעוד שנשלח light wood/warm tech",
-      "FULL_PRODUCT_SURFACE_MAP.md",
-      "EXPENSE_APP_V38_LAUNCH_PACKET.md",
-      "IMPORT_AUTOMATION_PLAN.md",
-      "HOUSEHOLD_AUTHORIZATION_DESIGN.md"
-    ]
-  },
-  "decision_queue": [
-    {
-      "id": "D-01",
-      "status": "open",
-      "title": "Couple privacy model"
-    },
-    {
-      "id": "D-02",
-      "status": "open",
-      "title": "First automated import source"
-    },
-    {
-      "id": "D-04",
-      "status": "open",
-      "title": "Backups under git"
-    },
-    {
-      "id": "D-06",
-      "status": "open",
-      "title": "Single file or split architecture"
-    },
-    {
-      "id": "D-05",
-      "status": "closed",
-      "resolution": "Direction C"
-    },
-    {
-      "id": "D-08",
-      "status": "closed",
-      "resolution": "Billing month; historical model left intact"
-    },
-    {
-      "id": "D-09",
-      "status": "closed",
-      "resolution": "Lazy pdf.js from CDN"
-    }
-  ],
-  "design_system": {
-    "file": "https://www.figma.com/design/QqheTbOibd4HAO0rbyzJ9M",
-    "variables": 107,
-    "components": {
-      "Button": 15,
-      "Card": 6,
-      "Stat cell": 3,
-      "Category row": 3,
-      "Tab item": 3
-    },
-    "self_audit": "design/design-system/SELF_AUDIT.md"
-  }
+  "active_design_set": "design/fresh-start-2026-09-13/tabs-03",
+  "visual_direction_approved": false,
+  "latest_design_feedback": "Visual direction praised; preserve all existing functions, forms, logic and displayed data.",
+  "selected_design_basis": "refinement-02 option-01 imagery/material + option-03 form UI",
+  "current_phase": "Source control classification and data contracts completed; detailed visual coverage and live validation pending",
+  "parity_report": "design/specification/parity-2026-09-13/COMPARISON_HE.md",
+  "parity_capability_groups": 57,
+  "full_data_coverage_verified": false,
+  "active_contracts": "design/specification/contracts-2026-09-14/README.md",
+  "unassigned_source_control_occurrences": 0,
+  "source_control_occurrences": 506
 }

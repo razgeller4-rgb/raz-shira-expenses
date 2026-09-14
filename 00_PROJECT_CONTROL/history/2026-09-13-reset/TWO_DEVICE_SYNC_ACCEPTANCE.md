@@ -1,5 +1,3 @@
-> **מעמד מ־13.09.2026: חומר עזר מתוארך, לא מקור מצב פעיל.** לתוכנית ולהחלטות העדכניות: [00_START_HERE.md](00_START_HERE.md). טענות על כיוון ג׳, סטטוס ייצור או תוצאות בדיקה נדרשות להצלבה; התוכן ההיסטורי נשמר להלן.
-
 # Two-Device Sync Acceptance — Raz + Shira
 
 **Scope:** live `expense-app-v37.html` after identity and household-read hardening.
