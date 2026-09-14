@@ -2689,6 +2689,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initDarkMode();
   runIncomeMigrations();
   migrateLegacyMerchantMemory();
+  runBalanceAnchorMigration();
   const HERO_DATA = {
     dashboard: { icon:"📊", title:"לוח הבקרה",          sub:"כל המספרים החשובים לחודש — בצפייה אחת" },
     budget:    { icon:"💰", title:"תקציב",               sub:"מעקב הוצאות לפי קטגוריה מול יעד" },
@@ -2924,7 +2925,12 @@ function getAllUserStorageKeys(userId){
     getScopedStorageKey("expense_app_goals_v1", userId),
     getScopedStorageKey("expense_app_merchant_memory_v1", userId),
     getScopedStorageKey("expense_app_monthly_categories_v1", userId),
-    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId)
+    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId),
+    // D-10 / DATA-04. This registry is the ONLY source for getBackupKeys(),
+    // getCloudSyncKeys() and getCloudSyncKeysForUser() - a key missing here is
+    // silently never backed up, never synced and never restored. An anchor is a
+    // recorded claim about real money, so that failure mode is unacceptable.
+    getScopedStorageKey("expense_app_balance_anchors_v1", userId)
   ];
 }
 function getBackupKeys(){
@@ -2973,6 +2979,10 @@ function scheduleAutoRecoveryPoint(){
 }
 function markLocalDataChanged(timestamp=getIsoNow(), userId=currentUser){
   localStorage.setItem(getLocalDataChangedAtKey(userId), timestamp);
+  // DATA-04: the carry-forward chain is computed, not stored, so any data edit
+  // can change every downstream month. This is the single choke point through
+  // which all local writes already pass.
+  if(typeof invalidateBalanceMemo === "function") invalidateBalanceMemo();
   scheduleAutoRecoveryPoint();
   return timestamp;
 }
@@ -5565,14 +5575,154 @@ function getExpenseStats(sheet){
     return stats;
   }, {total:0, fixed:0, variable:0, immediate:0, transfers:0, chargeByDay:{}});
 }
-function getDisplayedOpeningBalance(sheet){
-  const manual = getManualSettings(sheet);
-  if(manual.openingBalance != null) return Number(manual.openingBalance);
-  if(currentUser === "raz"){
-    const summary = getSheetSummaryByName(sheet);
-    if(summary.opening != null) return Number(summary.opening);
-  }
-  return null;
+/* ── D-10 / DATA-04: balance anchors ────────────────────────────────────────
+   An anchor is an observation: "on this date the bank actually said X". Until
+   now the closing balance was a pure projection with nothing to check it
+   against, so any drift - a missed expense, a double count, a wrong cycle -
+   persisted silently forever. That is why Shira's 9,000 immediate charge sat
+   unnoticed for ten days.
+
+   Deliberately NOT stored in manualSettings: saveManualSettings() rebuilds the
+   object with exactly two fields and would silently drop anything else. And an
+   anchor is a claim about a DATE, not about a sheet - under D-11 the month
+   boundary itself becomes a user preference, so a sheet-keyed anchor would
+   change meaning when the user flips that switch.
+
+   Append-only: an anchor is a recorded claim about money. Overwriting in place
+   destroys the ability to answer "when did the gap open?". Corrections are new
+   records with a later enteredAtIso. Same shape the settlements tombstones use. */
+function getBalanceAnchorsStorageKey(){ return getScopedStorageKey("expense_app_balance_anchors_v1"); }
+function normalizeBalanceAnchor(entry, index=0){
+  const amount = Number(entry && entry.amount);
+  if(!Number.isFinite(amount)) return null;
+  const dateIso = String(entry && entry.dateIso || "").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) return null;
+  return {
+    id: String(entry.id || `anchor-${Date.now()}-${index}`),
+    dateIso,
+    amount,
+    enteredBy: entry.enteredBy === "shira" ? "shira" : "raz",
+    enteredAtIso: String(entry.enteredAtIso || getIsoNow()),
+    source: ["manual","legacy-manual","statement-import"].includes(entry.source) ? entry.source : "manual",
+    accountLabel: String(entry.accountLabel || ""),
+    note: String(entry.note || "")
+  };
+}
+function getBalanceAnchors(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getBalanceAnchorsStorageKey()) || "[]");
+    if(Array.isArray(parsed)) return parsed.map(normalizeBalanceAnchor).filter(Boolean);
+  } catch(e){}
+  return [];
+}
+function saveBalanceAnchors(list){
+  const normalized = (Array.isArray(list) ? list : []).map(normalizeBalanceAnchor).filter(Boolean);
+  localStorage.setItem(getBalanceAnchorsStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+/* First day of the sheet's month, in ISO. Version 1 anchors the OPENING of a
+   month, not an arbitrary date - see BALANCE_ANCHOR_SPEC §2.4: income rows are
+   not reliably dated (inferIncomeRows writes date_raw:""), so a mid-month
+   expectation cannot be computed without inventing a date for the salary. */
+function getSheetAnchorDateIso(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return "";
+  return `${year}-${String(month).padStart(2,"0")}-01`;
+}
+/* Latest anchor wins for a given date - corrections are appended, not edited. */
+function getBalanceAnchorForSheet(sheet){
+  const dateIso = getSheetAnchorDateIso(sheet);
+  if(!dateIso) return null;
+  return getBalanceAnchors()
+    .filter(a => a.dateIso === dateIso)
+    .sort((a,b)=> String(a.enteredAtIso).localeCompare(String(b.enteredAtIso)))
+    .pop() || null;
+}
+/* Migration: every existing manual openingBalance becomes a legacy-manual
+   anchor. Runs once per user. Critically this does NOT delete the original -
+   manualSettings stays the source of record for those months so that not a
+   single historical number moves (D-08). The anchor is additive provenance. */
+function runBalanceAnchorMigration(){
+  const flagKey = getScopedStorageKey("expense_app_balance_anchor_migration_v1");
+  if(localStorage.getItem(flagKey)) return;
+  const existing = getBalanceAnchors();
+  const seen = new Set(existing.map(a => `${a.dateIso}|${a.source}`));
+  const added = [];
+  Object.entries(getManualSettingsMap()).forEach(([sheet, settings]) => {
+    if(!settings || settings.openingBalance == null) return;
+    const dateIso = getSheetAnchorDateIso(sheet);
+    if(!dateIso || seen.has(`${dateIso}|legacy-manual`)) return;
+    added.push({
+      id:`anchor-legacy-${dateIso}`,
+      dateIso,
+      amount: Number(settings.openingBalance),
+      enteredBy: currentUser,
+      enteredAtIso: getIsoNow(),
+      source:"legacy-manual",
+      note:"הועבר מ-openingBalance"
+    });
+    seen.add(`${dateIso}|legacy-manual`);
+  });
+  if(added.length) saveBalanceAnchors([...existing, ...added]);
+  localStorage.setItem(flagKey, "done");
+}
+
+/* Memoized per render pass. getDisplayedOpeningBalance now recurses backwards
+   through getDisplayedClosingBalance(prev), and getYearlyRowsData walks twelve
+   months while getHeroSparkData calls it twice - without this the walk is
+   quadratic on every render. Invalidated by markLocalDataChanged(). */
+let _openingBalanceMemo = new Map();
+function invalidateBalanceMemo(){ _openingBalanceMemo = new Map(); }
+
+function getDisplayedOpeningBalance(sheet, _depth=0){
+  const memoKey = `${currentUser}|${sheet}`;
+  if(_openingBalanceMemo.has(memoKey)) return _openingBalanceMemo.get(memoKey);
+  // Cycle/runaway guard: a corrupt sheet name could otherwise walk forever.
+  if(_depth > 240) return null;
+
+  const compute = () => {
+    // 1. Anchored - an actual observation of the bank balance.
+    const anchor = getBalanceAnchorForSheet(sheet);
+    if(anchor) return anchor.amount;
+    // 2. Manual (legacy) - a number the user actually typed.
+    const manual = getManualSettings(sheet);
+    if(manual.openingBalance != null) return Number(manual.openingBalance);
+    // 3. Seeded summary - raz only (C-1). Shira has no second path by design.
+    //    This is imported real data, so it outranks anything we compute.
+    if(currentUser === "raz"){
+      const summary = getSheetSummaryByName(sheet);
+      if(summary.opening != null) return Number(summary.opening);
+    }
+    // 4. LAST: carried forward from the previous month's closing.
+    //    Deliberately below every observed source. D-08 forbids a migration that
+    //    moves historical numbers, and the harness proved this is not
+    //    theoretical: with carry placed above the seeded summary it silently
+    //    rewrote ינואר/פברואר/מרץ 26 (5,107.16 -> -2,940.64 and onward).
+    //    Carry-forward fills holes; it never overrides an observation.
+    const prev = getPrevSheet(sheet);
+    if(prev && (SHEET_OPTIONS || []).includes(prev)){
+      const prevOpening = getDisplayedOpeningBalance(prev, _depth + 1);
+      if(prevOpening != null){
+        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.total || 0) : 0;
+        return prevOpening + getIncomeTotal(prev) - getExpenseStats(prev).total - bank;
+      }
+    }
+    return null;
+  };
+
+  const value = compute();
+  _openingBalanceMemo.set(memoKey, value);
+  return value;
+}
+/* Where the number came from, for the UI. Never guess in the label. */
+function getOpeningBalanceSource(sheet){
+  if(getBalanceAnchorForSheet(sheet)) return "anchored";
+  if(getManualSettings(sheet).openingBalance != null) return "manual";
+  if(currentUser === "raz" && getSheetSummaryByName(sheet).opening != null) return "summary";
+  const prev = getPrevSheet(sheet);
+  if(prev && (SHEET_OPTIONS || []).includes(prev) && getDisplayedOpeningBalance(prev) != null) return "carried";
+  return "none";
 }
 function getDisplayedClosingBalance(sheet){
   // C-2: this is cash actually leaving the account, so it's .total (principal
@@ -6089,11 +6239,30 @@ function drillIntoCategoryExpenses(categoryName){
   render();
 }
 /* ── helpers: prev month comparison ── */
+/* CARRY-16: sheet names are not canonical. Almost every key uses a 2-digit year
+   ("נובמבר 25") but at least one real key in production data uses 4 digits
+   ("אוקטובר 2025"). getSheetMonthYear() reads both, but formatSheetFromMonth()
+   always emits 2 digits - so getPrevSheet("נובמבר 25") returned "אוקטובר 25",
+   a key that does not exist, and the month chain broke there silently.
+   Verified in node against the real backup: 13 sheet keys, exactly one outlier.
+
+   resolveSheetName maps a computed name onto whichever spelling actually holds
+   data, comparing by sort value (year*100+month) so both spellings collapse to
+   the same point in time. Returns the computed name unchanged when nothing
+   matches, so callers that create new sheets keep the canonical 2-digit form. */
+function resolveSheetName(sheet){
+  if(!sheet) return sheet;
+  const known = SHEET_OPTIONS || [];
+  if(known.includes(sheet)) return sheet;
+  const target = getSheetSortValue(sheet);
+  if(!target) return sheet;
+  return known.find(candidate => getSheetSortValue(candidate) === target) || sheet;
+}
 function getPrevSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
   if(!month || !year) return null;
   const prev = shiftMonth(year, month, -1);
-  return formatSheetFromMonth(prev.year, prev.month);
+  return resolveSheetName(formatSheetFromMonth(prev.year, prev.month));
 }
 function buildComparisonChip(current, prev, higherIsBetter){
   if(current == null || !prev || prev === 0) return "";
