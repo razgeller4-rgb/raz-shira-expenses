@@ -2,6 +2,7 @@
 name: agent-researcher
 description: Researches publicly published AI agents, prompts, and agent systems from the community. Extracts practical ideas, patterns, and ready-to-adapt agent definitions. Use when looking for inspiration before building a new agent.
 tools: WebSearch, WebFetch, Read, Write
+permissionMode: plan
 memory: project
 ---
 
