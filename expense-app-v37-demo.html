@@ -370,6 +370,17 @@ input, select, textarea { font: inherit; }
 .groc-bought-section{ margin-top:10px; }
 .groc-bought-section summary{ cursor:pointer; font-size:var(--fs-sm); color:var(--text-2); padding:8px 4px; }
 .groc-empty{ padding:20px 4px; text-align:center; color:var(--muted); font-size:var(--fs-sm); }
+.groc-add-toggle{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:2px solid var(--wood-strong);
+  background:transparent; color:var(--wood-strong); font-weight:var(--fw-bold); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; font-size:16px; line-height:1; }
+.groc-add-toggle:hover{ background:var(--wood-light); }
+.groc-import-row{ margin-bottom:10px; }
+.groc-import-row input[type="file"]{ font-size:var(--fs-sm); color:var(--text-2); width:100%; }
+.groc-import-paste summary{ cursor:pointer; font-size:var(--fs-sm); color:var(--text-2); padding:6px 0; }
+.groc-import-paste textarea{ width:100%; box-sizing:border-box; margin-top:8px; padding:10px 12px;
+  border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text);
+  font-size:14px; font-family:inherit; resize:vertical; }
+.groc-import-paste button{ margin-top:8px; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -2583,19 +2594,30 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
       </div>
     </section>
 
-    <!-- ── Grocery (GROC-02 first slice) ── -->
+    <!-- ── Grocery (GROC-02 second slice — fixed catalog + needed-now toggle) ── -->
     <section class="tab-panel" data-panel="grocery">
       <div class="panel-hero">
         <div class="panel-hero-title">🛒 קניות</div>
-        <div class="panel-hero-sub">רשימה משותפת לבית — מה צריך, מה נקנה</div>
+        <div class="panel-hero-sub">הרשימה הקבועה של הבית — מסמנים מה חסר עכשיו</div>
       </div>
+
       <div class="section open">
         <div class="header">
           <span id="groceryNeededCount">הרשימה ריקה</span>
+          <button type="button" id="grocClearBoughtBtn" class="secondary" onclick="clearBoughtGroceryItems()" style="display:none">נקה את הנקנים ✓</button>
         </div>
         <div class="content">
+          <div class="summary-card">
+            <div id="groceryNeededList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section open">
+        <div class="header"><span>הוספת פריט חד־פעמי</span></div>
+        <div class="content">
           <form class="groc-add-form" onsubmit="event.preventDefault(); submitNewGroceryItem();">
-            <input id="grocNewName" type="text" placeholder="מה צריך? (למשל חלב)" autocomplete="off" required>
+            <input id="grocNewName" type="text" placeholder="פריט שלא ברשימה הקבועה (למשל מתנה ליום הולדת)" autocomplete="off" required>
             <div class="groc-add-row2">
               <input id="grocNewCategory" type="text" placeholder="קטגוריה (לא חובה)" autocomplete="off">
               <input id="grocNewQty" type="number" step="0.1" placeholder="כמות" autocomplete="off">
@@ -2603,11 +2625,32 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
               <label class="groc-important-toggle">
                 <input id="grocNewImportant" type="checkbox"> <span>★ חשוב</span>
               </label>
-              <button type="submit" class="success-btn">הוסף +</button>
+              <button type="submit" class="success-btn">הוסף לקנייה עכשיו +</button>
             </div>
           </form>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="header"><span>ייבוא הרשימה הקבועה</span></div>
+        <div class="content">
+          <div class="small" style="margin-bottom:10px">מייבאים פעם אחת מקובץ מה-iPhone (Files ← iCloud Drive) או מהדבקת טקסט. הקובץ נקרא בדפדפן בלבד ולא נשלח לשום שרת.</div>
+          <div class="groc-import-row">
+            <input type="file" id="grocImportFile" accept="application/json,.json,.txt,text/plain" onchange="handleGroceryImportFile(this)">
+          </div>
+          <details class="groc-import-paste">
+            <summary>או הדבקת טקסט (פריט אחד בכל שורה)</summary>
+            <textarea id="grocImportText" rows="6" placeholder="חלב&#10;לחם&#10;ביצים"></textarea>
+            <button type="button" class="secondary" onclick="handleGroceryImportText()">ייבוא מהטקסט</button>
+          </details>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="header"><span id="groceryCatalogCount">הרשימה הקבועה</span></div>
+        <div class="content">
           <div class="summary-card">
-            <div id="groceryList"></div>
+            <div id="groceryCatalogList"></div>
           </div>
         </div>
       </div>
@@ -5033,25 +5076,35 @@ function submitSettlement(){
   render();
 }
 
-/* ── GROC-02 — shared shopping list, first slice ─────────────────────────
+/* ── GROC-02 — fixed household catalog + "needed now" toggle ─────────────
    Shared like settlements (one list for the household, not per-user like
    expenses) - but deliberately WITHOUT settlements' append-merge cloud push.
    Raz chose "simple now": last write to the shared key wins, same as every
    other shared-row write in this app today. Two people editing the exact
    same item at the exact same second can drop one edit; recorded as a known
    v1 limit, not hidden. Cloud sync wiring (a pushGroceryRow analogous to
-   pushSettlementsRow) is explicitly NOT done in this slice - this is local
-   CRUD only, so it can be verified on its own before sync risk is added.
+   pushSettlementsRow) is explicitly NOT done in this slice.
 
-   The user's real 134-item household catalog lives in data/private-grocery/
-   (git-excluded) and is a DESIGN REFERENCE for categories/fields only. It is
-   never read by this code and never appears in this file - the list starts
-   empty for every user and is populated by typing/pasting into the UI, the
-   same way every other piece of user data in this app works. Hardcoding it
-   here would ship it to the public repo this file lives in. */
+   Second slice, per Raz 15.09: the mental model is not "type what you need"
+   - it's a FIXED catalog (his real household list, ~134 items) that stays in
+   the app permanently. Each item cycles through three states:
+     catalog -> needed (marked for the current shopping trip) -> bought
+     (checked off) -> catalog again (cleared after the trip, ready to be
+     marked needed next time). Nothing is deleted by the normal shopping
+     flow; deleteGroceryItem() is reserved for actually removing an item
+     from the catalog forever (e.g. an import mistake).
+
+   The user's real catalog lives in data/private-grocery/ (git-excluded) and
+   is NEVER read or embedded by this code. Instead this file ships a generic
+   client-side importer (JSON matching that file's shape, or plain text) so
+   Raz brings his own list in through the UI at runtime, on his own device -
+   exactly like every other piece of user data in this app. The import only
+   ever reads a File the user explicitly picks (FileReader, no network call)
+   or text they paste; nothing is uploaded anywhere. */
 function getGroceryListKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_items_v1"; }
 function getGroceryTombstonesKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_tombstones_v1"; }
 function normalizeGroceryItem(item){
+  const status = item && ["catalog","needed","bought"].includes(item.status) ? item.status : "needed";
   return {
     id: String(item && item.id || `groc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
     name: String(item && item.name || "").trim(),
@@ -5059,7 +5112,7 @@ function normalizeGroceryItem(item){
     quantity: item && item.quantity != null && item.quantity !== "" ? Number(item.quantity) : null,
     unit: String(item && item.unit || "").trim(),
     important: Boolean(item && item.important),
-    status: item && item.status === "bought" ? "bought" : "needed",
+    status,
     note: String(item && item.note || "").trim(),
     addedBy: String(item && item.addedBy || currentUser),
     createdAtIso: String(item && item.createdAtIso || getIsoNow()),
@@ -5098,8 +5151,22 @@ function updateGroceryItemStatus(id, status){
   const list = getGroceryItems();
   const item = list.find(i => i.id === id);
   if(!item) return;
-  item.status = status === "bought" ? "bought" : "needed";
+  item.status = ["catalog","needed","bought"].includes(status) ? status : "needed";
   item.updatedAtIso = getIsoNow();
+  saveGroceryItems(list);
+  render();
+}
+function clearBoughtGroceryItems(){
+  const list = getGroceryItems();
+  let changed = false;
+  list.forEach(item => {
+    if(item.status === "bought"){
+      item.status = "catalog";
+      item.updatedAtIso = getIsoNow();
+      changed = true;
+    }
+  });
+  if(!changed){ showToast("אין פריטים שנקנו לניקוי.", "info"); return; }
   saveGroceryItems(list);
   render();
 }
@@ -5123,12 +5190,69 @@ function submitNewGroceryItem(){
     category: catEl ? catEl.value.trim() : "",
     quantity: qtyEl && qtyEl.value !== "" ? Number(qtyEl.value) : null,
     unit: unitEl ? unitEl.value.trim() : "",
-    important: importantEl ? importantEl.checked : false
+    important: importantEl ? importantEl.checked : false,
+    status: "needed"
   });
   if(nameEl){ nameEl.value = ""; nameEl.focus(); }
   if(qtyEl) qtyEl.value = "";
   if(unitEl) unitEl.value = "";
   if(importantEl) importantEl.checked = false;
+}
+/* Accepts either JSON matching data/private-grocery/catalog.json's shape
+   ({items:[{display_name, proposed_category, quantity, unit}, ...]} or a
+   bare array of such objects) or plain text, one item per line. Never reads
+   that file itself - only whatever the user pastes or picks via <input
+   type=file>, which this function receives as a plain string either way. */
+function parseGroceryCatalogPayload(raw){
+  const text = String(raw || "").trim();
+  if(!text) return [];
+  try {
+    const parsed = JSON.parse(text);
+    const rows = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.items) ? parsed.items : null);
+    if(rows){
+      return rows.map(row => ({
+        name: String((row && (row.display_name || row.name || row.original_text)) || "").trim(),
+        category: String((row && (row.proposed_category || row.category || row.source_subsection)) || "").trim(),
+        quantity: row && row.quantity != null && row.quantity !== "" ? Number(row.quantity) : null,
+        unit: String((row && row.unit) || "").trim()
+      })).filter(row => row.name);
+    }
+  } catch(e){ /* not JSON — fall through to plain-text parsing */ }
+  return text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(name => ({
+    name, category: "", quantity: null, unit: ""
+  }));
+}
+function importGroceryCatalogItems(raw){
+  const parsedItems = parseGroceryCatalogPayload(raw);
+  if(!parsedItems.length){ showToast("לא נמצאו פריטים לייבוא.", "error"); return; }
+  const existing = getGroceryItems();
+  const existingNames = new Set(existing.map(i => i.name.trim().toLowerCase()));
+  const list = existing.slice();
+  let added = 0, skipped = 0;
+  parsedItems.forEach(row => {
+    const key = row.name.trim().toLowerCase();
+    if(!key || existingNames.has(key)){ skipped++; return; }
+    existingNames.add(key);
+    list.push(normalizeGroceryItem({...row, status: "catalog"}));
+    added++;
+  });
+  saveGroceryItems(list);
+  showToast(`יובאו ${added} פריטים חדשים${skipped ? `, ${skipped} כבר היו ברשימה` : ""}.`, added ? "success" : "info");
+  render();
+}
+function handleGroceryImportFile(inputEl){
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { importGroceryCatalogItems(String(reader.result || "")); inputEl.value = ""; };
+  reader.onerror = () => showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+  reader.readAsText(file);
+}
+function handleGroceryImportText(){
+  const el = document.getElementById("grocImportText");
+  if(!el) return;
+  importGroceryCatalogItems(el.value);
+  el.value = "";
 }
 /* Categories are free text (per GROCERY_RESEARCH_HE.md: no catalog required
    to add "something for dinner") - grouped here by whatever the user already
@@ -5143,19 +5267,28 @@ function getGroceryCategoryOrder(items){
   return seen;
 }
 function renderGroceryTab(){
-  const root = document.getElementById("groceryList");
-  if(!root) return;
+  const neededRoot = document.getElementById("groceryNeededList");
+  const catalogRoot = document.getElementById("groceryCatalogList");
+  if(!neededRoot || !catalogRoot) return;
   const items = getGroceryItems();
-  const needed = items.filter(i => i.status !== "bought");
+  const needed = items.filter(i => i.status === "needed");
   const bought = items.filter(i => i.status === "bought");
+  const catalog = items.filter(i => i.status === "catalog");
+
   const countEl = document.getElementById("groceryNeededCount");
   if(countEl){
     const importantCount = needed.filter(i => i.important).length;
     countEl.textContent = items.length
-      ? `נותרו ${needed.length} פריטים${importantCount ? ` · ${importantCount} חשובים` : ""}`
-      : "הרשימה ריקה — הוסיפו את המוצר הראשון";
+      ? `${needed.length} לקנייה עכשיו${importantCount ? ` · ${importantCount} חשובים` : ""}${bought.length ? ` · ${bought.length} נקנו` : ""}`
+      : "הרשימה ריקה — ייבאו את הרשימה הקבועה למטה";
   }
-  const renderRow = (item) => `
+  const clearBtn = document.getElementById("grocClearBoughtBtn");
+  if(clearBtn) clearBtn.style.display = bought.length ? "" : "none";
+
+  const catalogCountEl = document.getElementById("groceryCatalogCount");
+  if(catalogCountEl) catalogCountEl.textContent = `הרשימה הקבועה (${catalog.length})`;
+
+  const renderShoppingRow = (item) => `
     <div class="groc-row ${item.status === "bought" ? "is-bought" : ""}" data-id="${escapeHtmlAttr(item.id)}">
       <button type="button" class="groc-check" aria-label="${item.status === "bought" ? "החזר לרשימה" : "סמן כנקנה"}"
         onclick="updateGroceryItemStatus('${item.id}','${item.status === "bought" ? "needed" : "bought"}')">
@@ -5165,23 +5298,31 @@ function renderGroceryTab(){
         <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
-      <button type="button" class="groc-delete" aria-label="מחיקה" onclick="deleteGroceryItem('${item.id}')">✕</button>
+      <button type="button" class="groc-delete" aria-label="הסרה מהקנייה הנוכחית" title="הסרה מהקנייה הנוכחית, נשאר בקטלוג"
+        onclick="updateGroceryItemStatus('${item.id}','catalog')">✕</button>
     </div>`;
-  if(!items.length){
-    root.innerHTML = `<div class="groc-empty">אין פריטים ברשימה עדיין. הוסיפו למעלה מה שצריך.</div>`;
-    return;
-  }
-  const neededByCategory = getGroceryCategoryOrder(needed).map(cat => `
-    <div class="groc-category">
-      <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
-      ${needed.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderRow).join("")}
-    </div>`).join("");
-  const boughtSection = bought.length ? `
-    <details class="groc-bought-section">
-      <summary>נקנה (${bought.length})</summary>
-      ${bought.map(renderRow).join("")}
-    </details>` : "";
-  root.innerHTML = (neededByCategory || `<div class="groc-empty">כל הפריטים נקנו 🎉</div>`) + boughtSection;
+  const shoppingNow = [...needed, ...bought];
+  neededRoot.innerHTML = shoppingNow.length
+    ? shoppingNow.map(renderShoppingRow).join("")
+    : `<div class="groc-empty">כלום לא מסומן לקנייה עכשיו. סמנו פריטים ברשימה הקבועה למטה, או הוסיפו פריט חד־פעמי.</div>`;
+
+  const renderCatalogRow = (item) => `
+    <div class="groc-row" data-id="${escapeHtmlAttr(item.id)}">
+      <button type="button" class="groc-add-toggle" aria-label="הוספה לקנייה עכשיו" title="הוספה לקנייה עכשיו"
+        onclick="updateGroceryItemStatus('${item.id}','needed')">+</button>
+      <div class="groc-row-main">
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}</span>
+        ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
+      </div>
+      <button type="button" class="groc-delete" aria-label="מחיקה לצמיתות מהקטלוג" title="מחיקה לצמיתות מהקטלוג" onclick="deleteGroceryItem('${item.id}')">✕</button>
+    </div>`;
+  catalogRoot.innerHTML = catalog.length
+    ? getGroceryCategoryOrder(catalog).map(cat => `
+        <div class="groc-category">
+          <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
+          ${catalog.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderCatalogRow).join("")}
+        </div>`).join("")
+    : `<div class="groc-empty">הרשימה הקבועה ריקה. ייבאו קובץ או טקסט למעלה.</div>`;
 }
 
 function getManualSettings(sheet){

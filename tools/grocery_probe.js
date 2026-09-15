@@ -98,8 +98,9 @@ const main = scripts.reduce((a, b) => (b.length > a.length ? b : a), "");
 const EXPORTS = [
   "getGroceryListKey", "getGroceryTombstonesKey", "normalizeGroceryItem",
   "getGroceryItems", "saveGroceryItems", "addGroceryItem",
-  "updateGroceryItemStatus", "deleteGroceryItem", "getGroceryTombstones",
-  "getGroceryCategoryOrder", "getBackupKeys", "getCloudSyncKeys",
+  "updateGroceryItemStatus", "clearBoughtGroceryItems", "deleteGroceryItem",
+  "getGroceryTombstones", "getGroceryCategoryOrder", "getBackupKeys", "getCloudSyncKeys",
+  "parseGroceryCatalogPayload", "importGroceryCatalogItems",
 ];
 
 const src = `
@@ -201,6 +202,57 @@ api.addGroceryItem({ name: "קוטג'", category: "מוצרי חלב" });
 const order = api.getGroceryCategoryOrder(api.getGroceryItems());
 check("category order: first-seen, no duplicates", JSON.stringify(order) === JSON.stringify(["מאפים", "ירקות", "מוצרי חלב"]),
   JSON.stringify(order));
+
+// 9. catalog import — JSON matching data/private-grocery/catalog.json's shape
+// (fabricated sample data here, never the real private file — the parser is
+// generic and this only proves the shape is handled).
+const fakeCatalogJson = JSON.stringify({
+  items: [
+    { display_name: "כמון", proposed_category: "תבלינים", quantity: null, unit: null },
+    { display_name: "כורכום", proposed_category: "תבלינים" },
+    { name: "לחם" }, // duplicate of the existing needed-item added in test 4
+  ],
+});
+const beforeImport = api.getGroceryItems().length;
+api.importGroceryCatalogItems(fakeCatalogJson);
+let afterImport = api.getGroceryItems();
+check("import JSON: two new catalog items added, one skipped as duplicate",
+  afterImport.length === beforeImport + 2, `before=${beforeImport} after=${afterImport.length}`);
+const cumin = afterImport.find((i) => i.name === "כמון");
+check("import JSON: field mapping (display_name/proposed_category)",
+  cumin && cumin.category === "תבלינים" && cumin.status === "catalog", JSON.stringify(cumin));
+
+// 10. catalog import — plain text fallback, one item per line
+api.importGroceryCatalogItems("שמן זית\nמלח ים\n\n  \nכמון"); // "כמון" already imported, blank lines ignored
+afterImport = api.getGroceryItems();
+check("import text: two new items added, blank lines and dup skipped",
+  afterImport.some((i) => i.name === "שמן זית") && afterImport.some((i) => i.name === "מלח ים")
+  && afterImport.filter((i) => i.name === "כמון").length === 1, JSON.stringify(afterImport.map((i) => i.name)));
+
+// 11. reimporting the exact same payload adds nothing (idempotent)
+const beforeReimport = api.getGroceryItems().length;
+api.importGroceryCatalogItems(fakeCatalogJson);
+check("import: reimport is idempotent (no duplicates)", api.getGroceryItems().length === beforeReimport,
+  `before=${beforeReimport} after=${api.getGroceryItems().length}`);
+
+// 12. catalog -> needed -> bought -> catalog cycle (the real shopping flow)
+const cuminNow = api.getGroceryItems().find((i) => i.name === "כמון");
+api.updateGroceryItemStatus(cuminNow.id, "needed");
+check("cycle: catalog item marked needed", api.getGroceryItems().find((i) => i.id === cuminNow.id)?.status === "needed");
+api.updateGroceryItemStatus(cuminNow.id, "bought");
+check("cycle: needed item marked bought", api.getGroceryItems().find((i) => i.id === cuminNow.id)?.status === "bought");
+api.clearBoughtGroceryItems();
+check("cycle: clearBought returns bought items to catalog (not deleted)",
+  api.getGroceryItems().find((i) => i.id === cuminNow.id)?.status === "catalog");
+check("cycle: clearBought on an already-clear list is a no-op, does not throw", (() => {
+  try { api.clearBoughtGroceryItems(); return true; } catch (e) { return false; }
+})());
+
+// 13. deleteGroceryItem is still a real, permanent removal (distinct from clearBought)
+const beforeDelete2 = api.getGroceryItems().length;
+api.deleteGroceryItem(cuminNow.id);
+check("permanent delete: item removed even though it was in catalog",
+  api.getGroceryItems().length === beforeDelete2 - 1 && !api.getGroceryItems().find((i) => i.id === cuminNow.id));
 
 console.log(failed ? `\n${failed} check(s) FAILED` : "\nALL CHECKS PASSED");
 process.exit(failed ? 1 : 0);
