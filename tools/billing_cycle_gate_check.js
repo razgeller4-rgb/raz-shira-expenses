@@ -184,3 +184,44 @@ mismatchRows.slice(0, SHOW).forEach((r) => {
   );
 });
 if (mismatchRows.length > SHOW) console.log(`... and ${mismatchRows.length - SHOW} more`);
+
+/* ---- baseline compare (added 2026-09-15) ---------------------------------
+ * domain-risk-reviewer L-1: this was print-only, so a regression would only
+ * ever "look different" to a human, not fail a check. The one acceptance
+ * criterion CLAUDE_NEXT_ACTION.md actually requires is that EXISTING MANUAL
+ * ROWS never move - that is testable without any human judgment.
+ *
+ * usage: --out <path.json> to save this run's manual-row placements,
+ *        --baseline <path.json> to assert this run's manual-row placements
+ *        are byte-identical to a saved one. Only manual (imported=false) rows
+ *        are compared - imported rows are EXPECTED to change sheet once the
+ *        D-08 fix ships, that is the point of it. */
+const outIdx = process.argv.indexOf("--out");
+const baselineIdx = process.argv.indexOf("--baseline");
+const manualPlacements = {};
+for (const sheet of sheets) {
+  let rows;
+  try { rows = api.getEditableRows(sheet); } catch (e) { continue; }
+  for (const row of rows) {
+    if (row.importMeta) continue; // only manual rows are the no-movement guarantee
+    if (!row.merchant) continue;
+    const key = `${row.date_raw}|${row.merchant}|${row.amount}|${row.payment || ""}`;
+    manualPlacements[key] = sheet;
+  }
+}
+if (outIdx >= 0 && process.argv[outIdx + 1]) {
+  fs.writeFileSync(process.argv[outIdx + 1], JSON.stringify(manualPlacements, null, 1));
+  console.log(`\nsaved ${Object.keys(manualPlacements).length} manual-row placements to ${process.argv[outIdx + 1]}`);
+}
+if (baselineIdx >= 0 && process.argv[baselineIdx + 1]) {
+  const baseline = JSON.parse(fs.readFileSync(process.argv[baselineIdx + 1], "utf8"));
+  const moved = Object.keys(baseline).filter((k) => manualPlacements[k] !== baseline[k]);
+  console.log(`\n--- baseline compare: ${Object.keys(baseline).length} manual rows checked ---`);
+  if (moved.length) {
+    console.log(`FAIL: ${moved.length} manual row(s) moved sheet:`);
+    moved.slice(0, 20).forEach((k) => console.log(`  ${k}: ${baseline[k]} -> ${manualPlacements[k] ?? "(missing)"}`));
+    process.exitCode = 1;
+  } else {
+    console.log("PASS: 0 manual rows moved");
+  }
+}

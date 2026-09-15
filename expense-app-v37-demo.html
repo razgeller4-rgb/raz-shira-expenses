@@ -10103,6 +10103,25 @@ function handleCCFile(e){
   reader.readAsArrayBuffer(file);
 }
 
+/* DD-MM-YYYY (dashes) -> DD/MM/YYYY, the slash format toIsoDate expects and
+ * date_raw already uses everywhere else in the app. Deliberately separate
+ * from toIsoDate rather than teaching it a second delimiter: toIsoDate is
+ * called all over the app on data assumed to already be in the app's own
+ * date_raw convention, and silently widening what it accepts there is a
+ * bigger blast radius than one parser needing its own normalizer. Returns ""
+ * on anything that doesn't match - callers must treat that as "not present",
+ * not retry with a looser pattern, per domain-risk-reviewer 2026-09-15
+ * (a silent "" here is what made the original bug look fixed when it wasn't:
+ * it fell through to the old per-row calculation and nothing in a casual
+ * manual test would have shown the difference). */
+function parseDashedStatementDate(raw){
+  const s = String(raw || "").trim();
+  const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+  if(!m) return "";
+  const [, dd, mm, yyyy] = m;
+  return `${dd.padStart(2,"0")}/${mm.padStart(2,"0")}/${yyyy}`;
+}
+
 function parseCCStatement(rows, filename){
   // Detect format: Max / Isracard / CAL
   let format = null;
@@ -10184,6 +10203,10 @@ function parseCCStatement(rows, filename){
 
     let dateStr = "", merchant = "", amtCharge = 0, currOrig = "\u20aa", amtOrig = null, notes = "";
     let payment = "", sourceCardLabel = "", sourceCardLast4 = "", sourceTxnType = "";
+    // The date the ISSUER says this posts to the account, when the statement
+    // states one - as opposed to dateStr above, which is the purchase date.
+    // Empty unless a format below fills it in.
+    let billingDateRaw = "";
 
     if(format === "max"){
       // Max columns: 0=date(DD-MM-YYYY) 1=merchant 2=category 3=last4 4=type 5=chargeAmt 6=chargeCurr 7=origAmt 8=origCurr 9=billingDate 10=notes
@@ -10199,9 +10222,13 @@ function parseCCStatement(rows, filename){
       if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
       sourceCardLast4 = last4;
       payment = guessPaymentMethodForImport(cardName, sourceCardLast4, cardName, "");
-      // Parse DD-MM-YYYY
-      const parts = d.split("-");
-      dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+parts[2];
+      dateStr = parseDashedStatementDate(d);
+      // D-08 \u00a73 / domain-risk-reviewer 2026-09-15 (trap #1): r[9] is in the
+      // SAME dashed format as r[0] - it is not toIsoDate-compatible on its own
+      // (that function only accepts slashes). Route it through the identical
+      // parser used two lines above, not a fresh regex, so both dates either
+      // both parse or both fail the same way.
+      billingDateRaw = parseDashedStatementDate(normalizeStatementCell(r[9]));
 
     } else if(format === "isracard") {
       // Isracard columns: 0=date(DD.MM.YY) 1=merchant 2=origAmt 3=origCurr 4=chargeAmt 5=chargeCurr 7=notes
@@ -10291,7 +10318,11 @@ function parseCCStatement(rows, filename){
       // The issuer states outright which charges are standing orders. That beats
       // guessing from history, so it is passed through as a suggestion the
       // review table can still override.
-      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
+      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : "",
+      // Empty for isracard/cal/amex today - none of them carry a per-row
+      // billing date the way max does. D-08 \u00a73 only asked for this where the
+      // source actually states it; extending the others is separate work.
+      billingDateRaw
     });
   }
 
@@ -10530,6 +10561,17 @@ function buildCCImportTable(){
    so nothing is silently dropped. */
 function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
   try {
+    // D-08 \u00a73: when the statement itself states a billing date, that IS the
+    // month - no per-row recalculation. This is deliberately not merely a
+    // tie-breaker: getBillingSheetForExpense's cycleDay heuristic is exactly
+    // what D-08 found unreliable (verified against 17 real Mizrahi rows, off
+    // by a full month). A stated date, when present, is ground truth and
+    // bypasses that heuristic entirely rather than being reconciled with it.
+    const billingIso = toIsoDate(row.billingDateRaw);
+    if(billingIso){
+      const [by, bm] = billingIso.split("-").map(Number);
+      if(by && bm) return resolveSheetName(formatSheetFromMonth(by, bm));
+    }
     const iso = toIsoDate(row.date_raw);
     if(!iso) return fallbackSheet;
     const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
@@ -10538,6 +10580,21 @@ function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallba
     return fallbackSheet;
   }
 }
+/* domain-risk-reviewer 2026-09-15 (H-2): preferring the statement's stated
+ * billing date (below, via resolveImportTargetSheet) makes an import land on
+ * a FUTURE month more often than the old per-row calculation did - and this
+ * function has never checked whether its target sheet is closed, because
+ * MONTH_CLOSE_SPEC's month-close concept (expense_app_month_close_v1,
+ * closeMonth/reopenMonth) does not exist in this file yet. No check is added
+ * here for that reason: there is nothing to check against today, and a stub
+ * guard against a feature that doesn't exist would be exactly the kind of
+ * validation-for-a-scenario-that-can't-happen this project avoids.
+ *
+ * ⚠️ THIS BECOMES A REAL GAP THE MOMENT MONTH_CLOSE_SPEC WAVE 4a SHIPS. Its
+ * own §2 "reopen?" queue is scoped to wave 4b, one wave later - so there is a
+ * window where months CAN be closed but this function still writes into one
+ * with zero warning. Do not promote wave 4a to production before either wave
+ * 4b exists or this function gains its own minimal closed-month check. */
 function confirmCCImport(){
  try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
@@ -10573,6 +10630,13 @@ function confirmCCImport(){
     }
     const shift = Math.max(0, Number(r.billingShiftMonths || 0));
     const targetSheet = resolveImportTargetSheet(r, payment, isImm, shift, sheet);
+    // domain-risk-reviewer 2026-09-15 (M-3): addNewExpense already does this
+    // for manual entry (line ~8493); confirmCCImport never did, so an import
+    // landing on a month with no rows yet skipped the recurring-income seed
+    // that ensureSheetExists provides. Preferring the statement's stated
+    // billing date makes landing on a not-yet-touched future month more
+    // common, not less, so this stops being a rare edge case.
+    ensureSheetExists(targetSheet);
     if(!overrides[targetSheet]) overrides[targetSheet] = [];
     countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;
 

@@ -1,11 +1,12 @@
 #!/usr/bin/env node
-/* Runs the app's own shipping parseCCStatement against a real statement file,
- * using the REAL xlsx library (not tools/balance_harness.js's XLSXStub, which
- * returns empty results and would prove nothing about parsing). This is what
- * verified on 2026-09-14 that the existing "Max" branch already parses
- * Mizrahi's export correctly (17/17 real transactions) - and separately, that
- * it reads the statement's own billing-date column (r[9]) but never keeps it
- * anywhere in the returned txn object. See DECISION_REGISTER.md D-08.
+/* Runs the app's own shipping parseCCStatement + resolveImportTargetSheet
+ * against a real statement file, using the REAL xlsx library (not
+ * tools/balance_harness.js's XLSXStub, which returns empty results and would
+ * prove nothing about parsing). This is what verified on 2026-09-14 that the
+ * existing "Max" branch already parses Mizrahi's export correctly (17/17 real
+ * transactions), and on 2026-09-15 that a naive fix would have silently
+ * fallen back to the old (wrong) routing rule while looking like it worked -
+ * see DECISION_REGISTER.md D-08 and D08_NARROW_FIX_REVIEW_2026-09-15.md.
  *
  * REQUIRES a local copy of the exact xlsx build the app loads from CDN
  * (xlsx@0.18.5, see the <script src> in expense-app-v37-demo.html's <head>).
@@ -18,7 +19,9 @@
  * Usage:
  *   node tools/cc_import_probe.js <app.html> <statement.xlsx> [/path/to/xlsx.full.min.js]
  *
- * Read-only: never writes to the statement file, the app file, or app state.
+ * Exits non-zero on any assertion failure, so this can gate a promotion, not
+ * just "looks right in a manual read". Read-only: never writes to the
+ * statement file, the app file, or app state.
  *
  * SECURITY NOTE: uses new Function() on the app's own <script> content, same
  * scoped, reviewed pattern as tools/balance_harness.js - see that file's
@@ -44,7 +47,11 @@ const html = fs.readFileSync(appPath, "utf8");
 const scripts = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 const main = scripts.reduce((a, b) => (b.length > a.length ? b : a), "");
 
-const EXPORTS = ["parseCCStatement", "normalizeStatementCell", "guessPaymentMethodForImport", "getCategoryDefinitions", "lookupMerchantMapping"];
+const EXPORTS = [
+  "parseCCStatement", "normalizeStatementCell", "guessPaymentMethodForImport",
+  "getCategoryDefinitions", "lookupMerchantMapping", "resolveImportTargetSheet",
+  "getBillingSheetForExpense", "toIsoDate", "syncSheetOptions",
+];
 const src = `${main}\n;return { ${EXPORTS.map((n) => `${n}: typeof ${n} === "function" ? ${n} : undefined`).join(", ")} };`;
 
 const noop = () => {};
@@ -100,6 +107,7 @@ const api = new Function(
   noop, () => true, () => null, async () => ({ ok: false, status: 0, json: async () => ({}) }),
   ChartStub, XLSX
 );
+if (api.syncSheetOptions) { try { api.syncSheetOptions(); } catch (e) {} }
 
 const buf = fs.readFileSync(filePath);
 const wb = XLSX.read(buf, { type: "buffer" });
@@ -111,7 +119,53 @@ const result = api.parseCCStatement(raw, path.basename(filePath));
 console.log("\n--- parseCCStatement result ---");
 console.log("format:", result.format);
 console.log("cardName:", result.cardName);
-console.log("chargeDate (top-level, only isracard/cal set this):", JSON.stringify(result.chargeDate));
 console.log("last4:", result.last4);
 console.log("txns.length:", result.txns.length);
 console.log("first 3 txns:", JSON.stringify(result.txns.slice(0, 3), null, 1));
+
+/* ---- assertions (added 2026-09-15, per domain-risk-reviewer §5) ---------
+ * D08_NARROW_FIX_REVIEW_2026-09-15.md is explicit that this is the failure
+ * mode that matters most here: a bad normalizer can return "" and silently
+ * fall back to the old rule, and *nothing about the output looks wrong* in a
+ * casual read. These assertions exist so that failure mode fails loudly. */
+const results = [];
+const check = (name, pass, detail) => { results.push({ name, pass, detail }); console.log(`${pass ? "PASS" : "FAIL"}  ${name}\n        ${detail}`); };
+
+if (result.format === "max") {
+  const withDate = result.txns.filter((t) => t.billingDateRaw);
+  check(
+    "every max-format txn carries a non-empty billingDateRaw",
+    withDate.length === result.txns.length,
+    `${withDate.length}/${result.txns.length} have it`
+  );
+
+  const isoDates = result.txns.map((t) => api.toIsoDate(t.billingDateRaw));
+  check(
+    "billingDateRaw normalizes to a valid ISO date, not \"\"",
+    isoDates.every((d) => /^\d{4}-\d{2}-\d{2}$/.test(d)),
+    JSON.stringify([...new Set(isoDates)])
+  );
+
+  if (result.txns.length) {
+    const sample = result.txns[0];
+    const fallbackSheet = "FALLBACK_SHOULD_NOT_APPEAR";
+    const withStated = api.resolveImportTargetSheet(sample, "ויזה מזרחי", false, 0, fallbackSheet);
+    const withoutStated = api.resolveImportTargetSheet({ ...sample, billingDateRaw: "" }, "ויזה מזרחי", false, 0, fallbackSheet);
+    check(
+      "a row WITH a stated billing date routes differently than the old date-only calculation",
+      withStated !== withoutStated,
+      `stated -> ${withStated}, calculated -> ${withoutStated} (if these match, the statement's date is being silently ignored)`
+    );
+    check(
+      "with NO billing date, routing still produces something (regression: fallback path not broken)",
+      typeof withoutStated === "string" && withoutStated !== fallbackSheet,
+      `-> ${withoutStated}`
+    );
+  }
+} else {
+  console.log(`\n(format is "${result.format}", not "max" - billingDateRaw assertions only apply to the max branch today, see M-2 in the review)`);
+}
+
+const failed = results.filter((r) => !r.pass);
+console.log(`\n${results.length - failed.length}/${results.length} passed`);
+if (results.length && failed.length) process.exitCode = 1;
