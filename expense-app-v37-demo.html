@@ -221,6 +221,7 @@ input, select, textarea { font: inherit; }
 [data-panel="shared"]    .panel-hero { background: linear-gradient(135deg,#9E5A68,#C77B8B,#DAA2AE); }
 [data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#6E5C4D,#8E7A66,#B3A085); }
 [data-panel="goals"]     .panel-hero { background: linear-gradient(135deg,#4E7C6E,#6E9C8E,#9DC4B6); }
+[data-panel="grocery"]   .panel-hero { background: linear-gradient(135deg,#5E7A50,#7E9B6E,#A8C29A); }
 [data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#A8895C,#C2A579,#DDC79E); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#8A5E3C,#B07D56,#CCA079); }
 
@@ -337,6 +338,38 @@ input, select, textarea { font: inherit; }
 .anchor-sheet .anchor-error{ display:none; margin-top:10px; font-size:var(--fs-sm);
   font-weight:var(--fw-semi); color:var(--bad); }
 .anchor-sheet .anchor-error.is-visible{ display:block; }
+/* ── Grocery tab (GROC-02 first slice) ───────────────────────────────── */
+.groc-add-form{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.groc-add-form input[type="text"],.groc-add-form input[type="number"]{
+  width:100%; box-sizing:border-box; padding:11px 14px; border-radius:14px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; }
+.groc-add-form input:focus{ outline:none; border-color:var(--accent); }
+.groc-add-row2{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.groc-add-row2 input[type="text"]{ flex:1 1 110px; }
+.groc-add-row2 input[type="number"]{ flex:0 1 80px; }
+.groc-important-toggle{ display:flex; align-items:center; gap:4px; font-size:var(--fs-sm);
+  color:var(--text-2); white-space:nowrap; cursor:pointer; }
+.groc-category{ margin-bottom:18px; }
+.groc-category-title{ font-size:var(--fs-sm); font-weight:var(--fw-semi); color:var(--wood-strong);
+  margin-bottom:8px; padding-inline-start:2px; }
+.groc-row{ display:flex; align-items:center; gap:10px; padding:10px 4px;
+  border-bottom:1px solid var(--border); }
+.groc-row:last-child{ border-bottom:0; }
+.groc-check{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:2px solid var(--accent);
+  background:transparent; color:#fff; font-weight:var(--fw-bold); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; font-size:14px; }
+.groc-row.is-bought .groc-check{ background:var(--accent); }
+.groc-row-main{ flex:1; display:flex; align-items:baseline; gap:8px; min-width:0; }
+.groc-row-name{ font-size:15px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.groc-row.is-bought .groc-row-name{ color:var(--muted); text-decoration:line-through; }
+.groc-star{ color:var(--warn); font-size:13px; }
+.groc-row-qty{ font-size:var(--fs-sm); color:var(--text-2); white-space:nowrap; flex:0 0 auto; }
+.groc-delete{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:0; background:transparent;
+  color:var(--muted); cursor:pointer; font-size:14px; }
+.groc-delete:hover{ background:var(--bad-light); color:var(--bad); }
+.groc-bought-section{ margin-top:10px; }
+.groc-bought-section summary{ cursor:pointer; font-size:var(--fs-sm); color:var(--text-2); padding:8px 4px; }
+.groc-empty{ padding:20px 4px; text-align:center; color:var(--muted); font-size:var(--fs-sm); }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -1755,6 +1788,7 @@ body { background:var(--bg); }
 [data-theme="dark"] [data-panel="shared"] .panel-hero,
 [data-theme="dark"] [data-panel="debts"] .panel-hero,
 [data-theme="dark"] [data-panel="goals"] .panel-hero,
+[data-theme="dark"] [data-panel="grocery"] .panel-hero,
 [data-theme="dark"] [data-panel="yearly"] .panel-hero,
 [data-theme="dark"] [data-panel="backup"] .panel-hero {
   background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 56%,var(--surface) 100%);
@@ -2123,6 +2157,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
       <button class="tab-btn" data-tab="shared">הוצאות משותפות</button>
       <button class="tab-btn" data-tab="debts">חובות והלוואות</button>
       <button class="tab-btn" data-tab="goals">יעדים</button>
+      <button class="tab-btn" data-tab="grocery">קניות</button>
       <button class="tab-btn" data-tab="yearly">סיכום שנתי</button>
       <button class="tab-btn" data-tab="backup">גיבוי נתונים</button>
       <button class="tab-btn" id="showDebtsSetupBtn" type="button" style="display:none">הפעל טאב חובות</button>
@@ -2547,6 +2582,36 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
       </div>
     </section>
 
+    <!-- ── Grocery (GROC-02 first slice) ── -->
+    <section class="tab-panel" data-panel="grocery">
+      <div class="panel-hero">
+        <div class="panel-hero-title">🛒 קניות</div>
+        <div class="panel-hero-sub">רשימה משותפת לבית — מה צריך, מה נקנה</div>
+      </div>
+      <div class="section open">
+        <div class="header">
+          <span id="groceryNeededCount">הרשימה ריקה</span>
+        </div>
+        <div class="content">
+          <form class="groc-add-form" onsubmit="event.preventDefault(); submitNewGroceryItem();">
+            <input id="grocNewName" type="text" placeholder="מה צריך? (למשל חלב)" autocomplete="off" required>
+            <div class="groc-add-row2">
+              <input id="grocNewCategory" type="text" placeholder="קטגוריה (לא חובה)" autocomplete="off">
+              <input id="grocNewQty" type="number" step="0.1" placeholder="כמות" autocomplete="off">
+              <input id="grocNewUnit" type="text" placeholder="יחידה" autocomplete="off">
+              <label class="groc-important-toggle">
+                <input id="grocNewImportant" type="checkbox"> <span>★ חשוב</span>
+              </label>
+              <button type="submit" class="success-btn">הוסף +</button>
+            </div>
+          </form>
+          <div class="summary-card">
+            <div id="groceryList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Yearly ── -->
     <section class="tab-panel" data-panel="yearly">
       <div class="year-card">
@@ -2681,6 +2746,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
     <button class="more-row tab-btn" data-tab="cards"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='8' width='16' height='10' rx='2'/><path d='M4 11h16'/></svg>אשראיים</button>
     <button class="more-row tab-btn" data-tab="debts"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 20h16'/><path d='M6 20v-8M10 20v-8M14 20v-8M18 20v-8'/><path d='M12 4L4 9h16z'/></svg>חובות</button>
     <button class="more-row tab-btn" data-tab="goals"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='4'/><circle cx='12' cy='12' r='0.6' fill='currentColor'/></svg>יעדים</button>
+    <button class="more-row tab-btn" data-tab="grocery" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 6h2l2 11h11l1.5-8H7'/><circle cx='10' cy='20' r='1.2'/><circle cx='16' cy='20' r='1.2'/></svg>קניות</button>
     <button class="more-row tab-btn" data-tab="yearly" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='6' width='16' height='14' rx='2'/><path d='M4 10h16M9 4v4M15 4v4'/></svg>שנתי</button>
     <button class="more-row tab-btn" data-tab="backup" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx='12' cy='7' rx='7' ry='3'/><path d='M5 7v10c0 1.7 3.1 3 7 3s7-1.3 7-3V7'/></svg>גיבוי</button>
   </nav>
@@ -3015,7 +3081,13 @@ function getBackupKeys(){
     ACTIVE_USER_STORAGE_KEY,
     ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
     getSharedSettlementsKey(),
-    getSharedSettlementsTombstonesKey()
+    getSharedSettlementsTombstonesKey(),
+    // GROC-02 first slice: no cloud push wired yet (see the comment above
+    // getGroceryListKey), but the local JSON backup/restore path is generic
+    // over this list, so registering here now costs nothing and avoids a
+    // silent gap once cloud sync is added.
+    getGroceryListKey(),
+    getGroceryTombstonesKey()
   ];
 }
 function getCloudSyncKeys(){
@@ -3024,7 +3096,9 @@ function getCloudSyncKeys(){
   return [
     ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
     getSharedSettlementsKey(),
-    getSharedSettlementsTombstonesKey()
+    getSharedSettlementsTombstonesKey(),
+    getGroceryListKey(),
+    getGroceryTombstonesKey()
   ];
 }
 /* Per-user key set — the only keys a device writes to its own cloud row.
@@ -4957,6 +5031,158 @@ function submitSettlement(){
   addSharedSettlement({amount:amt, paidById, receivedById, date_raw, notes});
   render();
 }
+
+/* ── GROC-02 — shared shopping list, first slice ─────────────────────────
+   Shared like settlements (one list for the household, not per-user like
+   expenses) - but deliberately WITHOUT settlements' append-merge cloud push.
+   Raz chose "simple now": last write to the shared key wins, same as every
+   other shared-row write in this app today. Two people editing the exact
+   same item at the exact same second can drop one edit; recorded as a known
+   v1 limit, not hidden. Cloud sync wiring (a pushGroceryRow analogous to
+   pushSettlementsRow) is explicitly NOT done in this slice - this is local
+   CRUD only, so it can be verified on its own before sync risk is added.
+
+   The user's real 134-item household catalog lives in data/private-grocery/
+   (git-excluded) and is a DESIGN REFERENCE for categories/fields only. It is
+   never read by this code and never appears in this file - the list starts
+   empty for every user and is populated by typing/pasting into the UI, the
+   same way every other piece of user data in this app works. Hardcoding it
+   here would ship it to the public repo this file lives in. */
+function getGroceryListKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_items_v1"; }
+function getGroceryTombstonesKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_tombstones_v1"; }
+function normalizeGroceryItem(item){
+  return {
+    id: String(item && item.id || `groc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
+    name: String(item && item.name || "").trim(),
+    category: String(item && item.category || "").trim(),
+    quantity: item && item.quantity != null && item.quantity !== "" ? Number(item.quantity) : null,
+    unit: String(item && item.unit || "").trim(),
+    important: Boolean(item && item.important),
+    status: item && item.status === "bought" ? "bought" : "needed",
+    note: String(item && item.note || "").trim(),
+    addedBy: String(item && item.addedBy || currentUser),
+    createdAtIso: String(item && item.createdAtIso || getIsoNow()),
+    updatedAtIso: String(item && item.updatedAtIso || getIsoNow())
+  };
+}
+function getGroceryTombstones(){
+  try { return JSON.parse(localStorage.getItem(getGroceryTombstonesKey()) || "{}"); } catch(e){ return {}; }
+}
+function saveGroceryTombstones(tombstones){
+  localStorage.setItem(getGroceryTombstonesKey(), JSON.stringify(tombstones));
+}
+function getGroceryItems(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getGroceryListKey()) || "[]");
+    const tombstones = getGroceryTombstones();
+    if(!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeGroceryItem).filter(item => !tombstones[item.id]);
+  } catch(e){ return []; }
+}
+function saveGroceryItems(list){
+  localStorage.setItem(getGroceryListKey(), JSON.stringify((Array.isArray(list) ? list : []).map(normalizeGroceryItem)));
+  markLocalDataChanged();
+}
+function addGroceryItem(data){
+  if(!data || !String(data.name || "").trim()){
+    showToast("צריך שם למוצר לפני שמוסיפים.", "error");
+    return;
+  }
+  const list = getGroceryItems();
+  list.push(normalizeGroceryItem(data));
+  saveGroceryItems(list);
+  render();
+}
+function updateGroceryItemStatus(id, status){
+  const list = getGroceryItems();
+  const item = list.find(i => i.id === id);
+  if(!item) return;
+  item.status = status === "bought" ? "bought" : "needed";
+  item.updatedAtIso = getIsoNow();
+  saveGroceryItems(list);
+  render();
+}
+function deleteGroceryItem(id){
+  const tombstones = getGroceryTombstones();
+  tombstones[id] = getIsoNow();
+  saveGroceryTombstones(tombstones);
+  saveGroceryItems(getGroceryItems().filter(i => i.id !== id));
+  render();
+}
+function submitNewGroceryItem(){
+  const nameEl = document.getElementById("grocNewName");
+  const catEl = document.getElementById("grocNewCategory");
+  const qtyEl = document.getElementById("grocNewQty");
+  const unitEl = document.getElementById("grocNewUnit");
+  const importantEl = document.getElementById("grocNewImportant");
+  const name = nameEl ? nameEl.value.trim() : "";
+  if(!name){ showToast("צריך שם למוצר לפני שמוסיפים.", "error"); return; }
+  addGroceryItem({
+    name,
+    category: catEl ? catEl.value.trim() : "",
+    quantity: qtyEl && qtyEl.value !== "" ? Number(qtyEl.value) : null,
+    unit: unitEl ? unitEl.value.trim() : "",
+    important: importantEl ? importantEl.checked : false
+  });
+  if(nameEl){ nameEl.value = ""; nameEl.focus(); }
+  if(qtyEl) qtyEl.value = "";
+  if(unitEl) unitEl.value = "";
+  if(importantEl) importantEl.checked = false;
+}
+/* Categories are free text (per GROCERY_RESEARCH_HE.md: no catalog required
+   to add "something for dinner") - grouped here by whatever the user already
+   typed, "ללא קטגוריה" for items with none, so the list is never blocked on
+   picking from a fixed set. */
+function getGroceryCategoryOrder(items){
+  const seen = [];
+  items.forEach(item => {
+    const key = item.category || "ללא קטגוריה";
+    if(!seen.includes(key)) seen.push(key);
+  });
+  return seen;
+}
+function renderGroceryTab(){
+  const root = document.getElementById("groceryList");
+  if(!root) return;
+  const items = getGroceryItems();
+  const needed = items.filter(i => i.status !== "bought");
+  const bought = items.filter(i => i.status === "bought");
+  const countEl = document.getElementById("groceryNeededCount");
+  if(countEl){
+    const importantCount = needed.filter(i => i.important).length;
+    countEl.textContent = items.length
+      ? `נותרו ${needed.length} פריטים${importantCount ? ` · ${importantCount} חשובים` : ""}`
+      : "הרשימה ריקה — הוסיפו את המוצר הראשון";
+  }
+  const renderRow = (item) => `
+    <div class="groc-row ${item.status === "bought" ? "is-bought" : ""}" data-id="${escapeHtmlAttr(item.id)}">
+      <button type="button" class="groc-check" aria-label="${item.status === "bought" ? "החזר לרשימה" : "סמן כנקנה"}"
+        onclick="updateGroceryItemStatus('${item.id}','${item.status === "bought" ? "needed" : "bought"}')">
+        ${item.status === "bought" ? "✓" : ""}
+      </button>
+      <div class="groc-row-main">
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
+        ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
+      </div>
+      <button type="button" class="groc-delete" aria-label="מחיקה" onclick="deleteGroceryItem('${item.id}')">✕</button>
+    </div>`;
+  if(!items.length){
+    root.innerHTML = `<div class="groc-empty">אין פריטים ברשימה עדיין. הוסיפו למעלה מה שצריך.</div>`;
+    return;
+  }
+  const neededByCategory = getGroceryCategoryOrder(needed).map(cat => `
+    <div class="groc-category">
+      <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
+      ${needed.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderRow).join("")}
+    </div>`).join("");
+  const boughtSection = bought.length ? `
+    <details class="groc-bought-section">
+      <summary>נקנה (${bought.length})</summary>
+      ${bought.map(renderRow).join("")}
+    </details>` : "";
+  root.innerHTML = (neededByCategory || `<div class="groc-empty">כל הפריטים נקנו 🎉</div>`) + boughtSection;
+}
+
 function getManualSettings(sheet){
   const map = getManualSettingsMap();
   return {...DEFAULT_MANUAL_SETTINGS, ...(map[sheet] || {})};
@@ -8772,6 +8998,7 @@ const TAB_META = [
   {id:"shared",    label:"הוצאות משותפות",   icon:"❤️"},
   {id:"debts",     label:"חובות והלוואות",   icon:"🏦"},
   {id:"goals",     label:"יעדים",            icon:"🎯"},
+  {id:"grocery",   label:"קניות",            icon:"🛒"},
   {id:"yearly",    label:"סיכום שנתי",       icon:"📅"},
   {id:"backup",    label:"גיבוי נתונים",     icon:"🗄️"},
 ];
@@ -8981,7 +9208,7 @@ function renderTabs(){
   });
   const moreButton = document.querySelector(".btab-more");
   if(moreButton){
-    const moreIsActive = ["income","cards","debts","goals","yearly","backup"].includes(activeTab);
+    const moreIsActive = ["income","cards","debts","goals","yearly","backup","grocery"].includes(activeTab);
     moreButton.classList.toggle("active", moreIsActive);
     moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
   }
@@ -9371,6 +9598,7 @@ function render(){
     renderSharedExpensesTab();
     renderDebts();
     renderGoals();
+    renderGroceryTab();
     renderYearly();
     renderCloudSyncStatus();
     renderRecoveryPoints();
