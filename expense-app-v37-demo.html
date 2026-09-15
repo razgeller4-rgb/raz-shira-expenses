@@ -6205,11 +6205,17 @@ function getYearlySummaryData(year=selectedYear){
   const totalFixed = rows.reduce((sum,row)=>sum + Number(row.fixed || 0),0);
   const totalVariable = rows.reduce((sum,row)=>sum + Number(row.variable || 0),0);
   const totalMonthlyBalance = rows.reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0);
-  const averageExpense = rows.length ? totalExpense / rows.length : 0;
-  const averageIncome = rows.length ? totalIncome / rows.length : 0;
-  const averageBalance = rows.length ? totalMonthlyBalance / rows.length : 0;
-  const yearToDateSavings = rows.length ? rows[rows.length - 1].cumulativeBalance : 0;
-  const rollingThreeBalance = rows.slice(-3).reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0);
+  /* METRIC_NULL_ZERO_FINDINGS_2026-09-15: these five used ": 0" for the
+     empty-year case, so formatMetricValue (which only guards null/"")
+     faithfully printed ₪0 - indistinguishable from a year that genuinely
+     broke even. The dashboard's own avg_expense (getDashboardWidgetCatalog,
+     "rows.length ? ... : null") already draws this line correctly; these
+     yearly siblings just hadn't been brought in line with it. */
+  const averageExpense = rows.length ? totalExpense / rows.length : null;
+  const averageIncome = rows.length ? totalIncome / rows.length : null;
+  const averageBalance = rows.length ? totalMonthlyBalance / rows.length : null;
+  const yearToDateSavings = rows.length ? rows[rows.length - 1].cumulativeBalance : null;
+  const rollingThreeBalance = rows.length ? rows.slice(-3).reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0) : null;
   const bestBalanceMonth = rows.reduce((best,row)=>row.monthlyBalance > (best?.monthlyBalance ?? -Infinity) ? row : best, null);
   const worstBalanceMonth = rows.reduce((worst,row)=>row.monthlyBalance < (worst?.monthlyBalance ?? Infinity) ? row : worst, null);
   return {
