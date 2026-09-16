@@ -385,9 +385,16 @@ input, select, textarea { font: inherit; }
 /* ── D-13: bank sync + reconciliation ─────────────────────────────────── */
 .bank-drop{ border:1.5px dashed var(--wood); border-radius:var(--r-2xl);
   background:var(--wood-light); padding:22px 18px; text-align:center; }
+.bank-drop-icon{ font-size:26px; margin-bottom:6px; }
 .bank-drop-title{ font-size:15px; font-weight:var(--fw-semi); color:var(--wood-strong); margin-bottom:4px; }
 .bank-drop-sub{ font-size:var(--fs-sm); color:var(--text-2); line-height:1.6; margin-bottom:14px; }
-.bank-drop input[type="file"]{ font-size:var(--fs-sm); color:var(--text-2); max-width:100%; }
+/* Same "styled trigger + hidden native input" pattern already used by
+   importCCBtn/backupFileInput - a raw <input type=file> renders as the OS's
+   own unstyled control (measured: plain "Choose File" button + "No file
+   chosen" text), the one element on this screen with zero visual relation to
+   the rest of the app. */
+.bank-drop button{ min-height:44px; padding-inline:18px; }
+.bank-drop-file{ margin-top:10px; font-size:var(--fs-sm); color:var(--text-2); }
 .bank-verdict{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px;
   border-radius:var(--r-lg); margin-bottom:14px; font-size:var(--fs-sm); line-height:1.55; }
 .bank-verdict.ok{ background:var(--good-light); color:var(--good); border:1px solid var(--good); }
@@ -2486,12 +2493,15 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
         </div>
         <div class="content">
           <div id="bankSyncIntro" class="bank-drop">
+            <div class="bank-drop-icon" aria-hidden="true">🏦</div>
             <div class="bank-drop-title">העלו קובץ תנועות עו״ש</div>
             <div class="bank-drop-sub">
               האפליקציה תצליב את החיובים שירדו בפועל מול מה שרשום כאן, תגלה לבד את יום החיוב האמיתי של כל כרטיס, ותראה לכם את הפער.<br>
               הקובץ נקרא בדפדפן בלבד ואינו נשלח לשום מקום. אף שורה ממנו לא נכנסת לרשימת ההוצאות.
             </div>
-            <input type="file" id="bankStatementFile" accept=".xls,.xlsx,.html,.htm,text/html" onchange="handleBankStatementFile(this)">
+            <button id="bankStatementBtn" class="secondary" type="button">בחר קובץ תנועות ↑</button>
+            <div class="bank-drop-file" id="bankDropFileName" hidden></div>
+            <input type="file" id="bankStatementFile" accept=".xls,.xlsx,.html,.htm,text/html" style="display:none">
           </div>
           <div id="bankSyncResult"></div>
         </div>
@@ -10296,6 +10306,10 @@ document.getElementById("backupFileInput").onchange=(event)=>{
 };
 document.getElementById("addExpenseBtn").onclick=()=>toggleAddExpenseForm();
 document.getElementById("importCCBtn").onclick=openCCImport;
+document.getElementById("bankStatementBtn").onclick=()=>document.getElementById("bankStatementFile").click();
+document.getElementById("bankStatementFile").onchange=(event)=>{
+  handleBankStatementFile(event.target);
+};
 document.getElementById("newPayment").onchange=syncNewExpenseImmediateState;
 document.getElementById("newSharedExpense").onchange=syncNewSharedExpenseState;
 document.getElementById("newSharedSplitMode").onchange=syncNewSharedSplitMode;
@@ -11245,6 +11259,8 @@ function handleBankStatementFile(inputEl){
         labels: getBankCardLabelCandidates(parsed),
         fileName: file.name
       };
+      const fileNameEl = document.getElementById("bankDropFileName");
+      if(fileNameEl){ fileNameEl.textContent = `📄 ${file.name}`; fileNameEl.hidden = false; }
       renderBankSync();
       showToast(`נקראו ${parsed.transactions.length} תנועות.`, "success");
     } catch(e){
