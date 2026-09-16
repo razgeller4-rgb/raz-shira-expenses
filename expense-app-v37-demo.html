@@ -1916,6 +1916,21 @@ body { background:var(--bg); }
 .hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
 .hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
 .hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
+.hero-cashout { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+.hero-cashout-title { font-size:12px; font-weight:var(--fw-semi); color:var(--muted); margin-bottom:9px; }
+.hero-cashout-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.hero-cashout-row > div { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding-inline-start:12px; border-inline-start:1px solid var(--border); }
+.hero-cashout-row > div:first-child { border-inline-start:0; padding-inline-start:0; }
+.hero-cashout-row span { color:var(--muted); font-size:11px; }
+.hero-cashout-row strong { color:var(--text); font-size:17px; font-variant-numeric:tabular-nums; margin-top:3px; font-family:var(--font-num); }
+.hero-cashout-row strong.is-negative { color:var(--bad); }
+.hero-cashout-detail { margin-top:10px; font-size:12.5px; }
+.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:32px; display:flex; align-items:center; list-style:none; }
+.hero-cashout-detail summary::-webkit-details-marker { display:none; }
+.hero-cashout-detail summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
+.hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
+.hero-cashout-card-row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
+.hero-cashout-card-row:last-child { border-bottom:0; }
 .review-queue {
   background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
   padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
@@ -2296,6 +2311,18 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           </div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
           <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
+          <div class="hero-cashout" id="heroCashout" style="display:none">
+            <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
+            <div class="hero-cashout-row">
+              <div><span>עו״ש עכשיו</span><strong id="cashOutNow">—</strong></div>
+              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong></div>
+              <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
+            </div>
+            <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
+              <summary>פירוט לפי כרטיס</summary>
+              <div id="heroCashoutByCard"></div>
+            </details>
+          </div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
             <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
             <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
@@ -7590,6 +7617,7 @@ function renderDashboardHero(){
       forecastLine.style.display = "none";
     }
   }
+  renderHeroCashout();
   // CARRY-14 (BALANCE_ANCHOR_SPEC R-2): closing == null means "we have no opening
   // balance for this month", not "the balance is zero" - but the hero rendered it
   // as a confident ₪0. That is the single number on the dashboard, and per
@@ -7662,6 +7690,37 @@ function renderDashboardHero(){
         scales: { x: { display: false }, y: { display: false } }
       }
     });
+  }
+}
+
+/* D-13: getCashOutSummary is a bank-reality read model (charge-month, not
+   purchase-month) — deliberately separate from the hero-balance above so a
+   discrepancy between the two is visible, not silently reconciled. */
+function renderHeroCashout(){
+  const box = document.getElementById("heroCashout");
+  if(!box) return;
+  const sum = getCashOutSummary(selectedSheet);
+  if(!sum){ box.style.display = "none"; return; }
+  box.style.display = "block";
+  const nowEl = document.getElementById("cashOutNow");
+  const dueEl = document.getElementById("cashOutDue");
+  const afterEl = document.getElementById("cashOutAfter");
+  const fmtOrDash = v => v == null ? "—" : fmtIls(v);
+  if(nowEl){ nowEl.textContent = fmtOrDash(sum.nowBalance); nowEl.classList.toggle("is-negative", sum.nowBalance != null && sum.nowBalance < 0); }
+  if(dueEl) dueEl.textContent = fmtIls(sum.cardDue);
+  if(afterEl){ afterEl.textContent = fmtOrDash(sum.afterCardsBalance); afterEl.classList.toggle("is-negative", sum.afterCardsBalance != null && sum.afterCardsBalance < 0); }
+  const detail = document.getElementById("heroCashoutDetail");
+  const byCardEl = document.getElementById("heroCashoutByCard");
+  const cards = Object.entries(sum.byCard || {}).filter(([, amt]) => amt > 0).sort((a, b) => b[1] - a[1]);
+  if(detail && byCardEl){
+    if(cards.length){
+      detail.style.display = "block";
+      byCardEl.innerHTML = cards.map(([name, amt]) =>
+        `<div class="hero-cashout-card-row"><span>${escapeHtmlAttr(name)}</span><strong>${fmtIls(amt)}</strong></div>`
+      ).join("");
+    } else {
+      detail.style.display = "none";
+    }
   }
 }
 
