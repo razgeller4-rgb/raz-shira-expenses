@@ -221,6 +221,7 @@ input, select, textarea { font: inherit; }
 [data-panel="shared"]    .panel-hero { background: linear-gradient(135deg,#9E5A68,#C77B8B,#DAA2AE); }
 [data-panel="debts"]     .panel-hero { background: linear-gradient(135deg,#6E5C4D,#8E7A66,#B3A085); }
 [data-panel="goals"]     .panel-hero { background: linear-gradient(135deg,#4E7C6E,#6E9C8E,#9DC4B6); }
+[data-panel="grocery"]   .panel-hero { background: linear-gradient(135deg,#5E7A50,#7E9B6E,#A8C29A); }
 [data-panel="yearly"]    .panel-hero { background: linear-gradient(135deg,#A8895C,#C2A579,#DDC79E); }
 [data-panel="backup"]    .panel-hero { background: linear-gradient(135deg,#8A5E3C,#B07D56,#CCA079); }
 
@@ -265,6 +266,196 @@ input, select, textarea { font: inherit; }
 .hero.is-unknown .hero-balance{ opacity:.85; }
 .hero-unknown-hint{ display:none; font-size:var(--fs-sm); opacity:.92; margin-top:6px; }
 .hero.is-unknown .hero-unknown-hint{ display:block; }
+/* D-10: anchor state is always visible. BALANCE_ANCHOR_SPEC §2.5 — "never
+   anchored" must be a shown state, otherwise an un-anchored balance looks
+   exactly like a verified one. */
+/* DATA-04 wave 3.5 — the chip is a LABEL and the button is an ACTION, so they
+   must not look alike. Before this they were two translucent-white pills of the
+   same size side by side, and the button's fill (.14) was actually FAINTER than
+   the chip's (.16): the only tappable thing on the card was also its quietest
+   element, at 33.5px tall (under the 44px target) and 167px down a 428px card.
+   It was reported as missing, which is the correct reading of that design. */
+.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.hero-anchor-chip{ font-size:var(--fs-sm); opacity:.9; white-space:nowrap; }
+.hero-anchor-chip.is-gap{ font-weight:var(--fw-semi); opacity:1; }
+.hero-anchor-btn{ display:inline-flex; align-items:center; gap:7px; font-size:15px;
+  font-weight:var(--fw-bold); padding:11px 18px; min-height:44px; border:none;
+  border-radius:999px; cursor:pointer; background:#fff; color:#3E5233;
+  box-shadow:0 2px 10px rgba(0,0,0,.18); transition:transform .12s var(--ease-out); }
+.hero-anchor-btn:hover{ transform:translateY(-1px); }
+.hero-anchor-btn:active{ transform:translateY(0); }
+/* "Due" is the state the whole feature depends on: a reconciliation tool that
+   waits to be remembered never runs, because not noticing drift is the problem
+   it exists to solve. Three pulses, then it stops nagging. */
+.hero-anchor-btn.is-due{ animation:anchorDuePulse 2.2s var(--ease-out) 3; }
+@keyframes anchorDuePulse{
+  0%,100%{ box-shadow:0 2px 10px rgba(0,0,0,.18); }
+  50%{ box-shadow:0 2px 10px rgba(0,0,0,.18), 0 0 0 7px rgba(255,255,255,.32); } }
+@media (prefers-reduced-motion: reduce){ .hero-anchor-btn.is-due{ animation:none; } }
+/* The gap is a state, not an event — a persistent banner, not a toast. */
+.balance-gap-banner{ display:none; align-items:flex-start; gap:10px; margin:0 0 14px;
+  padding:12px 14px; border-radius:14px; font-size:var(--fs-sm); line-height:1.5;
+  background:rgba(212,130,50,.15); border:1px solid rgba(212,130,50,.45); color:var(--text); }
+.balance-gap-banner.is-visible{ display:flex; }
+.balance-gap-banner.is-match{ background:rgba(126,155,110,.15); border-color:rgba(126,155,110,.45); }
+.balance-gap-banner strong{ font-variant-numeric:tabular-nums; }
+.balance-gap-banner .gap-lead{ display:block; margin-top:6px; opacity:.92; }
+/* ── Anchor sheet (DATA-04 wave 3.5) ──────────────────────────────────────
+   prompt() was the wrong surface: on iOS it is a cramped system dialog with no
+   number keypad, no date, no paste handling and no room to say what the number
+   means. This is the one screen where a wrong entry silently corrupts the
+   reference point everything else is measured against. */
+.anchor-sheet-back{ position:fixed; inset:0; z-index:320; background:rgba(0,0,0,.5);
+  display:none; align-items:flex-end; justify-content:center; }
+.anchor-sheet-back.open{ display:flex; }
+/* width:100% with no cap was fine on a phone and stretched edge-to-edge on a
+   desktop window (reported: "נראה מזעזע במסך מחשב") — the app has an existing
+   convention for exactly this (.modal-card: max-width:620px; margin:0 auto),
+   this sheet just didn't follow it. 480px keeps it a full-width bottom sheet on
+   any real phone (this never engages under that width) and only kicks in on
+   viewports wider than a phone. */
+.anchor-sheet{ background:var(--surface); width:100%; max-width:480px; border-radius:24px 24px 0 0;
+  padding:20px 18px max(28px, calc(18px + env(safe-area-inset-bottom)));
+  max-height:92dvh; overflow-y:auto; }
+@media (min-width:481px){ .anchor-sheet{ border-radius:24px; margin-bottom:24px; } }
+.anchor-sheet h2{ margin:0 0 4px; font-size:19px; font-weight:var(--fw-black); color:var(--text); }
+.anchor-sheet .anchor-help{ margin:0 0 16px; font-size:var(--fs-sm); line-height:1.55; color:var(--text-2); }
+.anchor-amount-input{ width:100%; box-sizing:border-box; font-family:var(--font-num);
+  font-size:34px; font-weight:var(--fw-black); text-align:center; letter-spacing:-.01em;
+  padding:14px 12px; border-radius:16px; border:2px solid var(--line);
+  background:var(--surface-2); color:var(--text); font-variant-numeric:tabular-nums; }
+.anchor-amount-input:focus{ outline:none; border-color:var(--accent); }
+.anchor-sheet .anchor-date-row{ display:flex; align-items:center; gap:10px; margin-top:12px;
+  font-size:var(--fs-sm); color:var(--text-2); }
+.anchor-sheet .anchor-date-row input{ flex:1; min-height:44px; padding:8px 12px;
+  border-radius:12px; border:1px solid var(--line); background:var(--surface); color:var(--text); }
+.anchor-sheet .anchor-actions{ display:flex; gap:10px; margin-top:18px; }
+.anchor-sheet .anchor-save{ flex:1; min-height:50px; border:none; border-radius:15px;
+  background:var(--accent); color:#fff; font-size:16px; font-weight:var(--fw-black); cursor:pointer; }
+.anchor-sheet .anchor-cancel{ min-height:50px; padding:0 20px; border:none; border-radius:15px;
+  background:var(--line); color:var(--text); font-weight:var(--fw-bold); cursor:pointer; }
+.anchor-sheet .anchor-note{ margin-top:14px; font-size:var(--fs-xs); line-height:1.6; color:var(--muted); }
+.anchor-sheet .anchor-error{ display:none; margin-top:10px; font-size:var(--fs-sm);
+  font-weight:var(--fw-semi); color:var(--bad); }
+.anchor-sheet .anchor-error.is-visible{ display:block; }
+/* ── Grocery tab (GROC-02 first slice) ───────────────────────────────── */
+.groc-add-form{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px; }
+.groc-add-form input[type="text"],.groc-add-form input[type="number"]{
+  width:100%; box-sizing:border-box; padding:11px 14px; border-radius:14px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:15px; }
+.groc-add-form input:focus{ outline:none; border-color:var(--accent); }
+.groc-add-row2{ display:flex; gap:8px; flex-wrap:wrap; align-items:center; }
+.groc-add-row2 input[type="text"]{ flex:1 1 110px; }
+.groc-add-row2 input[type="number"]{ flex:0 1 80px; }
+.groc-important-toggle{ display:flex; align-items:center; gap:4px; font-size:var(--fs-sm);
+  color:var(--text-2); white-space:nowrap; cursor:pointer; }
+.groc-category{ margin-bottom:18px; }
+.groc-category-title{ font-size:var(--fs-sm); font-weight:var(--fw-semi); color:var(--wood-strong);
+  margin-bottom:8px; padding-inline-start:2px; }
+.groc-row{ display:flex; align-items:center; gap:10px; padding:10px 4px;
+  border-bottom:1px solid var(--border); }
+.groc-row:last-child{ border-bottom:0; }
+.groc-check{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:2px solid var(--accent);
+  background:transparent; color:#fff; font-weight:var(--fw-bold); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; font-size:14px; }
+.groc-row.is-bought .groc-check{ background:var(--accent); }
+.groc-row-main{ flex:1; display:flex; align-items:baseline; gap:8px; min-width:0; }
+.groc-row-name{ font-size:15px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.groc-row.is-bought .groc-row-name{ color:var(--muted); text-decoration:line-through; }
+.groc-star{ color:var(--warn); font-size:13px; }
+.groc-row-qty{ font-size:var(--fs-sm); color:var(--text-2); white-space:nowrap; flex:0 0 auto; }
+.groc-delete{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:0; background:transparent;
+  color:var(--muted); cursor:pointer; font-size:14px; }
+.groc-delete:hover{ background:var(--bad-light); color:var(--bad); }
+.groc-bought-section{ margin-top:10px; }
+.groc-bought-section summary{ cursor:pointer; font-size:var(--fs-sm); color:var(--text-2); padding:8px 4px; }
+.groc-empty{ padding:20px 4px; text-align:center; color:var(--muted); font-size:var(--fs-sm); }
+.groc-add-toggle{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:2px solid var(--wood-strong);
+  background:transparent; color:var(--wood-strong); font-weight:var(--fw-bold); cursor:pointer; display:flex;
+  align-items:center; justify-content:center; font-size:16px; line-height:1; }
+.groc-add-toggle:hover{ background:var(--wood-light); }
+.groc-import-row{ margin-bottom:10px; }
+.groc-import-row input[type="file"]{ font-size:var(--fs-sm); color:var(--text-2); width:100%; }
+.groc-import-paste summary{ cursor:pointer; font-size:var(--fs-sm); color:var(--text-2); padding:6px 0; }
+.groc-import-paste textarea{ width:100%; box-sizing:border-box; margin-top:8px; padding:10px 12px;
+  border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text);
+  font-size:14px; font-family:inherit; resize:vertical; }
+.groc-import-paste button{ margin-top:8px; }
+
+/* ── D-13: bank sync + reconciliation ─────────────────────────────────── */
+.bank-drop{ border:1.5px dashed var(--wood); border-radius:var(--r-2xl);
+  background:var(--wood-light); padding:22px 18px; text-align:center; }
+.bank-drop-icon{ font-size:26px; margin-bottom:6px; }
+.bank-drop-title{ font-size:15px; font-weight:var(--fw-semi); color:var(--wood-strong); margin-bottom:4px; }
+.bank-drop-sub{ font-size:var(--fs-sm); color:var(--text-2); line-height:1.6; margin-bottom:14px; }
+/* Same "styled trigger + hidden native input" pattern already used by
+   importCCBtn/backupFileInput - a raw <input type=file> renders as the OS's
+   own unstyled control (measured: plain "Choose File" button + "No file
+   chosen" text), the one element on this screen with zero visual relation to
+   the rest of the app. */
+.bank-drop button{ min-height:44px; padding-inline:18px; }
+.bank-drop-file{ margin-top:10px; font-size:var(--fs-sm); color:var(--text-2); }
+.bank-verdict{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px;
+  border-radius:var(--r-lg); margin-bottom:14px; font-size:var(--fs-sm); line-height:1.55; }
+.bank-verdict.ok{ background:var(--good-light); color:var(--good); border:1px solid var(--good); }
+.bank-verdict.warn{ background:var(--warn-light); color:var(--warn); border:1px solid var(--warn); }
+.bank-verdict-icon{ flex:0 0 auto; font-size:16px; line-height:1.4; }
+.bank-map-row{ display:flex; align-items:center; gap:10px; padding:11px 4px;
+  border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.bank-map-row:last-child{ border-bottom:0; }
+.bank-map-card{ flex:0 0 auto; min-width:92px; font-size:14px; font-weight:var(--fw-semi); color:var(--text); }
+/* 44px minimum touch target - measured at 40px on first build, below the
+   baseline the rest of the app already meets. */
+.bank-map-row select{ flex:1 1 170px; min-height:44px; padding:6px 10px; border-radius:12px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; }
+.bank-map-day{ flex:0 0 auto; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums; }
+.recon-card{ border:1px solid var(--border); border-radius:var(--r-2xl); overflow:hidden; margin-bottom:16px; }
+.recon-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:13px 16px; background:var(--wood-light); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.recon-title{ font-size:15px; font-weight:var(--fw-bold); color:var(--wood-strong); }
+.recon-sub{ font-size:var(--fs-xs); color:var(--text-2); }
+.recon-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.recon-table th{ text-align:start; font-size:var(--fs-xs); font-weight:var(--fw-semi); color:var(--muted);
+  padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.recon-table td{ padding:9px 10px; border-bottom:1px solid var(--border);
+  font-variant-numeric:tabular-nums; white-space:nowrap; }
+.recon-table tr:last-child td{ border-bottom:0; }
+.recon-month{ color:var(--text-2); }
+/* Measured against --surface (#FFFDF8) at 13px, which is normal-size text and
+   therefore needs 4.5:1, not 3:1. The display tokens fail it outright here:
+   --warn (#D9A441) lands at 2.21:1 and --bad (#C16A4F) at 3.80:1. Following
+   the precedent already set for --income-light above, the fix is local rather
+   than a change to those tokens, which are used broadly for fills and badges
+   where they are fine. Darkened only for this reconciliation text:
+   #8A6212 = 5.38:1, #A24A2C = 5.82:1 (both clear AA on surface, surface-2 and
+   wood-light alike). Colour is never the sole signal - the gap is also a
+   number the user reads directly. */
+.recon-gap{ font-weight:var(--fw-semi); }
+.recon-gap.exact,
+.recon-gap.high{ color:var(--good); }
+.recon-gap.low{ color:#8A6212; }
+.recon-gap.none{ color:#A24A2C; }
+.recon-gap.na{ color:var(--muted); font-weight:400; }
+.recon-dayflag{ display:inline-block; min-width:22px; text-align:center; padding:1px 6px;
+  border-radius:999px; font-size:var(--fs-xs); background:var(--surface-3); color:var(--text-2); }
+/* D-13 step 5: one aggregate answer above the per-card tables. Reuses --good
+   and #A24A2C (recon-gap.none) - both already measured at ≥4.5:1 on this
+   surface, so this introduces no new contrast risk. */
+.recon-summary .recon-head{ background:var(--surface-2); }
+.recon-summary.ok .recon-head{ background:var(--accent-light); }
+.recon-summary.ok .recon-title{ color:var(--good); }
+.recon-summary-gap{ display:flex; flex-direction:column; align-items:flex-end; text-align:end; min-width:0; }
+.recon-summary-gap span{ font-size:18px; font-weight:var(--fw-bold); font-variant-numeric:tabular-nums; color:var(--text); }
+.recon-summary-gap.has-gap span{ color:#A24A2C; }
+.recon-summary-gap small{ font-size:var(--fs-xs); color:var(--muted); }
+.recon-periods{ padding:13px 16px; background:var(--surface-2); border-top:1px solid var(--border); }
+.recon-period{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text);
+  padding:4px 0; flex-wrap:wrap; }
+.recon-period-day{ font-weight:var(--fw-bold); color:var(--wood-strong); }
+/* Buttons here inherit the app's generic button padding, which measured 34px
+   tall - under the 44px target. Scoped so the rest of the app is untouched. */
+.bank-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.bank-actions button{ min-height:44px; padding-inline:16px; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -485,7 +676,16 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
    category on almost every visit, so they sit above the fold at full size.
    Everything else (date, type, payment, sharing, notes) moves behind
    "פרטים נוספים" - present, not competing for the first tap. */
-.edit-quick { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+/* minmax(0,1fr), not 1fr. A bare `1fr` floors at min-content, and
+   input[type=number] carries a ~240px intrinsic width from the UA stylesheet -
+   so on a 375px phone the two columns demanded 391px inside a 281px container
+   and the amount field hung 110px outside the card. Measured, not guessed;
+   Raz reported it as "יוצא מהקווים" from his iPhone. minmax(0,…) lets a column
+   shrink past its content's intrinsic width, which is what makes the halves
+   actually equal. */
+.edit-quick { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; margin-top: 12px; }
+.edit-quick .field { min-width: 0; }
+.edit-quick .field input { width: 100%; box-sizing: border-box; }
 .edit-quick .field input { height: 44px; }
 .edit-quick .field-amount input { font-size: 17px; font-weight: 800; }
 /* var(--muted) measured 3.32:1 here (below the 4.5 AA minimum) - same token,
@@ -541,7 +741,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .edit-details-hint { font-size:11px; font-weight:400; color: var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 @media (prefers-reduced-motion: reduce) { .edit-details-toggle span:first-child::before { transition: none; } }
 @media (max-width: 480px) {
-  .edit-quick { grid-template-columns: 1fr 1fr; }
+  .edit-quick { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .edit-details-hint { display:none; }
 }
 .category-field-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
@@ -635,6 +835,22 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .budget-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .budget-card-title { font-size: 14px; font-weight: 700; }
 .budget-card-grid { display: flex; flex-direction: column; gap: 6px; }
+/* Form controls inside these cards must be allowed to shrink.
+   A flex item defaults to min-width:auto, which floors it at its content's
+   intrinsic width - and a <select> or input[type=number|date] gets that width
+   from the UA stylesheet, which is markedly WIDER in Safari than in Chrome.
+   Measured in Chrome at 375px: the category select already sits at 263px
+   inside a 279px parent, i.e. 16px of slack. Safari exceeds that, which is why
+   Raz saw the card "יוצא מהקווים" on his iPhone while it looked fine here.
+   min-width:0 + max-width:100% removes the floor instead of guessing at a
+   fixed width that would only be right on one device. */
+.budget-card input,
+.budget-card select,
+.budget-card textarea { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.budget-card-top > input { min-width: 0; }
+.budget-card-stat { gap: 8px; }
+.budget-card-stat > select,
+.budget-card-stat > input { min-width: 0; flex: 1 1 0; }
 .budget-card-badge { display: inline-flex; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .budget-card-amount-aside { font-size: 11px; color: var(--muted); }
 .budget-progress { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 8px 0; }
@@ -1683,6 +1899,7 @@ body { background:var(--bg); }
 [data-theme="dark"] [data-panel="shared"] .panel-hero,
 [data-theme="dark"] [data-panel="debts"] .panel-hero,
 [data-theme="dark"] [data-panel="goals"] .panel-hero,
+[data-theme="dark"] [data-panel="grocery"] .panel-hero,
 [data-theme="dark"] [data-panel="yearly"] .panel-hero,
 [data-theme="dark"] [data-panel="backup"] .panel-hero {
   background:linear-gradient(135deg,var(--surface) 0%,var(--surface-2) 56%,var(--surface) 100%);
@@ -1716,6 +1933,24 @@ body { background:var(--bg); }
 .hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
 .hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
 .hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
+.hero-cashout { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
+.hero-cashout-title { font-size:12px; font-weight:var(--fw-semi); color:var(--muted); margin-bottom:9px; }
+.hero-cashout-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
+.hero-cashout-row > div { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding-inline-start:12px; border-inline-start:1px solid var(--border); }
+.hero-cashout-row > div:first-child { border-inline-start:0; padding-inline-start:0; }
+.hero-cashout-row span { color:var(--muted); font-size:11px; }
+.hero-cashout-row strong { color:var(--text); font-size:17px; font-variant-numeric:tabular-nums; margin-top:3px; font-family:var(--font-num); }
+/* var(--bad) is 3.80:1 here at 17px (fine at the ~50px hero-balance size, fails
+   AA's 4.5:1 for normal-size text) — reuse the darkened token already measured
+   at 5.82:1 on this surface for .recon-gap.none. */
+.hero-cashout-row strong.is-negative { color:#A24A2C; }
+.hero-cashout-detail { margin-top:10px; font-size:12.5px; }
+.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
+.hero-cashout-detail summary::-webkit-details-marker { display:none; }
+.hero-cashout-detail summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
+.hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
+.hero-cashout-card-row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
+.hero-cashout-card-row:last-child { border-bottom:0; }
 .review-queue {
   background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
   padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
@@ -1730,9 +1965,12 @@ body { background:var(--bg); }
 .review-marker.good { background:var(--accent); box-shadow:0 0 0 5px var(--accent-light); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
-.review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+/* min-height/width:44px matches the touch-target baseline measured and fixed
+   elsewhere this session (.bank-actions button, .hero-cashout-detail summary) -
+   found here the same way: 30.5px/26px on a live measurement, not assumed. */
+.review-action { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 14px; font-weight:700; font-size:11px; white-space:nowrap; }
 .review-item-actions { display:flex; align-items:center; gap:6px; }
-.review-dismiss { border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:26px; height:26px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
+.review-dismiss { display:inline-flex; align-items:center; justify-content:center; border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:44px; height:44px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
 .review-dismiss:hover { background:var(--bad-light); color:var(--bad); }
 .review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
 .review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
@@ -1809,6 +2047,9 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
+  .hero-cashout-row { gap:6px; }
+  .hero-cashout-row > div { padding-inline-start:8px; }
+  .hero-cashout-row strong { font-size:14px; }
   .review-queue { padding:14px; border-radius:22px; }
   .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
   .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
@@ -2033,6 +2274,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
     <button class="tab-btn pill-btn" data-tab="shared"><span class="pill-icon">❤️</span>משותף</button>
     <button class="tab-btn pill-btn" data-tab="debts"><span class="pill-icon">🏦</span>חובות</button>
     <button class="tab-btn pill-btn" data-tab="goals"><span class="pill-icon">🎯</span>יעדים</button>
+    <button class="tab-btn pill-btn" data-tab="grocery"><span class="pill-icon">🛒</span>קניות</button>
     <button class="tab-btn pill-btn" data-tab="yearly"><span class="pill-icon">📅</span>שנתי</button>
     <button class="tab-btn pill-btn" data-tab="backup"><span class="pill-icon">🗄️</span>גיבוי</button>
   </nav>
@@ -2051,6 +2293,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
       <button class="tab-btn" data-tab="shared">הוצאות משותפות</button>
       <button class="tab-btn" data-tab="debts">חובות והלוואות</button>
       <button class="tab-btn" data-tab="goals">יעדים</button>
+      <button class="tab-btn" data-tab="grocery">קניות</button>
       <button class="tab-btn" data-tab="yearly">סיכום שנתי</button>
       <button class="tab-btn" data-tab="backup">גיבוי נתונים</button>
       <button class="tab-btn" id="showDebtsSetupBtn" type="button" style="display:none">הפעל טאב חובות</button>
@@ -2077,6 +2320,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <button type="button" class="workspace-btn active" id="personalWorkspaceBtn" onclick="openPersonalWorkspace()">אישי</button>
           <button type="button" class="workspace-btn" id="coupleWorkspaceBtn" onclick="openCoupleWorkspace()">זוגי</button>
         </div>
+        <div class="balance-gap-banner" id="balanceGapBanner" role="status"></div>
         <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
           <div class="hero-top">
             <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
@@ -2087,8 +2331,24 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           </div>
           <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
+          <div class="hero-anchor-row" id="heroAnchorRow">
+            <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
+            <span class="hero-anchor-chip" id="heroAnchorChip"></span>
+          </div>
           <div class="hero-delta" id="heroDelta" style="display:none"></div>
           <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
+          <div class="hero-cashout" id="heroCashout" style="display:none">
+            <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
+            <div class="hero-cashout-row">
+              <div><span>עו״ש עכשיו</span><strong id="cashOutNow">—</strong></div>
+              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong></div>
+              <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
+            </div>
+            <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
+              <summary>פירוט לפי כרטיס</summary>
+              <div id="heroCashoutByCard"></div>
+            </details>
+          </div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
             <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
             <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
@@ -2196,6 +2456,17 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
 
     <!-- ── Cards ── -->
     <section class="tab-panel" data-panel="cards">
+      <div class="panel-hero">
+        <div class="panel-hero-left">
+          <div class="panel-hero-title">💳 אשראיים</div>
+          <div class="panel-hero-sub">מחזורי חיוב, והצלבה מול מה שקרה בעו״ש</div>
+        </div>
+        <div class="panel-hero-right">
+          <div class="panel-hero-value" id="cardsHeroCount">—</div>
+          <div class="panel-hero-label">כרטיסים פעילים</div>
+        </div>
+      </div>
+
       <div class="section open">
         <div class="header" onclick="toggleSection(this)">
           <span>💳 אשראיים ומחזורי חיוב</span>
@@ -2212,6 +2483,27 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             </div>
           </div>
           <div id="paymentMethodList" class="income-list"></div>
+        </div>
+      </div>
+
+      <!-- ── D-13: bank statement sync + reconciliation ── -->
+      <div class="section open">
+        <div class="header" onclick="toggleSection(this)">
+          <span>🏦 סנכרון מול העו״ש</span>
+        </div>
+        <div class="content">
+          <div id="bankSyncIntro" class="bank-drop">
+            <div class="bank-drop-icon" aria-hidden="true">🏦</div>
+            <div class="bank-drop-title">העלו קובץ תנועות עו״ש</div>
+            <div class="bank-drop-sub">
+              האפליקציה תצליב את החיובים שירדו בפועל מול מה שרשום כאן, תגלה לבד את יום החיוב האמיתי של כל כרטיס, ותראה לכם את הפער.<br>
+              הקובץ נקרא בדפדפן בלבד ואינו נשלח לשום מקום. אף שורה ממנו לא נכנסת לרשימת ההוצאות.
+            </div>
+            <button id="bankStatementBtn" class="secondary" type="button">בחר קובץ תנועות ↑</button>
+            <div class="bank-drop-file" id="bankDropFileName" hidden></div>
+            <input type="file" id="bankStatementFile" accept=".xls,.xlsx,.html,.htm,text/html" style="display:none">
+          </div>
+          <div id="bankSyncResult"></div>
         </div>
       </div>
     </section>
@@ -2470,6 +2762,68 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
       </div>
     </section>
 
+    <!-- ── Grocery (GROC-02 second slice — fixed catalog + needed-now toggle) ── -->
+    <section class="tab-panel" data-panel="grocery">
+      <div class="panel-hero">
+        <div class="panel-hero-title">🛒 קניות</div>
+        <div class="panel-hero-sub">הרשימה הקבועה של הבית — מסמנים מה חסר עכשיו</div>
+      </div>
+
+      <div class="section open">
+        <div class="header">
+          <span id="groceryNeededCount">הרשימה ריקה</span>
+          <button type="button" id="grocClearBoughtBtn" class="secondary" onclick="clearBoughtGroceryItems()" style="display:none">נקה את הנקנים ✓</button>
+        </div>
+        <div class="content">
+          <div class="summary-card">
+            <div id="groceryNeededList"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section open">
+        <div class="header"><span>הוספת פריט חד־פעמי</span></div>
+        <div class="content">
+          <form class="groc-add-form" onsubmit="event.preventDefault(); submitNewGroceryItem();">
+            <input id="grocNewName" type="text" placeholder="פריט שלא ברשימה הקבועה (למשל מתנה ליום הולדת)" autocomplete="off" required>
+            <div class="groc-add-row2">
+              <input id="grocNewCategory" type="text" placeholder="קטגוריה (לא חובה)" autocomplete="off">
+              <input id="grocNewQty" type="number" step="0.1" placeholder="כמות" autocomplete="off">
+              <input id="grocNewUnit" type="text" placeholder="יחידה" autocomplete="off">
+              <label class="groc-important-toggle">
+                <input id="grocNewImportant" type="checkbox"> <span>★ חשוב</span>
+              </label>
+              <button type="submit" class="success-btn">הוסף לקנייה עכשיו +</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="header"><span>ייבוא הרשימה הקבועה</span></div>
+        <div class="content">
+          <div class="small" style="margin-bottom:10px">מייבאים פעם אחת מקובץ מה-iPhone (Files ← iCloud Drive) או מהדבקת טקסט. הקובץ נקרא בדפדפן בלבד ולא נשלח לשום שרת.</div>
+          <div class="groc-import-row">
+            <input type="file" id="grocImportFile" accept="application/json,.json,.txt,text/plain" onchange="handleGroceryImportFile(this)">
+          </div>
+          <details class="groc-import-paste">
+            <summary>או הדבקת טקסט (פריט אחד בכל שורה)</summary>
+            <textarea id="grocImportText" rows="6" placeholder="חלב&#10;לחם&#10;ביצים"></textarea>
+            <button type="button" class="secondary" onclick="handleGroceryImportText()">ייבוא מהטקסט</button>
+          </details>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="header"><span id="groceryCatalogCount">הרשימה הקבועה</span></div>
+        <div class="content">
+          <div class="summary-card">
+            <div id="groceryCatalogList"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
     <!-- ── Yearly ── -->
     <section class="tab-panel" data-panel="yearly">
       <div class="year-card">
@@ -2604,6 +2958,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
     <button class="more-row tab-btn" data-tab="cards"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='8' width='16' height='10' rx='2'/><path d='M4 11h16'/></svg>אשראיים</button>
     <button class="more-row tab-btn" data-tab="debts"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 20h16'/><path d='M6 20v-8M10 20v-8M14 20v-8M18 20v-8'/><path d='M12 4L4 9h16z'/></svg>חובות</button>
     <button class="more-row tab-btn" data-tab="goals"  onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><circle cx='12' cy='12' r='8'/><circle cx='12' cy='12' r='4'/><circle cx='12' cy='12' r='0.6' fill='currentColor'/></svg>יעדים</button>
+    <button class="more-row tab-btn" data-tab="grocery" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><path d='M4 6h2l2 11h11l1.5-8H7'/><circle cx='10' cy='20' r='1.2'/><circle cx='16' cy='20' r='1.2'/></svg>קניות</button>
     <button class="more-row tab-btn" data-tab="yearly" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><rect x='4' y='6' width='16' height='14' rx='2'/><path d='M4 10h16M9 4v4M15 4v4'/></svg>שנתי</button>
     <button class="more-row tab-btn" data-tab="backup" onclick="closeMoreSheet()"><svg class="" viewBox="0 0 24 24" aria-hidden="true"><ellipse cx='12' cy='7' rx='7' ry='3'/><path d='M5 7v10c0 1.7 3.1 3 7 3s7-1.3 7-3V7'/></svg>גיבוי</button>
   </nav>
@@ -2689,6 +3044,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initDarkMode();
   runIncomeMigrations();
   migrateLegacyMerchantMemory();
+  runBalanceAnchorMigration();
   const HERO_DATA = {
     dashboard: { icon:"📊", title:"לוח הבקרה",          sub:"כל המספרים החשובים לחודש — בצפייה אחת" },
     budget:    { icon:"💰", title:"תקציב",               sub:"מעקב הוצאות לפי קטגוריה מול יעד" },
@@ -2924,7 +3280,16 @@ function getAllUserStorageKeys(userId){
     getScopedStorageKey("expense_app_goals_v1", userId),
     getScopedStorageKey("expense_app_merchant_memory_v1", userId),
     getScopedStorageKey("expense_app_monthly_categories_v1", userId),
-    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId)
+    getScopedStorageKey("expense_app_dismissed_review_items_v1", userId),
+    // D-10 / DATA-04. This registry is the ONLY source for getBackupKeys(),
+    // getCloudSyncKeys() and getCloudSyncKeysForUser() - a key missing here is
+    // silently never backed up, never synced and never restored. An anchor is a
+    // recorded claim about real money, so that failure mode is unacceptable.
+    getScopedStorageKey("expense_app_balance_anchors_v1", userId),
+    // D-13. The card->bank-label mapping is small but not re-derivable: the app
+    // cannot tell on its own which card "הרשאה ישראכרט (י)" belongs to, so
+    // losing it means the user re-maps every card by hand after a restore.
+    getScopedStorageKey("expense_app_bank_label_map_v1", userId)
   ];
 }
 function getBackupKeys(){
@@ -2932,7 +3297,13 @@ function getBackupKeys(){
     ACTIVE_USER_STORAGE_KEY,
     ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
     getSharedSettlementsKey(),
-    getSharedSettlementsTombstonesKey()
+    getSharedSettlementsTombstonesKey(),
+    // GROC-02 first slice: no cloud push wired yet (see the comment above
+    // getGroceryListKey), but the local JSON backup/restore path is generic
+    // over this list, so registering here now costs nothing and avoids a
+    // silent gap once cloud sync is added.
+    getGroceryListKey(),
+    getGroceryTombstonesKey()
   ];
 }
 function getCloudSyncKeys(){
@@ -2941,7 +3312,9 @@ function getCloudSyncKeys(){
   return [
     ...USERS.flatMap(user => getAllUserStorageKeys(user.id)),
     getSharedSettlementsKey(),
-    getSharedSettlementsTombstonesKey()
+    getSharedSettlementsTombstonesKey(),
+    getGroceryListKey(),
+    getGroceryTombstonesKey()
   ];
 }
 /* Per-user key set — the only keys a device writes to its own cloud row.
@@ -2973,6 +3346,10 @@ function scheduleAutoRecoveryPoint(){
 }
 function markLocalDataChanged(timestamp=getIsoNow(), userId=currentUser){
   localStorage.setItem(getLocalDataChangedAtKey(userId), timestamp);
+  // DATA-04: the carry-forward chain is computed, not stored, so any data edit
+  // can change every downstream month. This is the single choke point through
+  // which all local writes already pass.
+  if(typeof invalidateBalanceMemo === "function") invalidateBalanceMemo();
   scheduleAutoRecoveryPoint();
   return timestamp;
 }
@@ -3502,14 +3879,81 @@ function enrichPaymentMethodWithDefaults(item, userId=currentUser){
     last4: String(item.last4 || match.last4 || "").trim()
   };
 }
+/* ── D-13: a card's billing day is a HISTORY, not a value ──────────────────
+   Measured 16.09 against Raz's real bank export, then confirmed by him
+   directly: "חבר" billed on the 2nd until July 2026, then he changed it to
+   the 10th. Both values are correct - for different periods. A single
+   cycleDay field cannot hold that: set it to 10 and every row before August
+   routes wrong; leave it at 2 and every new row routes wrong.
+
+   So billingDayHistory is a list of dated periods, oldest first. Each entry
+   applies from fromIso onwards until the next entry starts. cycleDay is KEPT
+   and still holds the current value - every existing caller keeps working
+   untouched, and a method with no history behaves exactly as before. The
+   history is purely additive.
+
+   Raz's framing (16.09) is the requirement this is built to: "זה פונקציה
+   שצריך להתמודד איתה כי עוד עלול לקרות שינויים ולהוסיף ולהוריד כרטיסים" -
+   the model has to survive billing days moving and cards coming and going,
+   not just be corrected once.
+
+   bankLabel exists because the app's card name is NOT the bank's transaction
+   label ("חבר" appears as "הרשאה ישראכרט (י)", "ויזה מזרחי" as "ויזה מקס (י)").
+   Matching by name is impossible; this is the explicit link, filled in when a
+   statement is imported. See research/2026-09-16/BANK_STATEMENT_FINDINGS_HE.md */
+function normalizeBillingDayHistory(raw, fallbackDay){
+  const clampDay = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.min(31, Math.max(1, Math.round(n))) : null;
+  };
+  const entries = (Array.isArray(raw) ? raw : [])
+    .map(entry => {
+      const day = clampDay(entry && entry.day);
+      const fromIso = String(entry && entry.fromIso || "").trim();
+      if(day == null || !/^\d{4}-\d{2}-\d{2}$/.test(fromIso)) return null;
+      return {
+        fromIso,
+        day,
+        source: ["user","statement-derived","default"].includes(entry.source) ? entry.source : "user",
+        note: String(entry && entry.note || "")
+      };
+    })
+    .filter(Boolean)
+    .sort((a,b) => a.fromIso.localeCompare(b.fromIso));
+  // Drop consecutive duplicates - a period that doesn't change the day is noise.
+  return entries.filter((entry, i) => i === 0 || entry.day !== entries[i-1].day);
+}
+/* The billing day in effect on a given date. Falls back to the flat cycleDay
+   for any date before the first recorded period, which is exactly the old
+   behaviour - so a method without history is unchanged. */
+function getBillingDayForDate(method, dateIso){
+  const flat = Number(method && method.cycleDay);
+  const fallback = Number.isFinite(flat) ? flat : 10;
+  const history = Array.isArray(method && method.billingDayHistory) ? method.billingDayHistory : [];
+  if(!history.length) return fallback;
+  const iso = String(dateIso || "").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return fallback;
+  let current = null;
+  for(const entry of history){
+    if(entry.fromIso <= iso) current = entry;
+    else break;
+  }
+  return current ? current.day : fallback;
+}
 function normalizePaymentMethodItem(item, index=0){
   const name = String(item && item.name || "").trim();
   const cycleDayRaw = item && item.cycleDay;
   const cycleDayNum = Number(cycleDayRaw);
+  const cycleDay = Number.isFinite(cycleDayNum) ? Math.min(31, Math.max(1, Math.round(cycleDayNum))) : 10;
   return enrichPaymentMethodWithDefaults({
     id: String(item && item.id || `card-${Date.now()}-${index}`),
     name,
-    cycleDay: Number.isFinite(cycleDayNum) ? Math.min(31, Math.max(1, Math.round(cycleDayNum))) : 10,
+    cycleDay,
+    billingDayHistory: normalizeBillingDayHistory(item && item.billingDayHistory, cycleDay),
+    bankLabel: String(item && item.bankLabel || "").trim(),
+    // Cards are archived, never dropped: historical rows still reference them
+    // by name, and deleting the method would silently change how those rows route.
+    archivedAtIso: /^\d{4}-\d{2}-\d{2}/.test(String(item && item.archivedAtIso || "")) ? String(item.archivedAtIso) : "",
     isImmediate: Boolean(item && item.isImmediate),
     last4: String(item && item.last4 || "").trim()
   });
@@ -4870,6 +5314,256 @@ function submitSettlement(){
   addSharedSettlement({amount:amt, paidById, receivedById, date_raw, notes});
   render();
 }
+
+/* ── GROC-02 — fixed household catalog + "needed now" toggle ─────────────
+   Shared like settlements (one list for the household, not per-user like
+   expenses) - but deliberately WITHOUT settlements' append-merge cloud push.
+   Raz chose "simple now": last write to the shared key wins, same as every
+   other shared-row write in this app today. Two people editing the exact
+   same item at the exact same second can drop one edit; recorded as a known
+   v1 limit, not hidden. Cloud sync wiring (a pushGroceryRow analogous to
+   pushSettlementsRow) is explicitly NOT done in this slice.
+
+   Second slice, per Raz 15.09: the mental model is not "type what you need"
+   - it's a FIXED catalog (his real household list, ~134 items) that stays in
+   the app permanently. Each item cycles through three states:
+     catalog -> needed (marked for the current shopping trip) -> bought
+     (checked off) -> catalog again (cleared after the trip, ready to be
+     marked needed next time). Nothing is deleted by the normal shopping
+     flow; deleteGroceryItem() is reserved for actually removing an item
+     from the catalog forever (e.g. an import mistake).
+
+   The user's real catalog lives in data/private-grocery/ (git-excluded) and
+   is NEVER read or embedded by this code. Instead this file ships a generic
+   client-side importer (JSON matching that file's shape, or plain text) so
+   Raz brings his own list in through the UI at runtime, on his own device -
+   exactly like every other piece of user data in this app. The import only
+   ever reads a File the user explicitly picks (FileReader, no network call)
+   or text they paste; nothing is uploaded anywhere. */
+function getGroceryListKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_items_v1"; }
+function getGroceryTombstonesKey(){ return STORAGE_NS_PREFIX + "expense_app_grocery_tombstones_v1"; }
+function normalizeGroceryItem(item){
+  const status = item && ["catalog","needed","bought"].includes(item.status) ? item.status : "needed";
+  return {
+    id: String(item && item.id || `groc-${Date.now()}-${Math.random().toString(36).slice(2,7)}`),
+    name: String(item && item.name || "").trim(),
+    category: String(item && item.category || "").trim(),
+    quantity: item && item.quantity != null && item.quantity !== "" ? Number(item.quantity) : null,
+    unit: String(item && item.unit || "").trim(),
+    important: Boolean(item && item.important),
+    status,
+    note: String(item && item.note || "").trim(),
+    addedBy: String(item && item.addedBy || currentUser),
+    createdAtIso: String(item && item.createdAtIso || getIsoNow()),
+    updatedAtIso: String(item && item.updatedAtIso || getIsoNow())
+  };
+}
+function getGroceryTombstones(){
+  try { return JSON.parse(localStorage.getItem(getGroceryTombstonesKey()) || "{}"); } catch(e){ return {}; }
+}
+function saveGroceryTombstones(tombstones){
+  localStorage.setItem(getGroceryTombstonesKey(), JSON.stringify(tombstones));
+}
+function getGroceryItems(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getGroceryListKey()) || "[]");
+    const tombstones = getGroceryTombstones();
+    if(!Array.isArray(parsed)) return [];
+    return parsed.map(normalizeGroceryItem).filter(item => !tombstones[item.id]);
+  } catch(e){ return []; }
+}
+function saveGroceryItems(list){
+  localStorage.setItem(getGroceryListKey(), JSON.stringify((Array.isArray(list) ? list : []).map(normalizeGroceryItem)));
+  markLocalDataChanged();
+}
+function addGroceryItem(data){
+  if(!data || !String(data.name || "").trim()){
+    showToast("צריך שם למוצר לפני שמוסיפים.", "error");
+    return;
+  }
+  const list = getGroceryItems();
+  list.push(normalizeGroceryItem(data));
+  saveGroceryItems(list);
+  render();
+}
+function updateGroceryItemStatus(id, status){
+  const list = getGroceryItems();
+  const item = list.find(i => i.id === id);
+  if(!item) return;
+  item.status = ["catalog","needed","bought"].includes(status) ? status : "needed";
+  item.updatedAtIso = getIsoNow();
+  saveGroceryItems(list);
+  render();
+}
+function clearBoughtGroceryItems(){
+  const list = getGroceryItems();
+  let changed = false;
+  list.forEach(item => {
+    if(item.status === "bought"){
+      item.status = "catalog";
+      item.updatedAtIso = getIsoNow();
+      changed = true;
+    }
+  });
+  if(!changed){ showToast("אין פריטים שנקנו לניקוי.", "info"); return; }
+  saveGroceryItems(list);
+  render();
+}
+function deleteGroceryItem(id){
+  const tombstones = getGroceryTombstones();
+  tombstones[id] = getIsoNow();
+  saveGroceryTombstones(tombstones);
+  saveGroceryItems(getGroceryItems().filter(i => i.id !== id));
+  render();
+}
+function submitNewGroceryItem(){
+  const nameEl = document.getElementById("grocNewName");
+  const catEl = document.getElementById("grocNewCategory");
+  const qtyEl = document.getElementById("grocNewQty");
+  const unitEl = document.getElementById("grocNewUnit");
+  const importantEl = document.getElementById("grocNewImportant");
+  const name = nameEl ? nameEl.value.trim() : "";
+  if(!name){ showToast("צריך שם למוצר לפני שמוסיפים.", "error"); return; }
+  addGroceryItem({
+    name,
+    category: catEl ? catEl.value.trim() : "",
+    quantity: qtyEl && qtyEl.value !== "" ? Number(qtyEl.value) : null,
+    unit: unitEl ? unitEl.value.trim() : "",
+    important: importantEl ? importantEl.checked : false,
+    status: "needed"
+  });
+  if(nameEl){ nameEl.value = ""; nameEl.focus(); }
+  if(qtyEl) qtyEl.value = "";
+  if(unitEl) unitEl.value = "";
+  if(importantEl) importantEl.checked = false;
+}
+/* Accepts either JSON matching data/private-grocery/catalog.json's shape
+   ({items:[{display_name, proposed_category, quantity, unit}, ...]} or a
+   bare array of such objects) or plain text, one item per line. Never reads
+   that file itself - only whatever the user pastes or picks via <input
+   type=file>, which this function receives as a plain string either way. */
+function parseGroceryCatalogPayload(raw){
+  const text = String(raw || "").trim();
+  if(!text) return [];
+  try {
+    const parsed = JSON.parse(text);
+    const rows = Array.isArray(parsed) ? parsed : (parsed && Array.isArray(parsed.items) ? parsed.items : null);
+    if(rows){
+      return rows.map(row => ({
+        name: String((row && (row.display_name || row.name || row.original_text)) || "").trim(),
+        category: String((row && (row.proposed_category || row.category || row.source_subsection)) || "").trim(),
+        quantity: row && row.quantity != null && row.quantity !== "" ? Number(row.quantity) : null,
+        unit: String((row && row.unit) || "").trim()
+      })).filter(row => row.name);
+    }
+  } catch(e){ /* not JSON — fall through to plain-text parsing */ }
+  return text.split(/\r?\n/).map(line => line.trim()).filter(Boolean).map(name => ({
+    name, category: "", quantity: null, unit: ""
+  }));
+}
+function importGroceryCatalogItems(raw){
+  const parsedItems = parseGroceryCatalogPayload(raw);
+  if(!parsedItems.length){ showToast("לא נמצאו פריטים לייבוא.", "error"); return; }
+  const existing = getGroceryItems();
+  const existingNames = new Set(existing.map(i => i.name.trim().toLowerCase()));
+  const list = existing.slice();
+  let added = 0, skipped = 0;
+  parsedItems.forEach(row => {
+    const key = row.name.trim().toLowerCase();
+    if(!key || existingNames.has(key)){ skipped++; return; }
+    existingNames.add(key);
+    list.push(normalizeGroceryItem({...row, status: "catalog"}));
+    added++;
+  });
+  saveGroceryItems(list);
+  showToast(`יובאו ${added} פריטים חדשים${skipped ? `, ${skipped} כבר היו ברשימה` : ""}.`, added ? "success" : "info");
+  render();
+}
+function handleGroceryImportFile(inputEl){
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => { importGroceryCatalogItems(String(reader.result || "")); inputEl.value = ""; };
+  reader.onerror = () => showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+  reader.readAsText(file);
+}
+function handleGroceryImportText(){
+  const el = document.getElementById("grocImportText");
+  if(!el) return;
+  importGroceryCatalogItems(el.value);
+  el.value = "";
+}
+/* Categories are free text (per GROCERY_RESEARCH_HE.md: no catalog required
+   to add "something for dinner") - grouped here by whatever the user already
+   typed, "ללא קטגוריה" for items with none, so the list is never blocked on
+   picking from a fixed set. */
+function getGroceryCategoryOrder(items){
+  const seen = [];
+  items.forEach(item => {
+    const key = item.category || "ללא קטגוריה";
+    if(!seen.includes(key)) seen.push(key);
+  });
+  return seen;
+}
+function renderGroceryTab(){
+  const neededRoot = document.getElementById("groceryNeededList");
+  const catalogRoot = document.getElementById("groceryCatalogList");
+  if(!neededRoot || !catalogRoot) return;
+  const items = getGroceryItems();
+  const needed = items.filter(i => i.status === "needed");
+  const bought = items.filter(i => i.status === "bought");
+  const catalog = items.filter(i => i.status === "catalog");
+
+  const countEl = document.getElementById("groceryNeededCount");
+  if(countEl){
+    const importantCount = needed.filter(i => i.important).length;
+    countEl.textContent = items.length
+      ? `${needed.length} לקנייה עכשיו${importantCount ? ` · ${importantCount} חשובים` : ""}${bought.length ? ` · ${bought.length} נקנו` : ""}`
+      : "הרשימה ריקה — ייבאו את הרשימה הקבועה למטה";
+  }
+  const clearBtn = document.getElementById("grocClearBoughtBtn");
+  if(clearBtn) clearBtn.style.display = bought.length ? "" : "none";
+
+  const catalogCountEl = document.getElementById("groceryCatalogCount");
+  if(catalogCountEl) catalogCountEl.textContent = `הרשימה הקבועה (${catalog.length})`;
+
+  const renderShoppingRow = (item) => `
+    <div class="groc-row ${item.status === "bought" ? "is-bought" : ""}" data-id="${escapeHtmlAttr(item.id)}">
+      <button type="button" class="groc-check" aria-label="${item.status === "bought" ? "החזר לרשימה" : "סמן כנקנה"}"
+        onclick="updateGroceryItemStatus('${item.id}','${item.status === "bought" ? "needed" : "bought"}')">
+        ${item.status === "bought" ? "✓" : ""}
+      </button>
+      <div class="groc-row-main">
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
+        ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
+      </div>
+      <button type="button" class="groc-delete" aria-label="הסרה מהקנייה הנוכחית" title="הסרה מהקנייה הנוכחית, נשאר בקטלוג"
+        onclick="updateGroceryItemStatus('${item.id}','catalog')">✕</button>
+    </div>`;
+  const shoppingNow = [...needed, ...bought];
+  neededRoot.innerHTML = shoppingNow.length
+    ? shoppingNow.map(renderShoppingRow).join("")
+    : `<div class="groc-empty">כלום לא מסומן לקנייה עכשיו. סמנו פריטים ברשימה הקבועה למטה, או הוסיפו פריט חד־פעמי.</div>`;
+
+  const renderCatalogRow = (item) => `
+    <div class="groc-row" data-id="${escapeHtmlAttr(item.id)}">
+      <button type="button" class="groc-add-toggle" aria-label="הוספה לקנייה עכשיו" title="הוספה לקנייה עכשיו"
+        onclick="updateGroceryItemStatus('${item.id}','needed')">+</button>
+      <div class="groc-row-main">
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}</span>
+        ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
+      </div>
+      <button type="button" class="groc-delete" aria-label="מחיקה לצמיתות מהקטלוג" title="מחיקה לצמיתות מהקטלוג" onclick="deleteGroceryItem('${item.id}')">✕</button>
+    </div>`;
+  catalogRoot.innerHTML = catalog.length
+    ? getGroceryCategoryOrder(catalog).map(cat => `
+        <div class="groc-category">
+          <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
+          ${catalog.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderCatalogRow).join("")}
+        </div>`).join("")
+    : `<div class="groc-empty">הרשימה הקבועה ריקה. ייבאו קובץ או טקסט למעלה.</div>`;
+}
+
 function getManualSettings(sheet){
   const map = getManualSettingsMap();
   return {...DEFAULT_MANUAL_SETTINGS, ...(map[sheet] || {})};
@@ -4958,6 +5652,20 @@ function saveIncomeRows(sheet, rows){
 }
 function getIncomeTotal(sheet){
   return getIncomeRows(sheet).reduce((sum,row)=>sum + Number(row.amount || 0),0);
+}
+/* Same rows as getIncomeTotal, but excludes income dated after today. Used only
+   where "now" must mean cash that has actually moved (getCashOutSummary) - a
+   salary dated 10/10 has not reached the bank yet on 16/9, so counting it would
+   show a checking-account balance higher than what is really there. Everywhere
+   else (closing balance, budget, yearly stats) the sheet's month is already
+   over by the time it's read, so the full total is correct as-is. */
+function getIncomeReceivedToDate(sheet){
+  const today = getTodayIso();
+  return getIncomeRows(sheet).reduce((sum,row)=>{
+    const iso = toIsoDate(row.date_raw);
+    if(iso && iso > today) return sum;
+    return sum + Number(row.amount || 0);
+  },0);
 }
 function getLoanSchedule(){
   return getDebtData().loanSchedule || [];
@@ -5232,6 +5940,286 @@ function editOpeningBalance(){
     salary: manual.salary
   });
   render();
+}
+
+/* D-10 / DATA-04 — record what the bank actually said.
+   BALANCE_ANCHOR_SPEC §3.3 is explicit that editing a carried month must ask
+   WHICH of two things the user means, because the two have different meanings:
+   an observation of reality (anchor, and therefore something the computed
+   balance can be wrong against), or a correction to the computation (manual).
+   Collapsing them would make the anchor just another editable number and
+   destroy the only thing that makes it useful as a source of truth. */
+function recordBalanceAnchor(sheet, amount, source){
+  const dateIso = getSheetAnchorDateIso(sheet);
+  if(!dateIso){
+    showToast("לא הצלחתי לזהות את החודש הנבחר.", "error");
+    return false;
+  }
+  // Append, never overwrite: an anchor is a dated claim about money, and the
+  // history of claims is what lets us answer "when did the gap open?".
+  saveBalanceAnchors([...getBalanceAnchors(), {
+    id:`anchor-${Date.now()}-${Math.random().toString(36).slice(2,8)}`,
+    dateIso,
+    amount,
+    enteredBy: currentUser,
+    enteredAtIso: getIsoNow(),
+    source: source || "manual"
+  }]);
+  invalidateBalanceMemo();
+  render();
+  // Report the OUTCOME, not the keystroke. "נשמר" tells the user nothing they
+  // did not already know; whether the app agrees with their bank is the entire
+  // reason they were asked.
+  const info = getBalanceGapForSheet(sheet);
+  const label = formatSheetLabel(sheet);
+  // Default toast duration (4200ms) is tuned for a short status line, not a
+  // confirmation with a number in it that's worth actually reading — reported:
+  // "קפצה התראה שנעלמה מהר". The banner is the durable record either way
+  // (getBalanceGapForSheet persists until resolved); this only affects the
+  // immediate ping.
+  if(!info){
+    showToast(`נרשמה יתרה מהבנק ל${label}: ${fmt(amount)}`, "success", {duration:6000});
+  } else if(Math.abs(info.gap) <= 1){
+    showToast(`תואם — החישוב של האפליקציה ל${label} זהה למה שבבנק.`, "success", {duration:6000});
+  } else {
+    showToast(`נמצא פער של ${fmt(Math.abs(info.gap))} מול הבנק. ההסבר בראש הדשבורד.`, "error", {duration:7000});
+  }
+  return true;
+}
+
+/* ── DATA-04 wave 3.5 — the anchor as a habit, not a hidden button ──────────
+   Wave 3 shipped a reconciliation tool that only runs when the user remembers
+   to run it. That is self-defeating: the reason silent drift is dangerous is
+   precisely that nobody notices it, so a check gated on suspicion never fires.
+   The app has to do the asking, and it has to ask at the one moment when the
+   answer is both easy to get and semantically correct. */
+
+/* §2.4 blocks mid-month anchoring: income rows carry no date (inferIncomeRows
+   writes date_raw:""), so the app cannot state what it expects on the 17th and
+   any gap it reported would be an artifact of the missing salary date rather
+   than a real discrepancy. Asking in the first days of the month dissolves that
+   constraint instead of guessing around it — on the 2nd, "how much is in the
+   account right now" IS this month's opening balance. Correctness and
+   convenience point the same way here, which is why this is the default moment
+   rather than a reminder the user configures. */
+const ANCHOR_WINDOW_LAST_DAY = 5;
+const ANCHOR_STALE_DAYS = 35;
+
+function getLatestBalanceAnchor(){
+  return getBalanceAnchors()
+    .filter(a => a.source !== "legacy-manual")  // migrated openingBalances were never a bank observation
+    .sort((a,b) => String(a.enteredAtIso).localeCompare(String(b.enteredAtIso)))
+    .pop() || null;
+}
+function getCurrentMonthSheet(){
+  const now = new Date();
+  return resolveSheetName(formatSheetFromMonth(now.getFullYear(), now.getMonth() + 1));
+}
+function getAnchorReadingState(){
+  const now = new Date();
+  const dayOfMonth = now.getDate();
+  const currentSheet = getCurrentMonthSheet();
+  const hasCurrentAnchor = Boolean(getBalanceAnchorForSheet(currentSheet));
+  const latest = getLatestBalanceAnchor();
+  const latestMs = latest ? new Date(latest.enteredAtIso).getTime() : NaN;
+  const daysSince = Number.isFinite(latestMs)
+    ? Math.max(0, Math.floor((now.getTime() - latestMs) / 86400000))
+    : null;
+  if(!hasCurrentAnchor && dayOfMonth <= ANCHOR_WINDOW_LAST_DAY){
+    return {due:true, reason:"window", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+  }
+  if(daysSince == null || daysSince > ANCHOR_STALE_DAYS){
+    return {due:true, reason:"stale", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+  }
+  return {due:false, reason:"ok", currentSheet, daysSince, dayOfMonth, hasCurrentAnchor};
+}
+/* The question changes with the date, because only inside the window can we
+   honestly ask about "now". Outside it we must ask the user to recall the 1st,
+   and must say plainly that guessing is worse than skipping - a wrong anchor
+   makes the app report a discrepancy that never happened. */
+function getAnchorAskCopy(sheet){
+  const state = getAnchorReadingState();
+  const inWindow = sheet === state.currentSheet && state.dayOfMonth <= ANCHOR_WINDOW_LAST_DAY;
+  const label = formatSheetLabel(sheet);
+  return inWindow
+    ? { inWindow:true,
+        title:"כמה יש עכשיו בעו״ש?",
+        help:`פתחו את אפליקציית הבנק והעתיקו את היתרה. אנחנו בתחילת ${label}, ולכן מה שיש עכשיו הוא גם היתרה שאיתה החודש נפתח — אין צורך לזכור אחורה.` }
+    : { inWindow:false,
+        title:`כמה היה בעו״ש בתחילת ${label}?`,
+        help:`היתרה בבנק ביום הראשון של ${label}. אם אינכם יודעים בוודאות — עדיף לדלג: מספר משוער כאן יגרום לאפליקציה לדווח על פער שלא קיים.` };
+}
+
+/* Nobody retypes a balance they are looking at - they copy it. Bank apps and
+   bank SMS hand over strings like "יתרה בחשבון: 12,345.67 ₪". Prefer the number
+   that sits next to the shekel sign, then fall back to the longest digit run,
+   because an account number ("123-456") often appears before the amount. The
+   parsed result is written into the field for the user to confirm, so a wrong
+   guess is visible before it is ever saved. */
+function extractAmountFromPastedText(text){
+  const clean = String(text || "").replace(/[‎‏]/g, "");
+  const nearShekel = clean.match(/(-?\d[\d,.   ]*)\s*₪|₪\s*(-?\d[\d,.   ]*)/);
+  const candidates = [];
+  if(nearShekel) candidates.push(nearShekel[1] || nearShekel[2]);
+  const runs = clean.match(/-?\d[\d,٬.   ]*/g) || [];
+  candidates.push(...runs.slice().sort((a,b) => b.replace(/\D/g,"").length - a.replace(/\D/g,"").length));
+  for(const candidate of candidates){
+    const parsed = parseCurrencyInput(candidate);
+    if(parsed.ok && parsed.value != null) return parsed.value;
+  }
+  return null;
+}
+
+/* prompt() was the wrong surface for the one number the whole reconciliation
+   rests on: no numeric keypad on iOS, no paste handling, no room to explain
+   what is being asked, and no way to show that a previous reading exists. */
+function openBalanceAnchorSheet(sheetOverride){
+  const sheet = sheetOverride || selectedSheet;
+  const dateIso = getSheetAnchorDateIso(sheet);
+  if(!dateIso){ showToast("לא הצלחתי לזהות את החודש הנבחר.", "error"); return; }
+  const copy = getAnchorAskCopy(sheet);
+  const existing = getBalanceAnchorForSheet(sheet);
+  const prefill = anchorSheetPrefill != null ? anchorSheetPrefill : (existing ? existing.amount : "");
+  anchorSheetPrefill = null;
+  let back = document.getElementById("anchorSheetBack");
+  if(!back){
+    back = document.createElement("div");
+    back.id = "anchorSheetBack";
+    back.className = "anchor-sheet-back";
+    back.setAttribute("role", "dialog");
+    back.setAttribute("aria-modal", "true");
+    back.setAttribute("aria-labelledby", "anchorSheetTitle");
+    back.addEventListener("click", e => { if(e.target === back) closeBalanceAnchorSheet(); });
+    document.body.appendChild(back);
+  }
+  back.dataset.sheet = sheet;
+  // Deliberately NOT showing the computed balance before entry. Displaying the
+  // expected number first would anchor the answer to it (the literal bias this
+  // feature is named after) and the user would "confirm" the app's own guess,
+  // which destroys the only independent observation in the system.
+  back.innerHTML = `
+    <form class="anchor-sheet" onsubmit="event.preventDefault(); submitBalanceAnchorSheet();">
+      <h2 id="anchorSheetTitle">${escapeHtmlAttr(copy.title)}</h2>
+      <p class="anchor-help">${escapeHtmlAttr(copy.help)}</p>
+      <input class="anchor-amount-input" id="anchorAmountInput" inputmode="decimal" autocomplete="off"
+             placeholder="0" value="${escapeHtmlAttr(String(prefill))}" aria-label="היתרה בעו״ש">
+      <div class="anchor-date-row"><span>נרשם כיתרת הפתיחה של ${escapeHtmlAttr(formatSheetLabel(sheet))} — היום הראשון בחודש</span></div>
+      <div class="anchor-error" id="anchorSheetError" role="alert"></div>
+      <div class="anchor-actions">
+        <button type="submit" class="anchor-save">שמור כיתרה מהבנק</button>
+        <button type="button" class="anchor-cancel" onclick="closeBalanceAnchorSheet()">ביטול</button>
+      </div>
+      <p class="anchor-note">אפשר להדביק ישירות מאפליקציית הבנק או מ-SMS — נחלץ את המספר ונציג אותו כאן לאישור לפני השמירה.${
+        existing ? `<br>קריאה קודמת: ${escapeHtmlAttr(fmt(existing.amount))}, נרשמה ב-<bdi>${escapeHtmlAttr(String(existing.enteredAtIso).slice(0,10))}</bdi>. רישום חדש אינו מוחק אותה — הוא נוסף אחריה.` : ""
+      }</p>
+    </form>`;
+  back.classList.add("open");
+  const input = document.getElementById("anchorAmountInput");
+  input.addEventListener("paste", e => {
+    const text = (e.clipboardData || window.clipboardData || {}).getData?.("text") || "";
+    const value = extractAmountFromPastedText(text);
+    if(value != null){ e.preventDefault(); input.value = String(value); }
+  });
+  document.addEventListener("keydown", anchorSheetEsc);
+  setTimeout(() => { input.focus(); input.select(); }, 60);
+}
+let anchorSheetPrefill = null;
+function anchorSheetEsc(e){ if(e.key === "Escape") closeBalanceAnchorSheet(); }
+function closeBalanceAnchorSheet(){
+  document.getElementById("anchorSheetBack")?.classList.remove("open");
+  document.removeEventListener("keydown", anchorSheetEsc);
+}
+function openAnchorSheetForCurrentMonth(){
+  const sheet = getCurrentMonthSheet();
+  if((SHEET_OPTIONS || []).includes(sheet)){ selectedSheet = sheet; }
+  openBalanceAnchorSheet(selectedSheet);
+}
+function submitBalanceAnchorSheet(){
+  const back = document.getElementById("anchorSheetBack");
+  const sheet = (back && back.dataset.sheet) || selectedSheet;
+  const input = document.getElementById("anchorAmountInput");
+  const errEl = document.getElementById("anchorSheetError");
+  const raw = input ? input.value : "";
+  const parsed = parseCurrencyInput(raw);
+  if(!parsed.ok || parsed.value == null){
+    if(errEl){
+      errEl.textContent = `"${raw}" אינו מספר תקין. הזינו את הסכום בלבד, למשל 12,345.67`;
+      errEl.classList.add("is-visible");
+    }
+    return;
+  }
+  if(recordBalanceAnchor(sheet, parsed.value)) closeBalanceAnchorSheet();
+}
+
+/* An iOS Shortcut can read the balance out of a bank SMS and open the app at
+   #anchor=12345; this is as close to automatic as a static page with no backend
+   can get (D-10: Israeli Open Banking needs a licensed provider and a server).
+   It still opens the confirmation sheet rather than writing straight to
+   storage - a URL is not an observation, and anything can put one there. */
+function ingestAnchorFromUrl(){
+  const hash = String(window.location.hash || "");
+  const match = hash.match(/(?:^#|[&#])anchor=([^&]+)/);
+  if(!match) return;
+  history.replaceState(null, "", window.location.pathname + window.location.search);
+  const parsed = parseCurrencyInput(decodeURIComponent(match[1]));
+  if(!parsed.ok || parsed.value == null){
+    showToast("הקישור הכיל יתרה שאינה מספר תקין — לא נרשם עוגן.", "error");
+    return;
+  }
+  anchorSheetPrefill = parsed.value;
+  openAnchorSheetForCurrentMonth();
+}
+window.addEventListener("load", () => { setTimeout(ingestAnchorFromUrl, 400); });
+
+/* The gap is a STATE, not an event - so it is never a toast (which disappears
+   after 4.2s). It is computed against what the app would have said on its own,
+   i.e. explicitly ignoring the anchor that is being checked. */
+function getBalanceGapForSheet(sheet){
+  const anchor = getBalanceAnchorForSheet(sheet);
+  if(!anchor) return null;
+  const prev = getPrevSheet(sheet);
+  let computed = null;
+  if(prev && (SHEET_OPTIONS || []).includes(prev)){
+    computed = getDisplayedClosingBalance(prev);
+  } else if(currentUser === "raz"){
+    const summary = getSheetSummaryByName(sheet);
+    if(summary.opening != null) computed = Number(summary.opening);
+  }
+  if(computed == null) return null;
+  return { anchor, computed, gap: anchor.amount - computed };
+}
+
+/* A gap without a lead is just an accusation. The previous month is where the
+   discrepancy was created, so look there for a row that matches the gap exactly
+   - a duplicate charge and a missed one both produce a gap of precisely that
+   amount. These are LEADS, never verdicts: the wording must stay interrogative,
+   because an identical amount is suggestive and not proof. */
+function findGapSuspects(sheet, gap){
+  const prev = getPrevSheet(sheet);
+  if(!prev || !(SHEET_OPTIONS || []).includes(prev)) return [];
+  const target = Math.abs(gap);
+  if(!(target > 1)) return [];
+  const rows = getEditableRows(prev);
+  const counts = new Map();
+  rows.forEach(row => {
+    const sig = `${normalizeMerchantName(row.merchant)}|${Number(row.amount || 0)}`;
+    counts.set(sig, (counts.get(sig) || 0) + 1);
+  });
+  const leads = [];
+  const seen = new Set();
+  rows.forEach(row => {
+    const amount = Number(row.amount || 0);
+    if(Math.abs(Math.abs(amount) - target) > 1) return;
+    const sig = `${normalizeMerchantName(row.merchant)}|${amount}`;
+    if(seen.has(sig)) return;
+    seen.add(sig);
+    const name = String(row.merchant || "").trim() || "ללא שם";
+    const when = toIsoDate(row.date_raw || "");
+    leads.push((counts.get(sig) || 0) > 1
+      ? `${name} ${fmt(amount)} מופיע ${counts.get(sig)} פעמים ב${formatSheetLabel(prev)} — כפילות?`
+      : `${name} ${fmt(amount)}${when ? ` (${when})` : ""} ב${formatSheetLabel(prev)} — בסכום בדיוק של הפער.`);
+  });
+  return leads.slice(0, 3);
 }
 
 function toggleSection(el){ el.parentElement.classList.toggle("open"); }
@@ -5533,7 +6521,11 @@ function getBillingSheetForExpense(dateValue, payment, immediate, billingShiftMo
   if(isMethodImmediate){
     return formatSheetFromMonth(year, month);
   }
-  const cycleStartDay = paymentMethod ? Number(paymentMethod.cycleDay) : null;
+  // D-13: resolve the billing day that was in effect ON THE PURCHASE DATE, not
+  // the card's current one. Identical to the old behaviour for any method
+  // without a recorded history, which is every method until a statement import
+  // fills one in.
+  const cycleStartDay = paymentMethod ? Number(getBillingDayForDate(paymentMethod, dateValue)) : null;
   if(cycleStartDay && day < cycleStartDay){
     const shifted = shiftMonth(year, month, -1);
     year = shifted.year;
@@ -5565,14 +6557,229 @@ function getExpenseStats(sheet){
     return stats;
   }, {total:0, fixed:0, variable:0, immediate:0, transfers:0, chargeByDay:{}});
 }
-function getDisplayedOpeningBalance(sheet){
-  const manual = getManualSettings(sheet);
-  if(manual.openingBalance != null) return Number(manual.openingBalance);
-  if(currentUser === "raz"){
-    const summary = getSheetSummaryByName(sheet);
-    if(summary.opening != null) return Number(summary.opening);
+/* ── D-10 / DATA-04: balance anchors ────────────────────────────────────────
+   An anchor is an observation: "on this date the bank actually said X". Until
+   now the closing balance was a pure projection with nothing to check it
+   against, so any drift - a missed expense, a double count, a wrong cycle -
+   persisted silently forever. That is why Shira's 9,000 immediate charge sat
+   unnoticed for ten days.
+
+   Deliberately NOT stored in manualSettings: saveManualSettings() rebuilds the
+   object with exactly two fields and would silently drop anything else. And an
+   anchor is a claim about a DATE, not about a sheet - under D-11 the month
+   boundary itself becomes a user preference, so a sheet-keyed anchor would
+   change meaning when the user flips that switch.
+
+   Append-only: an anchor is a recorded claim about money. Overwriting in place
+   destroys the ability to answer "when did the gap open?". Corrections are new
+   records with a later enteredAtIso. Same shape the settlements tombstones use. */
+function getBalanceAnchorsStorageKey(){ return getScopedStorageKey("expense_app_balance_anchors_v1"); }
+function normalizeBalanceAnchor(entry, index=0){
+  const amount = Number(entry && entry.amount);
+  if(!Number.isFinite(amount)) return null;
+  const dateIso = String(entry && entry.dateIso || "").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(dateIso)) return null;
+  return {
+    id: String(entry.id || `anchor-${Date.now()}-${index}`),
+    dateIso,
+    amount,
+    enteredBy: entry.enteredBy === "shira" ? "shira" : "raz",
+    enteredAtIso: String(entry.enteredAtIso || getIsoNow()),
+    source: ["manual","legacy-manual","statement-import"].includes(entry.source) ? entry.source : "manual",
+    accountLabel: String(entry.accountLabel || ""),
+    note: String(entry.note || "")
+  };
+}
+function getBalanceAnchors(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getBalanceAnchorsStorageKey()) || "[]");
+    if(Array.isArray(parsed)) return parsed.map(normalizeBalanceAnchor).filter(Boolean);
+  } catch(e){}
+  return [];
+}
+function saveBalanceAnchors(list){
+  const normalized = (Array.isArray(list) ? list : []).map(normalizeBalanceAnchor).filter(Boolean);
+  localStorage.setItem(getBalanceAnchorsStorageKey(), JSON.stringify(normalized));
+  markLocalDataChanged();
+  scheduleCloudSync();
+}
+/* First day of the sheet's month, in ISO. Version 1 anchors the OPENING of a
+   month, not an arbitrary date - see BALANCE_ANCHOR_SPEC §2.4: income rows are
+   not reliably dated (inferIncomeRows writes date_raw:""), so a mid-month
+   expectation cannot be computed without inventing a date for the salary. */
+function getSheetAnchorDateIso(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return "";
+  return `${year}-${String(month).padStart(2,"0")}-01`;
+}
+/* Latest anchor wins for a given date - corrections are appended, not edited. */
+function getBalanceAnchorForSheet(sheet){
+  const dateIso = getSheetAnchorDateIso(sheet);
+  if(!dateIso) return null;
+  return getBalanceAnchors()
+    .filter(a => a.dateIso === dateIso)
+    .sort((a,b)=> String(a.enteredAtIso).localeCompare(String(b.enteredAtIso)))
+    .pop() || null;
+}
+/* Migration: every existing manual openingBalance becomes a legacy-manual
+   anchor. Runs once per user. Critically this does NOT delete the original -
+   manualSettings stays the source of record for those months so that not a
+   single historical number moves (D-08). The anchor is additive provenance. */
+function runBalanceAnchorMigration(){
+  const flagKey = getScopedStorageKey("expense_app_balance_anchor_migration_v1");
+  if(localStorage.getItem(flagKey)) return;
+  const existing = getBalanceAnchors();
+  const seen = new Set(existing.map(a => `${a.dateIso}|${a.source}`));
+  const added = [];
+  Object.entries(getManualSettingsMap()).forEach(([sheet, settings]) => {
+    if(!settings || settings.openingBalance == null) return;
+    const dateIso = getSheetAnchorDateIso(sheet);
+    if(!dateIso || seen.has(`${dateIso}|legacy-manual`)) return;
+    added.push({
+      id:`anchor-legacy-${dateIso}`,
+      dateIso,
+      amount: Number(settings.openingBalance),
+      enteredBy: currentUser,
+      enteredAtIso: getIsoNow(),
+      source:"legacy-manual",
+      note:"הועבר מ-openingBalance"
+    });
+    seen.add(`${dateIso}|legacy-manual`);
+  });
+  if(added.length) saveBalanceAnchors([...existing, ...added]);
+  localStorage.setItem(flagKey, "done");
+}
+
+/* Memoized per render pass. getDisplayedOpeningBalance now recurses backwards
+   through getDisplayedClosingBalance(prev), and getYearlyRowsData walks twelve
+   months while getHeroSparkData calls it twice - without this the walk is
+   quadratic on every render. Invalidated by markLocalDataChanged(). */
+let _openingBalanceMemo = new Map();
+function invalidateBalanceMemo(){ _openingBalanceMemo = new Map(); }
+
+function getDisplayedOpeningBalance(sheet, _depth=0){
+  const memoKey = `${currentUser}|${sheet}`;
+  if(_openingBalanceMemo.has(memoKey)) return _openingBalanceMemo.get(memoKey);
+  // Cycle/runaway guard: a corrupt sheet name could otherwise walk forever.
+  if(_depth > 240) return null;
+
+  const compute = () => {
+    // 1. Anchored - an actual observation of the bank balance.
+    const anchor = getBalanceAnchorForSheet(sheet);
+    if(anchor) return anchor.amount;
+    // 2. Manual (legacy) - a number the user actually typed.
+    const manual = getManualSettings(sheet);
+    if(manual.openingBalance != null) return Number(manual.openingBalance);
+    // 3. Seeded summary - raz only (C-1). Shira has no second path by design.
+    //    This is imported real data, so it outranks anything we compute.
+    if(currentUser === "raz"){
+      const summary = getSheetSummaryByName(sheet);
+      if(summary.opening != null) return Number(summary.opening);
+    }
+    // 4. LAST: carried forward from the previous month's closing.
+    //    Deliberately below every observed source. D-08 forbids a migration that
+    //    moves historical numbers, and the harness proved this is not
+    //    theoretical: with carry placed above the seeded summary it silently
+    //    rewrote ינואר/פברואר/מרץ 26 (5,107.16 -> -2,940.64 and onward).
+    //    Carry-forward fills holes; it never overrides an observation.
+    const prev = getPrevSheet(sheet);
+    if(prev && (SHEET_OPTIONS || []).includes(prev)){
+      const prevOpening = getDisplayedOpeningBalance(prev, _depth + 1);
+      if(prevOpening != null){
+        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.total || 0) : 0;
+        return prevOpening + getIncomeTotal(prev) - getExpenseStats(prev).total - bank;
+      }
+    }
+    return null;
+  };
+
+  const value = compute();
+  _openingBalanceMemo.set(memoKey, value);
+  return value;
+}
+/* Where the number came from, for the UI. Never guess in the label. */
+function getOpeningBalanceSource(sheet){
+  if(getBalanceAnchorForSheet(sheet)) return "anchored";
+  if(getManualSettings(sheet).openingBalance != null) return "manual";
+  if(currentUser === "raz" && getSheetSummaryByName(sheet).opening != null) return "summary";
+  const prev = getPrevSheet(sheet);
+  if(prev && (SHEET_OPTIONS || []).includes(prev) && getDisplayedOpeningBalance(prev) != null) return "carried";
+  return "none";
+}
+/* ── D-13: cash-out view — "what is in the account" vs "what we spent" ──────
+   Raz's goal, stated 16.09: show at any moment how much is in the current
+   account, how much the card bills will still take this month, and have an
+   immediate charge already deducted.
+
+   The app cannot answer that from one number per row, because a row's sheet
+   says WHEN IT WAS BOUGHT while the balance depends on WHEN THE MONEY LEAVES.
+   For a card those are different months. So the charge month is DERIVED here
+   rather than stored - when a bank statement later supplies the truth, this
+   recomputes instead of migrating rows (D-13).
+
+   Scans EVERY sheet, not just the adjacent ones. The first version limited
+   itself to this month ±1 on the reasoning that a billing cycle never spans
+   more than two adjacent months - true for a correctly filed row, false for
+   the data that actually exists. A row dated 2025-12-01 sits in the "יולי 26"
+   sheet (one of the mis-dated AIG rows), and the window silently dropped
+   ₪1,033 from December's total. The probe caught it as a conservation failure.
+   Roughly 900 rows is not worth optimising against correctness.
+
+   NOTE this is a pure read model. It does NOT change getExpenseStats or
+   getDisplayedClosingBalance, which still answer the "what did we spend in
+   this month" question the rest of the app is built on. Wiring the balance
+   itself onto the cash-out basis is a separate, gated step. */
+function getChargeMonthForRow(row){
+  const iso = toIsoDate(row && (row.date_raw || row.date) || "");
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const year = Number(iso.slice(0,4)), month = Number(iso.slice(5,7)), day = Number(iso.slice(8,10));
+  if(!row.payment) return `${year}-${String(month).padStart(2,"0")}`;
+  const method = getPaymentMethodByName(row.payment);
+  // No method on file, or an immediate one: the money leaves when it is spent.
+  if(!method || method.isImmediate || isRowImmediate(row)){
+    return `${year}-${String(month).padStart(2,"0")}`;
   }
-  return null;
+  const billingDay = Number(getBillingDayForDate(method, iso)) || 10;
+  if(day < billingDay) return `${year}-${String(month).padStart(2,"0")}`;
+  const next = shiftMonth(year, month, 1);
+  return `${next.year}-${String(next.month).padStart(2,"0")}`;
+}
+function getCashOutSummary(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return null;
+  const targetMonth = `${year}-${String(month).padStart(2,"0")}`;
+  syncSheetOptions();
+
+  let alreadyLeft = 0, cardDue = 0;
+  const byCard = {};
+  for(const candidate of SHEET_OPTIONS){
+    for(const row of getEditableRows(candidate)){
+      if(getChargeMonthForRow(row) !== targetMonth) continue;
+      const amount = Number(row.amount || 0);
+      const method = row.payment ? getPaymentMethodByName(row.payment) : null;
+      const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
+      if(isCardBill){
+        cardDue += amount;
+        byCard[row.payment] = (byCard[row.payment] || 0) + amount;
+      } else {
+        alreadyLeft += amount;
+      }
+    }
+  }
+  const opening = getDisplayedOpeningBalance(sheet);
+  const income = getIncomeReceivedToDate(sheet);
+  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
+  // uncomputable number must read as "—", never as a confident zero.
+  const nowBalance = opening == null ? null : opening + income - alreadyLeft - loan;
+  return {
+    month: targetMonth,
+    alreadyLeft,
+    cardDue,
+    byCard,
+    nowBalance,
+    afterCardsBalance: nowBalance == null ? null : nowBalance - cardDue
+  };
 }
 function getDisplayedClosingBalance(sheet){
   // C-2: this is cash actually leaving the account, so it's .total (principal
@@ -5698,11 +6905,17 @@ function getYearlySummaryData(year=selectedYear){
   const totalFixed = rows.reduce((sum,row)=>sum + Number(row.fixed || 0),0);
   const totalVariable = rows.reduce((sum,row)=>sum + Number(row.variable || 0),0);
   const totalMonthlyBalance = rows.reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0);
-  const averageExpense = rows.length ? totalExpense / rows.length : 0;
-  const averageIncome = rows.length ? totalIncome / rows.length : 0;
-  const averageBalance = rows.length ? totalMonthlyBalance / rows.length : 0;
-  const yearToDateSavings = rows.length ? rows[rows.length - 1].cumulativeBalance : 0;
-  const rollingThreeBalance = rows.slice(-3).reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0);
+  /* METRIC_NULL_ZERO_FINDINGS_2026-09-15: these five used ": 0" for the
+     empty-year case, so formatMetricValue (which only guards null/"")
+     faithfully printed ₪0 - indistinguishable from a year that genuinely
+     broke even. The dashboard's own avg_expense (getDashboardWidgetCatalog,
+     "rows.length ? ... : null") already draws this line correctly; these
+     yearly siblings just hadn't been brought in line with it. */
+  const averageExpense = rows.length ? totalExpense / rows.length : null;
+  const averageIncome = rows.length ? totalIncome / rows.length : null;
+  const averageBalance = rows.length ? totalMonthlyBalance / rows.length : null;
+  const yearToDateSavings = rows.length ? rows[rows.length - 1].cumulativeBalance : null;
+  const rollingThreeBalance = rows.length ? rows.slice(-3).reduce((sum,row)=>sum + Number(row.monthlyBalance || 0),0) : null;
   const bestBalanceMonth = rows.reduce((best,row)=>row.monthlyBalance > (best?.monthlyBalance ?? -Infinity) ? row : best, null);
   const worstBalanceMonth = rows.reduce((worst,row)=>row.monthlyBalance < (worst?.monthlyBalance ?? Infinity) ? row : worst, null);
   return {
@@ -5755,7 +6968,11 @@ function getYearlyColumnCatalog(){
     {id:"variable", label:"משתנות"},
     {id:"income", label:"הכנסות"},
     {id:"monthlyBalance", label:"מאזן חודשי"},
-    {id:"cumulativeBalance", label:"מאזן מצטבר"},
+    // D-10 wave 3, item B: renamed, formula untouched and no number moved.
+    // "מאזן מצטבר" reads like a bank balance; it is actually a running sum of
+    // monthly deltas that restarts every January. Now that the hero is anchored
+    // to the real account, the two must not be confusable.
+    {id:"cumulativeBalance", label:"נצבר מתחילת השנה"},
     {id:"immediate", label:"מיידי"},
     {id:"transfers", label:"העברות בנקאיות"},
     {id:"loan", label:"הלוואה חודשית"},
@@ -6089,11 +7306,30 @@ function drillIntoCategoryExpenses(categoryName){
   render();
 }
 /* ── helpers: prev month comparison ── */
+/* CARRY-16: sheet names are not canonical. Almost every key uses a 2-digit year
+   ("נובמבר 25") but at least one real key in production data uses 4 digits
+   ("אוקטובר 2025"). getSheetMonthYear() reads both, but formatSheetFromMonth()
+   always emits 2 digits - so getPrevSheet("נובמבר 25") returned "אוקטובר 25",
+   a key that does not exist, and the month chain broke there silently.
+   Verified in node against the real backup: 13 sheet keys, exactly one outlier.
+
+   resolveSheetName maps a computed name onto whichever spelling actually holds
+   data, comparing by sort value (year*100+month) so both spellings collapse to
+   the same point in time. Returns the computed name unchanged when nothing
+   matches, so callers that create new sheets keep the canonical 2-digit form. */
+function resolveSheetName(sheet){
+  if(!sheet) return sheet;
+  const known = SHEET_OPTIONS || [];
+  if(known.includes(sheet)) return sheet;
+  const target = getSheetSortValue(sheet);
+  if(!target) return sheet;
+  return known.find(candidate => getSheetSortValue(candidate) === target) || sheet;
+}
 function getPrevSheet(sheet){
   const {month, year} = getSheetMonthYear(sheet);
   if(!month || !year) return null;
   const prev = shiftMonth(year, month, -1);
-  return formatSheetFromMonth(prev.year, prev.month);
+  return resolveSheetName(formatSheetFromMonth(prev.year, prev.month));
 }
 function buildComparisonChip(current, prev, higherIsBetter){
   if(current == null || !prev || prev === 0) return "";
@@ -6286,26 +7522,113 @@ function countUpIfChanged(el, value){
     el.dataset.initialized = "1";
   }
 }
+/* D-10 wave 3, item A. This used to plot cumulativeBalance - a running sum of
+   monthly deltas that restarts at 0 each year (getYearlyRowsData). Two problems,
+   both real:
+
+   1. It is a DIFFERENT QUANTITY from the big number above it. The hero shows the
+      closing balance; the curve showed "how much was saved since January". Once
+      the hero can say "anchored to the bank", a curve underneath it measuring
+      something else becomes an actively false claim. This is the same shape as
+      C-5, where an independent calculation path disagreed in SIGN with the card
+      on the same screen.
+   2. CARRY-15: crossing a year boundary concatenated two series that each start
+      at 0, so the line plunged every January and the alt text announced a
+      "decrease" for what was a counter reset.
+
+   Plotting the closing balance directly fixes both: same quantity as the hero,
+   and continuous across years because it is an absolute balance, not a tally.
+   Months with no balance are null, which Chart.js renders as a gap - correct,
+   since we must not draw a zero we do not know. */
 function getHeroSparkData(){
-  /* Reuse existing yearly running-balance data (getYearlyRowsData) — last up-to-6 months
-     of cumulativeBalance, spanning year boundary by combining current + previous year if needed. */
   const {year: curYear} = getSheetMonthYear(selectedSheet);
-  let rows = getYearlyRowsData(curYear).filter(r => getSheetSortValue(r.sheet) <= getSheetSortValue(selectedSheet));
-  if(rows.length < 6){
-    const prevRows = getYearlyRowsData(curYear - 1);
-    rows = [...prevRows, ...rows];
-  }
-  rows = rows.slice(-6);
+  let sheets = (SHEET_OPTIONS || []).filter(s => getSheetSortValue(s) <= getSheetSortValue(selectedSheet));
+  sheets = sheets.slice(-6);
   return {
-    labels: rows.map(r => formatSheetLabel(r.sheet)),
-    values: rows.map(r => r.cumulativeBalance)
+    labels: sheets.map(s => formatSheetLabel(s)),
+    values: sheets.map(s => getDisplayedClosingBalance(s))
   };
+}
+/* D-10 — the anchor chip and the gap banner.
+   Both are permanent states rather than notifications, per BALANCE_ANCHOR_SPEC
+   §2.5: a toast vanishes in 4.2s, but a discrepancy against the bank persists
+   until someone resolves it. "Never anchored" is shown for the same reason -
+   silence would make an unverified number look verified. */
+const BALANCE_SOURCE_LABEL = {
+  anchored:"מעוגן לבנק", manual:"הוזן ידנית", summary:"מהגיליון", carried:"מועבר מהחודש הקודם", none:"—"
+};
+function renderBalanceAnchorState(){
+  const chip = document.getElementById("heroAnchorChip");
+  const banner = document.getElementById("balanceGapBanner");
+  const source = getOpeningBalanceSource(selectedSheet);
+  const anchor = getBalanceAnchorForSheet(selectedSheet);
+
+  if(chip){
+    // The anchor is always the opening of the selected month in v1, so the
+    // month label carries no information here - what is useful is when the
+    // observation was made, which is how stale it is.
+    // ⁦…⁩ (LTR isolate) around the ISO date: inside an RTL run
+    // "2026-09-14" is reordered to "14-09-2026", which still reads as a valid
+    // date — in a different format. Correct by luck today, silently wrong the
+    // moment the day and the month are both under 13.
+    const raw = anchor ? String(anchor.enteredAtIso || "").slice(0, 10) : "";
+    const when = raw ? `⁦${raw}⁩` : "";
+    chip.textContent = anchor
+      ? `מעוגן: ${fmt(anchor.amount)}${when ? ` · נרשם ${when}` : ""}`
+      : `לא עוגן מעולם · פתיחה ${BALANCE_SOURCE_LABEL[source] || "—"}`;
+    chip.classList.toggle("is-gap", Boolean(anchor));
+  }
+  // The button has to say which of the two questions it is about to ask, since
+  // "now" and "the 1st of the month" are different things to go look up.
+  const btnLabel = document.getElementById("heroAnchorBtnLabel");
+  const btn = document.getElementById("heroAnchorBtn");
+  const reading = getAnchorReadingState();
+  if(btnLabel) btnLabel.textContent = getAnchorAskCopy(selectedSheet).inWindow
+    ? "כמה יש עכשיו בבנק?"
+    : (anchor ? "עדכן יתרה מהבנק" : "הזן יתרה מהבנק");
+  if(btn) btn.classList.toggle("is-due", reading.due && !anchor);
+  if(!banner) return;
+
+  const info = getBalanceGapForSheet(selectedSheet);
+  if(!info){
+    banner.className = "balance-gap-banner";
+    banner.textContent = "";
+    return;
+  }
+  // Below a shekel is rounding, not a discrepancy.
+  if(Math.abs(info.gap) <= 1){
+    banner.className = "balance-gap-banner is-visible is-match";
+    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת למה שראית בבנק (${fmt(info.anchor.amount)}).</span>`;
+    return;
+  }
+  // Say the direction in words. A signed number alone is read wrong under
+  // stress, and this banner exists precisely for the stressful case.
+  const bankHasLess = info.gap < 0;
+  const words = bankHasLess
+    ? `בבנק יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
+    : `בבנק יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+  const leads = findGapSuspects(selectedSheet, info.gap);
+  banner.className = "balance-gap-banner is-visible";
+  banner.innerHTML =
+    `<span>⚠️</span><span><strong>${words}.</strong> ` +
+    `החישוב: ${fmt(info.computed)} · מהבנק: ${fmt(info.anchor.amount)}. ` +
+    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.` +
+    (leads.length
+      ? `<span class="gap-lead">🔎 אולי קשור: ${leads.map(escapeHtmlAttr).join(" · ")}</span>`
+      : "") +
+    `</span>`;
 }
 function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
   const balEl = document.getElementById("heroBalance");
   if(!heroEl || !balEl) return;
-  const closing = getDisplayedClosingBalance(selectedSheet);
+  // The hero label promises "עד היום" (up to today) - getDisplayedClosingBalance
+  // is a full-MONTH projection (assumes all income already landed), which is
+  // right for chaining next month's opening balance but wrong for a "now"
+  // headline. getCashOutSummary's nowBalance is the one figure that actually
+  // excludes not-yet-received income, so it - not the closing balance - is
+  // what belongs here.
+  const closing = getCashOutSummary(selectedSheet)?.nowBalance ?? null;
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
@@ -6343,6 +7666,7 @@ function renderDashboardHero(){
       forecastLine.style.display = "none";
     }
   }
+  renderHeroCashout();
   // CARRY-14 (BALANCE_ANCHOR_SPEC R-2): closing == null means "we have no opening
   // balance for this month", not "the balance is zero" - but the hero rendered it
   // as a confident ₪0. That is the single number on the dashboard, and per
@@ -6354,6 +7678,7 @@ function renderDashboardHero(){
   const hasBalance = closing != null;
   heroEl.classList.toggle("is-negative", hasBalance && value < 0);
   heroEl.classList.toggle("is-unknown", !hasBalance);
+  renderBalanceAnchorState();
   if(!hasBalance){
     const intEl = balEl.querySelector('.hero-int') || balEl;
     intEl.textContent = "—";
@@ -6417,6 +7742,37 @@ function renderDashboardHero(){
   }
 }
 
+/* D-13: getCashOutSummary is a bank-reality read model (charge-month, not
+   purchase-month) — deliberately separate from the hero-balance above so a
+   discrepancy between the two is visible, not silently reconciled. */
+function renderHeroCashout(){
+  const box = document.getElementById("heroCashout");
+  if(!box) return;
+  const sum = getCashOutSummary(selectedSheet);
+  if(!sum){ box.style.display = "none"; return; }
+  box.style.display = "block";
+  const nowEl = document.getElementById("cashOutNow");
+  const dueEl = document.getElementById("cashOutDue");
+  const afterEl = document.getElementById("cashOutAfter");
+  const fmtOrDash = v => v == null ? "—" : fmtIls(v);
+  if(nowEl){ nowEl.textContent = fmtOrDash(sum.nowBalance); nowEl.classList.toggle("is-negative", sum.nowBalance != null && sum.nowBalance < 0); }
+  if(dueEl) dueEl.textContent = fmtIls(sum.cardDue);
+  if(afterEl){ afterEl.textContent = fmtOrDash(sum.afterCardsBalance); afterEl.classList.toggle("is-negative", sum.afterCardsBalance != null && sum.afterCardsBalance < 0); }
+  const detail = document.getElementById("heroCashoutDetail");
+  const byCardEl = document.getElementById("heroCashoutByCard");
+  const cards = Object.entries(sum.byCard || {}).filter(([, amt]) => amt > 0).sort((a, b) => b[1] - a[1]);
+  if(detail && byCardEl){
+    if(cards.length){
+      detail.style.display = "block";
+      byCardEl.innerHTML = cards.map(([name, amt]) =>
+        `<div class="hero-cashout-card-row"><span>${escapeHtmlAttr(name)}</span><strong>${fmtIls(amt)}</strong></div>`
+      ).join("");
+    } else {
+      detail.style.display = "none";
+    }
+  }
+}
+
 /* Compares this month's rows against last month's "קבועה" (fixed) rows and
    flags fixed merchants that had no matching row imported/entered yet this
    month — catches a missed credit-card statement or a manual entry you forgot. */
@@ -6436,6 +7792,49 @@ function getMissingFixedExpenses(){
     if(!found) missing.push(row.merchant);
   });
   return missing;
+}
+/* Finds likely double-entries within one sheet — never across sheets, and
+   never auto-fixed: this only surfaces a review-queue item, the user decides.
+   Two independent patterns, found by scanning real data (D-13, 2026-09-16):
+   - a "קבועה" (fixed) merchant billed twice in the same sheet FOR THE SAME
+     AMOUNT — a monthly fixed cost should appear once per sheet regardless of
+     which day it landed on, so a second identical-amount row is either a real
+     duplicate or a date-typo that put a row in the wrong sheet (e.g.
+     "01/02/2025" sitting in "ינואר 26"). Amount must match: the same insurer
+     ("הפניקס", "איילון") legitimately bills two DIFFERENT policy line items
+     every month under the identical merchant name - grouping by merchant
+     alone flagged that real pattern as a duplicate every single month.
+   - any type, same merchant + same amount + the same date_raw - the
+     copy-then-forgot-to-delete-the-original pattern (seen live with "לוסיד").
+   A group is skipped once ANY row in it is already "לא רלוונטי" - that is the
+   existing convention in this data for "I found the extra one and demoted it,
+   the other row is the real expense" (seen live: "בלינק פינטק", one row
+   recategorized with the note "בטעות" while its twin stays live). Requiring
+   the WHOLE group to be demoted would keep nagging about exactly the
+   duplicates the user already resolved. */
+function getPossibleDuplicateRows(sheet){
+  const rows = getEditableRows(sheet).filter(row => row && row.merchant && Number(row.amount) > 0);
+  const groups = new Map();
+  const addToGroup = (key, row) => {
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  };
+  rows.forEach(row => {
+    const merchantKey = normalizeMerchantName(row.merchant);
+    if(row.type === "קבועה") addToGroup(`fixed:${merchantKey}:${Number(row.amount).toFixed(2)}`, row);
+    if(row.date_raw) addToGroup(`sameday:${merchantKey}:${Number(row.amount).toFixed(2)}:${row.date_raw}`, row);
+  });
+  const seenRowKeys = new Set();
+  const result = [];
+  for(const [key, groupRows] of groups){
+    if(groupRows.length < 2) continue;
+    if(groupRows.some(row => normalizeCategory(row.category) === "לא רלוונטי")) continue;
+    const dedupeKey = groupRows.map(r => r.row).sort((a,b)=>a-b).join(",");
+    if(seenRowKeys.has(dedupeKey)) continue;
+    seenRowKeys.add(dedupeKey);
+    result.push({ merchant: groupRows[0].merchant, amount: Number(groupRows[0].amount), rows: groupRows.map(r => r.row) });
+  }
+  return result;
 }
 function getDashboardReviewItems(){
   const rows = getEditableRows(selectedSheet);
@@ -6477,6 +7876,26 @@ function getDashboardReviewItems(){
       label:"בדוק חלוקה"
     });
   }
+  // DATA-04 wave 3.5: this is the item that turns the anchor from a feature
+  // into a habit. Everything else in this queue reacts to data the user already
+  // entered; this one asks for the only number the app cannot derive.
+  const anchorState = getAnchorReadingState();
+  if(anchorState.due){
+    items.push({
+      id: `anchorDue:${anchorState.currentSheet}:${anchorState.reason}`,
+      tone: "warn",
+      title: anchorState.reason === "window"
+        ? "עכשיו הרגע הנכון לבדוק מול הבנק"
+        : "היתרה לא נבדקה מול הבנק",
+      sub: anchorState.reason === "window"
+        ? "בתחילת החודש היתרה שבבנק היא גם יתרת הפתיחה — דקה אחת עכשיו הופכת את כל החודש לבדוק."
+        : (anchorState.daysSince == null
+            ? "לא הוזנה מעולם יתרה אמיתית מהבנק, ולכן אין דרך לדעת אם החישוב סטה."
+            : `הקריאה האחרונה הייתה לפני ${anchorState.daysSince} ימים.`),
+      action: "openAnchorSheetForCurrentMonth()",
+      label: "הזן יתרה"
+    });
+  }
   const missingFixed = getMissingFixedExpenses();
   if(missingFixed.length){
     items.push({
@@ -6486,6 +7905,17 @@ function getDashboardReviewItems(){
       sub:`מהחודש הקודם: ${missingFixed.slice(0,3).map(m=>escapeHtmlAttr(m)).join(", ")}${missingFixed.length>3 ? "..." : ""}`,
       action:"switchToTab('expenses')",
       label:"בדוק הוצאות"
+    });
+  }
+  const possibleDuplicates = getPossibleDuplicateRows(selectedSheet);
+  if(possibleDuplicates.length){
+    items.push({
+      id:`possibleDup:${selectedSheet}:${possibleDuplicates.map(d=>d.rows.join("+")).join("|")}`,
+      tone:"warn",
+      title:`${possibleDuplicates.length} כפילויות אפשריות בהוצאות`,
+      sub:`אותו בית עסק וסכום פעמיים: ${possibleDuplicates.slice(0,3).map(d=>escapeHtmlAttr(d.merchant)).join(", ")}${possibleDuplicates.length>3 ? "..." : ""}`,
+      action:"reviewExpensesNeedingAttention()",
+      label:"בדוק כפילות"
     });
   }
   if(syncNeedsReview){
@@ -6794,13 +8224,24 @@ function renderChart(rows){
     const income = getIncomeTotal(selectedSheet);
     const dayLabels=Array.from({length:daysInMonth},(_,i)=>String(i+1));
     const dayNow = fc.dayNow || daysInMonth;
-    /* actual: opening + (income spread isn't dated, so apply at day 1) - cumulative expense up to today */
+    /* D-10 wave 3, item C — close the last inherited gap from C-2/C-5.
+       getDisplayedClosingBalance subtracts the month's bank loan payment, but
+       this chart never did, so the card and the graph disagreed by exactly that
+       payment (~948 for the month reviewed under C-2). While the balance was an
+       unanchored projection that discrepancy was merely confusing; now that the
+       hero can say "anchored to the bank", the first gap the anchor surfaces
+       would have been OUR OWN known bug, and the user would reasonably blame
+       the bank. Same field as the card - .total, i.e. principal + interest,
+       because that is the cash that actually leaves the account. Applied at day
+       1 alongside income, which shares the same "not reliably dated" caveat. */
+    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) : 0;
+    /* actual: opening + (income spread isn't dated, so apply at day 1) - bank loan - cumulative expense up to today */
     let runExp=0;
     const actual = dayLabels.map((_,i)=>{
       const day=i+1;
       runExp += (expByDay[day]||0);
       if(day>dayNow) return null;
-      return opening + income - runExp;
+      return opening + income - bankMonthly - runExp;
     });
     /* projection: from today's actual to month-end at avg daily burn, plus any
        already-known future charges landing on their real day (expByDay past
@@ -6810,7 +8251,7 @@ function renderChart(rows){
        signs for the same data. Applying it on its real day (not folded into
        avgDaily) keeps the two count it exactly once each. */
     const lastActual = actual[Math.min(dayNow,daysInMonth)-1];
-    const baseline = lastActual==null ? opening+income : lastActual;
+    const baseline = lastActual==null ? opening+income-bankMonthly : lastActual;
     let runFutureExp = 0;
     const projData = dayLabels.map((_,i)=>{
       const day=i+1;
@@ -7139,6 +8580,8 @@ function renderPaymentMethodTab(){
   const methods = getPaymentMethods();
   const count = document.getElementById("paymentMethodCount");
   if(count) count.textContent = String(methods.length);
+  const heroCount = document.getElementById("cardsHeroCount");
+  if(heroCount) heroCount.textContent = String(methods.filter(m => !m.archivedAtIso).length);
   if(!list) return;
   if(!methods.length){
     list.innerHTML = `<div class="debt-empty">עדיין לא הוגדרו כרטיסים לחשבון הזה. אפשר להתחיל עם כרטיס חדש, והעברה בנקאית תמיד זמינה כברירת מחדל.</div>`;
@@ -8123,6 +9566,7 @@ const TAB_META = [
   {id:"shared",    label:"הוצאות משותפות",   icon:"❤️"},
   {id:"debts",     label:"חובות והלוואות",   icon:"🏦"},
   {id:"goals",     label:"יעדים",            icon:"🎯"},
+  {id:"grocery",   label:"קניות",            icon:"🛒"},
   {id:"yearly",    label:"סיכום שנתי",       icon:"📅"},
   {id:"backup",    label:"גיבוי נתונים",     icon:"🗄️"},
 ];
@@ -8332,7 +9776,7 @@ function renderTabs(){
   });
   const moreButton = document.querySelector(".btab-more");
   if(moreButton){
-    const moreIsActive = ["income","cards","debts","goals","yearly","backup"].includes(activeTab);
+    const moreIsActive = ["income","cards","debts","goals","yearly","backup","grocery"].includes(activeTab);
     moreButton.classList.toggle("active", moreIsActive);
     moreButton.setAttribute("aria-expanded", document.getElementById("moreSheet")?.classList.contains("open") ? "true" : "false");
   }
@@ -8580,7 +10024,7 @@ function renderYearlyStats(summary){
       datasets:[
         { label:"הכנסות", data:summary.rows.map(r=>r.income), borderColor:_css("--income"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
         { label:"הוצאות", data:summary.rows.map(r=>r.totalExpenses), borderColor:_css("--expense"), backgroundColor:"transparent", borderWidth:2.5, tension:.25 },
-        { label:"מאזן מצטבר", data:summary.rows.map(r=>r.cumulativeBalance), borderColor:_css("--wood-strong"), backgroundColor:"transparent", borderWidth:2, borderDash:[5,4], tension:.25 }
+        { label:"נצבר מתחילת השנה", data:summary.rows.map(r=>r.cumulativeBalance), borderColor:_css("--wood-strong"), backgroundColor:"transparent", borderWidth:2, borderDash:[5,4], tension:.25 }
       ]
     },
     options:{
@@ -8722,6 +10166,7 @@ function render(){
     renderSharedExpensesTab();
     renderDebts();
     renderGoals();
+    renderGroceryTab();
     renderYearly();
     renderCloudSyncStatus();
     renderRecoveryPoints();
@@ -8798,6 +10243,22 @@ document.getElementById("chartTypeSelect").onchange = render;
 document.querySelectorAll(".tab-btn").forEach(btn=>{
   btn.onclick=()=>{ activeTab = btn.dataset.tab; clearSelectedExpenseRows(); renderTabs(); render(); if(typeof closeMoreSheet==="function") closeMoreSheet(); };
 });
+/* D-13 bank sync: delegated because renderBankSync() replaces the container's
+   innerHTML on every change, so per-element handlers would be lost. Bound once
+   on the stable parent. */
+(() => {
+  const root = document.getElementById("bankSyncResult");
+  if(!root) return;
+  root.addEventListener("click", e => {
+    const applyBtn = e.target.closest("[data-bank-apply]");
+    if(applyBtn){ applyDiscoveredBillingHistory(applyBtn.dataset.bankApply); return; }
+    if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
+  });
+  root.addEventListener("change", e => {
+    const select = e.target.closest("[data-bank-map-card]");
+    if(select) setBankCardLabel(select.dataset.bankMapCard, select.value);
+  });
+})();
 document.getElementById("showDebtsSetupBtn").onclick=()=>{
   setDebtTrackingEnabled(true);
   activeTab = "debts";
@@ -8845,6 +10306,10 @@ document.getElementById("backupFileInput").onchange=(event)=>{
 };
 document.getElementById("addExpenseBtn").onclick=()=>toggleAddExpenseForm();
 document.getElementById("importCCBtn").onclick=openCCImport;
+document.getElementById("bankStatementBtn").onclick=()=>document.getElementById("bankStatementFile").click();
+document.getElementById("bankStatementFile").onchange=(event)=>{
+  handleBankStatementFile(event.target);
+};
 document.getElementById("newPayment").onchange=syncNewExpenseImmediateState;
 document.getElementById("newSharedExpense").onchange=syncNewSharedExpenseState;
 document.getElementById("newSharedSplitMode").onchange=syncNewSharedSplitMode;
@@ -9460,6 +10925,544 @@ function handleCCFile(e){
   reader.readAsArrayBuffer(file);
 }
 
+/* DD-MM-YYYY (dashes) -> DD/MM/YYYY, the slash format toIsoDate expects and
+ * date_raw already uses everywhere else in the app. Deliberately separate
+ * from toIsoDate rather than teaching it a second delimiter: toIsoDate is
+ * called all over the app on data assumed to already be in the app's own
+ * date_raw convention, and silently widening what it accepts there is a
+ * bigger blast radius than one parser needing its own normalizer. Returns ""
+ * on anything that doesn't match - callers must treat that as "not present",
+ * not retry with a looser pattern, per domain-risk-reviewer 2026-09-15
+ * (a silent "" here is what made the original bug look fixed when it wasn't:
+ * it fell through to the old per-row calculation and nothing in a casual
+ * manual test would have shown the difference). */
+function parseDashedStatementDate(raw){
+  const s = String(raw || "").trim();
+  const m = s.match(/^(\d{1,2})-(\d{1,2})-(\d{2,4})$/);
+  if(!m) return "";
+  const [, dd, mm, yyyy] = m;
+  return `${dd.padStart(2,"0")}/${mm.padStart(2,"0")}/${yyyy}`;
+}
+
+/* ══ D-13: bank current-account statement — parse, discover, reconcile ══════
+   Measured against a real Mizrahi export on 16.09; see
+   research/2026-09-16/BANK_STATEMENT_FINDINGS_HE.md for the file anatomy and
+   every claim below.
+
+   This is deliberately NOT wired into the ccImport pipeline. A bank statement
+   is a different kind of document: it lists money MOVING IN THE ACCOUNT, not
+   purchases. The card bill appears as ONE aggregated line, and the individual
+   purchases behind it already arrive through the credit-card import. Feeding
+   these rows into the expense list would double-count every one of them.
+   What the statement is used for instead: (a) the balance anchor, (b)
+   discovering each card's real billing day, (c) reconciliation. */
+
+/* The export is HTML wearing a .xls extension, UTF-8 with BOM, dir="rtl".
+   Columns: תאריך | תאריך ערך | סוג תנועה | זכות | חובה | יתרה | אסמכתא | _ | _
+   76 of 232 rows carry no running balance (paired interest/fee lines, where
+   the bank only shows the balance after the net effect) - that is normal and
+   must not be treated as a parse failure. */
+function parseBankStatementHtml(text){
+  const src = String(text || "").replace(/^﻿/, "");
+  const decode = (s) => String(s)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  const cells = (rowHtml) => [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m => decode(m[1]));
+  const rows = [...src.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map(m => cells(m[1]));
+  const money = (s) => {
+    const n = Number(String(s || "").replace(/[,\s₪]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // Header balance: "יתרה בחשבון: 10,287.58 לתאריך - 14/09/26 16:41"
+  let headerBalance = null, headerDateIso = "";
+  for(const row of rows){
+    const idx = row.findIndex(c => /יתרה בחשבון/.test(c));
+    if(idx >= 0){
+      headerBalance = money(row[idx + 1]);
+      const dateCell = row.find(c => /^\d{2}\/\d{2}\/\d{2}/.test(c));
+      if(dateCell) headerDateIso = toIsoDate(dateCell.split(" ")[0]);
+      break;
+    }
+  }
+
+  const transactions = [];
+  for(const row of rows){
+    if(row.length < 7) continue;
+    if(!/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(row[0])) continue;
+    const iso = toIsoDate(row[0]);
+    if(!iso) continue;
+    transactions.push({
+      dateIso: iso,
+      dateRaw: row[0],
+      valueDateRaw: row[1] || "",
+      description: row[2] || "",
+      credit: money(row[3]),
+      debit: money(row[4]),
+      balance: row[5] && money(row[5]) ? money(row[5]) : null,
+      reference: row[6] || ""
+    });
+  }
+  transactions.sort((a,b) => a.dateIso.localeCompare(b.dateIso));
+  return { headerBalance, headerDateIso, transactions };
+}
+
+/* The running-balance column is the reason this file can feed the anchor
+   directly: verified 95/95 consecutive transitions with zero discrepancies on
+   the real export. This re-verifies it per import rather than trusting that
+   one measurement forever - a bank changing its export format silently is
+   exactly the kind of thing that should fail loudly. */
+function verifyBankStatementBalance(parsed){
+  const all = (parsed && parsed.transactions || []);
+  let checked = 0, mismatches = 0;
+  let prev = null;
+  for(const t of all){
+    // A row without a running balance BREAKS the chain - it still moved money,
+    // so the next balance-bearing row is not derivable from the previous one.
+    // Filtering those rows out first and comparing what remains silently joins
+    // across the gap and reports ~60 false mismatches on a file that is in fact
+    // perfectly consistent. Reset instead of skip.
+    if(t.balance == null){ prev = null; continue; }
+    if(prev != null){
+      checked++;
+      if(Math.abs((prev + t.credit - t.debit) - t.balance) > 0.02) mismatches++;
+    }
+    prev = t.balance;
+  }
+  const withBalance = all.filter(t => t.balance != null);
+  const last = withBalance.length ? withBalance[withBalance.length - 1] : null;
+  return {
+    checked,
+    mismatches,
+    consistent: checked > 0 && mismatches === 0,
+    lastBalance: last ? last.balance : null,
+    lastDateIso: last ? last.dateIso : "",
+    headerMatchesLast: last && parsed.headerBalance != null
+      ? Math.abs(last.balance - parsed.headerBalance) < 0.02
+      : null
+  };
+}
+
+/* Bank transaction labels that plausibly represent a credit-card charge, with
+   how many times each appears. Offered to the user for mapping onto their
+   cards, because the app's card name is never the bank's label ("חבר" bills
+   as "הרשאה ישראכרט (י)"). Returns candidates, not a guess - the app has no
+   basis to decide which of the user's cards a label belongs to. */
+function getBankCardLabelCandidates(parsed){
+  const counts = new Map();
+  for(const t of (parsed && parsed.transactions || [])){
+    if(t.debit <= 0) continue;
+    if(!/ויזה|ישראכרט|מקס|אמריקן|כאל|לאומי קארד|דיינרס|הרשאה/.test(t.description)) continue;
+    const entry = counts.get(t.description) || { label: t.description, count: 0, total: 0, maxDebit: 0 };
+    entry.count++;
+    entry.total += t.debit;
+    entry.maxDebit = Math.max(entry.maxDebit, t.debit);
+    counts.set(t.description, entry);
+  }
+  return [...counts.values()].sort((a,b) => b.maxDebit - a.maxDebit);
+}
+
+/* Sum of our own rows for one billing cycle: a bill charged on day D of month
+   (year, month) covers purchases from day D of the previous month through day
+   D-1 of this month. This exact formula reproduced the bank's real charge to
+   within ₪0-₪2 across six months once the correct day was used - it is the
+   measured-correct cycle definition, not an assumption. */
+function getOurCycleTotalForCard(cardName, billingDay, year, month){
+  const prev = shiftMonth(year, month, -1);
+  let total = 0;
+  // syncSheetOptions() rebuilds SHEET_OPTIONS from overrides/income/manual keys,
+  // so this sees every sheet that actually holds data - not just the base list.
+  syncSheetOptions();
+  for(const sheet of SHEET_OPTIONS){
+    for(const row of getEditableRows(sheet)){
+      if(!row || row.payment !== cardName) continue;
+      const iso = toIsoDate(row.date_raw || row.date || "") || String(row.date_raw || "");
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue;
+      const y = Number(iso.slice(0,4)), m = Number(iso.slice(5,7)), d = Number(iso.slice(8,10));
+      const inPrev = y === prev.year && m === prev.month && d >= billingDay;
+      const inCur = y === year && m === month && d < billingDay;
+      if(inPrev || inCur) total += Number(row.amount || 0);
+    }
+  }
+  return total;
+}
+
+/* For one month, find which billing day best explains the bank's actual charge.
+   Tries every day 1-28 (29-31 are excluded: a bill day that doesn't exist in
+   February would be ambiguous), and for each, checks how closely our computed
+   cycle total matches one of the bank's charges that month.
+
+   Returns a confidence band rather than a bare answer, because the match is
+   NOT always clean - our data has gaps, and installments are billed
+   separately. A month that can't be explained must say so instead of
+   producing a confident wrong day. */
+function inferBillingDayForMonth(cardName, bankLabel, parsed, year, month){
+  const charges = (parsed.transactions || []).filter(t =>
+    t.description === bankLabel &&
+    t.debit > 0 &&
+    Number(t.dateIso.slice(0,4)) === year &&
+    Number(t.dateIso.slice(5,7)) === month
+  );
+  if(!charges.length) return { year, month, day: null, confidence: "no-charge", gap: null, bankAmount: null, ourAmount: null };
+
+  /* The billing day is OBSERVED, not searched for: a bill posts on the billing
+     day, so the bank's own posting date is the answer. The cycle sum is how we
+     VALIDATE that reading, not how we find it.
+
+     Searching all 28 days for whichever best matched our totals was wrong and
+     measurably so - on Raz's real data it returned 1 instead of 2 and 9 instead
+     of 10 (adjacent days produce identical sums when the card was unused that
+     day, so the tie went to the lower number), plus outright noise like day 18
+     or 27 in months where our records are incomplete and some unrelated day
+     happened to fit. Coincidence beat evidence.
+
+     So: each candidate charge line proposes its own posting day, we compute the
+     cycle that day implies, and the charge whose amount our records best explain
+     wins. That single rule identifies BOTH which line is the monthly bill (vital
+     for a label like "ויזה מקס (י)", where only 12 of 64 rows are the bill) AND
+     the billing day, without ever inventing a day the bank never posted on.
+
+     A posting date can slip a day or two onto a weekend (Raz's card posted on
+     the 2nd most months and the 3rd twice). That ambiguity is harmless for
+     routing: if no transaction falls on the disputed day, both readings produce
+     the same cycle. */
+  let best = null;
+  for(const charge of charges){
+    const day = Number(charge.dateIso.slice(8,10));
+    if(!(day >= 1 && day <= 28)) continue;
+    const ours = getOurCycleTotalForCard(cardName, day, year, month);
+    const gap = Math.abs(charge.debit - ours);
+    const relative = charge.debit ? gap / charge.debit : 1;
+    if(!best || relative < best.relative){
+      best = { day, gap, relative, bankAmount: charge.debit, ourAmount: ours, chargeDateIso: charge.dateIso };
+    }
+  }
+  if(!best){
+    return { year, month, day: null, confidence: "no-usable-charge", gap: null,
+             bankAmount: charges[0].debit, ourAmount: null };
+  }
+
+  const confidence = best.relative <= 0.01 ? "exact"
+    : best.relative <= 0.05 ? "high"
+    : best.relative <= 0.2 ? "low" : "none";
+  return { year, month, ...best, confidence };
+}
+
+/* Walk every month in the statement and segment the confident months into
+   dated periods. Only "exact" and "high" months vote; anything weaker is
+   reported but never silently turned into a period - a wrong period would
+   misroute every row in its range. */
+function discoverBillingDayHistory(cardName, bankLabel, parsed){
+  const txs = parsed.transactions || [];
+  if(!txs.length) return { months: [], periods: [], usable: false };
+  const firstIso = txs[0].dateIso, lastIso = txs[txs.length - 1].dateIso;
+  let y = Number(firstIso.slice(0,4)), m = Number(firstIso.slice(5,7));
+  const endY = Number(lastIso.slice(0,4)), endM = Number(lastIso.slice(5,7));
+
+  const months = [];
+  while(y < endY || (y === endY && m <= endM)){
+    months.push(inferBillingDayForMonth(cardName, bankLabel, parsed, y, m));
+    const next = shiftMonth(y, m, 1);
+    y = next.year; m = next.month;
+  }
+
+  /* Group confident months into periods, absorbing ±1 day jitter.
+
+     A bill due on the 2nd posts on the 3rd when the 2nd is a weekend - Raz's
+     card did exactly that twice. Treating each slip as a billing-day CHANGE
+     produced four periods where there were two, including a one-month "period"
+     on day 3 that never existed as a real setting. Noise presented as history
+     is worse than no history: it would be shown to the user as a discovered
+     fact, and it would fragment routing for no reason.
+
+     So a month joins the current period when it is within a day of it, and the
+     period's recorded day is the MODE of its months - the recurring setting,
+     not whichever month happened to come first. A genuine change of a single
+     day would be absorbed too; that is an accepted trade, and it is routing-
+     neutral unless a transaction falls on exactly the disputed day. */
+  const confident = months.filter(m => m.day && (m.confidence === "exact" || m.confidence === "high"));
+  const groups = [];
+  for(const entry of confident){
+    const current = groups[groups.length - 1];
+    if(current && Math.abs(current.days[current.days.length - 1] - entry.day) <= 1){
+      current.days.push(entry.day);
+      current.untilIso = `${entry.year}-${String(entry.month).padStart(2,"0")}-01`;
+      continue;
+    }
+    groups.push({
+      fromIso: `${entry.year}-${String(entry.month).padStart(2,"0")}-01`,
+      untilIso: `${entry.year}-${String(entry.month).padStart(2,"0")}-01`,
+      days: [entry.day]
+    });
+  }
+  const periods = groups.map(group => {
+    const counts = new Map();
+    for(const day of group.days) counts.set(day, (counts.get(day) || 0) + 1);
+    const day = [...counts.entries()].sort((a,b) => b[1] - a[1] || a[0] - b[0])[0][0];
+    return {
+      fromIso: group.fromIso,
+      untilIso: group.untilIso,
+      day,
+      source: "statement-derived",
+      note: `זוהה מהצלבה מול ${bankLabel} (${group.days.length} חודשים${group.days.some(d => d !== day) ? ", כולל הזזות סוף שבוע" : ""})`
+    };
+  });
+  return {
+    months,
+    periods,
+    usable: periods.length > 0,
+    confidentMonths: months.filter(x => x.confidence === "exact" || x.confidence === "high").length,
+    totalMonths: months.length
+  };
+}
+
+/* ── D-13: bank sync UI ────────────────────────────────────────────────────
+   The parsed statement lives in memory for the duration of the screen and is
+   never persisted. It holds a real account number and running balances; the
+   only things that ever reach storage are what the user explicitly accepts:
+   the card→label mapping, a discovered billing-day history, or a balance
+   anchor. The statement rows themselves are read, used, and dropped. */
+let bankSyncState = null;
+
+function getBankLabelMappingKey(){ return getScopedStorageKey("expense_app_bank_label_map_v1"); }
+function getBankLabelMapping(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getBankLabelMappingKey()) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch(e){ return {}; }
+}
+function saveBankLabelMapping(map){
+  localStorage.setItem(getBankLabelMappingKey(), JSON.stringify(map || {}));
+  markLocalDataChanged();
+}
+
+function handleBankStatementFile(inputEl){
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = parseBankStatementHtml(String(reader.result || ""));
+      if(!parsed.transactions.length){
+        showToast("לא זוהו תנועות בקובץ. ודאו שזה ייצוא תנועות עו״ש.", "error");
+        return;
+      }
+      bankSyncState = {
+        parsed,
+        verdict: verifyBankStatementBalance(parsed),
+        labels: getBankCardLabelCandidates(parsed),
+        fileName: file.name
+      };
+      const fileNameEl = document.getElementById("bankDropFileName");
+      if(fileNameEl){ fileNameEl.textContent = `📄 ${file.name}`; fileNameEl.hidden = false; }
+      renderBankSync();
+      showToast(`נקראו ${parsed.transactions.length} תנועות.`, "success");
+    } catch(e){
+      showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+    } finally {
+      inputEl.value = "";
+    }
+  };
+  reader.onerror = () => showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+  reader.readAsText(file, "utf-8");
+}
+
+/* Keyed by the card's stable id, not its name: renaming a card should not
+   silently lose the mapping, and a name is free text the user controls. */
+function setBankCardLabel(cardId, label){
+  const map = getBankLabelMapping();
+  if(label) map[cardId] = label; else delete map[cardId];
+  saveBankLabelMapping(map);
+  renderBankSync();
+}
+
+/* Applies a discovered history to the card. Appends to whatever the user
+   already has rather than replacing it: an entry they typed themselves is a
+   stated fact about their own account and outranks anything inferred. */
+function applyDiscoveredBillingHistory(cardId){
+  if(!bankSyncState) return;
+  const methodsNow = getPaymentMethods();
+  const target = methodsNow.find(m => m.id === cardId);
+  if(!target) return;
+  const cardName = target.name;
+  const label = getBankLabelMapping()[cardId];
+  if(!label) return;
+  const discovery = discoverBillingDayHistory(cardName, label, bankSyncState.parsed);
+  if(!discovery.periods.length){
+    showToast("אין תקופות מזוהות בביטחון מספיק כדי להחיל.", "error");
+    return;
+  }
+  const existingUser = (target.billingDayHistory || []).filter(e => e.source === "user");
+  target.billingDayHistory = normalizeBillingDayHistory(
+    [...discovery.periods, ...existingUser], target.cycleDay
+  );
+  savePaymentMethods(methodsNow);
+  const last = discovery.periods[discovery.periods.length - 1];
+  showToast(`הוחל: ${discovery.periods.length} תקופות. יום החיוב הנוכחי — ${last.day}.`, "success", {duration:6000});
+  render();
+}
+
+function renderBankSync(){
+  const root = document.getElementById("bankSyncResult");
+  if(!root) return;
+  if(!bankSyncState){ root.innerHTML = ""; return; }
+
+  const { parsed, verdict, labels } = bankSyncState;
+  const money = (n) => n == null ? "—" : "₪" + Number(n).toLocaleString("he-IL", {maximumFractionDigits:0});
+
+  const verdictBlock = verdict.consistent
+    ? `<div class="bank-verdict ok"><span class="bank-verdict-icon">✓</span><span>
+         הקובץ עקבי: ${verdict.checked} מעברי יתרה נבדקו, ללא חריגה.
+         היתרה האחרונה ${money(verdict.lastBalance)} בתאריך ${escapeHtmlAttr(verdict.lastDateIso)}.
+       </span></div>`
+    : `<div class="bank-verdict warn"><span class="bank-verdict-icon">⚠</span><span>
+         נמצאו ${verdict.mismatches} אי-התאמות מתוך ${verdict.checked} מעברי יתרה.
+         ייתכן שמבנה הקובץ השתנה — הפער מוצג, אך אל תסתמכו עליו בלי בדיקה.
+       </span></div>`;
+
+  const anchorBlock = verdict.lastBalance != null ? `
+    <div class="bank-actions">
+      <button type="button" class="success-btn" data-bank-anchor="1">
+        שמירת ${money(verdict.lastBalance)} כעוגן ל-${escapeHtmlAttr(verdict.lastDateIso)}
+      </button>
+    </div>` : "";
+
+  const map = getBankLabelMapping();
+  const cards = getPaymentMethods().filter(m => !m.isImmediate && !m.archivedAtIso);
+  const labelOptions = (selected) => [`<option value="">— ללא —</option>`]
+    .concat(labels.map(l =>
+      `<option value="${escapeHtmlAttr(l.label)}" ${l.label === selected ? "selected" : ""}>${escapeHtmlAttr(l.label)} (${l.count})</option>`
+    )).join("");
+
+  /* Card ids and names go into data-* attributes and are read back through
+     the DOM, never interpolated into an inline handler. escapeHtmlAttr does
+     not escape a single quote, and card names are free text the user edits -
+     a name containing an apostrophe would otherwise break straight out of an
+     onclick="...('NAME')" string. */
+  const mappingRows = cards.map(card => `
+    <div class="bank-map-row">
+      <span class="bank-map-card">${escapeHtmlAttr(card.name)}</span>
+      <select data-bank-map-card="${escapeHtmlAttr(card.id)}">${labelOptions(map[card.id] || "")}</select>
+      <span class="bank-map-day">יום חיוב כעת: ${card.cycleDay}</span>
+    </div>`).join("");
+
+  const mappedCards = cards.filter(card => map[card.id]);
+  const discoveries = mappedCards.map(card => ({ card, discovery: discoverBillingDayHistory(card.name, map[card.id], parsed) }));
+
+  /* D-13 step 5: the per-card tables above already show month-by-month gap;
+     this rolls them into one number so the question "is everything reconciled,
+     overall?" has a direct answer instead of requiring a scan of N tables. */
+  const summaryBlock = mappedCards.length ? (() => {
+    let monthsChecked = 0, confidentMonths = 0, totalGap = 0, gapMonths = 0;
+    for(const { discovery } of discoveries){
+      monthsChecked += discovery.months.filter(m => m.bankAmount != null).length;
+      confidentMonths += discovery.confidentMonths;
+      for(const m of discovery.months){
+        if(m.gap != null){ totalGap += Math.abs(m.gap); gapMonths++; }
+      }
+    }
+    const allReconciled = monthsChecked > 0 && confidentMonths === monthsChecked;
+    return `
+      <div class="recon-card recon-summary ${allReconciled ? "ok" : ""}">
+        <div class="recon-head">
+          <div>
+            <div class="recon-title">${allReconciled ? "✓ הכול מוצלב" : "סיכום ההצלבה"}</div>
+            <div class="recon-sub">${mappedCards.length} כרטיסים משויכים · ${confidentMonths}/${monthsChecked} חודשים תואמים בביטחון</div>
+          </div>
+          <div class="recon-summary-gap ${totalGap > 0 ? "has-gap" : ""}">
+            <span>${money(gapMonths ? totalGap : null)}</span>
+            <small>פער מצטבר בכל החודשים שנבדקו</small>
+          </div>
+        </div>
+      </div>`;
+  })() : "";
+
+  const reconBlocks = discoveries.map(({ card, discovery }) => {
+    const rows = discovery.months.filter(m => m.bankAmount != null).map(m => {
+      const cls = m.confidence === "exact" || m.confidence === "high" ? m.confidence
+        : m.confidence === "low" ? "low"
+        : m.gap == null ? "na" : "none";
+      return `<tr>
+        <td class="recon-month">${m.year}-${String(m.month).padStart(2,"0")}</td>
+        <td><span class="recon-dayflag">${m.day ?? "—"}</span></td>
+        <td>${money(m.bankAmount)}</td>
+        <td>${m.ourAmount == null ? "—" : money(m.ourAmount)}</td>
+        <td class="recon-gap ${cls}">${m.gap == null ? "—" : money(m.gap)}</td>
+      </tr>`;
+    }).join("");
+
+    const periodsBlock = discovery.periods.length ? `
+      <div class="recon-periods">
+        ${discovery.periods.map(p => `
+          <div class="recon-period">
+            <span class="recon-period-day">יום ${p.day}</span>
+            <span>מ-${escapeHtmlAttr(p.fromIso)}</span>
+            <span class="recon-sub">${escapeHtmlAttr(p.note)}</span>
+          </div>`).join("")}
+        <div class="bank-actions">
+          <button type="button" class="success-btn" data-bank-apply="${escapeHtmlAttr(card.id)}">
+            החלה על ${escapeHtmlAttr(card.name)}
+          </button>
+        </div>
+      </div>` : `
+      <div class="recon-periods">
+        <div class="recon-sub">לא נמצאה אף תקופה בביטחון מספיק. ${discovery.confidentMonths}/${discovery.totalMonths} חודשים הוצלבו.</div>
+      </div>`;
+
+    return `
+      <div class="recon-card">
+        <div class="recon-head">
+          <div>
+            <div class="recon-title">${escapeHtmlAttr(card.name)}</div>
+            <div class="recon-sub">מול ${escapeHtmlAttr(map[card.id])} · ${discovery.confidentMonths}/${discovery.totalMonths} חודשים תואמים</div>
+          </div>
+        </div>
+        <table class="recon-table">
+          <thead><tr><th>חודש</th><th>יום</th><th>בבנק</th><th>אצלנו</th><th>פער</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="5" class="recon-sub">אין חיובים לתווית הזו בטווח הקובץ.</td></tr>`}</tbody>
+        </table>
+        ${periodsBlock}
+      </div>`;
+  }).join("");
+
+  root.innerHTML = `
+    ${verdictBlock}
+    ${anchorBlock}
+    <div class="section open" style="margin-top:16px">
+      <!-- .header renders a chevron via CSS, so it must actually collapse -
+           without the toggle it advertises an affordance that does nothing. -->
+      <div class="header" onclick="toggleSection(this)"><span>שיוך כרטיסים לתוויות הבנק</span></div>
+      <div class="content">
+        <div class="small" style="margin-bottom:8px">שם הכרטיס אצלנו אינו שם התנועה בבנק — בחרו פעם אחת, וזה נשמר.</div>
+        ${mappingRows || `<div class="recon-sub">אין כרטיסים מבוססי מחזור להצליב.</div>`}
+      </div>
+    </div>
+    ${summaryBlock}
+    ${reconBlocks}`;
+}
+
+function saveAnchorFromBankStatement(){
+  if(!bankSyncState || bankSyncState.verdict.lastBalance == null) return;
+  const { lastBalance, lastDateIso } = bankSyncState.verdict;
+  const anchors = getBalanceAnchors();
+  anchors.push(normalizeBalanceAnchor({
+    dateIso: lastDateIso,
+    amount: lastBalance,
+    enteredBy: currentUser,
+    source: "statement-import",
+    note: `מקובץ ${bankSyncState.fileName || "תנועות עו״ש"}`
+  }, anchors.length));
+  saveBalanceAnchors(anchors.filter(Boolean));
+  showToast("העוגן נשמר מהקובץ.", "success");
+  render();
+}
+
 function parseCCStatement(rows, filename){
   // Detect format: Max / Isracard / CAL
   let format = null;
@@ -9541,6 +11544,10 @@ function parseCCStatement(rows, filename){
 
     let dateStr = "", merchant = "", amtCharge = 0, currOrig = "\u20aa", amtOrig = null, notes = "";
     let payment = "", sourceCardLabel = "", sourceCardLast4 = "", sourceTxnType = "";
+    // The date the ISSUER says this posts to the account, when the statement
+    // states one - as opposed to dateStr above, which is the purchase date.
+    // Empty unless a format below fills it in.
+    let billingDateRaw = "";
 
     if(format === "max"){
       // Max columns: 0=date(DD-MM-YYYY) 1=merchant 2=category 3=last4 4=type 5=chargeAmt 6=chargeCurr 7=origAmt 8=origCurr 9=billingDate 10=notes
@@ -9556,9 +11563,13 @@ function parseCCStatement(rows, filename){
       if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
       sourceCardLast4 = last4;
       payment = guessPaymentMethodForImport(cardName, sourceCardLast4, cardName, "");
-      // Parse DD-MM-YYYY
-      const parts = d.split("-");
-      dateStr = parts[0].padStart(2,"0")+"/"+parts[1].padStart(2,"0")+"/"+parts[2];
+      dateStr = parseDashedStatementDate(d);
+      // D-08 \u00a73 / domain-risk-reviewer 2026-09-15 (trap #1): r[9] is in the
+      // SAME dashed format as r[0] - it is not toIsoDate-compatible on its own
+      // (that function only accepts slashes). Route it through the identical
+      // parser used two lines above, not a fresh regex, so both dates either
+      // both parse or both fail the same way.
+      billingDateRaw = parseDashedStatementDate(normalizeStatementCell(r[9]));
 
     } else if(format === "isracard") {
       // Isracard columns: 0=date(DD.MM.YY) 1=merchant 2=origAmt 3=origCurr 4=chargeAmt 5=chargeCurr 7=notes
@@ -9648,7 +11659,11 @@ function parseCCStatement(rows, filename){
       // The issuer states outright which charges are standing orders. That beats
       // guessing from history, so it is passed through as a suggestion the
       // review table can still override.
-      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : ""
+      suggestedType: String(sourceTxnType || "").replace(/\s*\.\s*/g, ".").indexOf("\u05d4.\u05e7\u05d1\u05e2") !== -1 ? "\u05e7\u05d1\u05d5\u05e2\u05d4" : "",
+      // Empty for isracard/cal/amex today - none of them carry a per-row
+      // billing date the way max does. D-08 \u00a73 only asked for this where the
+      // source actually states it; extending the others is separate work.
+      billingDateRaw
     });
   }
 
@@ -9887,6 +11902,17 @@ function buildCCImportTable(){
    so nothing is silently dropped. */
 function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
   try {
+    // D-08 \u00a73: when the statement itself states a billing date, that IS the
+    // month - no per-row recalculation. This is deliberately not merely a
+    // tie-breaker: getBillingSheetForExpense's cycleDay heuristic is exactly
+    // what D-08 found unreliable (verified against 17 real Mizrahi rows, off
+    // by a full month). A stated date, when present, is ground truth and
+    // bypasses that heuristic entirely rather than being reconciled with it.
+    const billingIso = toIsoDate(row.billingDateRaw);
+    if(billingIso){
+      const [by, bm] = billingIso.split("-").map(Number);
+      if(by && bm) return resolveSheetName(formatSheetFromMonth(by, bm));
+    }
     const iso = toIsoDate(row.date_raw);
     if(!iso) return fallbackSheet;
     const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
@@ -9895,6 +11921,21 @@ function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallba
     return fallbackSheet;
   }
 }
+/* domain-risk-reviewer 2026-09-15 (H-2): preferring the statement's stated
+ * billing date (below, via resolveImportTargetSheet) makes an import land on
+ * a FUTURE month more often than the old per-row calculation did - and this
+ * function has never checked whether its target sheet is closed, because
+ * MONTH_CLOSE_SPEC's month-close concept (expense_app_month_close_v1,
+ * closeMonth/reopenMonth) does not exist in this file yet. No check is added
+ * here for that reason: there is nothing to check against today, and a stub
+ * guard against a feature that doesn't exist would be exactly the kind of
+ * validation-for-a-scenario-that-can't-happen this project avoids.
+ *
+ * ⚠️ THIS BECOMES A REAL GAP THE MOMENT MONTH_CLOSE_SPEC WAVE 4a SHIPS. Its
+ * own §2 "reopen?" queue is scoped to wave 4b, one wave later - so there is a
+ * window where months CAN be closed but this function still writes into one
+ * with zero warning. Do not promote wave 4a to production before either wave
+ * 4b exists or this function gains its own minimal closed-month check. */
 function confirmCCImport(){
  try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
@@ -9930,6 +11971,13 @@ function confirmCCImport(){
     }
     const shift = Math.max(0, Number(r.billingShiftMonths || 0));
     const targetSheet = resolveImportTargetSheet(r, payment, isImm, shift, sheet);
+    // domain-risk-reviewer 2026-09-15 (M-3): addNewExpense already does this
+    // for manual entry (line ~8493); confirmCCImport never did, so an import
+    // landing on a month with no rows yet skipped the recurring-income seed
+    // that ensureSheetExists provides. Preferring the statement's stated
+    // billing date makes landing on a not-yet-touched future month more
+    // common, not less, so this stops being a rare edge case.
+    ensureSheetExists(targetSheet);
     if(!overrides[targetSheet]) overrides[targetSheet] = [];
     countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;
 
