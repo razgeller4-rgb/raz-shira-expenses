@@ -360,6 +360,7 @@ input, select, textarea { font: inherit; }
   align-items:center; justify-content:center; font-size:14px; }
 .groc-row.is-bought .groc-check{ background:var(--accent); }
 .groc-row-main{ flex:1; display:flex; align-items:baseline; gap:8px; min-width:0; }
+.groc-row-icon{ flex:0 0 auto; font-size:15px; line-height:1; }
 .groc-row-name{ font-size:15px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .groc-row.is-bought .groc-row-name{ color:var(--muted); text-decoration:line-through; }
 .groc-star{ color:var(--warn); font-size:13px; }
@@ -5499,6 +5500,20 @@ function handleGroceryImportText(){
    to add "something for dinner") - grouped here by whatever the user already
    typed, "ללא קטגוריה" for items with none, so the list is never blocked on
    picking from a fixed set. */
+/* One icon per CATEGORY, not per product - a per-product icon dictionary for
+   free-text names would need constant upkeep and silently show nothing for
+   any name it doesn't recognize. Shown next to every item so the row still
+   reads as "iconed", just derived from a maintainable 16-entry map. */
+const GROCERY_CATEGORY_ICONS = {
+  "לחמים ומאפים":"🍞", "מקרר ומוצרי חלב":"🧀", "ירקות ופירות":"🥕",
+  "בשר ועוף":"🍗", "דגני בוקר":"🥣", "תבלינים":"🧂", "רטבים ושמנים":"🫙",
+  "מזווה ובישול":"🍚", "אפייה":"🧁", "חטיפים ומתוקים":"🍫",
+  "משקאות וקפה":"☕", "קפואים":"🧊", "ניקיון וכביסה":"🧼",
+  "טיפוח ורחצה":"🧴", "נייר וציוד לבית":"🧻", "תרופות ועזרה ראשונה":"💊"
+};
+function getGroceryCategoryIcon(category){
+  return GROCERY_CATEGORY_ICONS[category] || "🛒";
+}
 function getGroceryCategoryOrder(items){
   const seen = [];
   items.forEach(item => {
@@ -5536,6 +5551,7 @@ function renderGroceryTab(){
         ${item.status === "bought" ? "✓" : ""}
       </button>
       <div class="groc-row-main">
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryCategoryIcon(item.category)}</span>
         <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
@@ -5552,7 +5568,8 @@ function renderGroceryTab(){
       <button type="button" class="groc-add-toggle" aria-label="הוספה לקנייה עכשיו" title="הוספה לקנייה עכשיו"
         onclick="updateGroceryItemStatus('${item.id}','needed')">+</button>
       <div class="groc-row-main">
-        <span class="groc-row-name">${escapeHtmlAttr(item.name)}</span>
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryCategoryIcon(item.category)}</span>
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
       <button type="button" class="groc-delete" aria-label="מחיקה לצמיתות מהקטלוג" title="מחיקה לצמיתות מהקטלוג" onclick="deleteGroceryItem('${item.id}')">✕</button>
@@ -5560,7 +5577,7 @@ function renderGroceryTab(){
   catalogRoot.innerHTML = catalog.length
     ? getGroceryCategoryOrder(catalog).map(cat => `
         <div class="groc-category">
-          <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
+          <div class="groc-category-title">${getGroceryCategoryIcon(cat)} ${escapeHtmlAttr(cat)}</div>
           ${catalog.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderCatalogRow).join("")}
         </div>`).join("")
     : `<div class="groc-empty">הרשימה הקבועה ריקה. ייבאו קובץ או טקסט למעלה.</div>`;
