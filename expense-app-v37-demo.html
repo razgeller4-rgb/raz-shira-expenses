@@ -6636,6 +6636,81 @@ function getOpeningBalanceSource(sheet){
   if(prev && (SHEET_OPTIONS || []).includes(prev) && getDisplayedOpeningBalance(prev) != null) return "carried";
   return "none";
 }
+/* ── D-13: cash-out view — "what is in the account" vs "what we spent" ──────
+   Raz's goal, stated 16.09: show at any moment how much is in the current
+   account, how much the card bills will still take this month, and have an
+   immediate charge already deducted.
+
+   The app cannot answer that from one number per row, because a row's sheet
+   says WHEN IT WAS BOUGHT while the balance depends on WHEN THE MONEY LEAVES.
+   For a card those are different months. So the charge month is DERIVED here
+   rather than stored - when a bank statement later supplies the truth, this
+   recomputes instead of migrating rows (D-13).
+
+   Scans EVERY sheet, not just the adjacent ones. The first version limited
+   itself to this month ±1 on the reasoning that a billing cycle never spans
+   more than two adjacent months - true for a correctly filed row, false for
+   the data that actually exists. A row dated 2025-12-01 sits in the "יולי 26"
+   sheet (one of the mis-dated AIG rows), and the window silently dropped
+   ₪1,033 from December's total. The probe caught it as a conservation failure.
+   Roughly 900 rows is not worth optimising against correctness.
+
+   NOTE this is a pure read model. It does NOT change getExpenseStats or
+   getDisplayedClosingBalance, which still answer the "what did we spend in
+   this month" question the rest of the app is built on. Wiring the balance
+   itself onto the cash-out basis is a separate, gated step. */
+function getChargeMonthForRow(row){
+  const iso = toIsoDate(row && (row.date_raw || row.date) || "");
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
+  const year = Number(iso.slice(0,4)), month = Number(iso.slice(5,7)), day = Number(iso.slice(8,10));
+  if(!row.payment) return `${year}-${String(month).padStart(2,"0")}`;
+  const method = getPaymentMethodByName(row.payment);
+  // No method on file, or an immediate one: the money leaves when it is spent.
+  if(!method || method.isImmediate || isRowImmediate(row)){
+    return `${year}-${String(month).padStart(2,"0")}`;
+  }
+  const billingDay = Number(getBillingDayForDate(method, iso)) || 10;
+  if(day < billingDay) return `${year}-${String(month).padStart(2,"0")}`;
+  const next = shiftMonth(year, month, 1);
+  return `${next.year}-${String(next.month).padStart(2,"0")}`;
+}
+function getCashOutSummary(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return null;
+  const targetMonth = `${year}-${String(month).padStart(2,"0")}`;
+  syncSheetOptions();
+
+  let alreadyLeft = 0, cardDue = 0;
+  const byCard = {};
+  for(const candidate of SHEET_OPTIONS){
+    for(const row of getEditableRows(candidate)){
+      if(getChargeMonthForRow(row) !== targetMonth) continue;
+      const amount = Number(row.amount || 0);
+      const method = row.payment ? getPaymentMethodByName(row.payment) : null;
+      const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
+      if(isCardBill){
+        cardDue += amount;
+        byCard[row.payment] = (byCard[row.payment] || 0) + amount;
+      } else {
+        alreadyLeft += amount;
+      }
+    }
+  }
+  const opening = getDisplayedOpeningBalance(sheet);
+  const income = getIncomeTotal(sheet);
+  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
+  // uncomputable number must read as "—", never as a confident zero.
+  const nowBalance = opening == null ? null : opening + income - alreadyLeft - loan;
+  return {
+    month: targetMonth,
+    alreadyLeft,
+    cardDue,
+    byCard,
+    nowBalance,
+    afterCardsBalance: nowBalance == null ? null : nowBalance - cardDue
+  };
+}
 function getDisplayedClosingBalance(sheet){
   // C-2: this is cash actually leaving the account, so it's .total (principal
   // + interest), not .principal alone - the bank does not lend you the
