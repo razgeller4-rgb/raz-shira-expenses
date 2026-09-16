@@ -1923,9 +1923,12 @@ body { background:var(--bg); }
 .hero-cashout-row > div:first-child { border-inline-start:0; padding-inline-start:0; }
 .hero-cashout-row span { color:var(--muted); font-size:11px; }
 .hero-cashout-row strong { color:var(--text); font-size:17px; font-variant-numeric:tabular-nums; margin-top:3px; font-family:var(--font-num); }
-.hero-cashout-row strong.is-negative { color:var(--bad); }
+/* var(--bad) is 3.80:1 here at 17px (fine at the ~50px hero-balance size, fails
+   AA's 4.5:1 for normal-size text) — reuse the darkened token already measured
+   at 5.82:1 on this surface for .recon-gap.none. */
+.hero-cashout-row strong.is-negative { color:#A24A2C; }
 .hero-cashout-detail { margin-top:10px; font-size:12.5px; }
-.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:32px; display:flex; align-items:center; list-style:none; }
+.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
 .hero-cashout-detail summary::-webkit-details-marker { display:none; }
 .hero-cashout-detail summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
 .hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
@@ -2024,6 +2027,9 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
+  .hero-cashout-row { gap:6px; }
+  .hero-cashout-row > div { padding-inline-start:8px; }
+  .hero-cashout-row strong { font-size:14px; }
   .review-queue { padding:14px; border-radius:22px; }
   .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
   .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
