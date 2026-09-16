@@ -3707,14 +3707,81 @@ function enrichPaymentMethodWithDefaults(item, userId=currentUser){
     last4: String(item.last4 || match.last4 || "").trim()
   };
 }
+/* ── D-13: a card's billing day is a HISTORY, not a value ──────────────────
+   Measured 16.09 against Raz's real bank export, then confirmed by him
+   directly: "חבר" billed on the 2nd until July 2026, then he changed it to
+   the 10th. Both values are correct - for different periods. A single
+   cycleDay field cannot hold that: set it to 10 and every row before August
+   routes wrong; leave it at 2 and every new row routes wrong.
+
+   So billingDayHistory is a list of dated periods, oldest first. Each entry
+   applies from fromIso onwards until the next entry starts. cycleDay is KEPT
+   and still holds the current value - every existing caller keeps working
+   untouched, and a method with no history behaves exactly as before. The
+   history is purely additive.
+
+   Raz's framing (16.09) is the requirement this is built to: "זה פונקציה
+   שצריך להתמודד איתה כי עוד עלול לקרות שינויים ולהוסיף ולהוריד כרטיסים" -
+   the model has to survive billing days moving and cards coming and going,
+   not just be corrected once.
+
+   bankLabel exists because the app's card name is NOT the bank's transaction
+   label ("חבר" appears as "הרשאה ישראכרט (י)", "ויזה מזרחי" as "ויזה מקס (י)").
+   Matching by name is impossible; this is the explicit link, filled in when a
+   statement is imported. See research/2026-09-16/BANK_STATEMENT_FINDINGS_HE.md */
+function normalizeBillingDayHistory(raw, fallbackDay){
+  const clampDay = (value) => {
+    const n = Number(value);
+    return Number.isFinite(n) ? Math.min(31, Math.max(1, Math.round(n))) : null;
+  };
+  const entries = (Array.isArray(raw) ? raw : [])
+    .map(entry => {
+      const day = clampDay(entry && entry.day);
+      const fromIso = String(entry && entry.fromIso || "").trim();
+      if(day == null || !/^\d{4}-\d{2}-\d{2}$/.test(fromIso)) return null;
+      return {
+        fromIso,
+        day,
+        source: ["user","statement-derived","default"].includes(entry.source) ? entry.source : "user",
+        note: String(entry && entry.note || "")
+      };
+    })
+    .filter(Boolean)
+    .sort((a,b) => a.fromIso.localeCompare(b.fromIso));
+  // Drop consecutive duplicates - a period that doesn't change the day is noise.
+  return entries.filter((entry, i) => i === 0 || entry.day !== entries[i-1].day);
+}
+/* The billing day in effect on a given date. Falls back to the flat cycleDay
+   for any date before the first recorded period, which is exactly the old
+   behaviour - so a method without history is unchanged. */
+function getBillingDayForDate(method, dateIso){
+  const flat = Number(method && method.cycleDay);
+  const fallback = Number.isFinite(flat) ? flat : 10;
+  const history = Array.isArray(method && method.billingDayHistory) ? method.billingDayHistory : [];
+  if(!history.length) return fallback;
+  const iso = String(dateIso || "").trim();
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return fallback;
+  let current = null;
+  for(const entry of history){
+    if(entry.fromIso <= iso) current = entry;
+    else break;
+  }
+  return current ? current.day : fallback;
+}
 function normalizePaymentMethodItem(item, index=0){
   const name = String(item && item.name || "").trim();
   const cycleDayRaw = item && item.cycleDay;
   const cycleDayNum = Number(cycleDayRaw);
+  const cycleDay = Number.isFinite(cycleDayNum) ? Math.min(31, Math.max(1, Math.round(cycleDayNum))) : 10;
   return enrichPaymentMethodWithDefaults({
     id: String(item && item.id || `card-${Date.now()}-${index}`),
     name,
-    cycleDay: Number.isFinite(cycleDayNum) ? Math.min(31, Math.max(1, Math.round(cycleDayNum))) : 10,
+    cycleDay,
+    billingDayHistory: normalizeBillingDayHistory(item && item.billingDayHistory, cycleDay),
+    bankLabel: String(item && item.bankLabel || "").trim(),
+    // Cards are archived, never dropped: historical rows still reference them
+    // by name, and deleting the method would silently change how those rows route.
+    archivedAtIso: /^\d{4}-\d{2}-\d{2}/.test(String(item && item.archivedAtIso || "")) ? String(item.archivedAtIso) : "",
     isImmediate: Boolean(item && item.isImmediate),
     last4: String(item && item.last4 || "").trim()
   });
@@ -6268,7 +6335,11 @@ function getBillingSheetForExpense(dateValue, payment, immediate, billingShiftMo
   if(isMethodImmediate){
     return formatSheetFromMonth(year, month);
   }
-  const cycleStartDay = paymentMethod ? Number(paymentMethod.cycleDay) : null;
+  // D-13: resolve the billing day that was in effect ON THE PURCHASE DATE, not
+  // the card's current one. Identical to the old behaviour for any method
+  // without a recorded history, which is every method until a statement import
+  // fills one in.
+  const cycleStartDay = paymentMethod ? Number(getBillingDayForDate(paymentMethod, dateValue)) : null;
   if(cycleStartDay && day < cycleStartDay){
     const shifted = shiftMonth(year, month, -1);
     year = shifted.year;
