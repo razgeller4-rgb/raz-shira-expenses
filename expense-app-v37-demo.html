@@ -397,7 +397,9 @@ input, select, textarea { font: inherit; }
   border-bottom:1px solid var(--border); flex-wrap:wrap; }
 .bank-map-row:last-child{ border-bottom:0; }
 .bank-map-card{ flex:0 0 auto; min-width:92px; font-size:14px; font-weight:var(--fw-semi); color:var(--text); }
-.bank-map-row select{ flex:1 1 170px; min-height:40px; padding:6px 10px; border-radius:12px;
+/* 44px minimum touch target - measured at 40px on first build, below the
+   baseline the rest of the app already meets. */
+.bank-map-row select{ flex:1 1 170px; min-height:44px; padding:6px 10px; border-radius:12px;
   border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; }
 .bank-map-day{ flex:0 0 auto; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums; }
 .recon-card{ border:1px solid var(--border); border-radius:var(--r-2xl); overflow:hidden; margin-bottom:16px; }
@@ -412,11 +414,20 @@ input, select, textarea { font: inherit; }
   font-variant-numeric:tabular-nums; white-space:nowrap; }
 .recon-table tr:last-child td{ border-bottom:0; }
 .recon-month{ color:var(--text-2); }
+/* Measured against --surface (#FFFDF8) at 13px, which is normal-size text and
+   therefore needs 4.5:1, not 3:1. The display tokens fail it outright here:
+   --warn (#D9A441) lands at 2.21:1 and --bad (#C16A4F) at 3.80:1. Following
+   the precedent already set for --income-light above, the fix is local rather
+   than a change to those tokens, which are used broadly for fills and badges
+   where they are fine. Darkened only for this reconciliation text:
+   #8A6212 = 5.38:1, #A24A2C = 5.82:1 (both clear AA on surface, surface-2 and
+   wood-light alike). Colour is never the sole signal - the gap is also a
+   number the user reads directly. */
 .recon-gap{ font-weight:var(--fw-semi); }
-.recon-gap.exact{ color:var(--good); }
+.recon-gap.exact,
 .recon-gap.high{ color:var(--good); }
-.recon-gap.low{ color:var(--warn); }
-.recon-gap.none{ color:var(--bad); }
+.recon-gap.low{ color:#8A6212; }
+.recon-gap.none{ color:#A24A2C; }
 .recon-gap.na{ color:var(--muted); font-weight:400; }
 .recon-dayflag{ display:inline-block; min-width:22px; text-align:center; padding:1px 6px;
   border-radius:999px; font-size:var(--fs-xs); background:var(--surface-3); color:var(--text-2); }
@@ -424,7 +435,10 @@ input, select, textarea { font: inherit; }
 .recon-period{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text);
   padding:4px 0; flex-wrap:wrap; }
 .recon-period-day{ font-weight:var(--fw-bold); color:var(--wood-strong); }
+/* Buttons here inherit the app's generic button padding, which measured 34px
+   tall - under the 44px target. Scoped so the rest of the app is untouched. */
 .bank-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
+.bank-actions button{ min-height:44px; padding-inline:16px; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -11123,7 +11137,9 @@ function renderBankSync(){
     ${verdictBlock}
     ${anchorBlock}
     <div class="section open" style="margin-top:16px">
-      <div class="header"><span>שיוך כרטיסים לתוויות הבנק</span></div>
+      <!-- .header renders a chevron via CSS, so it must actually collapse -
+           without the toggle it advertises an affordance that does nothing. -->
+      <div class="header" onclick="toggleSection(this)"><span>שיוך כרטיסים לתוויות הבנק</span></div>
       <div class="content">
         <div class="small" style="margin-bottom:8px">שם הכרטיס אצלנו אינו שם התנועה בבנק — בחרו פעם אחת, וזה נשמר.</div>
         ${mappingRows || `<div class="recon-sub">אין כרטיסים מבוססי מחזור להצליב.</div>`}

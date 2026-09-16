@@ -27,3 +27,8 @@ backups/
 .claude/worktrees/
 .claude/settings.local.json
 /data/private-grocery/
+# Playwright MCP writes page snapshots, console logs and screenshots here while
+# verifying the live demo. Those artifacts capture whatever was on screen -
+# balances, merchant names, an account number if a statement was open. The repo
+# is public. Never commit them.
+.playwright-mcp/
