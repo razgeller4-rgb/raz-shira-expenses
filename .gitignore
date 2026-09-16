@@ -32,3 +32,7 @@ backups/
 # balances, merchant names, an account number if a statement was open. The repo
 # is public. Never commit them.
 .playwright-mcp/
+# Verification screenshots land in the repo root (anchor-*.png, demo-load.png,
+# prod-*.png and friends). Several show real production balances. Scoped to the
+# root ONLY - design/ mockups and spec images are tracked on purpose.
+/*.png
