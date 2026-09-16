@@ -659,7 +659,16 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
    category on almost every visit, so they sit above the fold at full size.
    Everything else (date, type, payment, sharing, notes) moves behind
    "פרטים נוספים" - present, not competing for the first tap. */
-.edit-quick { display:grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 12px; }
+/* minmax(0,1fr), not 1fr. A bare `1fr` floors at min-content, and
+   input[type=number] carries a ~240px intrinsic width from the UA stylesheet -
+   so on a 375px phone the two columns demanded 391px inside a 281px container
+   and the amount field hung 110px outside the card. Measured, not guessed;
+   Raz reported it as "יוצא מהקווים" from his iPhone. minmax(0,…) lets a column
+   shrink past its content's intrinsic width, which is what makes the halves
+   actually equal. */
+.edit-quick { display:grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 10px; margin-top: 12px; }
+.edit-quick .field { min-width: 0; }
+.edit-quick .field input { width: 100%; box-sizing: border-box; }
 .edit-quick .field input { height: 44px; }
 .edit-quick .field-amount input { font-size: 17px; font-weight: 800; }
 /* var(--muted) measured 3.32:1 here (below the 4.5 AA minimum) - same token,
@@ -715,7 +724,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .edit-details-hint { font-size:11px; font-weight:400; color: var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 @media (prefers-reduced-motion: reduce) { .edit-details-toggle span:first-child::before { transition: none; } }
 @media (max-width: 480px) {
-  .edit-quick { grid-template-columns: 1fr 1fr; }
+  .edit-quick { grid-template-columns: minmax(0,1fr) minmax(0,1fr); }
   .edit-details-hint { display:none; }
 }
 .category-field-swatch { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-left: 6px; vertical-align: middle; }
@@ -809,6 +818,22 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .budget-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
 .budget-card-title { font-size: 14px; font-weight: 700; }
 .budget-card-grid { display: flex; flex-direction: column; gap: 6px; }
+/* Form controls inside these cards must be allowed to shrink.
+   A flex item defaults to min-width:auto, which floors it at its content's
+   intrinsic width - and a <select> or input[type=number|date] gets that width
+   from the UA stylesheet, which is markedly WIDER in Safari than in Chrome.
+   Measured in Chrome at 375px: the category select already sits at 263px
+   inside a 279px parent, i.e. 16px of slack. Safari exceeds that, which is why
+   Raz saw the card "יוצא מהקווים" on his iPhone while it looked fine here.
+   min-width:0 + max-width:100% removes the floor instead of guessing at a
+   fixed width that would only be right on one device. */
+.budget-card input,
+.budget-card select,
+.budget-card textarea { max-width: 100%; min-width: 0; box-sizing: border-box; }
+.budget-card-top > input { min-width: 0; }
+.budget-card-stat { gap: 8px; }
+.budget-card-stat > select,
+.budget-card-stat > input { min-width: 0; flex: 1 1 0; }
 .budget-card-badge { display: inline-flex; padding: 2px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
 .budget-card-amount-aside { font-size: 11px; color: var(--muted); }
 .budget-progress { height: 6px; background: var(--border); border-radius: 999px; overflow: hidden; margin: 8px 0; }
