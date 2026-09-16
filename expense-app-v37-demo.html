@@ -381,6 +381,50 @@ input, select, textarea { font: inherit; }
   border-radius:14px; border:1px solid var(--border); background:var(--surface); color:var(--text);
   font-size:14px; font-family:inherit; resize:vertical; }
 .groc-import-paste button{ margin-top:8px; }
+
+/* ── D-13: bank sync + reconciliation ─────────────────────────────────── */
+.bank-drop{ border:1.5px dashed var(--wood); border-radius:var(--r-2xl);
+  background:var(--wood-light); padding:22px 18px; text-align:center; }
+.bank-drop-title{ font-size:15px; font-weight:var(--fw-semi); color:var(--wood-strong); margin-bottom:4px; }
+.bank-drop-sub{ font-size:var(--fs-sm); color:var(--text-2); line-height:1.6; margin-bottom:14px; }
+.bank-drop input[type="file"]{ font-size:var(--fs-sm); color:var(--text-2); max-width:100%; }
+.bank-verdict{ display:flex; align-items:flex-start; gap:10px; padding:12px 14px;
+  border-radius:var(--r-lg); margin-bottom:14px; font-size:var(--fs-sm); line-height:1.55; }
+.bank-verdict.ok{ background:var(--good-light); color:var(--good); border:1px solid var(--good); }
+.bank-verdict.warn{ background:var(--warn-light); color:var(--warn); border:1px solid var(--warn); }
+.bank-verdict-icon{ flex:0 0 auto; font-size:16px; line-height:1.4; }
+.bank-map-row{ display:flex; align-items:center; gap:10px; padding:11px 4px;
+  border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.bank-map-row:last-child{ border-bottom:0; }
+.bank-map-card{ flex:0 0 auto; min-width:92px; font-size:14px; font-weight:var(--fw-semi); color:var(--text); }
+.bank-map-row select{ flex:1 1 170px; min-height:40px; padding:6px 10px; border-radius:12px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px; }
+.bank-map-day{ flex:0 0 auto; font-size:var(--fs-sm); color:var(--text-2); font-variant-numeric:tabular-nums; }
+.recon-card{ border:1px solid var(--border); border-radius:var(--r-2xl); overflow:hidden; margin-bottom:16px; }
+.recon-head{ display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:13px 16px; background:var(--wood-light); border-bottom:1px solid var(--border); flex-wrap:wrap; }
+.recon-title{ font-size:15px; font-weight:var(--fw-bold); color:var(--wood-strong); }
+.recon-sub{ font-size:var(--fs-xs); color:var(--text-2); }
+.recon-table{ width:100%; border-collapse:collapse; font-size:13px; }
+.recon-table th{ text-align:start; font-size:var(--fs-xs); font-weight:var(--fw-semi); color:var(--muted);
+  padding:8px 10px; border-bottom:1px solid var(--border); white-space:nowrap; }
+.recon-table td{ padding:9px 10px; border-bottom:1px solid var(--border);
+  font-variant-numeric:tabular-nums; white-space:nowrap; }
+.recon-table tr:last-child td{ border-bottom:0; }
+.recon-month{ color:var(--text-2); }
+.recon-gap{ font-weight:var(--fw-semi); }
+.recon-gap.exact{ color:var(--good); }
+.recon-gap.high{ color:var(--good); }
+.recon-gap.low{ color:var(--warn); }
+.recon-gap.none{ color:var(--bad); }
+.recon-gap.na{ color:var(--muted); font-weight:400; }
+.recon-dayflag{ display:inline-block; min-width:22px; text-align:center; padding:1px 6px;
+  border-radius:999px; font-size:var(--fs-xs); background:var(--surface-3); color:var(--text-2); }
+.recon-periods{ padding:13px 16px; background:var(--surface-2); border-top:1px solid var(--border); }
+.recon-period{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text);
+  padding:4px 0; flex-wrap:wrap; }
+.recon-period-day{ font-weight:var(--fw-bold); color:var(--wood-strong); }
+.bank-actions{ display:flex; gap:10px; flex-wrap:wrap; margin-top:14px; }
 .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0); }
 @media (prefers-reduced-motion: reduce){
   *,*::before,*::after{ animation-duration:.001ms!important; animation-iteration-count:1!important;
@@ -2320,6 +2364,17 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
 
     <!-- ── Cards ── -->
     <section class="tab-panel" data-panel="cards">
+      <div class="panel-hero">
+        <div class="panel-hero-left">
+          <div class="panel-hero-title">💳 אשראיים</div>
+          <div class="panel-hero-sub">מחזורי חיוב, והצלבה מול מה שקרה בעו״ש</div>
+        </div>
+        <div class="panel-hero-right">
+          <div class="panel-hero-value" id="cardsHeroCount">—</div>
+          <div class="panel-hero-label">כרטיסים פעילים</div>
+        </div>
+      </div>
+
       <div class="section open">
         <div class="header" onclick="toggleSection(this)">
           <span>💳 אשראיים ומחזורי חיוב</span>
@@ -2336,6 +2391,24 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             </div>
           </div>
           <div id="paymentMethodList" class="income-list"></div>
+        </div>
+      </div>
+
+      <!-- ── D-13: bank statement sync + reconciliation ── -->
+      <div class="section open">
+        <div class="header" onclick="toggleSection(this)">
+          <span>🏦 סנכרון מול העו״ש</span>
+        </div>
+        <div class="content">
+          <div id="bankSyncIntro" class="bank-drop">
+            <div class="bank-drop-title">העלו קובץ תנועות עו״ש</div>
+            <div class="bank-drop-sub">
+              האפליקציה תצליב את החיובים שירדו בפועל מול מה שרשום כאן, תגלה לבד את יום החיוב האמיתי של כל כרטיס, ותראה לכם את הפער.<br>
+              הקובץ נקרא בדפדפן בלבד ואינו נשלח לשום מקום. אף שורה ממנו לא נכנסת לרשימת ההוצאות.
+            </div>
+            <input type="file" id="bankStatementFile" accept=".xls,.xlsx,.html,.htm,text/html" onchange="handleBankStatementFile(this)">
+          </div>
+          <div id="bankSyncResult"></div>
         </div>
       </div>
     </section>
@@ -3117,7 +3190,11 @@ function getAllUserStorageKeys(userId){
     // getCloudSyncKeys() and getCloudSyncKeysForUser() - a key missing here is
     // silently never backed up, never synced and never restored. An anchor is a
     // recorded claim about real money, so that failure mode is unacceptable.
-    getScopedStorageKey("expense_app_balance_anchors_v1", userId)
+    getScopedStorageKey("expense_app_balance_anchors_v1", userId),
+    // D-13. The card->bank-label mapping is small but not re-derivable: the app
+    // cannot tell on its own which card "הרשאה ישראכרט (י)" belongs to, so
+    // losing it means the user re-maps every card by hand after a restore.
+    getScopedStorageKey("expense_app_bank_label_map_v1", userId)
   ];
 }
 function getBackupKeys(){
@@ -8227,6 +8304,8 @@ function renderPaymentMethodTab(){
   const methods = getPaymentMethods();
   const count = document.getElementById("paymentMethodCount");
   if(count) count.textContent = String(methods.length);
+  const heroCount = document.getElementById("cardsHeroCount");
+  if(heroCount) heroCount.textContent = String(methods.filter(m => !m.archivedAtIso).length);
   if(!list) return;
   if(!methods.length){
     list.innerHTML = `<div class="debt-empty">עדיין לא הוגדרו כרטיסים לחשבון הזה. אפשר להתחיל עם כרטיס חדש, והעברה בנקאית תמיד זמינה כברירת מחדל.</div>`;
@@ -9888,6 +9967,22 @@ document.getElementById("chartTypeSelect").onchange = render;
 document.querySelectorAll(".tab-btn").forEach(btn=>{
   btn.onclick=()=>{ activeTab = btn.dataset.tab; clearSelectedExpenseRows(); renderTabs(); render(); if(typeof closeMoreSheet==="function") closeMoreSheet(); };
 });
+/* D-13 bank sync: delegated because renderBankSync() replaces the container's
+   innerHTML on every change, so per-element handlers would be lost. Bound once
+   on the stable parent. */
+(() => {
+  const root = document.getElementById("bankSyncResult");
+  if(!root) return;
+  root.addEventListener("click", e => {
+    const applyBtn = e.target.closest("[data-bank-apply]");
+    if(applyBtn){ applyDiscoveredBillingHistory(applyBtn.dataset.bankApply); return; }
+    if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
+  });
+  root.addEventListener("change", e => {
+    const select = e.target.closest("[data-bank-map-card]");
+    if(select) setBankCardLabel(select.dataset.bankMapCard, select.value);
+  });
+})();
 document.getElementById("showDebtsSetupBtn").onclick=()=>{
   setDebtTrackingEnabled(true);
   activeTab = "debts";
@@ -10845,6 +10940,212 @@ function discoverBillingDayHistory(cardName, bankLabel, parsed){
     confidentMonths: months.filter(x => x.confidence === "exact" || x.confidence === "high").length,
     totalMonths: months.length
   };
+}
+
+/* ── D-13: bank sync UI ────────────────────────────────────────────────────
+   The parsed statement lives in memory for the duration of the screen and is
+   never persisted. It holds a real account number and running balances; the
+   only things that ever reach storage are what the user explicitly accepts:
+   the card→label mapping, a discovered billing-day history, or a balance
+   anchor. The statement rows themselves are read, used, and dropped. */
+let bankSyncState = null;
+
+function getBankLabelMappingKey(){ return getScopedStorageKey("expense_app_bank_label_map_v1"); }
+function getBankLabelMapping(){
+  try {
+    const parsed = JSON.parse(localStorage.getItem(getBankLabelMappingKey()) || "{}");
+    return parsed && typeof parsed === "object" ? parsed : {};
+  } catch(e){ return {}; }
+}
+function saveBankLabelMapping(map){
+  localStorage.setItem(getBankLabelMappingKey(), JSON.stringify(map || {}));
+  markLocalDataChanged();
+}
+
+function handleBankStatementFile(inputEl){
+  const file = inputEl && inputEl.files && inputEl.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try {
+      const parsed = parseBankStatementHtml(String(reader.result || ""));
+      if(!parsed.transactions.length){
+        showToast("לא זוהו תנועות בקובץ. ודאו שזה ייצוא תנועות עו״ש.", "error");
+        return;
+      }
+      bankSyncState = {
+        parsed,
+        verdict: verifyBankStatementBalance(parsed),
+        labels: getBankCardLabelCandidates(parsed),
+        fileName: file.name
+      };
+      renderBankSync();
+      showToast(`נקראו ${parsed.transactions.length} תנועות.`, "success");
+    } catch(e){
+      showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+    } finally {
+      inputEl.value = "";
+    }
+  };
+  reader.onerror = () => showToast("לא הצלחתי לקרוא את הקובץ.", "error");
+  reader.readAsText(file, "utf-8");
+}
+
+/* Keyed by the card's stable id, not its name: renaming a card should not
+   silently lose the mapping, and a name is free text the user controls. */
+function setBankCardLabel(cardId, label){
+  const map = getBankLabelMapping();
+  if(label) map[cardId] = label; else delete map[cardId];
+  saveBankLabelMapping(map);
+  renderBankSync();
+}
+
+/* Applies a discovered history to the card. Appends to whatever the user
+   already has rather than replacing it: an entry they typed themselves is a
+   stated fact about their own account and outranks anything inferred. */
+function applyDiscoveredBillingHistory(cardId){
+  if(!bankSyncState) return;
+  const methodsNow = getPaymentMethods();
+  const target = methodsNow.find(m => m.id === cardId);
+  if(!target) return;
+  const cardName = target.name;
+  const label = getBankLabelMapping()[cardId];
+  if(!label) return;
+  const discovery = discoverBillingDayHistory(cardName, label, bankSyncState.parsed);
+  if(!discovery.periods.length){
+    showToast("אין תקופות מזוהות בביטחון מספיק כדי להחיל.", "error");
+    return;
+  }
+  const existingUser = (target.billingDayHistory || []).filter(e => e.source === "user");
+  target.billingDayHistory = normalizeBillingDayHistory(
+    [...discovery.periods, ...existingUser], target.cycleDay
+  );
+  savePaymentMethods(methodsNow);
+  const last = discovery.periods[discovery.periods.length - 1];
+  showToast(`הוחל: ${discovery.periods.length} תקופות. יום החיוב הנוכחי — ${last.day}.`, "success", {duration:6000});
+  render();
+}
+
+function renderBankSync(){
+  const root = document.getElementById("bankSyncResult");
+  if(!root) return;
+  if(!bankSyncState){ root.innerHTML = ""; return; }
+
+  const { parsed, verdict, labels } = bankSyncState;
+  const money = (n) => n == null ? "—" : "₪" + Number(n).toLocaleString("he-IL", {maximumFractionDigits:0});
+
+  const verdictBlock = verdict.consistent
+    ? `<div class="bank-verdict ok"><span class="bank-verdict-icon">✓</span><span>
+         הקובץ עקבי: ${verdict.checked} מעברי יתרה נבדקו, ללא חריגה.
+         היתרה האחרונה ${money(verdict.lastBalance)} בתאריך ${escapeHtmlAttr(verdict.lastDateIso)}.
+       </span></div>`
+    : `<div class="bank-verdict warn"><span class="bank-verdict-icon">⚠</span><span>
+         נמצאו ${verdict.mismatches} אי-התאמות מתוך ${verdict.checked} מעברי יתרה.
+         ייתכן שמבנה הקובץ השתנה — הפער מוצג, אך אל תסתמכו עליו בלי בדיקה.
+       </span></div>`;
+
+  const anchorBlock = verdict.lastBalance != null ? `
+    <div class="bank-actions">
+      <button type="button" class="success-btn" data-bank-anchor="1">
+        שמירת ${money(verdict.lastBalance)} כעוגן ל-${escapeHtmlAttr(verdict.lastDateIso)}
+      </button>
+    </div>` : "";
+
+  const map = getBankLabelMapping();
+  const cards = getPaymentMethods().filter(m => !m.isImmediate && !m.archivedAtIso);
+  const labelOptions = (selected) => [`<option value="">— ללא —</option>`]
+    .concat(labels.map(l =>
+      `<option value="${escapeHtmlAttr(l.label)}" ${l.label === selected ? "selected" : ""}>${escapeHtmlAttr(l.label)} (${l.count})</option>`
+    )).join("");
+
+  /* Card ids and names go into data-* attributes and are read back through
+     the DOM, never interpolated into an inline handler. escapeHtmlAttr does
+     not escape a single quote, and card names are free text the user edits -
+     a name containing an apostrophe would otherwise break straight out of an
+     onclick="...('NAME')" string. */
+  const mappingRows = cards.map(card => `
+    <div class="bank-map-row">
+      <span class="bank-map-card">${escapeHtmlAttr(card.name)}</span>
+      <select data-bank-map-card="${escapeHtmlAttr(card.id)}">${labelOptions(map[card.id] || "")}</select>
+      <span class="bank-map-day">יום חיוב כעת: ${card.cycleDay}</span>
+    </div>`).join("");
+
+  const reconBlocks = cards.filter(card => map[card.id]).map(card => {
+    const discovery = discoverBillingDayHistory(card.name, map[card.id], parsed);
+    const rows = discovery.months.filter(m => m.bankAmount != null).map(m => {
+      const cls = m.confidence === "exact" || m.confidence === "high" ? m.confidence
+        : m.confidence === "low" ? "low"
+        : m.gap == null ? "na" : "none";
+      return `<tr>
+        <td class="recon-month">${m.year}-${String(m.month).padStart(2,"0")}</td>
+        <td><span class="recon-dayflag">${m.day ?? "—"}</span></td>
+        <td>${money(m.bankAmount)}</td>
+        <td>${m.ourAmount == null ? "—" : money(m.ourAmount)}</td>
+        <td class="recon-gap ${cls}">${m.gap == null ? "—" : money(m.gap)}</td>
+      </tr>`;
+    }).join("");
+
+    const periodsBlock = discovery.periods.length ? `
+      <div class="recon-periods">
+        ${discovery.periods.map(p => `
+          <div class="recon-period">
+            <span class="recon-period-day">יום ${p.day}</span>
+            <span>מ-${escapeHtmlAttr(p.fromIso)}</span>
+            <span class="recon-sub">${escapeHtmlAttr(p.note)}</span>
+          </div>`).join("")}
+        <div class="bank-actions">
+          <button type="button" class="success-btn" data-bank-apply="${escapeHtmlAttr(card.id)}">
+            החלה על ${escapeHtmlAttr(card.name)}
+          </button>
+        </div>
+      </div>` : `
+      <div class="recon-periods">
+        <div class="recon-sub">לא נמצאה אף תקופה בביטחון מספיק. ${discovery.confidentMonths}/${discovery.totalMonths} חודשים הוצלבו.</div>
+      </div>`;
+
+    return `
+      <div class="recon-card">
+        <div class="recon-head">
+          <div>
+            <div class="recon-title">${escapeHtmlAttr(card.name)}</div>
+            <div class="recon-sub">מול ${escapeHtmlAttr(map[card.name])} · ${discovery.confidentMonths}/${discovery.totalMonths} חודשים תואמים</div>
+          </div>
+        </div>
+        <table class="recon-table">
+          <thead><tr><th>חודש</th><th>יום</th><th>בבנק</th><th>אצלנו</th><th>פער</th></tr></thead>
+          <tbody>${rows || `<tr><td colspan="5" class="recon-sub">אין חיובים לתווית הזו בטווח הקובץ.</td></tr>`}</tbody>
+        </table>
+        ${periodsBlock}
+      </div>`;
+  }).join("");
+
+  root.innerHTML = `
+    ${verdictBlock}
+    ${anchorBlock}
+    <div class="section open" style="margin-top:16px">
+      <div class="header"><span>שיוך כרטיסים לתוויות הבנק</span></div>
+      <div class="content">
+        <div class="small" style="margin-bottom:8px">שם הכרטיס אצלנו אינו שם התנועה בבנק — בחרו פעם אחת, וזה נשמר.</div>
+        ${mappingRows || `<div class="recon-sub">אין כרטיסים מבוססי מחזור להצליב.</div>`}
+      </div>
+    </div>
+    ${reconBlocks}`;
+}
+
+function saveAnchorFromBankStatement(){
+  if(!bankSyncState || bankSyncState.verdict.lastBalance == null) return;
+  const { lastBalance, lastDateIso } = bankSyncState.verdict;
+  const anchors = getBalanceAnchors();
+  anchors.push(normalizeBalanceAnchor({
+    dateIso: lastDateIso,
+    amount: lastBalance,
+    enteredBy: currentUser,
+    source: "statement-import",
+    note: `מקובץ ${bankSyncState.fileName || "תנועות עו״ש"}`
+  }, anchors.length));
+  saveBalanceAnchors(anchors.filter(Boolean));
+  showToast("העוגן נשמר מהקובץ.", "success");
+  render();
 }
 
 function parseCCStatement(rows, filename){
