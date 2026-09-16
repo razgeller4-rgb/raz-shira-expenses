@@ -5453,7 +5453,9 @@ function parseGroceryCatalogPayload(raw){
         name: String((row && (row.display_name || row.name || row.original_text)) || "").trim(),
         category: String((row && (row.proposed_category || row.category || row.source_subsection)) || "").trim(),
         quantity: row && row.quantity != null && row.quantity !== "" ? Number(row.quantity) : null,
-        unit: String((row && row.unit) || "").trim()
+        unit: String((row && row.unit) || "").trim(),
+        important: Boolean(row && row.important),
+        note: String((row && (row.note || row.notes)) || "").trim()
       })).filter(row => row.name);
     }
   } catch(e){ /* not JSON — fall through to plain-text parsing */ }
