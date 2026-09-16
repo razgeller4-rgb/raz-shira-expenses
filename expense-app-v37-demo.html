@@ -7750,6 +7750,49 @@ function getMissingFixedExpenses(){
   });
   return missing;
 }
+/* Finds likely double-entries within one sheet — never across sheets, and
+   never auto-fixed: this only surfaces a review-queue item, the user decides.
+   Two independent patterns, found by scanning real data (D-13, 2026-09-16):
+   - a "קבועה" (fixed) merchant billed twice in the same sheet FOR THE SAME
+     AMOUNT — a monthly fixed cost should appear once per sheet regardless of
+     which day it landed on, so a second identical-amount row is either a real
+     duplicate or a date-typo that put a row in the wrong sheet (e.g.
+     "01/02/2025" sitting in "ינואר 26"). Amount must match: the same insurer
+     ("הפניקס", "איילון") legitimately bills two DIFFERENT policy line items
+     every month under the identical merchant name - grouping by merchant
+     alone flagged that real pattern as a duplicate every single month.
+   - any type, same merchant + same amount + the same date_raw - the
+     copy-then-forgot-to-delete-the-original pattern (seen live with "לוסיד").
+   A group is skipped once ANY row in it is already "לא רלוונטי" - that is the
+   existing convention in this data for "I found the extra one and demoted it,
+   the other row is the real expense" (seen live: "בלינק פינטק", one row
+   recategorized with the note "בטעות" while its twin stays live). Requiring
+   the WHOLE group to be demoted would keep nagging about exactly the
+   duplicates the user already resolved. */
+function getPossibleDuplicateRows(sheet){
+  const rows = getEditableRows(sheet).filter(row => row && row.merchant && Number(row.amount) > 0);
+  const groups = new Map();
+  const addToGroup = (key, row) => {
+    if(!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(row);
+  };
+  rows.forEach(row => {
+    const merchantKey = normalizeMerchantName(row.merchant);
+    if(row.type === "קבועה") addToGroup(`fixed:${merchantKey}:${Number(row.amount).toFixed(2)}`, row);
+    if(row.date_raw) addToGroup(`sameday:${merchantKey}:${Number(row.amount).toFixed(2)}:${row.date_raw}`, row);
+  });
+  const seenRowKeys = new Set();
+  const result = [];
+  for(const [key, groupRows] of groups){
+    if(groupRows.length < 2) continue;
+    if(groupRows.some(row => normalizeCategory(row.category) === "לא רלוונטי")) continue;
+    const dedupeKey = groupRows.map(r => r.row).sort((a,b)=>a-b).join(",");
+    if(seenRowKeys.has(dedupeKey)) continue;
+    seenRowKeys.add(dedupeKey);
+    result.push({ merchant: groupRows[0].merchant, amount: Number(groupRows[0].amount), rows: groupRows.map(r => r.row) });
+  }
+  return result;
+}
 function getDashboardReviewItems(){
   const rows = getEditableRows(selectedSheet);
   const missingCategory = rows.filter(row => !normalizeCategory(row.category)).length;
@@ -7819,6 +7862,17 @@ function getDashboardReviewItems(){
       sub:`מהחודש הקודם: ${missingFixed.slice(0,3).map(m=>escapeHtmlAttr(m)).join(", ")}${missingFixed.length>3 ? "..." : ""}`,
       action:"switchToTab('expenses')",
       label:"בדוק הוצאות"
+    });
+  }
+  const possibleDuplicates = getPossibleDuplicateRows(selectedSheet);
+  if(possibleDuplicates.length){
+    items.push({
+      id:`possibleDup:${selectedSheet}:${possibleDuplicates.map(d=>d.rows.join("+")).join("|")}`,
+      tone:"warn",
+      title:`${possibleDuplicates.length} כפילויות אפשריות בהוצאות`,
+      sub:`אותו בית עסק וסכום פעמיים: ${possibleDuplicates.slice(0,3).map(d=>escapeHtmlAttr(d.merchant)).join(", ")}${possibleDuplicates.length>3 ? "..." : ""}`,
+      action:"reviewExpensesNeedingAttention()",
+      label:"בדוק כפילות"
     });
   }
   if(syncNeedsReview){
