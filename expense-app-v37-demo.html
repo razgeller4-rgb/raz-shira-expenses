@@ -7612,7 +7612,13 @@ function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
   const balEl = document.getElementById("heroBalance");
   if(!heroEl || !balEl) return;
-  const closing = getDisplayedClosingBalance(selectedSheet);
+  // The hero label promises "עד היום" (up to today) - getDisplayedClosingBalance
+  // is a full-MONTH projection (assumes all income already landed), which is
+  // right for chaining next month's opening balance but wrong for a "now"
+  // headline. getCashOutSummary's nowBalance is the one figure that actually
+  // excludes not-yet-received income, so it - not the closing balance - is
+  // what belongs here.
+  const closing = getCashOutSummary(selectedSheet)?.nowBalance ?? null;
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
