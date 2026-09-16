@@ -1948,9 +1948,12 @@ body { background:var(--bg); }
 .review-marker.good { background:var(--accent); box-shadow:0 0 0 5px var(--accent-light); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
-.review-action { border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 11px; font-weight:700; font-size:11px; white-space:nowrap; }
+/* min-height/width:44px matches the touch-target baseline measured and fixed
+   elsewhere this session (.bank-actions button, .hero-cashout-detail summary) -
+   found here the same way: 30.5px/26px on a live measurement, not assumed. */
+.review-action { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 14px; font-weight:700; font-size:11px; white-space:nowrap; }
 .review-item-actions { display:flex; align-items:center; gap:6px; }
-.review-dismiss { border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:26px; height:26px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
+.review-dismiss { display:inline-flex; align-items:center; justify-content:center; border:0; background:var(--surface-2); color:var(--muted); border-radius:50%; width:44px; height:44px; font-size:12px; line-height:1; cursor:pointer; flex-shrink:0; }
 .review-dismiss:hover { background:var(--bad-light); color:var(--bad); }
 .review-primary { width:100%; margin-top:12px; min-height:48px; border:0; border-radius:16px; background:var(--accent-strong); color:#fff; font-weight:800; font-size:15px; }
 .review-all-clear { text-align:center; padding:20px 12px; background:var(--surface); border:1px solid var(--border); border-radius:18px; color:var(--accent-strong); font-weight:700; }
