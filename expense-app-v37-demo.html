@@ -431,6 +431,16 @@ input, select, textarea { font: inherit; }
 .recon-gap.na{ color:var(--muted); font-weight:400; }
 .recon-dayflag{ display:inline-block; min-width:22px; text-align:center; padding:1px 6px;
   border-radius:999px; font-size:var(--fs-xs); background:var(--surface-3); color:var(--text-2); }
+/* D-13 step 5: one aggregate answer above the per-card tables. Reuses --good
+   and #A24A2C (recon-gap.none) - both already measured at ≥4.5:1 on this
+   surface, so this introduces no new contrast risk. */
+.recon-summary .recon-head{ background:var(--surface-2); }
+.recon-summary.ok .recon-head{ background:var(--accent-light); }
+.recon-summary.ok .recon-title{ color:var(--good); }
+.recon-summary-gap{ display:flex; flex-direction:column; align-items:flex-end; text-align:end; min-width:0; }
+.recon-summary-gap span{ font-size:18px; font-weight:var(--fw-bold); font-variant-numeric:tabular-nums; color:var(--text); }
+.recon-summary-gap.has-gap span{ color:#A24A2C; }
+.recon-summary-gap small{ font-size:var(--fs-xs); color:var(--muted); }
 .recon-periods{ padding:13px 16px; background:var(--surface-2); border-top:1px solid var(--border); }
 .recon-period{ display:flex; align-items:center; gap:8px; font-size:13px; color:var(--text);
   padding:4px 0; flex-wrap:wrap; }
@@ -11306,8 +11316,38 @@ function renderBankSync(){
       <span class="bank-map-day">יום חיוב כעת: ${card.cycleDay}</span>
     </div>`).join("");
 
-  const reconBlocks = cards.filter(card => map[card.id]).map(card => {
-    const discovery = discoverBillingDayHistory(card.name, map[card.id], parsed);
+  const mappedCards = cards.filter(card => map[card.id]);
+  const discoveries = mappedCards.map(card => ({ card, discovery: discoverBillingDayHistory(card.name, map[card.id], parsed) }));
+
+  /* D-13 step 5: the per-card tables above already show month-by-month gap;
+     this rolls them into one number so the question "is everything reconciled,
+     overall?" has a direct answer instead of requiring a scan of N tables. */
+  const summaryBlock = mappedCards.length ? (() => {
+    let monthsChecked = 0, confidentMonths = 0, totalGap = 0, gapMonths = 0;
+    for(const { discovery } of discoveries){
+      monthsChecked += discovery.months.filter(m => m.bankAmount != null).length;
+      confidentMonths += discovery.confidentMonths;
+      for(const m of discovery.months){
+        if(m.gap != null){ totalGap += Math.abs(m.gap); gapMonths++; }
+      }
+    }
+    const allReconciled = monthsChecked > 0 && confidentMonths === monthsChecked;
+    return `
+      <div class="recon-card recon-summary ${allReconciled ? "ok" : ""}">
+        <div class="recon-head">
+          <div>
+            <div class="recon-title">${allReconciled ? "✓ הכול מוצלב" : "סיכום ההצלבה"}</div>
+            <div class="recon-sub">${mappedCards.length} כרטיסים משויכים · ${confidentMonths}/${monthsChecked} חודשים תואמים בביטחון</div>
+          </div>
+          <div class="recon-summary-gap ${totalGap > 0 ? "has-gap" : ""}">
+            <span>${money(gapMonths ? totalGap : null)}</span>
+            <small>פער מצטבר בכל החודשים שנבדקו</small>
+          </div>
+        </div>
+      </div>`;
+  })() : "";
+
+  const reconBlocks = discoveries.map(({ card, discovery }) => {
     const rows = discovery.months.filter(m => m.bankAmount != null).map(m => {
       const cls = m.confidence === "exact" || m.confidence === "high" ? m.confidence
         : m.confidence === "low" ? "low"
@@ -11344,7 +11384,7 @@ function renderBankSync(){
         <div class="recon-head">
           <div>
             <div class="recon-title">${escapeHtmlAttr(card.name)}</div>
-            <div class="recon-sub">מול ${escapeHtmlAttr(map[card.name])} · ${discovery.confidentMonths}/${discovery.totalMonths} חודשים תואמים</div>
+            <div class="recon-sub">מול ${escapeHtmlAttr(map[card.id])} · ${discovery.confidentMonths}/${discovery.totalMonths} חודשים תואמים</div>
           </div>
         </div>
         <table class="recon-table">
@@ -11367,6 +11407,7 @@ function renderBankSync(){
         ${mappingRows || `<div class="recon-sub">אין כרטיסים מבוססי מחזור להצליב.</div>`}
       </div>
     </div>
+    ${summaryBlock}
     ${reconBlocks}`;
 }
 
