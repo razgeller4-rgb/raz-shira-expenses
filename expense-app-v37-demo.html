@@ -10569,6 +10569,284 @@ function parseDashedStatementDate(raw){
   return `${dd.padStart(2,"0")}/${mm.padStart(2,"0")}/${yyyy}`;
 }
 
+/* ══ D-13: bank current-account statement — parse, discover, reconcile ══════
+   Measured against a real Mizrahi export on 16.09; see
+   research/2026-09-16/BANK_STATEMENT_FINDINGS_HE.md for the file anatomy and
+   every claim below.
+
+   This is deliberately NOT wired into the ccImport pipeline. A bank statement
+   is a different kind of document: it lists money MOVING IN THE ACCOUNT, not
+   purchases. The card bill appears as ONE aggregated line, and the individual
+   purchases behind it already arrive through the credit-card import. Feeding
+   these rows into the expense list would double-count every one of them.
+   What the statement is used for instead: (a) the balance anchor, (b)
+   discovering each card's real billing day, (c) reconciliation. */
+
+/* The export is HTML wearing a .xls extension, UTF-8 with BOM, dir="rtl".
+   Columns: תאריך | תאריך ערך | סוג תנועה | זכות | חובה | יתרה | אסמכתא | _ | _
+   76 of 232 rows carry no running balance (paired interest/fee lines, where
+   the bank only shows the balance after the net effect) - that is normal and
+   must not be treated as a parse failure. */
+function parseBankStatementHtml(text){
+  const src = String(text || "").replace(/^﻿/, "");
+  const decode = (s) => String(s)
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&quot;/gi, '"')
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/\s+/g, " ")
+    .trim();
+  const cells = (rowHtml) => [...rowHtml.matchAll(/<t[dh][^>]*>([\s\S]*?)<\/t[dh]>/gi)].map(m => decode(m[1]));
+  const rows = [...src.matchAll(/<tr[^>]*>([\s\S]*?)<\/tr>/gi)].map(m => cells(m[1]));
+  const money = (s) => {
+    const n = Number(String(s || "").replace(/[,\s₪]/g, ""));
+    return Number.isFinite(n) ? n : 0;
+  };
+
+  // Header balance: "יתרה בחשבון: 10,287.58 לתאריך - 14/09/26 16:41"
+  let headerBalance = null, headerDateIso = "";
+  for(const row of rows){
+    const idx = row.findIndex(c => /יתרה בחשבון/.test(c));
+    if(idx >= 0){
+      headerBalance = money(row[idx + 1]);
+      const dateCell = row.find(c => /^\d{2}\/\d{2}\/\d{2}/.test(c));
+      if(dateCell) headerDateIso = toIsoDate(dateCell.split(" ")[0]);
+      break;
+    }
+  }
+
+  const transactions = [];
+  for(const row of rows){
+    if(row.length < 7) continue;
+    if(!/^\d{1,2}\/\d{1,2}\/\d{2,4}$/.test(row[0])) continue;
+    const iso = toIsoDate(row[0]);
+    if(!iso) continue;
+    transactions.push({
+      dateIso: iso,
+      dateRaw: row[0],
+      valueDateRaw: row[1] || "",
+      description: row[2] || "",
+      credit: money(row[3]),
+      debit: money(row[4]),
+      balance: row[5] && money(row[5]) ? money(row[5]) : null,
+      reference: row[6] || ""
+    });
+  }
+  transactions.sort((a,b) => a.dateIso.localeCompare(b.dateIso));
+  return { headerBalance, headerDateIso, transactions };
+}
+
+/* The running-balance column is the reason this file can feed the anchor
+   directly: verified 95/95 consecutive transitions with zero discrepancies on
+   the real export. This re-verifies it per import rather than trusting that
+   one measurement forever - a bank changing its export format silently is
+   exactly the kind of thing that should fail loudly. */
+function verifyBankStatementBalance(parsed){
+  const all = (parsed && parsed.transactions || []);
+  let checked = 0, mismatches = 0;
+  let prev = null;
+  for(const t of all){
+    // A row without a running balance BREAKS the chain - it still moved money,
+    // so the next balance-bearing row is not derivable from the previous one.
+    // Filtering those rows out first and comparing what remains silently joins
+    // across the gap and reports ~60 false mismatches on a file that is in fact
+    // perfectly consistent. Reset instead of skip.
+    if(t.balance == null){ prev = null; continue; }
+    if(prev != null){
+      checked++;
+      if(Math.abs((prev + t.credit - t.debit) - t.balance) > 0.02) mismatches++;
+    }
+    prev = t.balance;
+  }
+  const withBalance = all.filter(t => t.balance != null);
+  const last = withBalance.length ? withBalance[withBalance.length - 1] : null;
+  return {
+    checked,
+    mismatches,
+    consistent: checked > 0 && mismatches === 0,
+    lastBalance: last ? last.balance : null,
+    lastDateIso: last ? last.dateIso : "",
+    headerMatchesLast: last && parsed.headerBalance != null
+      ? Math.abs(last.balance - parsed.headerBalance) < 0.02
+      : null
+  };
+}
+
+/* Bank transaction labels that plausibly represent a credit-card charge, with
+   how many times each appears. Offered to the user for mapping onto their
+   cards, because the app's card name is never the bank's label ("חבר" bills
+   as "הרשאה ישראכרט (י)"). Returns candidates, not a guess - the app has no
+   basis to decide which of the user's cards a label belongs to. */
+function getBankCardLabelCandidates(parsed){
+  const counts = new Map();
+  for(const t of (parsed && parsed.transactions || [])){
+    if(t.debit <= 0) continue;
+    if(!/ויזה|ישראכרט|מקס|אמריקן|כאל|לאומי קארד|דיינרס|הרשאה/.test(t.description)) continue;
+    const entry = counts.get(t.description) || { label: t.description, count: 0, total: 0, maxDebit: 0 };
+    entry.count++;
+    entry.total += t.debit;
+    entry.maxDebit = Math.max(entry.maxDebit, t.debit);
+    counts.set(t.description, entry);
+  }
+  return [...counts.values()].sort((a,b) => b.maxDebit - a.maxDebit);
+}
+
+/* Sum of our own rows for one billing cycle: a bill charged on day D of month
+   (year, month) covers purchases from day D of the previous month through day
+   D-1 of this month. This exact formula reproduced the bank's real charge to
+   within ₪0-₪2 across six months once the correct day was used - it is the
+   measured-correct cycle definition, not an assumption. */
+function getOurCycleTotalForCard(cardName, billingDay, year, month){
+  const prev = shiftMonth(year, month, -1);
+  let total = 0;
+  // syncSheetOptions() rebuilds SHEET_OPTIONS from overrides/income/manual keys,
+  // so this sees every sheet that actually holds data - not just the base list.
+  syncSheetOptions();
+  for(const sheet of SHEET_OPTIONS){
+    for(const row of getEditableRows(sheet)){
+      if(!row || row.payment !== cardName) continue;
+      const iso = toIsoDate(row.date_raw || row.date || "") || String(row.date_raw || "");
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) continue;
+      const y = Number(iso.slice(0,4)), m = Number(iso.slice(5,7)), d = Number(iso.slice(8,10));
+      const inPrev = y === prev.year && m === prev.month && d >= billingDay;
+      const inCur = y === year && m === month && d < billingDay;
+      if(inPrev || inCur) total += Number(row.amount || 0);
+    }
+  }
+  return total;
+}
+
+/* For one month, find which billing day best explains the bank's actual charge.
+   Tries every day 1-28 (29-31 are excluded: a bill day that doesn't exist in
+   February would be ambiguous), and for each, checks how closely our computed
+   cycle total matches one of the bank's charges that month.
+
+   Returns a confidence band rather than a bare answer, because the match is
+   NOT always clean - our data has gaps, and installments are billed
+   separately. A month that can't be explained must say so instead of
+   producing a confident wrong day. */
+function inferBillingDayForMonth(cardName, bankLabel, parsed, year, month){
+  const charges = (parsed.transactions || []).filter(t =>
+    t.description === bankLabel &&
+    t.debit > 0 &&
+    Number(t.dateIso.slice(0,4)) === year &&
+    Number(t.dateIso.slice(5,7)) === month
+  );
+  if(!charges.length) return { year, month, day: null, confidence: "no-charge", gap: null, bankAmount: null, ourAmount: null };
+
+  /* The billing day is OBSERVED, not searched for: a bill posts on the billing
+     day, so the bank's own posting date is the answer. The cycle sum is how we
+     VALIDATE that reading, not how we find it.
+
+     Searching all 28 days for whichever best matched our totals was wrong and
+     measurably so - on Raz's real data it returned 1 instead of 2 and 9 instead
+     of 10 (adjacent days produce identical sums when the card was unused that
+     day, so the tie went to the lower number), plus outright noise like day 18
+     or 27 in months where our records are incomplete and some unrelated day
+     happened to fit. Coincidence beat evidence.
+
+     So: each candidate charge line proposes its own posting day, we compute the
+     cycle that day implies, and the charge whose amount our records best explain
+     wins. That single rule identifies BOTH which line is the monthly bill (vital
+     for a label like "ויזה מקס (י)", where only 12 of 64 rows are the bill) AND
+     the billing day, without ever inventing a day the bank never posted on.
+
+     A posting date can slip a day or two onto a weekend (Raz's card posted on
+     the 2nd most months and the 3rd twice). That ambiguity is harmless for
+     routing: if no transaction falls on the disputed day, both readings produce
+     the same cycle. */
+  let best = null;
+  for(const charge of charges){
+    const day = Number(charge.dateIso.slice(8,10));
+    if(!(day >= 1 && day <= 28)) continue;
+    const ours = getOurCycleTotalForCard(cardName, day, year, month);
+    const gap = Math.abs(charge.debit - ours);
+    const relative = charge.debit ? gap / charge.debit : 1;
+    if(!best || relative < best.relative){
+      best = { day, gap, relative, bankAmount: charge.debit, ourAmount: ours, chargeDateIso: charge.dateIso };
+    }
+  }
+  if(!best){
+    return { year, month, day: null, confidence: "no-usable-charge", gap: null,
+             bankAmount: charges[0].debit, ourAmount: null };
+  }
+
+  const confidence = best.relative <= 0.01 ? "exact"
+    : best.relative <= 0.05 ? "high"
+    : best.relative <= 0.2 ? "low" : "none";
+  return { year, month, ...best, confidence };
+}
+
+/* Walk every month in the statement and segment the confident months into
+   dated periods. Only "exact" and "high" months vote; anything weaker is
+   reported but never silently turned into a period - a wrong period would
+   misroute every row in its range. */
+function discoverBillingDayHistory(cardName, bankLabel, parsed){
+  const txs = parsed.transactions || [];
+  if(!txs.length) return { months: [], periods: [], usable: false };
+  const firstIso = txs[0].dateIso, lastIso = txs[txs.length - 1].dateIso;
+  let y = Number(firstIso.slice(0,4)), m = Number(firstIso.slice(5,7));
+  const endY = Number(lastIso.slice(0,4)), endM = Number(lastIso.slice(5,7));
+
+  const months = [];
+  while(y < endY || (y === endY && m <= endM)){
+    months.push(inferBillingDayForMonth(cardName, bankLabel, parsed, y, m));
+    const next = shiftMonth(y, m, 1);
+    y = next.year; m = next.month;
+  }
+
+  /* Group confident months into periods, absorbing ±1 day jitter.
+
+     A bill due on the 2nd posts on the 3rd when the 2nd is a weekend - Raz's
+     card did exactly that twice. Treating each slip as a billing-day CHANGE
+     produced four periods where there were two, including a one-month "period"
+     on day 3 that never existed as a real setting. Noise presented as history
+     is worse than no history: it would be shown to the user as a discovered
+     fact, and it would fragment routing for no reason.
+
+     So a month joins the current period when it is within a day of it, and the
+     period's recorded day is the MODE of its months - the recurring setting,
+     not whichever month happened to come first. A genuine change of a single
+     day would be absorbed too; that is an accepted trade, and it is routing-
+     neutral unless a transaction falls on exactly the disputed day. */
+  const confident = months.filter(m => m.day && (m.confidence === "exact" || m.confidence === "high"));
+  const groups = [];
+  for(const entry of confident){
+    const current = groups[groups.length - 1];
+    if(current && Math.abs(current.days[current.days.length - 1] - entry.day) <= 1){
+      current.days.push(entry.day);
+      current.untilIso = `${entry.year}-${String(entry.month).padStart(2,"0")}-01`;
+      continue;
+    }
+    groups.push({
+      fromIso: `${entry.year}-${String(entry.month).padStart(2,"0")}-01`,
+      untilIso: `${entry.year}-${String(entry.month).padStart(2,"0")}-01`,
+      days: [entry.day]
+    });
+  }
+  const periods = groups.map(group => {
+    const counts = new Map();
+    for(const day of group.days) counts.set(day, (counts.get(day) || 0) + 1);
+    const day = [...counts.entries()].sort((a,b) => b[1] - a[1] || a[0] - b[0])[0][0];
+    return {
+      fromIso: group.fromIso,
+      untilIso: group.untilIso,
+      day,
+      source: "statement-derived",
+      note: `זוהה מהצלבה מול ${bankLabel} (${group.days.length} חודשים${group.days.some(d => d !== day) ? ", כולל הזזות סוף שבוע" : ""})`
+    };
+  });
+  return {
+    months,
+    periods,
+    usable: periods.length > 0,
+    confidentMonths: months.filter(x => x.confidence === "exact" || x.confidence === "high").length,
+    totalMonths: months.length
+  };
+}
+
 function parseCCStatement(rows, filename){
   // Detect format: Max / Isracard / CAL
   let format = null;
