@@ -5643,6 +5643,20 @@ function saveIncomeRows(sheet, rows){
 function getIncomeTotal(sheet){
   return getIncomeRows(sheet).reduce((sum,row)=>sum + Number(row.amount || 0),0);
 }
+/* Same rows as getIncomeTotal, but excludes income dated after today. Used only
+   where "now" must mean cash that has actually moved (getCashOutSummary) - a
+   salary dated 10/10 has not reached the bank yet on 16/9, so counting it would
+   show a checking-account balance higher than what is really there. Everywhere
+   else (closing balance, budget, yearly stats) the sheet's month is already
+   over by the time it's read, so the full total is correct as-is. */
+function getIncomeReceivedToDate(sheet){
+  const today = getTodayIso();
+  return getIncomeRows(sheet).reduce((sum,row)=>{
+    const iso = toIsoDate(row.date_raw);
+    if(iso && iso > today) return sum;
+    return sum + Number(row.amount || 0);
+  },0);
+}
 function getLoanSchedule(){
   return getDebtData().loanSchedule || [];
 }
@@ -6743,7 +6757,7 @@ function getCashOutSummary(sheet){
     }
   }
   const opening = getDisplayedOpeningBalance(sheet);
-  const income = getIncomeTotal(sheet);
+  const income = getIncomeReceivedToDate(sheet);
   const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
   // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
   // uncomputable number must read as "—", never as a confident zero.
