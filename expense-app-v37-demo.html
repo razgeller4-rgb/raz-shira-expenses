@@ -7001,7 +7001,7 @@ function getCashOutSummary(sheet){
      it is 0 while roughly a month of card spending is still owed. Showing 0 as
      "צפוי לרדת באשראי" told Raz nothing and made "אחרי חיובי אשראי" a copy of
      the balance above it. */
-  let pendingCards = 0, nextChargeIso = "";
+  let pendingCards = 0, nextChargeIso = "", upcomingCash = 0;
   const byCard = {};
   for(const candidate of SHEET_OPTIONS){
     for(const row of getEditableRows(candidate)){
@@ -7012,9 +7012,14 @@ function getCashOutSummary(sheet){
       const settled = iso <= today;
 
       if(chargeMonth === targetMonth){
-        // Every row of this month lands in exactly one bucket, so that
-        // alreadyLeft + cardDue still equals the month's charge total.
-        if(isCardBill && !settled) cardDue += amount;
+        /* Three buckets, and every row of this month lands in exactly one, so
+           alreadyLeft + cardDue + upcomingCash = the month's charge total.
+           upcomingCash exists because the two-bucket version counted a cash row
+           dated later this month as money that had already gone: a recurring
+           33 ₪ charge dated 27/09 was subtracted from "כמה יש בעו״ש היום" on
+           the 18th. Small here, but it scales with however many recurring rows
+           are entered ahead of time. */
+        if(!settled) (isCardBill ? (cardDue += amount) : (upcomingCash += amount));
         else alreadyLeft += amount;
       }
       if(isCardBill && !settled){
@@ -7033,7 +7038,8 @@ function getCashOutSummary(sheet){
   return {
     month: targetMonth,
     alreadyLeft,
-    cardDue,          // this month only - keeps alreadyLeft + cardDue = month total
+    cardDue,          // this month, card, not yet billed
+    upcomingCash,     // this month, non-card, dated after today - not gone yet
     pendingCards,     // every card purchase already made and not yet collected
     nextChargeIso,    // when the earliest of those is taken
     byCard,

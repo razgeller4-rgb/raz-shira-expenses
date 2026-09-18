@@ -182,12 +182,15 @@ for (const s of api.getSheetOptions()) {
   if (!sum) continue;
   summariesChecked++;
   const expected = liveMonth.get(sum.month) || 0;
-  if (Math.abs((sum.alreadyLeft + sum.cardDue) - expected) < 0.01) splitOk++;
+  // Three buckets since 18.09: settled / card-not-yet-billed / cash-dated-later.
+  // The third exists because a cash row dated later this month has not left the
+  // account yet, so subtracting it from "how much is there today" is wrong.
+  if (Math.abs((sum.alreadyLeft + sum.cardDue + sum.upcomingCash) - expected) < 0.01) splitOk++;
   else if (summariesChecked <= 3) {
-    console.log(`      ${s}: already=${sum.alreadyLeft.toFixed(0)} cards=${sum.cardDue.toFixed(0)} expected=${expected.toFixed(0)}`);
+    console.log(`      ${s}: already=${sum.alreadyLeft.toFixed(0)} cards=${sum.cardDue.toFixed(0)} upcoming=${sum.upcomingCash.toFixed(0)} expected=${expected.toFixed(0)}`);
   }
 }
-check(`alreadyLeft + cardDue equals the month total (${splitOk}/${summariesChecked})`,
+check(`alreadyLeft + cardDue + upcomingCash equals the month total (${splitOk}/${summariesChecked})`,
   splitOk === summariesChecked);
 
 // ── 4. CARRY-14: unknown opening must be null, never 0.
