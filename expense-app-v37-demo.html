@@ -1980,6 +1980,16 @@ body { background:var(--bg); }
 .hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
 .hero-cashout-card-row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
 .hero-cashout-card-row:last-child { border-bottom:0; }
+/* U-7 (18.09): the hero used to show ~13 numbers at once with no priority -
+   everything past "how much do I really have right now" is folded here, one
+   tap away instead of competing with it for attention. */
+.hero-details { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.hero-details > summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); font-size:13px; min-height:44px; display:flex; align-items:center; list-style:none; }
+.hero-details > summary::-webkit-details-marker { display:none; }
+.hero-details > summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
+.hero-details[open] > summary::before { transform:rotate(90deg); }
+.hero-details > .hero-delta { margin-top:10px; }
+.hero-details #heroForecastLine { margin-top:8px; }
 .review-queue {
   background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
   padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
@@ -2372,32 +2382,38 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
             <span class="hero-anchor-chip" id="heroAnchorChip"></span>
           </div>
-          <div class="hero-delta" id="heroDelta" style="display:none"></div>
-          <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
-          <div class="hero-cashout" id="heroCashout" style="display:none">
-            <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
-            <div class="hero-cashout-row">
-              <div><span>עו״ש עכשיו</span><strong id="cashOutNow">—</strong></div>
-              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong><small id="cashOutDueWhen" hidden></small></div>
-              <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
+          <details class="hero-details" id="heroDetails">
+            <summary>פרטים נוספים</summary>
+            <div class="hero-delta" id="heroDelta" style="display:none"></div>
+            <div id="heroForecastLine" style="display:none;font-size:12px;color:var(--text-2)"></div>
+            <div class="hero-cashout" id="heroCashout" style="display:none">
+              <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
+              <div class="hero-cashout-row">
+                <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong><small id="cashOutDueWhen" hidden></small></div>
+                <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
+              </div>
+              <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
+                <summary>פירוט לפי כרטיס</summary>
+                <div id="heroCashoutByCard"></div>
+              </details>
             </div>
-            <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
-              <summary>פירוט לפי כרטיס</summary>
-              <div id="heroCashoutByCard"></div>
-            </details>
-          </div>
-          <div class="hero-month-metrics" aria-label="סיכום חודשי">
-            <!-- "לכל החודש", not "מתוכנן": these three are full-month figures on
-                 the sheet's own basis, while the headline above is a today
-                 figure on a cash basis. Saying which period each covers is what
-                 stops a reader trying to subtract one from the other. -->
-            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>לכל החודש</small></div>
-            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>לכל החודש</small></div>
-            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לכל החודש</small></div>
-          </div>
-          <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
-          <span class="visually-hidden" id="heroSparkAlt"></span>
-          <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
+            <div class="hero-month-metrics" aria-label="סיכום חודשי">
+              <!-- "לכל החודש", not "מתוכנן": these three are full-month figures on
+                   the sheet's own basis, while the headline above is a today
+                   figure on a cash basis. Saying which period each covers is what
+                   stops a reader trying to subtract one from the other. -->
+              <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>לכל החודש</small></div>
+              <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>לכל החודש</small></div>
+              <!-- U-7: labelled "בנק+אבא" so this figure isn't silently subtracted
+                   twice by a reader who also sees the headline (which nets out
+                   only the bank loan, never father repayments - see
+                   renderDashboardHero's getCashOutSummary call). -->
+              <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>בנק+אבא, לכל החודש</small></div>
+            </div>
+            <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
+            <span class="visually-hidden" id="heroSparkAlt"></span>
+            <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
+          </details>
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
@@ -8037,11 +8053,17 @@ function renderDashboardHero(){
       balEl.dataset.initialized = "1";
     }
   }
-  /* delta vs previous month */
+  /* delta vs previous month. U-7 (18.09): this used to compare `value`
+     (getCashOutSummary's cash-basis nowBalance) against
+     getDisplayedClosingBalance (sheet-basis, assumes the full month already
+     landed) - two different quantities, so the "difference" didn't correspond
+     to anything real. A past month is fully settled by the time we're
+     comparing against it, so its own nowBalance IS its final cash position -
+     same basis as `value`, apples to apples. */
   const prevSheet = getPrevSheet(selectedSheet);
   const deltaEl = document.getElementById("heroDelta");
   if(prevSheet && deltaEl && hasBalance){
-    const prevClosing = getDisplayedClosingBalance(prevSheet);
+    const prevClosing = getCashOutSummary(prevSheet)?.nowBalance ?? null;
     if(prevClosing != null && prevClosing !== 0){
       const diff = value - prevClosing;
       const pct = (diff / Math.abs(prevClosing)) * 100;
