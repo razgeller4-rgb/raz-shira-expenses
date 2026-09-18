@@ -5815,19 +5815,39 @@ function saveIncomeRows(sheet, rows){
 function getIncomeTotal(sheet){
   return getIncomeRows(sheet).reduce((sum,row)=>sum + Number(row.amount || 0),0);
 }
-/* Same rows as getIncomeTotal, but excludes income dated after today. Used only
-   where "now" must mean cash that has actually moved (getCashOutSummary) - a
-   salary dated 10/10 has not reached the bank yet on 16/9, so counting it would
-   show a checking-account balance higher than what is really there. Everywhere
-   else (closing balance, budget, yearly stats) the sheet's month is already
-   over by the time it's read, so the full total is correct as-is. */
+/* Cash that has actually reached the account during this sheet's calendar
+   month, up to today - regardless of which sheet the row is filed under.
+
+   The first version of this only looked at rows inside the given sheet, which
+   was wrong for the same reason the whole basis question is hard: the household
+   files a salary under the month it was EARNED, but it lands on the 9th-10th of
+   the month after. On 18.09.2026 that cost the dashboard 18,998 - the September
+   salary and a September refund both sit on the אוגוסט sheet - and the headline
+   read 732 while the bank held 10,288. Measured, not guessed: tools/now_balance_diag.js.
+
+   Undated rows fall back to their own sheet's month. A missing date is missing
+   data, not a claim that the money moved somewhere else. */
 function getIncomeReceivedToDate(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return 0;
+  const target = `${year}-${String(month).padStart(2,"0")}`;
   const today = getTodayIso();
-  return getIncomeRows(sheet).reduce((sum,row)=>{
-    const iso = toIsoDate(row.date_raw);
-    if(iso && iso > today) return sum;
-    return sum + Number(row.amount || 0);
-  },0);
+  syncSheetOptions();
+  let sum = 0;
+  for(const candidate of SHEET_OPTIONS){
+    const fallback = getSheetAnchorDateIso(candidate).slice(0,7);
+    for(const row of getIncomeRows(candidate)){
+      const iso = row.date_raw ? toIsoDate(row.date_raw) : "";
+      if(iso){
+        if(iso.slice(0,7) !== target) continue;
+        if(iso > today) continue;             // dated, but not here yet
+      } else if(fallback !== target){
+        continue;
+      }
+      sum += Number(row.amount || 0);
+    }
+  }
+  return sum;
 }
 function getLoanSchedule(){
   return getDebtData().loanSchedule || [];
@@ -6946,6 +6966,14 @@ function getCashOutSummary(sheet){
   const targetMonth = `${year}-${String(month).padStart(2,"0")}`;
   syncSheetOptions();
 
+  /* A card bill counts as "still to come" only until its billing day passes.
+     Splitting purely on "is it a card" - which is what this did until
+     18.09.2026 - says a bill charged on the 10th is still pending on the 18th,
+     and the dashboard then shows 9,315 as "צפוי לרדת באשראי" when the bank had
+     already taken it a week earlier. Both halves of the headline were wrong at
+     once: the balance too low, the upcoming charges too high. */
+  const today = getTodayIso();
+  const lastDayOfMonth = new Date(year, month, 0).getDate();
   let alreadyLeft = 0, cardDue = 0;
   const byCard = {};
   for(const candidate of SHEET_OPTIONS){
@@ -6954,11 +6982,21 @@ function getCashOutSummary(sheet){
       const amount = Number(row.amount || 0);
       const method = row.payment ? getPaymentMethodByName(row.payment) : null;
       const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
-      if(isCardBill){
+      if(!isCardBill){
+        // Cash or an immediate charge: the money left when it was spent.
+        alreadyLeft += amount;
+        continue;
+      }
+      const rowIso = toIsoDate(row.date_raw);
+      // Clamped: a card billing on the 31st in a 30-day month charges on the
+      // last day, not on a date that does not exist.
+      const billingDay = Math.min(Number(getBillingDayForDate(method, rowIso)) || 10, lastDayOfMonth);
+      const chargeIso = `${targetMonth}-${String(billingDay).padStart(2,"0")}`;
+      if(chargeIso <= today){
+        alreadyLeft += amount;
+      } else {
         cardDue += amount;
         byCard[row.payment] = (byCard[row.payment] || 0) + amount;
-      } else {
-        alreadyLeft += amount;
       }
     }
   }
