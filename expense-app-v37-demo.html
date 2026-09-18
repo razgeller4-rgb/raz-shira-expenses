@@ -1957,29 +1957,6 @@ body { background:var(--bg); }
 .hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
 .hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
 .hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
-.hero-cashout { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
-.hero-cashout-title { font-size:12px; font-weight:var(--fw-semi); color:var(--muted); margin-bottom:9px; }
-.hero-cashout-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-.hero-cashout-row > div { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding-inline-start:12px; border-inline-start:1px solid var(--border); }
-.hero-cashout-row > div:first-child { border-inline-start:0; padding-inline-start:0; }
-.hero-cashout-row span { color:var(--muted); font-size:11px; }
-.hero-cashout-row strong { color:var(--text); font-size:17px; font-variant-numeric:tabular-nums; margin-top:3px; font-family:var(--font-num); }
-/* var(--bad) is 3.80:1 here at 17px (fine at the ~50px hero-balance size, fails
-   AA's 4.5:1 for normal-size text) — reuse the darkened token already measured
-   at 5.82:1 on this surface for .recon-gap.none. */
-.hero-cashout-row strong.is-negative { color:#A24A2C; }
-/* The charge date under "צפוי לרדת" - deliberately quiet, it qualifies the
-   number above it rather than competing with it. */
-/* nowrap: at 105px per cell "החל מ-10/10" breaks after the hyphen and the date
-   lands on its own line, which reads as two separate facts. */
-.hero-cashout-row small { color:var(--muted); font-size:10.5px; margin-top:2px; white-space:nowrap; }
-.hero-cashout-detail { margin-top:10px; font-size:12.5px; }
-.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
-.hero-cashout-detail summary::-webkit-details-marker { display:none; }
-.hero-cashout-detail summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
-.hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
-.hero-cashout-card-row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
-.hero-cashout-card-row:last-child { border-bottom:0; }
 /* U-7 (18.09): the hero used to show ~13 numbers at once with no priority -
    everything past "how much do I really have right now" is folded here, one
    tap away instead of competing with it for attention. */
@@ -2005,7 +1982,7 @@ body { background:var(--bg); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
 /* min-height/width:44px matches the touch-target baseline measured and fixed
-   elsewhere this session (.bank-actions button, .hero-cashout-detail summary) -
+   elsewhere this session (.bank-actions button, .hero-details summary) -
    found here the same way: 30.5px/26px on a live measurement, not assumed. */
 .review-action { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 14px; font-weight:700; font-size:11px; white-space:nowrap; }
 .review-item-actions { display:flex; align-items:center; gap:6px; }
@@ -2086,9 +2063,6 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
-  .hero-cashout-row { gap:6px; }
-  .hero-cashout-row > div { padding-inline-start:8px; }
-  .hero-cashout-row strong { font-size:14px; }
   .review-queue { padding:14px; border-radius:22px; }
   .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
   .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
@@ -2368,15 +2342,11 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
-          <!-- The old wording, "הכנסות פחות הוצאות עד היום", described a formula
-               this number does not compute, and the audit of 18.09.2026 measured
-               the consequence: the headline and the two metrics printed directly
-               beneath it differed by up to 17,488 with no way for a reader to
-               reconcile them. What renderDashboardHero actually shows here is
-               getCashOutSummary().nowBalance - opening balance plus income that
-               has really arrived, minus money that has really left, with card
-               bills not yet charged deliberately still in the account. -->
-          <div class="hero-balance-label">כמה יש בעו״ש היום · לפני חיובי אשראי שטרם ירדו</div>
+          <!-- 18.09 "חושבין מחדש": one number, one basis - opening + this
+               month's income − this month's expenses − loan principal, all by
+               SHEET (the month a row is filed under, never a derived charge
+               month). No separate "cash position right now" question. -->
+          <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <div class="hero-anchor-row" id="heroAnchorRow">
             <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
@@ -2386,28 +2356,10 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <summary>פרטים נוספים</summary>
             <div class="hero-delta" id="heroDelta" style="display:none"></div>
             <div id="heroForecastLine" style="display:none;font-size:12px;color:var(--text-2)"></div>
-            <div class="hero-cashout" id="heroCashout" style="display:none">
-              <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
-              <div class="hero-cashout-row">
-                <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong><small id="cashOutDueWhen" hidden></small></div>
-                <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
-              </div>
-              <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
-                <summary>פירוט לפי כרטיס</summary>
-                <div id="heroCashoutByCard"></div>
-              </details>
-            </div>
             <div class="hero-month-metrics" aria-label="סיכום חודשי">
-              <!-- "לכל החודש", not "מתוכנן": these three are full-month figures on
-                   the sheet's own basis, while the headline above is a today
-                   figure on a cash basis. Saying which period each covers is what
-                   stops a reader trying to subtract one from the other. -->
               <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>לכל החודש</small></div>
               <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>לכל החודש</small></div>
-              <!-- U-7: labelled "בנק+אבא" so this figure isn't silently subtracted
-                   twice by a reader who also sees the headline (which nets out
-                   only the bank loan, never father repayments - see
-                   renderDashboardHero's getCashOutSummary call). -->
+              <!-- U-7: labelled "בנק+אבא" כי הכותרת הגדולה מנכה רק הלוואת בנק, לא אבא. -->
               <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>בנק+אבא, לכל החודש</small></div>
             </div>
             <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
@@ -5836,40 +5788,6 @@ function saveIncomeRows(sheet, rows){
 function getIncomeTotal(sheet){
   return getIncomeRows(sheet).reduce((sum,row)=>sum + Number(row.amount || 0),0);
 }
-/* Cash that has actually reached the account during this sheet's calendar
-   month, up to today - regardless of which sheet the row is filed under.
-
-   The first version of this only looked at rows inside the given sheet, which
-   was wrong for the same reason the whole basis question is hard: the household
-   files a salary under the month it was EARNED, but it lands on the 9th-10th of
-   the month after. On 18.09.2026 that cost the dashboard 18,998 - the September
-   salary and a September refund both sit on the אוגוסט sheet - and the headline
-   read 732 while the bank held 10,288. Measured, not guessed: tools/now_balance_diag.js.
-
-   Undated rows fall back to their own sheet's month. A missing date is missing
-   data, not a claim that the money moved somewhere else. */
-function getIncomeReceivedToDate(sheet){
-  const {month, year} = getSheetMonthYear(sheet);
-  if(!month || !year) return 0;
-  const target = `${year}-${String(month).padStart(2,"0")}`;
-  const today = getTodayIso();
-  syncSheetOptions();
-  let sum = 0;
-  for(const candidate of SHEET_OPTIONS){
-    const fallback = getSheetAnchorDateIso(candidate).slice(0,7);
-    for(const row of getIncomeRows(candidate)){
-      const iso = row.date_raw ? toIsoDate(row.date_raw) : "";
-      if(iso){
-        if(iso.slice(0,7) !== target) continue;
-        if(iso > today) continue;             // dated, but not here yet
-      } else if(fallback !== target){
-        continue;
-      }
-      sum += Number(row.amount || 0);
-    }
-  }
-  return sum;
-}
 function getLoanSchedule(){
   return getDebtData().loanSchedule || [];
 }
@@ -6413,10 +6331,11 @@ function getBalanceGapForSheet(sheet){
   const prev = getPrevSheet(sheet);
   let computed = null;
   if(prev && (SHEET_OPTIONS || []).includes(prev)){
-    // Cash basis, not getDisplayedClosingBalance: this line compares against a
-    // measured bank balance, and only the cash basis is denominated in the same
-    // thing the bank measures. See getCashBasisClosingBalance for the numbers.
-    computed = getCashBasisClosingBalance(prev);
+    // 18.09 "חושבין מחדש": back to the sheet basis (pre-U-4). The cash-basis
+    // comparison introduced a second, competing definition of "which month a
+    // charge belongs to" - Raz asked for exactly one, so the gap banner now
+    // measures against the same number the rest of the app shows.
+    computed = getDisplayedClosingBalance(prev);
   } else if(source === "anchored" && currentUser === "raz"){
     // No previous month to chain from: fall back to the seeded summary. Only
     // valid for an anchor, because for a summary-sourced opening this would be
@@ -6962,128 +6881,6 @@ function getOpeningBalanceSource(sheet){
   if(prev && (SHEET_OPTIONS || []).includes(prev) && getDisplayedOpeningBalance(prev) != null) return "carried";
   return "none";
 }
-/* ── D-13: cash-out view — "what is in the account" vs "what we spent" ──────
-   Raz's goal, stated 16.09: show at any moment how much is in the current
-   account, how much the card bills will still take this month, and have an
-   immediate charge already deducted.
-
-   The app cannot answer that from one number per row, because a row's sheet
-   says WHEN IT WAS BOUGHT while the balance depends on WHEN THE MONEY LEAVES.
-   For a card those are different months. So the charge month is DERIVED here
-   rather than stored - when a bank statement later supplies the truth, this
-   recomputes instead of migrating rows (D-13).
-
-   Scans EVERY sheet, not just the adjacent ones. The first version limited
-   itself to this month ±1 on the reasoning that a billing cycle never spans
-   more than two adjacent months - true for a correctly filed row, false for
-   the data that actually exists. A row dated 2025-12-01 sits in the "יולי 26"
-   sheet (one of the mis-dated AIG rows), and the window silently dropped
-   ₪1,033 from December's total. The probe caught it as a conservation failure.
-   Roughly 900 rows is not worth optimising against correctness.
-
-   NOTE this is a pure read model. It does NOT change getExpenseStats or
-   getDisplayedClosingBalance, which still answer the "what did we spend in
-   this month" question the rest of the app is built on. Wiring the balance
-   itself onto the cash-out basis is a separate, gated step. */
-function getChargeMonthForRow(row){
-  const iso = toIsoDate(row && (row.date_raw || row.date) || "");
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
-  const year = Number(iso.slice(0,4)), month = Number(iso.slice(5,7)), day = Number(iso.slice(8,10));
-  if(!row.payment) return `${year}-${String(month).padStart(2,"0")}`;
-  const method = getPaymentMethodByName(row.payment);
-  // No method on file, or an immediate one: the money leaves when it is spent.
-  if(!method || method.isImmediate || isRowImmediate(row)){
-    return `${year}-${String(month).padStart(2,"0")}`;
-  }
-  const billingDay = Number(getBillingDayForDate(method, iso)) || 10;
-  if(day < billingDay) return `${year}-${String(month).padStart(2,"0")}`;
-  const next = shiftMonth(year, month, 1);
-  return `${next.year}-${String(next.month).padStart(2,"0")}`;
-}
-function getCashOutSummary(sheet){
-  const {month, year} = getSheetMonthYear(sheet);
-  if(!month || !year) return null;
-  const targetMonth = `${year}-${String(month).padStart(2,"0")}`;
-  syncSheetOptions();
-
-  /* A card bill counts as "still to come" only until its billing day passes.
-     Splitting purely on "is it a card" - which is what this did until
-     18.09.2026 - says a bill charged on the 10th is still pending on the 18th,
-     and the dashboard then shows 9,315 as "צפוי לרדת באשראי" when the bank had
-     already taken it a week earlier. Both halves of the headline were wrong at
-     once: the balance too low, the upcoming charges too high. */
-  const today = getTodayIso();
-  /* When does a row's money actually leave the account? For cash or an
-     immediate charge, on the day it was spent. For a card, on that card's
-     billing day in its charge month - clamped to the last day of that month,
-     because a card billing on the 31st charges on the 30th in September. */
-  const chargeDateOf = (row, chargeMonth) => {
-    const method = row.payment ? getPaymentMethodByName(row.payment) : null;
-    const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
-    if(!isCardBill) return { isCardBill:false, iso: toIsoDate(row.date_raw) || `${chargeMonth}-01` };
-    const y = Number(chargeMonth.slice(0,4)), m = Number(chargeMonth.slice(5,7));
-    const lastDay = new Date(y, m, 0).getDate();
-    const day = Math.min(Number(getBillingDayForDate(method, toIsoDate(row.date_raw))) || 10, lastDay);
-    return { isCardBill:true, iso: `${chargeMonth}-${String(day).padStart(2,"0")}` };
-  };
-
-  let alreadyLeft = 0, cardDue = 0;
-  /* pendingCards is every card purchase already made whose bill has not been
-     collected yet - INCLUDING next month's cycle, which is the whole point.
-     cardDue stays scoped to this month so the conservation invariant
-     (alreadyLeft + cardDue = the month's charge total) still holds, but it is
-     useless on screen: on the 18th, with all three cards billing on the 10th,
-     it is 0 while roughly a month of card spending is still owed. Showing 0 as
-     "צפוי לרדת באשראי" told Raz nothing and made "אחרי חיובי אשראי" a copy of
-     the balance above it. */
-  let pendingCards = 0, nextChargeIso = "", upcomingCash = 0;
-  const byCard = {};
-  for(const candidate of SHEET_OPTIONS){
-    for(const row of getEditableRows(candidate)){
-      const chargeMonth = getChargeMonthForRow(row);
-      if(!chargeMonth || chargeMonth < targetMonth) continue; // settled history
-      const amount = Number(row.amount || 0);
-      const { isCardBill, iso } = chargeDateOf(row, chargeMonth);
-      const settled = iso <= today;
-
-      if(chargeMonth === targetMonth){
-        /* Three buckets, and every row of this month lands in exactly one, so
-           alreadyLeft + cardDue + upcomingCash = the month's charge total.
-           upcomingCash exists because the two-bucket version counted a cash row
-           dated later this month as money that had already gone: a recurring
-           33 ₪ charge dated 27/09 was subtracted from "כמה יש בעו״ש היום" on
-           the 18th. Small here, but it scales with however many recurring rows
-           are entered ahead of time. */
-        if(!settled) (isCardBill ? (cardDue += amount) : (upcomingCash += amount));
-        else alreadyLeft += amount;
-      }
-      if(isCardBill && !settled){
-        pendingCards += amount;
-        byCard[row.payment] = (byCard[row.payment] || 0) + amount;
-        if(!nextChargeIso || iso < nextChargeIso) nextChargeIso = iso;
-      }
-    }
-  }
-  const opening = getDisplayedOpeningBalance(sheet);
-  const income = getIncomeReceivedToDate(sheet);
-  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: bank refunds the interest same day - cash impact is principal only
-  // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
-  // uncomputable number must read as "—", never as a confident zero.
-  const nowBalance = opening == null ? null : opening + income - alreadyLeft - loan;
-  return {
-    month: targetMonth,
-    alreadyLeft,
-    cardDue,          // this month, card, not yet billed
-    upcomingCash,     // this month, non-card, dated after today - not gone yet
-    pendingCards,     // every card purchase already made and not yet collected
-    nextChargeIso,    // when the earliest of those is taken
-    byCard,
-    nowBalance,
-    // Subtracts pendingCards, not cardDue: the question "how much of this is
-    // really mine" is not answered by this calendar month's leftovers.
-    afterCardsBalance: nowBalance == null ? null : nowBalance - pendingCards
-  };
-}
 function getDisplayedClosingBalance(sheet){
   // C-8 (18.09): the bank charges the full installment (principal + interest)
   // and refunds the interest the same day (מקדמה/הטבת ריבית בהלוואה),
@@ -7097,57 +6894,6 @@ function getDisplayedClosingBalance(sheet){
   const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
   return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
-/* Cash that moved through the account during a sheet's calendar month, on the
-   bank's own terms rather than the sheet's.
-
-   Income is bucketed by the row's DATE, not by the sheet it is filed under: the
-   household convention files a salary under the month it was earned, but the
-   bank pays it on the 9th-10th of the month after, so a sheet total answers a
-   different question than "what reached the account in September". An undated
-   row falls back to its sheet - a missing date is missing data, not evidence
-   that the money moved elsewhere.
-
-   Expenses are bucketed by CHARGE month (getChargeMonthForRow), because a card
-   purchase leaves the account on the billing date, not the purchase date.
-
-   Measured against the real bank export on the months where the app's data
-   actually covers the bank's outflow (90-110%), this basis predicts the next
-   month's opening balance with a mean error of 1,702 against 4,657 for the
-   sheet basis. It is NOT used for any balance the app displays - only as the
-   comparison in the gap banner, where comparing a bank measurement against a
-   sheet-basis projection produced a structural 12,654 false alarm every month. */
-function getCashMovementForSheet(sheet){
-  const {month, year} = getSheetMonthYear(sheet);
-  if(!month || !year) return null;
-  const target = `${year}-${String(month).padStart(2,"0")}`;
-  syncSheetOptions();
-  let income = 0, spent = 0;
-  for(const candidate of SHEET_OPTIONS){
-    const candidateKey = getSheetAnchorDateIso(candidate).slice(0,7);
-    for(const row of getIncomeRows(candidate)){
-      const iso = row.date_raw ? toIsoDate(row.date_raw) : "";
-      const bucket = iso ? iso.slice(0,7) : candidateKey;
-      if(bucket === target) income += Number(row.amount || 0);
-    }
-    for(const row of getEditableRows(candidate)){
-      if(getChargeMonthForRow(row) === target) spent += Number(row.amount || 0);
-    }
-  }
-  return { month: target, income, spent };
-}
-
-/* What the account should hold when this month ends, if every row is right.
-   Same shape as getDisplayedClosingBalance but on the cash basis above, and
-   deliberately NOT wired into any screen - see getBalanceGapForSheet. */
-function getCashBasisClosingBalance(sheet){
-  const opening = getDisplayedOpeningBalance(sheet);
-  if(opening == null) return null;
-  const moved = getCashMovementForSheet(sheet);
-  if(!moved) return null;
-  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: principal is the real cash impact
-  return opening + moved.income - moved.spent - bankMonthlyPayment;
-}
-
 function getAvailableYears(){
   syncSheetOptions();
   return [...new Set(SHEET_OPTIONS.map(sheet => getSheetMonthYear(sheet).year))].sort((a,b)=>a-b);
@@ -8000,13 +7746,13 @@ function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
   const balEl = document.getElementById("heroBalance");
   if(!heroEl || !balEl) return;
-  // The hero label promises "עד היום" (up to today) - getDisplayedClosingBalance
-  // is a full-MONTH projection (assumes all income already landed), which is
-  // right for chaining next month's opening balance but wrong for a "now"
-  // headline. getCashOutSummary's nowBalance is the one figure that actually
-  // excludes not-yet-received income, so it - not the closing balance - is
-  // what belongs here.
-  const closing = getCashOutSummary(selectedSheet)?.nowBalance ?? null;
+  // 18.09 "חושבין מחדש": back to the one number the rest of the app already
+  // uses - opening + this month's income - this month's expenses - loan
+  // principal, by sheet. Raz asked to drop the separate "cash position right
+  // now, before this month's card bills land" question (D-13/getCashOutSummary)
+  // entirely; a full-month projection is exactly what answers "will I end up
+  // negative", which is what he actually wants from this number.
+  const closing = getDisplayedClosingBalance(selectedSheet);
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
@@ -8044,7 +7790,6 @@ function renderDashboardHero(){
       forecastLine.style.display = "none";
     }
   }
-  renderHeroCashout();
   // CARRY-14 (BALANCE_ANCHOR_SPEC R-2): closing == null means "we have no opening
   // balance for this month", not "the balance is zero" - but the hero rendered it
   // as a confident ₪0. That is the single number on the dashboard, and per
@@ -8071,17 +7816,12 @@ function renderDashboardHero(){
       balEl.dataset.initialized = "1";
     }
   }
-  /* delta vs previous month. U-7 (18.09): this used to compare `value`
-     (getCashOutSummary's cash-basis nowBalance) against
-     getDisplayedClosingBalance (sheet-basis, assumes the full month already
-     landed) - two different quantities, so the "difference" didn't correspond
-     to anything real. A past month is fully settled by the time we're
-     comparing against it, so its own nowBalance IS its final cash position -
-     same basis as `value`, apples to apples. */
+  /* delta vs previous month - both sides are now the same sheet-basis closing
+     balance, so this is a plain apples-to-apples comparison. */
   const prevSheet = getPrevSheet(selectedSheet);
   const deltaEl = document.getElementById("heroDelta");
   if(prevSheet && deltaEl && hasBalance){
-    const prevClosing = getCashOutSummary(prevSheet)?.nowBalance ?? null;
+    const prevClosing = getDisplayedClosingBalance(prevSheet);
     if(prevClosing != null && prevClosing !== 0){
       const diff = value - prevClosing;
       const pct = (diff / Math.abs(prevClosing)) * 100;
@@ -8126,50 +7866,6 @@ function renderDashboardHero(){
   }
 }
 
-/* D-13: getCashOutSummary is a bank-reality read model (charge-month, not
-   purchase-month) — deliberately separate from the hero-balance above so a
-   discrepancy between the two is visible, not silently reconciled. */
-function renderHeroCashout(){
-  const box = document.getElementById("heroCashout");
-  if(!box) return;
-  const sum = getCashOutSummary(selectedSheet);
-  if(!sum){ box.style.display = "none"; return; }
-  box.style.display = "block";
-  const nowEl = document.getElementById("cashOutNow");
-  const dueEl = document.getElementById("cashOutDue");
-  const afterEl = document.getElementById("cashOutAfter");
-  const fmtOrDash = v => v == null ? "—" : fmtIls(v);
-  if(nowEl){ nowEl.textContent = fmtOrDash(sum.nowBalance); nowEl.classList.toggle("is-negative", sum.nowBalance != null && sum.nowBalance < 0); }
-  if(dueEl) dueEl.textContent = fmtIls(sum.pendingCards);
-  /* Name the date the money goes. "צפוי לרדת באשראי" with no date is unreadable
-     once the current month's bills have already been collected - it either
-     looks like 0 for no reason, or like a charge that is about to happen today. */
-  const dueWhenEl = document.getElementById("cashOutDueWhen");
-  if(dueWhenEl){
-    if(sum.pendingCards > 0 && sum.nextChargeIso){
-      const [, m, d] = sum.nextChargeIso.split("-");
-      dueWhenEl.textContent = `החל מ-${d}/${m}`;
-      dueWhenEl.hidden = false;
-    } else {
-      dueWhenEl.textContent = "אין חיוב פתוח";
-      dueWhenEl.hidden = false;
-    }
-  }
-  if(afterEl){ afterEl.textContent = fmtOrDash(sum.afterCardsBalance); afterEl.classList.toggle("is-negative", sum.afterCardsBalance != null && sum.afterCardsBalance < 0); }
-  const detail = document.getElementById("heroCashoutDetail");
-  const byCardEl = document.getElementById("heroCashoutByCard");
-  const cards = Object.entries(sum.byCard || {}).filter(([, amt]) => amt > 0).sort((a, b) => b[1] - a[1]);
-  if(detail && byCardEl){
-    if(cards.length){
-      detail.style.display = "block";
-      byCardEl.innerHTML = cards.map(([name, amt]) =>
-        `<div class="hero-cashout-card-row"><span>${escapeHtmlAttr(name)}</span><strong>${fmtIls(amt)}</strong></div>`
-      ).join("");
-    } else {
-      detail.style.display = "none";
-    }
-  }
-}
 
 /* Compares this month's rows against last month's "קבועה" (fixed) rows and
    flags fixed merchants that had no matching row imported/entered yet this
@@ -12428,20 +12124,15 @@ function buildCCImportTable(){
    entirely in whichever month the dropdown happened to show.
    Returns the dropdown value only when routing genuinely cannot be determined:
    no card, or a date the parser could not read. Those rows are still imported,
-   so nothing is silently dropped. */
+   so nothing is silently dropped.
+
+   18.09 "\u05d7\u05d5\u05e9\u05d1\u05d9\u05df \u05de\u05d7\u05d3\u05e9": no longer prefers the statement's own stated billing
+   date (D-08/row.billingDateRaw). Raz: an expense belongs to the month it was
+   PURCHASED in, by the card's own cycle day - never by what the bank chooses
+   to call the bill that collects it. A single getBillingSheetForExpense call
+   is now the only routing rule in the app, for both import and manual entry. */
 function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
   try {
-    // D-08 \u00a73: when the statement itself states a billing date, that IS the
-    // month - no per-row recalculation. This is deliberately not merely a
-    // tie-breaker: getBillingSheetForExpense's cycleDay heuristic is exactly
-    // what D-08 found unreliable (verified against 17 real Mizrahi rows, off
-    // by a full month). A stated date, when present, is ground truth and
-    // bypasses that heuristic entirely rather than being reconciled with it.
-    const billingIso = toIsoDate(row.billingDateRaw);
-    if(billingIso){
-      const [by, bm] = billingIso.split("-").map(Number);
-      if(by && bm) return resolveSheetName(formatSheetFromMonth(by, bm));
-    }
     const iso = toIsoDate(row.date_raw);
     if(!iso) return fallbackSheet;
     const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
@@ -12450,10 +12141,10 @@ function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallba
     return fallbackSheet;
   }
 }
-/* domain-risk-reviewer 2026-09-15 (H-2): preferring the statement's stated
- * billing date (below, via resolveImportTargetSheet) makes an import land on
- * a FUTURE month more often than the old per-row calculation did - and this
- * function has never checked whether its target sheet is closed, because
+/* domain-risk-reviewer 2026-09-15 (H-2, now moot - see 18.09 note above:
+ * resolveImportTargetSheet no longer prefers a stated billing date, so this
+ * is no more likely to land on a future month than manual entry always was).
+ * This function has never checked whether its target sheet is closed, because
  * MONTH_CLOSE_SPEC's month-close concept (expense_app_month_close_v1,
  * closeMonth/reopenMonth) does not exist in this file yet. No check is added
  * here for that reason: there is nothing to check against today, and a stub
@@ -12503,9 +12194,7 @@ function confirmCCImport(){
     // domain-risk-reviewer 2026-09-15 (M-3): addNewExpense already does this
     // for manual entry (line ~8493); confirmCCImport never did, so an import
     // landing on a month with no rows yet skipped the recurring-income seed
-    // that ensureSheetExists provides. Preferring the statement's stated
-    // billing date makes landing on a not-yet-touched future month more
-    // common, not less, so this stops being a rare edge case.
+    // that ensureSheetExists provides.
     ensureSheetExists(targetSheet);
     if(!overrides[targetSheet]) overrides[targetSheet] = [];
     countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;

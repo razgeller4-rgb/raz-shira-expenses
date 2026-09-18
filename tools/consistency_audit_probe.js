@@ -6,6 +6,15 @@
  * a user reads on the dashboard, the income tab, the cards tab and the yearly
  * view actually add up to each other?
  *
+ * Rewritten 18.09.2026 ("חושבין מחדש"): the app used to carry two competing
+ * bases (sheet vs derived charge-month/cash-basis) - Raz asked for exactly
+ * one, so the checks that specifically compared those two bases (D/E/G in the
+ * old version) are gone along with the code they tested. What is left checks
+ * that the ONE remaining basis - opening + this month's income - this month's
+ * expenses - debt, all by sheet - actually holds everywhere it is shown, and
+ * that the single billing-day rule (getBillingSheetForExpense) is what both
+ * manual entry and import actually use.
+ *
  * READ-ONLY. Loads the app's own shipped functions against a real backup.
  * Usage: node tools/consistency_audit_probe.js [app.html] [backup.json] [user]
  */
@@ -77,15 +86,15 @@ for (const base of ["expense_app_overrides_v29","expense_app_payment_methods_v1"
 
 const scripts = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
 const main = scripts.reduce((a, b) => (b.length > a.length ? b : a), "");
-const EXPORTS = ["syncSheetOptions","getIncomeTotal","getIncomeReceivedToDate","getExpenseStats",
-                 "getDisplayedOpeningBalance","getDisplayedClosingBalance","getCashOutSummary",
-                 "getDashboardWidgetCatalog","getEditableRows","getChargeMonthForRow","getSheetMonthYear",
-                 "getMonthlyCategorySums","isDebtTrackingEnabled","getLoanScheduleEntryForSheet",
-                 "getFatherRepaymentTotal","getYearlySummaryData","getIncomeRows","getTodayIso",
+const EXPORTS = ["syncSheetOptions","getIncomeTotal","getExpenseStats",
+                 "getDisplayedOpeningBalance","getDisplayedClosingBalance",
+                 "getDashboardWidgetCatalog","getEditableRows","getSheetMonthYear",
+                 "isDebtTrackingEnabled","getLoanScheduleEntryForSheet",
+                 "getFatherRepaymentTotal","getIncomeRows","getTodayIso",
                  "getOpeningBalanceSource","getBalanceGapForSheet","getBalanceAnchorForSheet",
                  "parseBankStatementHtml","verifyBankStatementBalance",
                  "saveMonthStartAnchorsFromBankStatement","invalidateBalanceMemo",
-                 "getCashBasisClosingBalance","getCashMovementForSheet","getPrevSheet"];
+                 "getBillingSheetForExpense","getPaymentMethodByName","resolveImportTargetSheet","getPrevSheet"];
 let api;
 try {
   api = new Function(
@@ -129,24 +138,14 @@ const flag = (msg) => { issues++; console.log(`  ⚠  ${msg}`); };
 console.log(`app=${appPath}  user=${user}  backup=${backupPath || "(none)"}  sheets=${sheets.length}`);
 console.log(`today=${api.getTodayIso ? api.getTodayIso() : "?"}\n`);
 
-console.log("A. Per-sheet: the four figures a user can read on screen");
-console.log("   sheet            opening   income  inc<=今   expense  chargeExp   closing  nowBal");
+console.log("A. Per-sheet: the figures a user can read on screen");
+console.log("   sheet            opening    income   expense    closing");
 for (const sheet of sheets) {
   const opening = api.getDisplayedOpeningBalance(sheet);
   const income = api.getIncomeTotal(sheet);
-  const incomeNow = api.getIncomeReceivedToDate(sheet);
   const stats = api.getExpenseStats(sheet);
-  const cash = api.getCashOutSummary(sheet);
-  // charge-month total = every row across every sheet whose DERIVED charge month
-  // is this sheet's month. This is what the cards tab / cash-out block counts.
-  const { month, year } = api.getSheetMonthYear(sheet);
-  const target = month && year ? `${year}-${String(month).padStart(2,"0")}` : null;
-  let chargeExp = 0;
-  if (target) for (const s of sheets) for (const row of api.getEditableRows(s)) {
-    if (api.getChargeMonthForRow(row) === target) chargeExp += Number(row.amount || 0);
-  }
   const closing = api.getDisplayedClosingBalance(sheet);
-  console.log(`   ${sheet.padEnd(14)} ${f(opening)} ${f(income)} ${f(incomeNow)} ${f(stats.total)} ${f(chargeExp)} ${f(closing)} ${f(cash && cash.nowBalance)}`);
+  console.log(`   ${sheet.padEnd(14)} ${f(opening)} ${f(income)} ${f(stats.total)} ${f(closing)}`);
 }
 
 console.log("\nB. Identity checks (what the code claims must hold)");
@@ -163,17 +162,6 @@ for (const sheet of sheets) {
   if (Math.abs(expect - closing) > 0.5)
     flag(`${sheet}: closing != opening+income-expense-debt (${n(closing)} vs ${n(expect)})`);
 
-  const cash = api.getCashOutSummary(sheet);
-  if (cash && cash.nowBalance != null && cash.afterCardsBalance != null) {
-    // afterCards subtracts pendingCards (every card purchase not yet collected,
-    // including next month's cycle), NOT cardDue (this calendar month only).
-    // cardDue goes to 0 once the month's billing day passes, which made
-    // "אחרי חיובי אשראי" a duplicate of the balance above it.
-    if (Math.abs((cash.nowBalance - cash.pendingCards) - cash.afterCardsBalance) > 0.5)
-      flag(`${sheet}: afterCards != nowBalance - pendingCards`);
-    if (cash.pendingCards > 0 && !cash.nextChargeIso)
-      flag(`${sheet}: pendingCards ${n(cash.pendingCards)} but no nextChargeIso to show the user`);
-  }
   const cat = api.getDashboardWidgetCatalog(sheet);
   const mb = cat.find(x => x.id === "monthly_balance");
   const inc = cat.find(x => x.id === "income");
@@ -199,36 +187,7 @@ for (let i = 1; i < sheets.length; i++) {
   if (d > 0.5) console.log(`   ${prev} closing ${n(prevClosing)} -> ${cur} opening ${n(curOpening)}  (delta ${n(curOpening - prevClosing)})`);
 }
 
-console.log("\nD. Basis mismatch: purchase-month vs charge-month expense totals");
-console.log("   (both are shown to the user in different tabs; a large gap means");
-console.log("    the dashboard and the cards tab disagree about 'this month')");
-for (const sheet of sheets) {
-  const { month, year } = api.getSheetMonthYear(sheet);
-  if (!month || !year) continue;
-  const target = `${year}-${String(month).padStart(2,"0")}`;
-  let chargeExp = 0;
-  for (const s of sheets) for (const row of api.getEditableRows(s)) {
-    if (api.getChargeMonthForRow(row) === target) chargeExp += Number(row.amount || 0);
-  }
-  const purchase = api.getExpenseStats(sheet).total;
-  const delta = chargeExp - purchase;
-  if (Math.abs(delta) > 1) console.log(`   ${sheet.padEnd(14)} purchase ${f(purchase)}  charge ${f(chargeExp)}  delta ${f(delta)}`);
-}
-
-console.log("\nE. Hero panel internal coherence (the one screen showing all three at once)");
-for (const sheet of sheets) {
-  const cash = api.getCashOutSummary(sheet);
-  if (!cash || cash.nowBalance == null) continue;
-  const opening = api.getDisplayedOpeningBalance(sheet);
-  const heroIncome = api.getIncomeTotal(sheet);          // shown as "הכנסות"
-  const heroExpense = api.getExpenseStats(sheet).total;   // shown as "הוצאות"
-  const heroBig = cash.nowBalance;                        // shown as the headline
-  const naive = opening + heroIncome - heroExpense;
-  if (Math.abs(naive - heroBig) > 1)
-    console.log(`   ${sheet.padEnd(14)} headline ${f(heroBig)} but opening+income-expense = ${f(naive)}  (gap ${f(naive - heroBig)})`);
-}
-
-console.log("\nF. Is every broken chain link EXPLAINED to the user?");
+console.log("\nD. Is every broken chain link EXPLAINED to the user?");
 console.log("   (a jump from closing(n-1) to opening(n) is fine when an anchor caused it");
 console.log("    AND the gap banner fires; a silent jump is the dangerous case)");
 for (let i = 1; i < sheets.length; i++) {
@@ -244,32 +203,51 @@ for (let i = 1; i < sheets.length; i++) {
   if (!explained) flag(`${cur}: opening jumps by ${n(curOpening - prevClosing)} with no anchor and no banner`);
 }
 
-console.log("\nG. What the gap banner will actually say (U-4: cash-basis comparison)");
+console.log("\nE. What the gap banner will say (sheet basis only, since 18.09)");
 console.log("   sheet          observed  computed      gap  basis");
-const bannerGaps = [];
 for (const sheet of sheets) {
   const info = api.getBalanceGapForSheet(sheet);
   if (!info) continue;
-  bannerGaps.push(Math.abs(info.gap));
-  const sheetBasis = api.getDisplayedClosingBalance(api.getPrevSheet ? api.getPrevSheet(sheet) : null);
   console.log(`   ${sheet.padEnd(14)} ${f(info.observed)} ${f(info.computed)} ${f(info.gap)}  ${info.source}`);
-}
-if (bannerGaps.length) {
-  const mean = bannerGaps.reduce((a,b)=>a+b,0) / bannerGaps.length;
-  console.log(`   -> ${bannerGaps.length} banner(s), mean |gap| ${n(mean)}, max |gap| ${n(Math.max(...bannerGaps))}`);
-  // A large gap is NOT by itself a failure - July really is missing ~13,000 of
-  // expenses (its charge-month total covers 30% of what the bank paid out), and
-  // a banner that stayed quiet about that would be worse than one that shouts.
-  // What U-4 has to prove is narrower: on the month whose data we know is
-  // complete, the gap must be a real-discrepancy number rather than the
-  // structural salary-shift artefact the sheet basis produced.
-  const sep = api.getBalanceGapForSheet("ספטמבר 26");
-  if (sep) {
-    const sheetBasisGap = sep.observed - api.getDisplayedClosingBalance("אוגוסט 26");
-    console.log(`   ספטמבר 26 on the sheet basis would report ${n(sheetBasisGap)}; on the cash basis it reports ${n(sep.gap)}`);
-    if (Math.abs(sep.gap) >= Math.abs(sheetBasisGap))
-      flag(`U-4 did not improve ספטמבר: cash ${n(sep.gap)} vs sheet ${n(sheetBasisGap)}`);
+  // The banner's own "computed" side must now be exactly getDisplayedClosingBalance
+  // of the previous sheet - if it isn't, something is reading a different basis
+  // again without anyone deciding that on purpose.
+  const prev = api.getPrevSheet(sheet);
+  if (prev) {
+    const expected = api.getDisplayedClosingBalance(prev);
+    if (expected != null && Math.abs(expected - info.computed) > 0.5)
+      flag(`${sheet}: gap banner's "computed" (${n(info.computed)}) != getDisplayedClosingBalance(prev) (${n(expected)})`);
   }
+}
+
+console.log("\nF. One billing rule, not two: manual entry and import must route identically");
+// A regression guard for the 18.09 "חושבין מחדש": resolveImportTargetSheet used
+// to prefer a statement-stated billing date over getBillingSheetForExpense.
+// Simulate the same date/card through both entry points and require agreement.
+const sampleMethod = (api.getPaymentMethodByName && sheets.length)
+  ? (function () {
+      for (const s of sheets) for (const row of api.getEditableRows(s)) {
+        if (row.payment) return row.payment;
+      }
+      return null;
+    })()
+  : null;
+if (sampleMethod) {
+  const method = api.getPaymentMethodByName(sampleMethod);
+  const testDates = ["05/09/2026", "10/09/2026", "16/09/2026"]; // date_raw is DD/MM/YYYY, not ISO
+  for (const dateRaw of testDates) {
+    const isoDate = `${dateRaw.slice(6,10)}-${dateRaw.slice(3,5)}-${dateRaw.slice(0,2)}`;
+    const manual = api.getBillingSheetForExpense(isoDate, sampleMethod, method?.isImmediate ? "כן" : "", 0);
+    const imported = api.resolveImportTargetSheet(
+      { date_raw: dateRaw, billingDateRaw: "2099-01-15" }, // a bogus stated date - must be ignored
+      sampleMethod, Boolean(method?.isImmediate), 0, "FALLBACK_SHOULD_NOT_APPEAR"
+    );
+    if (manual !== imported)
+      flag(`${sampleMethod} ${dateRaw}: manual entry -> ${manual}, import -> ${imported} (should be identical)`);
+  }
+  console.log(`   checked "${sampleMethod}" (isImmediate=${Boolean(method?.isImmediate)}) on ${testDates.length} dates - a stated billingDateRaw was deliberately wrong and must be ignored`);
+} else {
+  console.log("   (no payment method found on any row - skipped)");
 }
 
 console.log(`\n${issues ? `${issues} consistency problem(s) flagged` : "no consistency problems flagged"}`);
