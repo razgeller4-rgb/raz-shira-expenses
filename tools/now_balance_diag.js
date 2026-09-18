@@ -73,7 +73,9 @@ console.log(`sheet=${sheet}  month=${target}  today=${today}\n`);
 
 const sum = api.getCashOutSummary(sheet);
 const opening = api.getDisplayedOpeningBalance(sheet);
-const loan = api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+// C-8 (18.09): bank refunds the loan interest the same day - .principal is
+// the real cash impact, matching the app's corrected sites.
+const loan = api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
 console.log("== what the app computes now ==");
 console.log(`  opening                 ${n(opening).padStart(10)}`);
 console.log(`+ income received to date ${n(api.getIncomeReceivedToDate(sheet)).padStart(10)}   <- dated in this month, any sheet, up to today`);

@@ -105,7 +105,9 @@ function chargedIn(monthKey){
   }
   return sum;
 }
-const debtOf = (sheet) => api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+// C-8 (18.09): bank refunds the loan interest the same day - .principal is
+// the real cash impact, matching the app's corrected sites.
+const debtOf = (sheet) => api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
 
 const derived = api.deriveMonthStartBalances(parsed);
 const bankOpen = {};

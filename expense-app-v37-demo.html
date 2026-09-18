@@ -5934,10 +5934,11 @@ function addLoanScheduleRow(){
   render();
 }
 function updateLoanScheduleRow(installment, field, value){
-  // C-2: total is now what every balance/cash-flow figure in the app actually
-  // reads (see getDisplayedClosingBalance etc.) - if principal is edited
-  // without keeping total in sync, those figures would silently drift from
-  // total = principal + interest without any input in this form to notice it.
+  // total is kept in sync as principal + interest for schedule-table display
+  // and reference; C-8 (18.09) confirmed the bank refunds the interest the
+  // same day, so every cash-flow figure now reads .principal instead (see
+  // getDisplayedClosingBalance etc.) - this sync only keeps .total itself
+  // internally consistent when principal is edited by hand.
   const data = getDebtData();
   data.loanSchedule = data.loanSchedule.map(row => {
     if(row.installment !== installment) return row;
@@ -6907,7 +6908,7 @@ function getDisplayedOpeningBalance(sheet, _depth=0){
     if(prev && (SHEET_OPTIONS || []).includes(prev)){
       const prevOpening = getDisplayedOpeningBalance(prev, _depth + 1);
       if(prevOpening != null){
-        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.total || 0) : 0;
+        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.principal || 0) : 0; // C-8: bank refunds the interest same day - cash impact is principal only
         return prevOpening + getIncomeTotal(prev) - getExpenseStats(prev).total - bank;
       }
     }
@@ -7031,7 +7032,7 @@ function getCashOutSummary(sheet){
   }
   const opening = getDisplayedOpeningBalance(sheet);
   const income = getIncomeReceivedToDate(sheet);
-  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: bank refunds the interest same day - cash impact is principal only
   // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
   // uncomputable number must read as "—", never as a confident zero.
   const nowBalance = opening == null ? null : opening + income - alreadyLeft - loan;
@@ -7050,14 +7051,16 @@ function getCashOutSummary(sheet){
   };
 }
 function getDisplayedClosingBalance(sheet){
-  // C-2: this is cash actually leaving the account, so it's .total (principal
-  // + interest), not .principal alone - the bank does not lend you the
-  // interest portion for free. getLoanPrincipalBase()/bankRemaining/
-  // bankProgress (the loan-payoff-progress figures elsewhere) correctly stay
-  // on .principal - paying interest doesn't reduce what you owe the bank.
+  // C-8 (18.09): the bank charges the full installment (principal + interest)
+  // and refunds the interest the same day (מקדמה/הטבת ריבית בהלוואה),
+  // verified against the real bank statement on 9/12 months to the agora.
+  // Net cash impact is .principal - the C-2 (13.09) change to .total
+  // double-counted interest the household never actually pays.
+  // getLoanPrincipalBase()/bankRemaining/bankProgress (payoff-progress
+  // figures elsewhere) were always correct on .principal.
   const opening = getDisplayedOpeningBalance(sheet);
   if(opening == null) return null;
-  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
   return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
 /* Cash that moved through the account during a sheet's calendar month, on the
@@ -7107,7 +7110,7 @@ function getCashBasisClosingBalance(sheet){
   if(opening == null) return null;
   const moved = getCashMovementForSheet(sheet);
   if(!moved) return null;
-  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: principal is the real cash impact
   return opening + moved.income - moved.spent - bankMonthlyPayment;
 }
 
@@ -7130,7 +7133,7 @@ function getDashboardWidgetCatalog(sheet){
   const openingBalance = getDisplayedOpeningBalance(sheet);
   const closingBalance = getDisplayedClosingBalance(sheet);
   const debtEnabled = isDebtTrackingEnabled();
-  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0; // C-2: cash out, not principal alone
+  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: bank refunds interest same day - principal is the real cash impact
   const monthlyBalance = income - stats.total - bankMonthly;
   const categorySums = getMonthlyCategorySums(sheet);
   const biggestExpense = rows.reduce((max,row)=>Number(row.amount || 0) > Number(max.amount || 0) ? row : max, {amount:0, merchant:""});
@@ -7189,10 +7192,11 @@ function getYearlyRowsData(year){
     const loanEntry = getLoanScheduleEntryForSheet(sheet);
     const stats = getExpenseStats(sheet);
     const income = getIncomeTotal(sheet);
-    // C-2: both the running balance and the displayed "loan" column must use
+    // C-8: both the running balance and the displayed "loan" column must use
     // the same field, or the yearly table's own numbers stop adding up on
-    // the same row.
-    const monthlyBalance = income - stats.total - Number(loanEntry?.total || 0);
+    // the same row. Principal, not total - the bank refunds the interest
+    // the same day.
+    const monthlyBalance = income - stats.total - Number(loanEntry?.principal || 0);
     runningBalance += monthlyBalance;
     return {
       sheet,
@@ -7204,7 +7208,7 @@ function getYearlyRowsData(year){
       cumulativeBalance: runningBalance,
       immediate: stats.immediate,
       transfers: stats.transfers,
-      loan: loanEntry?.total || null,
+      loan: loanEntry?.principal || null,
       father: getFatherRepaymentTotal(sheet)
     };
   });
@@ -7382,7 +7386,7 @@ function openDebtDetailsModal(){
   const modal = document.getElementById("debtDetailsModal");
   const body = document.getElementById("debtDetailsModalBody");
   const summary = getYearlySummaryData(selectedYear);
-  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.total || 0; // C-2: "charges this month" is cash out, not principal alone
+  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0; // C-8: bank refunds interest same day - principal is the real cash impact
   const currentFather = getFatherRepaymentTotal(selectedSheet) || 0;
   body.innerHTML = `
     <div class="modal-grid">
@@ -7974,7 +7978,7 @@ function renderDashboardHero(){
   const monthlyIncome = getIncomeTotal(selectedSheet);
   const monthlyExpenses = getExpenseStats(selectedSheet).total;
   const monthlyDebt = isDebtTrackingEnabled()
-    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-2
+    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-8: principal is the real cash impact
     : 0;
   const incomeMetric = document.getElementById("dashboardIncomeMetric");
   const expenseMetric = document.getElementById("dashboardExpenseMetric");
@@ -8581,14 +8585,14 @@ function renderChart(rows){
     /* D-10 wave 3, item C — close the last inherited gap from C-2/C-5.
        getDisplayedClosingBalance subtracts the month's bank loan payment, but
        this chart never did, so the card and the graph disagreed by exactly that
-       payment (~948 for the month reviewed under C-2). While the balance was an
-       unanchored projection that discrepancy was merely confusing; now that the
-       hero can say "anchored to the bank", the first gap the anchor surfaces
-       would have been OUR OWN known bug, and the user would reasonably blame
-       the bank. Same field as the card - .total, i.e. principal + interest,
-       because that is the cash that actually leaves the account. Applied at day
+       payment. While the balance was an unanchored projection that discrepancy
+       was merely confusing; now that the hero can say "anchored to the bank",
+       the first gap the anchor surfaces would have been OUR OWN known bug, and
+       the user would reasonably blame the bank. Same field as the card -
+       .principal (C-8, 18.09: the bank refunds the interest the same day, so
+       principal is the cash that actually leaves the account). Applied at day
        1 alongside income, which shares the same "not reliably dated" caveat. */
-    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) : 0;
+    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) : 0;
     /* actual: opening + (income spread isn't dated, so apply at day 1) - bank loan - cumulative expense up to today */
     let runExp=0;
     const actual = dayLabels.map((_,i)=>{
@@ -10257,7 +10261,7 @@ function renderDebts(){
     : loanSchedule.filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso);
   const bankProgress = getLoanPrincipalBase() ? Math.max(0, Math.min(100, Math.round((bankPaidPrincipal / getLoanPrincipalBase()) * 100))) : 0;
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
-  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.total); // C-2: "החזר בנק בחודש" means the full payment, not principal alone
+  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal); // C-8: bank refunds interest same day - principal is the real cash impact
   document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
   countUpIfChanged(document.getElementById("debtBankRemainingHero"), bankRemaining);
   countUpIfChanged(document.getElementById("debtFatherRemainingHero"), fatherRemaining);

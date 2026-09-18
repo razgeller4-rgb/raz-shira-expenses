@@ -155,7 +155,9 @@ for (const sheet of sheets) {
   if (opening == null) continue;
   const income = api.getIncomeTotal(sheet);
   const stats = api.getExpenseStats(sheet);
-  const debt = api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  // C-8 (18.09): bank refunds the loan interest the same day it charges it -
+  // .principal is the real cash impact, matching the app's corrected sites.
+  const debt = api.isDebtTrackingEnabled() ? Number(api.getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
   const closing = api.getDisplayedClosingBalance(sheet);
   const expect = opening + income - stats.total - debt;
   if (Math.abs(expect - closing) > 0.5)
