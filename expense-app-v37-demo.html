@@ -1968,6 +1968,9 @@ body { background:var(--bg); }
    AA's 4.5:1 for normal-size text) — reuse the darkened token already measured
    at 5.82:1 on this surface for .recon-gap.none. */
 .hero-cashout-row strong.is-negative { color:#A24A2C; }
+/* The charge date under "צפוי לרדת" - deliberately quiet, it qualifies the
+   number above it rather than competing with it. */
+.hero-cashout-row small { color:var(--muted); font-size:10.5px; margin-top:2px; }
 .hero-cashout-detail { margin-top:10px; font-size:12.5px; }
 .hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
 .hero-cashout-detail summary::-webkit-details-marker { display:none; }
@@ -2373,7 +2376,7 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
             <div class="hero-cashout-row">
               <div><span>עו״ש עכשיו</span><strong id="cashOutNow">—</strong></div>
-              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong></div>
+              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong><small id="cashOutDueWhen" hidden></small></div>
               <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
             </div>
             <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
@@ -6973,30 +6976,49 @@ function getCashOutSummary(sheet){
      already taken it a week earlier. Both halves of the headline were wrong at
      once: the balance too low, the upcoming charges too high. */
   const today = getTodayIso();
-  const lastDayOfMonth = new Date(year, month, 0).getDate();
+  /* When does a row's money actually leave the account? For cash or an
+     immediate charge, on the day it was spent. For a card, on that card's
+     billing day in its charge month - clamped to the last day of that month,
+     because a card billing on the 31st charges on the 30th in September. */
+  const chargeDateOf = (row, chargeMonth) => {
+    const method = row.payment ? getPaymentMethodByName(row.payment) : null;
+    const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
+    if(!isCardBill) return { isCardBill:false, iso: toIsoDate(row.date_raw) || `${chargeMonth}-01` };
+    const y = Number(chargeMonth.slice(0,4)), m = Number(chargeMonth.slice(5,7));
+    const lastDay = new Date(y, m, 0).getDate();
+    const day = Math.min(Number(getBillingDayForDate(method, toIsoDate(row.date_raw))) || 10, lastDay);
+    return { isCardBill:true, iso: `${chargeMonth}-${String(day).padStart(2,"0")}` };
+  };
+
   let alreadyLeft = 0, cardDue = 0;
+  /* pendingCards is every card purchase already made whose bill has not been
+     collected yet - INCLUDING next month's cycle, which is the whole point.
+     cardDue stays scoped to this month so the conservation invariant
+     (alreadyLeft + cardDue = the month's charge total) still holds, but it is
+     useless on screen: on the 18th, with all three cards billing on the 10th,
+     it is 0 while roughly a month of card spending is still owed. Showing 0 as
+     "צפוי לרדת באשראי" told Raz nothing and made "אחרי חיובי אשראי" a copy of
+     the balance above it. */
+  let pendingCards = 0, nextChargeIso = "";
   const byCard = {};
   for(const candidate of SHEET_OPTIONS){
     for(const row of getEditableRows(candidate)){
-      if(getChargeMonthForRow(row) !== targetMonth) continue;
+      const chargeMonth = getChargeMonthForRow(row);
+      if(!chargeMonth || chargeMonth < targetMonth) continue; // settled history
       const amount = Number(row.amount || 0);
-      const method = row.payment ? getPaymentMethodByName(row.payment) : null;
-      const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
-      if(!isCardBill){
-        // Cash or an immediate charge: the money left when it was spent.
-        alreadyLeft += amount;
-        continue;
+      const { isCardBill, iso } = chargeDateOf(row, chargeMonth);
+      const settled = iso <= today;
+
+      if(chargeMonth === targetMonth){
+        // Every row of this month lands in exactly one bucket, so that
+        // alreadyLeft + cardDue still equals the month's charge total.
+        if(isCardBill && !settled) cardDue += amount;
+        else alreadyLeft += amount;
       }
-      const rowIso = toIsoDate(row.date_raw);
-      // Clamped: a card billing on the 31st in a 30-day month charges on the
-      // last day, not on a date that does not exist.
-      const billingDay = Math.min(Number(getBillingDayForDate(method, rowIso)) || 10, lastDayOfMonth);
-      const chargeIso = `${targetMonth}-${String(billingDay).padStart(2,"0")}`;
-      if(chargeIso <= today){
-        alreadyLeft += amount;
-      } else {
-        cardDue += amount;
+      if(isCardBill && !settled){
+        pendingCards += amount;
         byCard[row.payment] = (byCard[row.payment] || 0) + amount;
+        if(!nextChargeIso || iso < nextChargeIso) nextChargeIso = iso;
       }
     }
   }
@@ -7009,10 +7031,14 @@ function getCashOutSummary(sheet){
   return {
     month: targetMonth,
     alreadyLeft,
-    cardDue,
+    cardDue,          // this month only - keeps alreadyLeft + cardDue = month total
+    pendingCards,     // every card purchase already made and not yet collected
+    nextChargeIso,    // when the earliest of those is taken
     byCard,
     nowBalance,
-    afterCardsBalance: nowBalance == null ? null : nowBalance - cardDue
+    // Subtracts pendingCards, not cardDue: the question "how much of this is
+    // really mine" is not answered by this calendar month's leftovers.
+    afterCardsBalance: nowBalance == null ? null : nowBalance - pendingCards
   };
 }
 function getDisplayedClosingBalance(sheet){
@@ -7884,8 +7910,6 @@ function renderBalanceAnchorState(){
   // claiming a hand-typed number came from the bank is the exact confusion this
   // whole change exists to remove.
   const fromBank = info.source === "anchored";
-  const whose = fromBank ? "בבנק" : "ביתרת הפתיחה שהוזנה";
-  const whoseShort = fromBank ? "מהבנק" : (OPENING_SOURCE_LABELS[info.source] || "שהוזן");
   // Below a shekel is rounding, not a discrepancy.
   if(Math.abs(info.gap) <= 1){
     banner.className = "balance-gap-banner is-visible is-match";
@@ -7895,17 +7919,31 @@ function renderBalanceAnchorState(){
   // Say the direction in words. A signed number alone is read wrong under
   // stress, and this banner exists precisely for the stressful case.
   const observedIsLess = info.gap < 0;
+  const prevSheet = getPrevSheet(selectedSheet);
+  const prevLabel = prevSheet ? formatSheetLabel(prevSheet) : "החודש הקודם";
+  const thisLabel = formatSheetLabel(selectedSheet);
+  /* Name the two months and what each number IS. The previous wording printed a
+     bare "החישוב: 755.30" - a cash-basis closing balance that appears on no
+     screen - next to the bank's figure, so the banner asserted a discrepancy
+     without giving the reader anything to check it against. */
   const words = observedIsLess
-    ? `${whose} יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
-    : `${whose} יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+    ? `חסרים ${fmt(Math.abs(info.gap))} ב${prevLabel}`
+    : `עודפים ${fmt(Math.abs(info.gap))} ב${prevLabel}`;
   const leads = findGapSuspects(selectedSheet, info.gap);
-  const advice = fromBank
-    ? `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.`
-    : `יתרת הפתיחה של החודש הזה הוקלדה ולא נמדדה. ייבוא דוח תנועות עו״ש יחליף אותה ביתרה אמיתית מהבנק.`;
+  /* Direction matters for where to look. More money than expected is usually
+     income that was never recorded; less is usually an expense that was not.
+     The old text only ever suggested a missing expense, which points the wrong
+     way half the time. */
+  const advice = !fromBank
+    ? `יתרת הפתיחה של ${thisLabel} הוקלדה ולא נמדדה. ייבוא דוח תנועות עו״ש יחליף אותה ביתרה אמיתית מהבנק.`
+    : observedIsLess
+      ? `כנראה חסרה הוצאה ב${prevLabel}, או שהכנסה נרשמה פעמיים, או ששיוך חודש החיוב לא מדויק.`
+      : `כנראה חסרה הכנסה ב${prevLabel} (למשל זיכוי או ריבית שהבנק נתן ולא נרשמה), או שהוצאה נרשמה פעמיים.`;
   banner.className = "balance-gap-banner is-visible";
   banner.innerHTML =
     `<span>⚠️</span><span><strong>${words}.</strong> ` +
-    `החישוב: ${fmt(info.computed)} · ${whoseShort}: ${fmt(info.observed)}. ` +
+    `${thisLabel} נפתח בפועל על ${fmt(info.observed)} ${fromBank ? "לפי הבנק" : "לפי מה שהוזן"}, ` +
+    `אבל לפי מה שרשום ב${prevLabel} הוא היה אמור להיפתח על ${fmt(info.computed)}. ` +
     advice +
     (leads.length
       ? `<span class="gap-lead">🔎 אולי קשור: ${leads.map(escapeHtmlAttr).join(" · ")}</span>`
@@ -8050,7 +8088,21 @@ function renderHeroCashout(){
   const afterEl = document.getElementById("cashOutAfter");
   const fmtOrDash = v => v == null ? "—" : fmtIls(v);
   if(nowEl){ nowEl.textContent = fmtOrDash(sum.nowBalance); nowEl.classList.toggle("is-negative", sum.nowBalance != null && sum.nowBalance < 0); }
-  if(dueEl) dueEl.textContent = fmtIls(sum.cardDue);
+  if(dueEl) dueEl.textContent = fmtIls(sum.pendingCards);
+  /* Name the date the money goes. "צפוי לרדת באשראי" with no date is unreadable
+     once the current month's bills have already been collected - it either
+     looks like 0 for no reason, or like a charge that is about to happen today. */
+  const dueWhenEl = document.getElementById("cashOutDueWhen");
+  if(dueWhenEl){
+    if(sum.pendingCards > 0 && sum.nextChargeIso){
+      const [, m, d] = sum.nextChargeIso.split("-");
+      dueWhenEl.textContent = `החל מ-${d}/${m}`;
+      dueWhenEl.hidden = false;
+    } else {
+      dueWhenEl.textContent = "אין חיוב פתוח";
+      dueWhenEl.hidden = false;
+    }
+  }
   if(afterEl){ afterEl.textContent = fmtOrDash(sum.afterCardsBalance); afterEl.classList.toggle("is-negative", sum.afterCardsBalance != null && sum.afterCardsBalance < 0); }
   const detail = document.getElementById("heroCashoutDetail");
   const byCardEl = document.getElementById("heroCashoutByCard");

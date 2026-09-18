@@ -163,8 +163,14 @@ for (const sheet of sheets) {
 
   const cash = api.getCashOutSummary(sheet);
   if (cash && cash.nowBalance != null && cash.afterCardsBalance != null) {
-    if (Math.abs((cash.nowBalance - cash.cardDue) - cash.afterCardsBalance) > 0.5)
-      flag(`${sheet}: afterCards != nowBalance - cardDue`);
+    // afterCards subtracts pendingCards (every card purchase not yet collected,
+    // including next month's cycle), NOT cardDue (this calendar month only).
+    // cardDue goes to 0 once the month's billing day passes, which made
+    // "אחרי חיובי אשראי" a duplicate of the balance above it.
+    if (Math.abs((cash.nowBalance - cash.pendingCards) - cash.afterCardsBalance) > 0.5)
+      flag(`${sheet}: afterCards != nowBalance - pendingCards`);
+    if (cash.pendingCards > 0 && !cash.nextChargeIso)
+      flag(`${sheet}: pendingCards ${n(cash.pendingCards)} but no nextChargeIso to show the user`);
   }
   const cat = api.getDashboardWidgetCatalog(sheet);
   const mb = cat.find(x => x.id === "monthly_balance");
