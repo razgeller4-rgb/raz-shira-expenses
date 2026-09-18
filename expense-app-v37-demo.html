@@ -1970,7 +1970,9 @@ body { background:var(--bg); }
 .hero-cashout-row strong.is-negative { color:#A24A2C; }
 /* The charge date under "צפוי לרדת" - deliberately quiet, it qualifies the
    number above it rather than competing with it. */
-.hero-cashout-row small { color:var(--muted); font-size:10.5px; margin-top:2px; }
+/* nowrap: at 105px per cell "החל מ-10/10" breaks after the hyphen and the date
+   lands on its own line, which reads as two separate facts. */
+.hero-cashout-row small { color:var(--muted); font-size:10.5px; margin-top:2px; white-space:nowrap; }
 .hero-cashout-detail { margin-top:10px; font-size:12.5px; }
 .hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
 .hero-cashout-detail summary::-webkit-details-marker { display:none; }
