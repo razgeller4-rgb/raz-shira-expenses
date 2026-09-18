@@ -365,6 +365,10 @@ input, select, textarea { font: inherit; }
 .groc-row.is-bought .groc-row-name{ color:var(--muted); text-decoration:line-through; }
 .groc-star{ color:var(--warn); font-size:13px; }
 .groc-row-qty{ font-size:var(--fs-sm); color:var(--text-2); white-space:nowrap; flex:0 0 auto; }
+.groc-row-price{ flex:0 0 auto; width:64px; min-height:36px; padding:4px 8px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;
+  text-align:center; font-variant-numeric:tabular-nums; }
+.groc-stats-grid{ margin-bottom:16px; }
 .groc-delete{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:0; background:transparent;
   color:var(--muted); cursor:pointer; font-size:14px; }
 .groc-delete:hover{ background:var(--bad-light); color:var(--bad); }
@@ -401,6 +405,25 @@ input, select, textarea { font: inherit; }
 .bank-verdict.ok{ background:var(--good-light); color:var(--good); border:1px solid var(--good); }
 .bank-verdict.warn{ background:var(--warn-light); color:var(--warn); border:1px solid var(--warn); }
 .bank-verdict-icon{ flex:0 0 auto; font-size:16px; line-height:1.4; }
+.bank-openings{ border:1px solid var(--border); border-radius:var(--r-2xl); padding:14px 16px; margin-bottom:16px; }
+.bank-openings-title{ font-size:15px; font-weight:var(--fw-bold); color:var(--wood-strong); margin-bottom:4px; }
+.bank-openings-sub{ font-size:var(--fs-xs); color:var(--text-2); line-height:1.6; margin-bottom:12px; }
+/* Four columns on any width: the delta only means something next to the two
+   numbers it is the difference of, so this must not wrap into separate lines. */
+.bank-open-head,.bank-open-row{ display:grid; grid-template-columns:1fr 1fr 1fr 0.8fr;
+  gap:8px; align-items:center; padding:9px 0; font-variant-numeric:tabular-nums; }
+.bank-open-head{ font-size:var(--fs-xs); color:var(--text-2); border-bottom:1px solid var(--border); padding-bottom:6px; }
+.bank-open-row{ border-bottom:1px solid var(--border); font-size:13px; }
+.bank-open-row:last-of-type{ border-bottom:0; }
+.bank-open-month{ font-weight:var(--fw-semi); color:var(--text); }
+.bank-open-bank{ font-weight:var(--fw-bold); color:var(--wood-strong); }
+.bank-open-cur{ color:var(--text-2); display:flex; flex-direction:column; line-height:1.3; }
+.bank-open-cur small{ font-size:10px; opacity:0.8; }
+.bank-open-same{ color:var(--text-2); font-size:var(--fs-xs); }
+.bank-open-new{ color:var(--text-2); font-size:var(--fs-xs); }
+/* #A24A2C, not var(--bad): measured 5.82:1 on this surface, where --bad fails
+   4.5:1 at 13px. A difference from the bank is information, not an alarm. */
+.bank-open-diff{ color:#A24A2C; font-weight:var(--fw-bold); }
 .bank-map-row{ display:flex; align-items:center; gap:10px; padding:11px 4px;
   border-bottom:1px solid var(--border); flex-wrap:wrap; }
 .bank-map-row:last-child{ border-bottom:0; }
@@ -2330,7 +2353,15 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
-          <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
+          <!-- The old wording, "הכנסות פחות הוצאות עד היום", described a formula
+               this number does not compute, and the audit of 18.09.2026 measured
+               the consequence: the headline and the two metrics printed directly
+               beneath it differed by up to 17,488 with no way for a reader to
+               reconcile them. What renderDashboardHero actually shows here is
+               getCashOutSummary().nowBalance - opening balance plus income that
+               has really arrived, minus money that has really left, with card
+               bills not yet charged deliberately still in the account. -->
+          <div class="hero-balance-label">כמה יש בעו״ש היום · לפני חיובי אשראי שטרם ירדו</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <div class="hero-anchor-row" id="heroAnchorRow">
             <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
@@ -2351,9 +2382,13 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             </details>
           </div>
           <div class="hero-month-metrics" aria-label="סיכום חודשי">
-            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
-            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
-            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לתשלום</small></div>
+            <!-- "לכל החודש", not "מתוכנן": these three are full-month figures on
+                 the sheet's own basis, while the headline above is a today
+                 figure on a cash basis. Saying which period each covers is what
+                 stops a reader trying to subtract one from the other. -->
+            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>לכל החודש</small></div>
+            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>לכל החודש</small></div>
+            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לכל החודש</small></div>
           </div>
           <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
           <span class="visually-hidden" id="heroSparkAlt"></span>
@@ -2769,6 +2804,8 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
         <div class="panel-hero-title">🛒 קניות</div>
         <div class="panel-hero-sub">הרשימה הקבועה של הבית — מסמנים מה חסר עכשיו</div>
       </div>
+
+      <div class="shared-mini-grid groc-stats-grid" id="groceryStats" style="display:none"></div>
 
       <div class="section open">
         <div class="header">
@@ -5352,6 +5389,9 @@ function normalizeGroceryItem(item){
     quantity: item && item.quantity != null && item.quantity !== "" ? Number(item.quantity) : null,
     unit: String(item && item.unit || "").trim(),
     important: Boolean(item && item.important),
+    // Last known price - what it actually cost last time, not a live catalog
+    // price the app has no way to fetch. Optional; missing means unknown, not free.
+    price: item && item.price != null && item.price !== "" ? Number(item.price) : null,
     status,
     note: String(item && item.note || "").trim(),
     addedBy: String(item && item.addedBy || currentUser),
@@ -5514,6 +5554,53 @@ const GROCERY_CATEGORY_ICONS = {
 function getGroceryCategoryIcon(category){
   return GROCERY_CATEGORY_ICONS[category] || "🛒";
 }
+/* Per-PRODUCT icon, curated for the real household list (2026-09-16 import) -
+   Raz asked explicitly for "an icon for every item", not just per category.
+   Free text has no fixed vocabulary, so this is a best-effort exact-match
+   dictionary; getGroceryItemIcon() below falls back to the category icon
+   (never a blank) for any name not in it, so a new item never renders empty. */
+const GROCERY_ITEM_ICONS = {
+  "כמון":"🌿", "כורכום":"🌿", "אורגנו":"🌿", "פלפל שחור גרוס":"🌶️", "קינמון":"🟤",
+  "אבקת שום":"🧄", "פלפל שחור טחון":"🌶️", "מלח":"🧂", "מלח דק":"🧂",
+  "פפריקה מתוקה":"🌶️", "קייג׳ון":"🌶️", "בהרט":"🌿",
+  "שומשום":"🌰", "ריבועי פיצה":"🍕", "פיוז טי":"🧊", "סוכר":"🍬",
+  "אקטימל תות":"🍓", "גבינת עזים גליל":"🧀", "תפוחי אדמה":"🥔", "בוראטה":"🧀",
+  "קקאו":"🍫", "ממרח קינדר":"🍫", "טורטיות":"🌯", "שערות קדאיף":"🍢",
+  "איולי שום לימון":"🧄", "רוטב להמבורגר":"🍔", "פסטו":"🌿", "תיונים":"🍹",
+  "איולי פסטו":"🌿", "ביסקוויטים":"🍪", "שוקוצ׳יפס":"🍫", "חזה עוף לשניצל":"🍗",
+  "סמורס":"🍫", "מלוואח":"🫓", "גמבה":"🫑", "פירורי לחם":"🍞",
+  "רוטב אלף האיים":"🥫", "עוגיות לבצק עוגיות":"🍪", "אבקת סוכר":"🍬",
+  "תמצית וניל":"🍦", "שום":"🧄", "רסק עגבניות":"🍅", "טחינה":"🌰",
+  "שמן קנולה":"🫙", "קרקרים":"🍘", "פנקו":"🍞", "לורפק":"🧈",
+  "עגבניות מרוסקות לשקשוקה":"🍅", "בורקסים קטנים קפוא":"🥟",
+  "גבינת עזים במרקם שמנת":"🧀", "קמח":"🌾", "גבינת שמנת - סימפוניה בייגל":"🧀",
+  "גבינה לבנה":"🧀", "קוטג׳ קטן (לקטנה שלי ❤️)":"🧀", "שמנת חמוצה":"🥛",
+  "בלסמי מצומצם":"🫙", "שמן זית":"🫒", "עגבניות":"🍅", "אורז לבן":"🍚",
+  "חטיפים מלוחים":"🥨", "גבינת שמנת רגילה":"🧀", "גאודה עזים פרוסות":"🧀",
+  "פחיות טונה":"🐟", "דפי אורז":"🍚", "אוראו רגיל":"🍪", "גרנולה":"🥣",
+  "לואקר אדום":"🍫", "מיונז":"🥫", "אפונה":"🟢", "שניצל תירס":"🌽",
+  "בשר טחון":"🥩", "פסטה":"🍝", "פטריות":"🍄", "עגבניות שרי":"🍅",
+  "בצל":"🧅", "לחם":"🍞", "באגט":"🥖", "פיתות":"🫓", "לחמניות":"🍞",
+  "שוקולדים":"🍫", "בייגלים לטוסט":"🥯", "גזר":"🥕", "קינדר אצבעות":"🍫",
+  "שמנת מתוקה":"🥛", "נוטלה":"🍫", "מילקי":"🍫", "חטיף שוגי":"🍫",
+  "יוגורטים של שירה":"🥛", "קורנפלקס":"🥣", "חלב ללא לקטוז":"🥛",
+  "שניצלונים קפואים":"🍗", "מגולגלות":"🌯", "פטה קוביות":"🧀", "קשים":"🥤",
+  "ביצים":"🥚", "מיני כדורי מוצרלה":"🧀", "פרגיות":"🍗", "פילה בקר":"🥩",
+  "חמאה":"🧈", "קפה":"☕", "נקניק":"🌭", "מלפפון":"🥒", "גלידה":"🍨",
+  "ספוג הפלא":"🧽", "נוזלי ניקוי":"🧴", "99 סנו - חומץ לימון כתום":"🍋",
+  "שפריצר אקונומיקה":"🧴", "שפריצר מסיר אבנית":"🧴", "מרכך":"🧴",
+  "נייר טואלט":"🧻", "דאודורנט":"🧴", "מרכך כביסה":"🧴", "משחת שיניים":"🪥",
+  "כפפות":"🧤", "שמפו":"🧴", "מי פה":"🧴", "ג׳ל כביסה":"🧴",
+  "סבון גוף תינוקות":"🧼", "סבון כלים":"🧴", "שקיות זבל":"🗑️",
+  "תחליב רחצה":"🧴", "סבון ידיים קטן":"🧼", "נייר מגבת":"🧻", "מגבונים":"🧻",
+  "טישו רך!":"🤧", "כוסות חדפ":"🥤", "טישו רגיל":"🤧", "בושם":"💐",
+  "אלרגיקס":"💊", "טיפות אוזניים":"💊", "טיפות עיניים":"💊",
+  "משפריץ לאף":"💊", "פלסטרים":"🩹", "משחה לכוויות":"🩹",
+  "נורופן":"💊", "דקסמול קולד":"💊"
+};
+function getGroceryItemIcon(item){
+  return GROCERY_ITEM_ICONS[item.name] || getGroceryCategoryIcon(item.category);
+}
 function getGroceryCategoryOrder(items){
   const seen = [];
   items.forEach(item => {
@@ -5544,6 +5631,11 @@ function renderGroceryTab(){
   const catalogCountEl = document.getElementById("groceryCatalogCount");
   if(catalogCountEl) catalogCountEl.textContent = `הרשימה הקבועה (${catalog.length})`;
 
+  const renderPriceInput = (item) => `
+    <input type="number" step="0.1" min="0" class="groc-row-price" placeholder="מחיר"
+      value="${item.price != null ? escapeHtmlAttr(String(item.price)) : ""}"
+      aria-label="מחיר אחרון של ${escapeHtmlAttr(item.name)}"
+      onchange="updateGroceryItemPrice('${item.id}', this.value)">`;
   const renderShoppingRow = (item) => `
     <div class="groc-row ${item.status === "bought" ? "is-bought" : ""}" data-id="${escapeHtmlAttr(item.id)}">
       <button type="button" class="groc-check" aria-label="${item.status === "bought" ? "החזר לרשימה" : "סמן כנקנה"}"
@@ -5551,10 +5643,11 @@ function renderGroceryTab(){
         ${item.status === "bought" ? "✓" : ""}
       </button>
       <div class="groc-row-main">
-        <span class="groc-row-icon" aria-hidden="true">${getGroceryCategoryIcon(item.category)}</span>
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryItemIcon(item)}</span>
         <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
+      ${renderPriceInput(item)}
       <button type="button" class="groc-delete" aria-label="הסרה מהקנייה הנוכחית" title="הסרה מהקנייה הנוכחית, נשאר בקטלוג"
         onclick="updateGroceryItemStatus('${item.id}','catalog')">✕</button>
     </div>`;
@@ -5568,10 +5661,11 @@ function renderGroceryTab(){
       <button type="button" class="groc-add-toggle" aria-label="הוספה לקנייה עכשיו" title="הוספה לקנייה עכשיו"
         onclick="updateGroceryItemStatus('${item.id}','needed')">+</button>
       <div class="groc-row-main">
-        <span class="groc-row-icon" aria-hidden="true">${getGroceryCategoryIcon(item.category)}</span>
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryItemIcon(item)}</span>
         <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
+      ${renderPriceInput(item)}
       <button type="button" class="groc-delete" aria-label="מחיקה לצמיתות מהקטלוג" title="מחיקה לצמיתות מהקטלוג" onclick="deleteGroceryItem('${item.id}')">✕</button>
     </div>`;
   catalogRoot.innerHTML = catalog.length
@@ -5581,6 +5675,55 @@ function renderGroceryTab(){
           ${catalog.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderCatalogRow).join("")}
         </div>`).join("")
     : `<div class="groc-empty">הרשימה הקבועה ריקה. ייבאו קובץ או טקסט למעלה.</div>`;
+
+  renderGroceryStats(items, needed, bought, catalog);
+}
+/* Statistics block requested alongside prices/icons - grounded in what the
+   data model can actually answer (current catalog + current shopping-now
+   list), not invented shopping-history numbers no data source backs. */
+function renderGroceryStats(items, needed, bought, catalog){
+  const root = document.getElementById("groceryStats");
+  if(!root) return;
+  if(!items.length){ root.style.display = "none"; return; }
+  root.style.display = "";
+  const priced = items.filter(i => i.price != null);
+  const neededTotal = needed.reduce((sum,i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+  const neededPriced = needed.filter(i => i.price != null).length;
+  const byCat = {};
+  catalog.forEach(i => { const c = i.category || "ללא קטגוריה"; byCat[c] = (byCat[c]||0) + 1; });
+  const topCat = Object.entries(byCat).sort((a,b) => b[1]-a[1])[0];
+  const staples = items.filter(i => i.important).length;
+  root.innerHTML = `
+    <div class="shared-stat-card">
+      <div class="small">בקטלוג הקבוע</div>
+      <div class="value">${catalog.length}</div>
+      <div class="micro">${staples} ⭐ קבועים/תדירות גבוהה</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">לקנייה עכשיו</div>
+      <div class="value">${needed.length + bought.length}</div>
+      <div class="micro">${bought.length} כבר בעגלה</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">עלות משוערת לקנייה</div>
+      <div class="value">${neededTotal > 0 ? fmt(neededTotal) : "—"}</div>
+      <div class="micro">${neededPriced}/${needed.length || 0} עם מחיר ידוע</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">כיסוי מחירים בקטלוג</div>
+      <div class="value">${priced.length}/${items.length}</div>
+      <div class="micro">${topCat ? `הכי גדולה: ${topCat[0]} (${topCat[1]})` : "—"}</div>
+    </div>`;
+}
+function updateGroceryItemPrice(id, value){
+  const list = getGroceryItems();
+  const item = list.find(i => i.id === id);
+  if(!item) return;
+  const num = value === "" ? null : Number(value);
+  item.price = num != null && Number.isFinite(num) && num >= 0 ? num : null;
+  item.updatedAtIso = getIsoNow();
+  saveGroceryItems(list);
+  render();
 }
 
 function getManualSettings(sheet){
@@ -6193,19 +6336,37 @@ window.addEventListener("load", () => { setTimeout(ingestAnchorFromUrl, 400); })
 /* The gap is a STATE, not an event - so it is never a toast (which disappears
    after 4.2s). It is computed against what the app would have said on its own,
    i.e. explicitly ignoring the anchor that is being checked. */
+/* Any opening balance that did NOT come from the carry-forward chain is an
+   independent claim about the account, and can therefore be checked against
+   what the chain computed. Until 18.09.2026 this only ran for anchored months,
+   which left the most common case silent: the audit found 9 of 13 month
+   transitions where a typed opening disagreed with the previous month's closing
+   - the largest by 8,048 - with nothing on screen to say so. A number the user
+   typed is exactly as capable of being wrong as one they read off the bank. */
 function getBalanceGapForSheet(sheet){
-  const anchor = getBalanceAnchorForSheet(sheet);
-  if(!anchor) return null;
+  const source = getOpeningBalanceSource(sheet);
+  // "carried" IS the chain's own output, so checking it against the chain would
+  // report zero by construction - there is no independent claim to test.
+  if(source === "carried" || source === "none") return null;
+  const observed = getDisplayedOpeningBalance(sheet);
+  if(observed == null) return null;
   const prev = getPrevSheet(sheet);
   let computed = null;
   if(prev && (SHEET_OPTIONS || []).includes(prev)){
-    computed = getDisplayedClosingBalance(prev);
-  } else if(currentUser === "raz"){
+    // Cash basis, not getDisplayedClosingBalance: this line compares against a
+    // measured bank balance, and only the cash basis is denominated in the same
+    // thing the bank measures. See getCashBasisClosingBalance for the numbers.
+    computed = getCashBasisClosingBalance(prev);
+  } else if(source === "anchored" && currentUser === "raz"){
+    // No previous month to chain from: fall back to the seeded summary. Only
+    // valid for an anchor, because for a summary-sourced opening this would be
+    // comparing the number against itself.
     const summary = getSheetSummaryByName(sheet);
     if(summary.opening != null) computed = Number(summary.opening);
   }
   if(computed == null) return null;
-  return { anchor, computed, gap: anchor.amount - computed };
+  const anchor = getBalanceAnchorForSheet(sheet);
+  return { anchor, source, observed, computed, gap: observed - computed };
 }
 
 /* A gap without a lead is just an accusation. The previous month is where the
@@ -6631,6 +6792,22 @@ function getSheetAnchorDateIso(sheet){
   if(!month || !year) return "";
   return `${year}-${String(month).padStart(2,"0")}-01`;
 }
+/* Inverse of getSheetAnchorDateIso: which sheet does a YYYY-MM-01 anchor bind
+   to? Returns "" when no sheet exists for that month - an anchor for a month
+   the user never created is valid to store but has nothing to display against. */
+function findSheetForAnchorDate(dateIso){
+  syncSheetOptions();
+  return (SHEET_OPTIONS || []).find(sheet => getSheetAnchorDateIso(sheet) === dateIso) || "";
+}
+/* Plain-language provenance. "manual" and "summary" look equally authoritative
+   in a number; they are not, and the label is the only thing that says so. */
+const OPENING_SOURCE_LABELS = {
+  anchored: "מהבנק",
+  manual: "הוקלד ידנית",
+  summary: "מנתוני ייבוא",
+  carried: "מחושב מהחודש הקודם",
+  none: "לא ידוע"
+};
 /* Latest anchor wins for a given date - corrections are appended, not edited. */
 function getBalanceAnchorForSheet(sheet){
   const dateIso = getSheetAnchorDateIso(sheet);
@@ -6811,6 +6988,57 @@ function getDisplayedClosingBalance(sheet){
   const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
   return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
+/* Cash that moved through the account during a sheet's calendar month, on the
+   bank's own terms rather than the sheet's.
+
+   Income is bucketed by the row's DATE, not by the sheet it is filed under: the
+   household convention files a salary under the month it was earned, but the
+   bank pays it on the 9th-10th of the month after, so a sheet total answers a
+   different question than "what reached the account in September". An undated
+   row falls back to its sheet - a missing date is missing data, not evidence
+   that the money moved elsewhere.
+
+   Expenses are bucketed by CHARGE month (getChargeMonthForRow), because a card
+   purchase leaves the account on the billing date, not the purchase date.
+
+   Measured against the real bank export on the months where the app's data
+   actually covers the bank's outflow (90-110%), this basis predicts the next
+   month's opening balance with a mean error of 1,702 against 4,657 for the
+   sheet basis. It is NOT used for any balance the app displays - only as the
+   comparison in the gap banner, where comparing a bank measurement against a
+   sheet-basis projection produced a structural 12,654 false alarm every month. */
+function getCashMovementForSheet(sheet){
+  const {month, year} = getSheetMonthYear(sheet);
+  if(!month || !year) return null;
+  const target = `${year}-${String(month).padStart(2,"0")}`;
+  syncSheetOptions();
+  let income = 0, spent = 0;
+  for(const candidate of SHEET_OPTIONS){
+    const candidateKey = getSheetAnchorDateIso(candidate).slice(0,7);
+    for(const row of getIncomeRows(candidate)){
+      const iso = row.date_raw ? toIsoDate(row.date_raw) : "";
+      const bucket = iso ? iso.slice(0,7) : candidateKey;
+      if(bucket === target) income += Number(row.amount || 0);
+    }
+    for(const row of getEditableRows(candidate)){
+      if(getChargeMonthForRow(row) === target) spent += Number(row.amount || 0);
+    }
+  }
+  return { month: target, income, spent };
+}
+
+/* What the account should hold when this month ends, if every row is right.
+   Same shape as getDisplayedClosingBalance but on the cash basis above, and
+   deliberately NOT wired into any screen - see getBalanceGapForSheet. */
+function getCashBasisClosingBalance(sheet){
+  const opening = getDisplayedOpeningBalance(sheet);
+  if(opening == null) return null;
+  const moved = getCashMovementForSheet(sheet);
+  if(!moved) return null;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  return opening + moved.income - moved.spent - bankMonthlyPayment;
+}
+
 function getAvailableYears(){
   syncSheetOptions();
   return [...new Set(SHEET_OPTIONS.map(sheet => getSheetMonthYear(sheet).year))].sort((a,b)=>a-b);
@@ -7614,24 +7842,33 @@ function renderBalanceAnchorState(){
     banner.textContent = "";
     return;
   }
+  // The banner now covers typed openings too, so it may no longer say "בבנק" -
+  // claiming a hand-typed number came from the bank is the exact confusion this
+  // whole change exists to remove.
+  const fromBank = info.source === "anchored";
+  const whose = fromBank ? "בבנק" : "ביתרת הפתיחה שהוזנה";
+  const whoseShort = fromBank ? "מהבנק" : (OPENING_SOURCE_LABELS[info.source] || "שהוזן");
   // Below a shekel is rounding, not a discrepancy.
   if(Math.abs(info.gap) <= 1){
     banner.className = "balance-gap-banner is-visible is-match";
-    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת למה שראית בבנק (${fmt(info.anchor.amount)}).</span>`;
+    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת ל${fromBank ? "מה שראית בבנק" : "יתרת הפתיחה שהוזנה"} (${fmt(info.observed)}).</span>`;
     return;
   }
   // Say the direction in words. A signed number alone is read wrong under
   // stress, and this banner exists precisely for the stressful case.
-  const bankHasLess = info.gap < 0;
-  const words = bankHasLess
-    ? `בבנק יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
-    : `בבנק יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+  const observedIsLess = info.gap < 0;
+  const words = observedIsLess
+    ? `${whose} יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
+    : `${whose} יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
   const leads = findGapSuspects(selectedSheet, info.gap);
+  const advice = fromBank
+    ? `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.`
+    : `יתרת הפתיחה של החודש הזה הוקלדה ולא נמדדה. ייבוא דוח תנועות עו״ש יחליף אותה ביתרה אמיתית מהבנק.`;
   banner.className = "balance-gap-banner is-visible";
   banner.innerHTML =
     `<span>⚠️</span><span><strong>${words}.</strong> ` +
-    `החישוב: ${fmt(info.computed)} · מהבנק: ${fmt(info.anchor.amount)}. ` +
-    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.` +
+    `החישוב: ${fmt(info.computed)} · ${whoseShort}: ${fmt(info.observed)}. ` +
+    advice +
     (leads.length
       ? `<span class="gap-lead">🔎 אולי קשור: ${leads.map(escapeHtmlAttr).join(" · ")}</span>`
       : "") +
@@ -10271,7 +10508,8 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   root.addEventListener("click", e => {
     const applyBtn = e.target.closest("[data-bank-apply]");
     if(applyBtn){ applyDiscoveredBillingHistory(applyBtn.dataset.bankApply); return; }
-    if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
+    if(e.target.closest("[data-bank-month-anchors]")) saveMonthStartAnchorsFromBankStatement();
+    else if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
   });
   root.addEventListener("change", e => {
     const select = e.target.closest("[data-bank-map-card]");
@@ -11068,6 +11306,49 @@ function verifyBankStatementBalance(parsed){
   };
 }
 
+/* Raz's decision, 18.09.2026: months before this line stay as they were
+   imported. The bank export reaches back to 09/2025, but 09-11/2025 have no
+   income rows at all in the app and their card charges were never entered, so
+   anchoring them would pin a correct opening onto a month whose contents are
+   known-incomplete - a confident-looking number built on a hole. From this date
+   forward the bank is the authority on the opening balance. */
+const BANK_ANCHOR_BACKFILL_FROM_ISO = "2026-01-01";
+
+/* The reason the manual openings drifted from the bank in every single month
+   (audit 18.09.2026: up to 8,748 off) is that nothing ever wrote a measured
+   opening - the "save as anchor" button offers only the file's LAST balance, at
+   its own date, and an anchor binds to a month only when its date is the 1st
+   (getSheetAnchorDateIso). So that anchor could never become an opening.
+
+   The export already carries a running-balance column, which means the balance
+   at the start of every month it covers is a fact sitting in the file, not
+   something we have to infer. This derives one per month: the running balance
+   of the last transaction STRICTLY BEFORE the 1st, which is by definition what
+   the account held when the month opened. A month with no prior balance-bearing
+   row (the first month in the file) is skipped rather than guessed. */
+function deriveMonthStartBalances(parsed, fromIso = BANK_ANCHOR_BACKFILL_FROM_ISO){
+  const withBalance = (parsed && parsed.transactions || []).filter(t => t.balance != null);
+  if(withBalance.length < 2) return [];
+  const boundaries = new Set();
+  for(const t of withBalance){
+    const iso = String(t.dateIso || "");
+    if(iso.length < 7) continue;
+    boundaries.add(`${iso.slice(0,7)}-01`);
+  }
+  const out = [];
+  for(const dateIso of [...boundaries].sort()){
+    if(fromIso && dateIso < fromIso) continue;
+    let prior = null;
+    for(const t of withBalance){
+      if(t.dateIso >= dateIso) break;
+      prior = t;
+    }
+    if(!prior) continue; // nothing before this month in the file - not a guess we may make
+    out.push({ dateIso, amount: prior.balance, basedOn: prior.dateRaw });
+  }
+  return out;
+}
+
 /* Bank transaction labels that plausibly represent a credit-card charge, with
    how many times each appears. Offered to the user for mapping onto their
    cards, because the app's card name is never the bank's label ("חבר" bills
@@ -11352,6 +11633,46 @@ function renderBankSync(){
       </button>
     </div>` : "";
 
+  /* Shows every month-start balance the file can prove, next to what the app
+     currently opens that month on, BEFORE writing anything. The delta column is
+     the point: it is the only place the user can see that a number they typed
+     months ago disagrees with the bank, and by how much. */
+  const derivedOpenings = verdict.consistent ? deriveMonthStartBalances(parsed) : [];
+  const openingRows = derivedOpenings.map(entry => {
+    const sheet = findSheetForAnchorDate(entry.dateIso);
+    const current = sheet ? getDisplayedOpeningBalance(sheet) : null;
+    const src = sheet ? getOpeningBalanceSource(sheet) : "none";
+    const delta = current == null ? null : entry.amount - current;
+    const deltaText = delta == null
+      ? `<span class="bank-open-new">חדש</span>`
+      : (Math.abs(delta) < 1
+          ? `<span class="bank-open-same">זהה</span>`
+          : `<span class="bank-open-diff">${delta > 0 ? "+" : ""}${money(delta)}</span>`);
+    return `<div class="bank-open-row">
+      <span class="bank-open-month">${escapeHtmlAttr(sheet || entry.dateIso.slice(0,7))}</span>
+      <span class="bank-open-bank">${money(entry.amount)}</span>
+      <span class="bank-open-cur">${current == null ? "—" : money(current)}<small>${escapeHtmlAttr(OPENING_SOURCE_LABELS[src] || src)}</small></span>
+      ${deltaText}
+    </div>`;
+  }).join("");
+  const openingsBlock = derivedOpenings.length ? `
+    <div class="bank-openings">
+      <div class="bank-openings-title">יתרות פתיחה שאפשר לקבוע מהקובץ</div>
+      <div class="bank-openings-sub">
+        היתרה הרצה בקובץ קובעת כמה היה בעו״ש ב-1 בכל חודש. שמירה תחליף את
+        יתרות הפתיחה שהוקלדו ידנית בנתון מדוד מהבנק.
+      </div>
+      <div class="bank-open-head">
+        <span>חודש</span><span>לפי הבנק</span><span>באפליקציה</span><span>הפרש</span>
+      </div>
+      ${openingRows}
+      <div class="bank-actions">
+        <button type="button" class="success-btn" data-bank-month-anchors="1">
+          שמירת ${derivedOpenings.length} יתרות פתיחה מהבנק
+        </button>
+      </div>
+    </div>` : "";
+
   const map = getBankLabelMapping();
   const cards = getPaymentMethods().filter(m => !m.isImmediate && !m.archivedAtIso);
   const labelOptions = (selected) => [`<option value="">— ללא —</option>`]
@@ -11452,6 +11773,7 @@ function renderBankSync(){
 
   root.innerHTML = `
     ${verdictBlock}
+    ${openingsBlock}
     ${anchorBlock}
     <div class="section open" style="margin-top:16px">
       <!-- .header renders a chevron via CSS, so it must actually collapse -
@@ -11479,6 +11801,52 @@ function saveAnchorFromBankStatement(){
   }, anchors.length));
   saveBalanceAnchors(anchors.filter(Boolean));
   showToast("העוגן נשמר מהקובץ.", "success");
+  render();
+}
+
+/* Writes one opening-balance anchor per month covered by the statement. This is
+   what actually replaces the typed openings: anchors outrank manual/summary in
+   getDisplayedOpeningBalance, so after this runs every affected month opens on
+   a measured bank balance instead of a number somebody remembered.
+
+   Refuses to run on an inconsistent file. The whole value here is that the
+   running-balance column is trustworthy; if verifyBankStatementBalance found
+   mismatches, that assumption is already broken and writing 9 anchors off it
+   would spread the damage rather than contain it. */
+function saveMonthStartAnchorsFromBankStatement(){
+  if(!bankSyncState) return;
+  const { parsed, verdict } = bankSyncState;
+  if(!verdict.consistent){
+    showToast("הקובץ לא עקבי — לא כותבים עוגנים ממנו.", "error");
+    return;
+  }
+  const derived = deriveMonthStartBalances(parsed);
+  if(!derived.length){
+    showToast("אין חודשים שאפשר לגזור להם יתרת פתיחה מהקובץ.", "error");
+    return;
+  }
+  const anchors = getBalanceAnchors();
+  // Re-importing the same file must not pile up identical anchors. An anchor
+  // whose date AND amount already exist adds no information.
+  const existing = new Set(anchors.map(a => `${a.dateIso}|${Number(a.amount).toFixed(2)}`));
+  let added = 0;
+  derived.forEach((entry, i) => {
+    if(existing.has(`${entry.dateIso}|${Number(entry.amount).toFixed(2)}`)) return;
+    const normalized = normalizeBalanceAnchor({
+      dateIso: entry.dateIso,
+      amount: entry.amount,
+      enteredBy: currentUser,
+      source: "statement-import",
+      note: `יתרת פתיחה מדוח הבנק (לפי התנועה מ-${entry.basedOn})`
+    }, anchors.length + i);
+    if(normalized){ anchors.push(normalized); added++; }
+  });
+  if(!added){
+    showToast("כל יתרות הפתיחה מהקובץ כבר שמורות.", "success");
+    return;
+  }
+  saveBalanceAnchors(anchors);
+  showToast(`נשמרו ${added} יתרות פתיחה מהבנק.`, "success", {duration:6000});
   render();
 }
 
