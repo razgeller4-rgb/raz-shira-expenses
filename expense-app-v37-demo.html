@@ -6074,7 +6074,7 @@ function describeImportImpact(backup){
 function importBackupFile(file){
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const backup = JSON.parse(String(reader.result || "{}"));
       if(!backup || backup.app !== "raz-expenses-local" || !backup.data){
@@ -6105,7 +6105,25 @@ function importBackupFile(file){
       currentUser = backup.currentUser || localStorage.getItem(ACTIVE_USER_STORAGE_KEY) || currentUser;
       selectedSheet = backup.selectedSheet || selectedSheet;
       selectedYear = backup.selectedYear || selectedYear;
-      setBackupStatus(`הגיבוי נטען בהצלחה. לפני הייבוא הורד אוטומטית גיבוי בטיחות: ${beforeImportFilename}`);
+      // Found 18.09 while chasing a demo/phone data mismatch: unlike the two
+      // recovery-point restores (restoreCloudRecoveryPoint, restoreLocalRecoveryPoint),
+      // this path never called pushAllRowsFromLocal - the imported file replaced
+      // this device's localStorage but never reached Supabase. Any other device
+      // (or a fresh headless check) kept reading the OLD cloud row, with no
+      // visible error, because the self-row-freshness rule in
+      // assembleFromCloudRows silently prefers the (equally silent) unsynced
+      // local copy on THIS device. Same fix as the sibling restores.
+      let cloudPushFailed = null;
+      if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+        try {
+          await pushAllRowsFromLocal({message:"הגיבוי נטען ונשמר גם בענן.", reason:"ייבוא קובץ גיבוי"});
+        } catch(error){
+          cloudPushFailed = error;
+        }
+      }
+      setBackupStatus(cloudPushFailed
+        ? `הגיבוי נטען מקומית, אבל השמירה לענן נכשלה: ${cloudPushFailed.message}. נסה שוב או בדוק חיבור - עד אז מכשירים אחרים לא יראו את הנתונים האלה.`
+        : `הגיבוי נטען בהצלחה ונשמר גם בענן. לפני הייבוא הורד אוטומטית גיבוי בטיחות: ${beforeImportFilename}`);
       refreshRecoveryPoints();
       render();
     } catch(e){
