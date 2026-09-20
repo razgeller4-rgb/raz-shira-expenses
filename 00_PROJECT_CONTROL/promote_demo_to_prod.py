@@ -64,6 +64,25 @@ ALLOWED_REMOVALS = {
     "clearCloudSyncBtn":
         "disconnect-sync button; Raz judged it irrelevant for a two-person "
         "household app, and logging out already stops syncing.",
+
+    # 2026-09-18 "חושבין מחדש" (DECISION_REGISTER.md): Raz asked to remove the
+    # entire derived-charge-month model after real Mizrahi transactions landed
+    # in the wrong month because the statement's stated billing date (D-08)
+    # overrode the purchase date, and getChargeMonthForRow silently used the
+    # OPPOSITE day-threshold convention from resolveImportTargetSheet for the
+    # same question. Replaced by a single rule everywhere (manual entry and
+    # import alike): getBillingSheetForExpense, keyed only on the sheet a row
+    # is filed under - no separate "charge month" for any screen.
+    "getChargeMonthForRow": "the derived charge-month concept itself; superseded by getBillingSheetForExpense as the one routing rule.",
+    "getCashOutSummary": "the cash-basis 'what's in the account right now' read model; superseded by getDisplayedClosingBalance (opening + month's income - month's expenses - loan, by sheet), which is what Raz actually wants ('will I end up negative').",
+    "getIncomeReceivedToDate": "only ever consumed by getCashOutSummary; income is counted by sheet regardless of date again, same as getIncomeTotal always did.",
+    "renderHeroCashout": "rendered the removed getCashOutSummary onto the hero card.",
+    "heroCashout": "container element for the removed cash-out breakdown UI.",
+    "cashOutNow": "duplicated the hero headline verbatim; removed in U-7, before this reset.",
+    "cashOutDue": "'צפוי לרדת באשראי' cell, part of the removed cash-out breakdown.",
+    "cashOutAfter": "'אחרי חיובי אשראי' cell, part of the removed cash-out breakdown.",
+    "heroCashoutDetail": "per-card breakdown <details>, part of the removed cash-out breakdown.",
+    "heroCashoutByCard": "per-card breakdown container, part of the removed cash-out breakdown.",
 }
 
 CHECK_ONLY = "--check" in sys.argv

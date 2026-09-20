@@ -360,10 +360,15 @@ input, select, textarea { font: inherit; }
   align-items:center; justify-content:center; font-size:14px; }
 .groc-row.is-bought .groc-check{ background:var(--accent); }
 .groc-row-main{ flex:1; display:flex; align-items:baseline; gap:8px; min-width:0; }
+.groc-row-icon{ flex:0 0 auto; font-size:15px; line-height:1; }
 .groc-row-name{ font-size:15px; color:var(--text); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .groc-row.is-bought .groc-row-name{ color:var(--muted); text-decoration:line-through; }
 .groc-star{ color:var(--warn); font-size:13px; }
 .groc-row-qty{ font-size:var(--fs-sm); color:var(--text-2); white-space:nowrap; flex:0 0 auto; }
+.groc-row-price{ flex:0 0 auto; width:64px; min-height:36px; padding:4px 8px; border-radius:10px;
+  border:1px solid var(--border); background:var(--surface); color:var(--text); font-size:13px;
+  text-align:center; font-variant-numeric:tabular-nums; }
+.groc-stats-grid{ margin-bottom:16px; }
 .groc-delete{ flex:0 0 auto; width:28px; height:28px; border-radius:999px; border:0; background:transparent;
   color:var(--muted); cursor:pointer; font-size:14px; }
 .groc-delete:hover{ background:var(--bad-light); color:var(--bad); }
@@ -400,6 +405,25 @@ input, select, textarea { font: inherit; }
 .bank-verdict.ok{ background:var(--good-light); color:var(--good); border:1px solid var(--good); }
 .bank-verdict.warn{ background:var(--warn-light); color:var(--warn); border:1px solid var(--warn); }
 .bank-verdict-icon{ flex:0 0 auto; font-size:16px; line-height:1.4; }
+.bank-openings{ border:1px solid var(--border); border-radius:var(--r-2xl); padding:14px 16px; margin-bottom:16px; }
+.bank-openings-title{ font-size:15px; font-weight:var(--fw-bold); color:var(--wood-strong); margin-bottom:4px; }
+.bank-openings-sub{ font-size:var(--fs-xs); color:var(--text-2); line-height:1.6; margin-bottom:12px; }
+/* Four columns on any width: the delta only means something next to the two
+   numbers it is the difference of, so this must not wrap into separate lines. */
+.bank-open-head,.bank-open-row{ display:grid; grid-template-columns:1fr 1fr 1fr 0.8fr;
+  gap:8px; align-items:center; padding:9px 0; font-variant-numeric:tabular-nums; }
+.bank-open-head{ font-size:var(--fs-xs); color:var(--text-2); border-bottom:1px solid var(--border); padding-bottom:6px; }
+.bank-open-row{ border-bottom:1px solid var(--border); font-size:13px; }
+.bank-open-row:last-of-type{ border-bottom:0; }
+.bank-open-month{ font-weight:var(--fw-semi); color:var(--text); }
+.bank-open-bank{ font-weight:var(--fw-bold); color:var(--wood-strong); }
+.bank-open-cur{ color:var(--text-2); display:flex; flex-direction:column; line-height:1.3; }
+.bank-open-cur small{ font-size:10px; opacity:0.8; }
+.bank-open-same{ color:var(--text-2); font-size:var(--fs-xs); }
+.bank-open-new{ color:var(--text-2); font-size:var(--fs-xs); }
+/* #A24A2C, not var(--bad): measured 5.82:1 on this surface, where --bad fails
+   4.5:1 at 13px. A difference from the bank is information, not an alarm. */
+.bank-open-diff{ color:#A24A2C; font-weight:var(--fw-bold); }
 .bank-map-row{ display:flex; align-items:center; gap:10px; padding:11px 4px;
   border-bottom:1px solid var(--border); flex-wrap:wrap; }
 .bank-map-row:last-child{ border-bottom:0; }
@@ -1933,24 +1957,16 @@ body { background:var(--bg); }
 .hero-month-metrics > div:first-child { border-inline-start:0; padding-inline-start:0; }
 .hero-month-metrics span,.hero-month-metrics small { color:var(--muted); font-size:11px; }
 .hero-month-metrics strong { color:var(--text); font-size:19px; font-variant-numeric:tabular-nums; margin-block:3px; }
-.hero-cashout { margin-top:16px; padding-top:14px; border-top:1px solid var(--border); }
-.hero-cashout-title { font-size:12px; font-weight:var(--fw-semi); color:var(--muted); margin-bottom:9px; }
-.hero-cashout-row { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:10px; }
-.hero-cashout-row > div { display:flex; flex-direction:column; align-items:flex-start; min-width:0; padding-inline-start:12px; border-inline-start:1px solid var(--border); }
-.hero-cashout-row > div:first-child { border-inline-start:0; padding-inline-start:0; }
-.hero-cashout-row span { color:var(--muted); font-size:11px; }
-.hero-cashout-row strong { color:var(--text); font-size:17px; font-variant-numeric:tabular-nums; margin-top:3px; font-family:var(--font-num); }
-/* var(--bad) is 3.80:1 here at 17px (fine at the ~50px hero-balance size, fails
-   AA's 4.5:1 for normal-size text) — reuse the darkened token already measured
-   at 5.82:1 on this surface for .recon-gap.none. */
-.hero-cashout-row strong.is-negative { color:#A24A2C; }
-.hero-cashout-detail { margin-top:10px; font-size:12.5px; }
-.hero-cashout-detail summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); min-height:44px; display:flex; align-items:center; list-style:none; }
-.hero-cashout-detail summary::-webkit-details-marker { display:none; }
-.hero-cashout-detail summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
-.hero-cashout-detail[open] summary::before { transform:rotate(90deg); }
-.hero-cashout-card-row { display:flex; justify-content:space-between; gap:8px; padding:7px 0; border-bottom:1px solid var(--border); }
-.hero-cashout-card-row:last-child { border-bottom:0; }
+/* U-7 (18.09): the hero used to show ~13 numbers at once with no priority -
+   everything past "how much do I really have right now" is folded here, one
+   tap away instead of competing with it for attention. */
+.hero-details { margin-top:14px; padding-top:14px; border-top:1px solid var(--border); }
+.hero-details > summary { cursor:pointer; color:var(--accent-strong); font-weight:var(--fw-semi); font-size:13px; min-height:44px; display:flex; align-items:center; list-style:none; }
+.hero-details > summary::-webkit-details-marker { display:none; }
+.hero-details > summary::before { content:"▸"; margin-inline-end:6px; transition:transform .15s; }
+.hero-details[open] > summary::before { transform:rotate(90deg); }
+.hero-details > .hero-delta { margin-top:10px; }
+.hero-details #heroForecastLine { margin-top:8px; }
 .review-queue {
   background:var(--surface-2); border:1px solid var(--border); border-radius:26px;
   padding:18px; margin-bottom:16px; box-shadow:var(--shadow-xs);
@@ -1966,7 +1982,7 @@ body { background:var(--bg); }
 .review-item strong { display:block; color:var(--text); font-size:14px; }
 .review-item small { display:block; color:var(--muted); font-size:11px; margin-top:2px; }
 /* min-height/width:44px matches the touch-target baseline measured and fixed
-   elsewhere this session (.bank-actions button, .hero-cashout-detail summary) -
+   elsewhere this session (.bank-actions button, .hero-details summary) -
    found here the same way: 30.5px/26px on a live measurement, not assumed. */
 .review-action { display:inline-flex; align-items:center; justify-content:center; min-height:44px; border:0; background:var(--wood-light); color:var(--wood-strong); border-radius:999px; padding:7px 14px; font-weight:700; font-size:11px; white-space:nowrap; }
 .review-item-actions { display:flex; align-items:center; gap:6px; }
@@ -2047,9 +2063,6 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
   .monthly-status-card .hero-balance { font-size:46px; justify-content:flex-start; }
   .hero-month-metrics > div { padding-inline:9px; }
   .hero-month-metrics strong { font-size:15px; }
-  .hero-cashout-row { gap:6px; }
-  .hero-cashout-row > div { padding-inline-start:8px; }
-  .hero-cashout-row strong { font-size:14px; }
   .review-queue { padding:14px; border-radius:22px; }
   .review-item { grid-template-columns:auto 1fr; row-gap:8px; min-height:0; padding:12px; }
   .review-item-actions { grid-column:1/-1; justify-content:flex-end; }
@@ -2329,34 +2342,30 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
             <span class="hero-int">0</span><span class="hero-cur">₪</span>
           </div>
-          <div class="hero-balance-label">יתרה נוכחית (הכנסות פחות הוצאות עד היום)</div>
+          <!-- 18.09 "חושבין מחדש": one number, one basis - opening + this
+               month's income − this month's expenses − loan principal, all by
+               SHEET (the month a row is filed under, never a derived charge
+               month). No separate "cash position right now" question. -->
+          <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <div class="hero-anchor-row" id="heroAnchorRow">
             <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
             <span class="hero-anchor-chip" id="heroAnchorChip"></span>
           </div>
-          <div class="hero-delta" id="heroDelta" style="display:none"></div>
-          <div id="heroForecastLine" style="display:none;margin-top:8px;font-size:12px;color:var(--text-2)"></div>
-          <div class="hero-cashout" id="heroCashout" style="display:none">
-            <div class="hero-cashout-title">תזרים בפועל בעו״ש (לפי מחזור חיוב אשראי)</div>
-            <div class="hero-cashout-row">
-              <div><span>עו״ש עכשיו</span><strong id="cashOutNow">—</strong></div>
-              <div><span>צפוי לרדת באשראי</span><strong id="cashOutDue">—</strong></div>
-              <div><span>אחרי חיובי אשראי</span><strong id="cashOutAfter">—</strong></div>
+          <details class="hero-details" id="heroDetails">
+            <summary>פרטים נוספים</summary>
+            <div class="hero-delta" id="heroDelta" style="display:none"></div>
+            <div id="heroForecastLine" style="display:none;font-size:12px;color:var(--text-2)"></div>
+            <div class="hero-month-metrics" aria-label="סיכום חודשי">
+              <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>לכל החודש</small></div>
+              <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>לכל החודש</small></div>
+              <!-- U-7: labelled "בנק+אבא" כי הכותרת הגדולה מנכה רק הלוואת בנק, לא אבא. -->
+              <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>בנק+אבא, לכל החודש</small></div>
             </div>
-            <details class="hero-cashout-detail" id="heroCashoutDetail" style="display:none">
-              <summary>פירוט לפי כרטיס</summary>
-              <div id="heroCashoutByCard"></div>
-            </details>
-          </div>
-          <div class="hero-month-metrics" aria-label="סיכום חודשי">
-            <div><span>הכנסות</span><strong id="dashboardIncomeMetric">—</strong><small>מתוכנן</small></div>
-            <div><span>הוצאות</span><strong id="dashboardExpenseMetric">—</strong><small>מתוכנן</small></div>
-            <div><span>חובות</span><strong id="dashboardDebtMetric">—</strong><small>לתשלום</small></div>
-          </div>
-          <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
-          <span class="visually-hidden" id="heroSparkAlt"></span>
-          <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
+            <div class="hero-spark" hidden><canvas id="heroSpark" height="48" aria-hidden="true"></canvas></div>
+            <span class="visually-hidden" id="heroSparkAlt"></span>
+            <div id="dashboardDebtChip" style="display:none;margin-top:10px;padding:8px 12px;border-radius:12px;background:var(--bad-light);color:var(--bad);font-size:12px;font-weight:700;justify-content:space-between;cursor:pointer" onclick="switchToTab('debts')"></div>
+          </details>
         </section>
         <section class="dashboard-quick-actions" aria-label="קיצורי דרך">
           <button type="button" onclick="switchToTab('budget')"><span>תכנון ובקרה</span><small>תקציב ומגמה</small></button>
@@ -2768,6 +2777,8 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
         <div class="panel-hero-title">🛒 קניות</div>
         <div class="panel-hero-sub">הרשימה הקבועה של הבית — מסמנים מה חסר עכשיו</div>
       </div>
+
+      <div class="shared-mini-grid groc-stats-grid" id="groceryStats" style="display:none"></div>
 
       <div class="section open">
         <div class="header">
@@ -5351,6 +5362,9 @@ function normalizeGroceryItem(item){
     quantity: item && item.quantity != null && item.quantity !== "" ? Number(item.quantity) : null,
     unit: String(item && item.unit || "").trim(),
     important: Boolean(item && item.important),
+    // Last known price - what it actually cost last time, not a live catalog
+    // price the app has no way to fetch. Optional; missing means unknown, not free.
+    price: item && item.price != null && item.price !== "" ? Number(item.price) : null,
     status,
     note: String(item && item.note || "").trim(),
     addedBy: String(item && item.addedBy || currentUser),
@@ -5453,7 +5467,9 @@ function parseGroceryCatalogPayload(raw){
         name: String((row && (row.display_name || row.name || row.original_text)) || "").trim(),
         category: String((row && (row.proposed_category || row.category || row.source_subsection)) || "").trim(),
         quantity: row && row.quantity != null && row.quantity !== "" ? Number(row.quantity) : null,
-        unit: String((row && row.unit) || "").trim()
+        unit: String((row && row.unit) || "").trim(),
+        important: Boolean(row && row.important),
+        note: String((row && (row.note || row.notes)) || "").trim()
       })).filter(row => row.name);
     }
   } catch(e){ /* not JSON — fall through to plain-text parsing */ }
@@ -5497,6 +5513,67 @@ function handleGroceryImportText(){
    to add "something for dinner") - grouped here by whatever the user already
    typed, "ללא קטגוריה" for items with none, so the list is never blocked on
    picking from a fixed set. */
+/* One icon per CATEGORY, not per product - a per-product icon dictionary for
+   free-text names would need constant upkeep and silently show nothing for
+   any name it doesn't recognize. Shown next to every item so the row still
+   reads as "iconed", just derived from a maintainable 16-entry map. */
+const GROCERY_CATEGORY_ICONS = {
+  "לחמים ומאפים":"🍞", "מקרר ומוצרי חלב":"🧀", "ירקות ופירות":"🥕",
+  "בשר ועוף":"🍗", "דגני בוקר":"🥣", "תבלינים":"🧂", "רטבים ושמנים":"🫙",
+  "מזווה ובישול":"🍚", "אפייה":"🧁", "חטיפים ומתוקים":"🍫",
+  "משקאות וקפה":"☕", "קפואים":"🧊", "ניקיון וכביסה":"🧼",
+  "טיפוח ורחצה":"🧴", "נייר וציוד לבית":"🧻", "תרופות ועזרה ראשונה":"💊"
+};
+function getGroceryCategoryIcon(category){
+  return GROCERY_CATEGORY_ICONS[category] || "🛒";
+}
+/* Per-PRODUCT icon, curated for the real household list (2026-09-16 import) -
+   Raz asked explicitly for "an icon for every item", not just per category.
+   Free text has no fixed vocabulary, so this is a best-effort exact-match
+   dictionary; getGroceryItemIcon() below falls back to the category icon
+   (never a blank) for any name not in it, so a new item never renders empty. */
+const GROCERY_ITEM_ICONS = {
+  "כמון":"🌿", "כורכום":"🌿", "אורגנו":"🌿", "פלפל שחור גרוס":"🌶️", "קינמון":"🟤",
+  "אבקת שום":"🧄", "פלפל שחור טחון":"🌶️", "מלח":"🧂", "מלח דק":"🧂",
+  "פפריקה מתוקה":"🌶️", "קייג׳ון":"🌶️", "בהרט":"🌿",
+  "שומשום":"🌰", "ריבועי פיצה":"🍕", "פיוז טי":"🧊", "סוכר":"🍬",
+  "אקטימל תות":"🍓", "גבינת עזים גליל":"🧀", "תפוחי אדמה":"🥔", "בוראטה":"🧀",
+  "קקאו":"🍫", "ממרח קינדר":"🍫", "טורטיות":"🌯", "שערות קדאיף":"🍢",
+  "איולי שום לימון":"🧄", "רוטב להמבורגר":"🍔", "פסטו":"🌿", "תיונים":"🍹",
+  "איולי פסטו":"🌿", "ביסקוויטים":"🍪", "שוקוצ׳יפס":"🍫", "חזה עוף לשניצל":"🍗",
+  "סמורס":"🍫", "מלוואח":"🫓", "גמבה":"🫑", "פירורי לחם":"🍞",
+  "רוטב אלף האיים":"🥫", "עוגיות לבצק עוגיות":"🍪", "אבקת סוכר":"🍬",
+  "תמצית וניל":"🍦", "שום":"🧄", "רסק עגבניות":"🍅", "טחינה":"🌰",
+  "שמן קנולה":"🫙", "קרקרים":"🍘", "פנקו":"🍞", "לורפק":"🧈",
+  "עגבניות מרוסקות לשקשוקה":"🍅", "בורקסים קטנים קפוא":"🥟",
+  "גבינת עזים במרקם שמנת":"🧀", "קמח":"🌾", "גבינת שמנת - סימפוניה בייגל":"🧀",
+  "גבינה לבנה":"🧀", "קוטג׳ קטן (לקטנה שלי ❤️)":"🧀", "שמנת חמוצה":"🥛",
+  "בלסמי מצומצם":"🫙", "שמן זית":"🫒", "עגבניות":"🍅", "אורז לבן":"🍚",
+  "חטיפים מלוחים":"🥨", "גבינת שמנת רגילה":"🧀", "גאודה עזים פרוסות":"🧀",
+  "פחיות טונה":"🐟", "דפי אורז":"🍚", "אוראו רגיל":"🍪", "גרנולה":"🥣",
+  "לואקר אדום":"🍫", "מיונז":"🥫", "אפונה":"🟢", "שניצל תירס":"🌽",
+  "בשר טחון":"🥩", "פסטה":"🍝", "פטריות":"🍄", "עגבניות שרי":"🍅",
+  "בצל":"🧅", "לחם":"🍞", "באגט":"🥖", "פיתות":"🫓", "לחמניות":"🍞",
+  "שוקולדים":"🍫", "בייגלים לטוסט":"🥯", "גזר":"🥕", "קינדר אצבעות":"🍫",
+  "שמנת מתוקה":"🥛", "נוטלה":"🍫", "מילקי":"🍫", "חטיף שוגי":"🍫",
+  "יוגורטים של שירה":"🥛", "קורנפלקס":"🥣", "חלב ללא לקטוז":"🥛",
+  "שניצלונים קפואים":"🍗", "מגולגלות":"🌯", "פטה קוביות":"🧀", "קשים":"🥤",
+  "ביצים":"🥚", "מיני כדורי מוצרלה":"🧀", "פרגיות":"🍗", "פילה בקר":"🥩",
+  "חמאה":"🧈", "קפה":"☕", "נקניק":"🌭", "מלפפון":"🥒", "גלידה":"🍨",
+  "ספוג הפלא":"🧽", "נוזלי ניקוי":"🧴", "99 סנו - חומץ לימון כתום":"🍋",
+  "שפריצר אקונומיקה":"🧴", "שפריצר מסיר אבנית":"🧴", "מרכך":"🧴",
+  "נייר טואלט":"🧻", "דאודורנט":"🧴", "מרכך כביסה":"🧴", "משחת שיניים":"🪥",
+  "כפפות":"🧤", "שמפו":"🧴", "מי פה":"🧴", "ג׳ל כביסה":"🧴",
+  "סבון גוף תינוקות":"🧼", "סבון כלים":"🧴", "שקיות זבל":"🗑️",
+  "תחליב רחצה":"🧴", "סבון ידיים קטן":"🧼", "נייר מגבת":"🧻", "מגבונים":"🧻",
+  "טישו רך!":"🤧", "כוסות חדפ":"🥤", "טישו רגיל":"🤧", "בושם":"💐",
+  "אלרגיקס":"💊", "טיפות אוזניים":"💊", "טיפות עיניים":"💊",
+  "משפריץ לאף":"💊", "פלסטרים":"🩹", "משחה לכוויות":"🩹",
+  "נורופן":"💊", "דקסמול קולד":"💊"
+};
+function getGroceryItemIcon(item){
+  return GROCERY_ITEM_ICONS[item.name] || getGroceryCategoryIcon(item.category);
+}
 function getGroceryCategoryOrder(items){
   const seen = [];
   items.forEach(item => {
@@ -5527,6 +5604,11 @@ function renderGroceryTab(){
   const catalogCountEl = document.getElementById("groceryCatalogCount");
   if(catalogCountEl) catalogCountEl.textContent = `הרשימה הקבועה (${catalog.length})`;
 
+  const renderPriceInput = (item) => `
+    <input type="number" step="0.1" min="0" class="groc-row-price" placeholder="מחיר"
+      value="${item.price != null ? escapeHtmlAttr(String(item.price)) : ""}"
+      aria-label="מחיר אחרון של ${escapeHtmlAttr(item.name)}"
+      onchange="updateGroceryItemPrice('${item.id}', this.value)">`;
   const renderShoppingRow = (item) => `
     <div class="groc-row ${item.status === "bought" ? "is-bought" : ""}" data-id="${escapeHtmlAttr(item.id)}">
       <button type="button" class="groc-check" aria-label="${item.status === "bought" ? "החזר לרשימה" : "סמן כנקנה"}"
@@ -5534,9 +5616,11 @@ function renderGroceryTab(){
         ${item.status === "bought" ? "✓" : ""}
       </button>
       <div class="groc-row-main">
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryItemIcon(item)}</span>
         <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
+      ${renderPriceInput(item)}
       <button type="button" class="groc-delete" aria-label="הסרה מהקנייה הנוכחית" title="הסרה מהקנייה הנוכחית, נשאר בקטלוג"
         onclick="updateGroceryItemStatus('${item.id}','catalog')">✕</button>
     </div>`;
@@ -5550,18 +5634,69 @@ function renderGroceryTab(){
       <button type="button" class="groc-add-toggle" aria-label="הוספה לקנייה עכשיו" title="הוספה לקנייה עכשיו"
         onclick="updateGroceryItemStatus('${item.id}','needed')">+</button>
       <div class="groc-row-main">
-        <span class="groc-row-name">${escapeHtmlAttr(item.name)}</span>
+        <span class="groc-row-icon" aria-hidden="true">${getGroceryItemIcon(item)}</span>
+        <span class="groc-row-name">${escapeHtmlAttr(item.name)}${item.important ? ' <span class="groc-star" title="חשוב">★</span>' : ""}</span>
         ${item.quantity != null || item.unit ? `<span class="groc-row-qty">${item.quantity != null ? escapeHtmlAttr(String(item.quantity)) : ""}${item.unit ? " " + escapeHtmlAttr(item.unit) : ""}</span>` : ""}
       </div>
+      ${renderPriceInput(item)}
       <button type="button" class="groc-delete" aria-label="מחיקה לצמיתות מהקטלוג" title="מחיקה לצמיתות מהקטלוג" onclick="deleteGroceryItem('${item.id}')">✕</button>
     </div>`;
   catalogRoot.innerHTML = catalog.length
     ? getGroceryCategoryOrder(catalog).map(cat => `
         <div class="groc-category">
-          <div class="groc-category-title">${escapeHtmlAttr(cat)}</div>
+          <div class="groc-category-title">${getGroceryCategoryIcon(cat)} ${escapeHtmlAttr(cat)}</div>
           ${catalog.filter(i => (i.category || "ללא קטגוריה") === cat).map(renderCatalogRow).join("")}
         </div>`).join("")
     : `<div class="groc-empty">הרשימה הקבועה ריקה. ייבאו קובץ או טקסט למעלה.</div>`;
+
+  renderGroceryStats(items, needed, bought, catalog);
+}
+/* Statistics block requested alongside prices/icons - grounded in what the
+   data model can actually answer (current catalog + current shopping-now
+   list), not invented shopping-history numbers no data source backs. */
+function renderGroceryStats(items, needed, bought, catalog){
+  const root = document.getElementById("groceryStats");
+  if(!root) return;
+  if(!items.length){ root.style.display = "none"; return; }
+  root.style.display = "";
+  const priced = items.filter(i => i.price != null);
+  const neededTotal = needed.reduce((sum,i) => sum + (i.price || 0) * (i.quantity || 1), 0);
+  const neededPriced = needed.filter(i => i.price != null).length;
+  const byCat = {};
+  catalog.forEach(i => { const c = i.category || "ללא קטגוריה"; byCat[c] = (byCat[c]||0) + 1; });
+  const topCat = Object.entries(byCat).sort((a,b) => b[1]-a[1])[0];
+  const staples = items.filter(i => i.important).length;
+  root.innerHTML = `
+    <div class="shared-stat-card">
+      <div class="small">בקטלוג הקבוע</div>
+      <div class="value">${catalog.length}</div>
+      <div class="micro">${staples} ⭐ קבועים/תדירות גבוהה</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">לקנייה עכשיו</div>
+      <div class="value">${needed.length + bought.length}</div>
+      <div class="micro">${bought.length} כבר בעגלה</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">עלות משוערת לקנייה</div>
+      <div class="value">${neededTotal > 0 ? fmt(neededTotal) : "—"}</div>
+      <div class="micro">${neededPriced}/${needed.length || 0} עם מחיר ידוע</div>
+    </div>
+    <div class="shared-stat-card">
+      <div class="small">כיסוי מחירים בקטלוג</div>
+      <div class="value">${priced.length}/${items.length}</div>
+      <div class="micro">${topCat ? `הכי גדולה: ${topCat[0]} (${topCat[1]})` : "—"}</div>
+    </div>`;
+}
+function updateGroceryItemPrice(id, value){
+  const list = getGroceryItems();
+  const item = list.find(i => i.id === id);
+  if(!item) return;
+  const num = value === "" ? null : Number(value);
+  item.price = num != null && Number.isFinite(num) && num >= 0 ? num : null;
+  item.updatedAtIso = getIsoNow();
+  saveGroceryItems(list);
+  render();
 }
 
 function getManualSettings(sheet){
@@ -5653,20 +5788,6 @@ function saveIncomeRows(sheet, rows){
 function getIncomeTotal(sheet){
   return getIncomeRows(sheet).reduce((sum,row)=>sum + Number(row.amount || 0),0);
 }
-/* Same rows as getIncomeTotal, but excludes income dated after today. Used only
-   where "now" must mean cash that has actually moved (getCashOutSummary) - a
-   salary dated 10/10 has not reached the bank yet on 16/9, so counting it would
-   show a checking-account balance higher than what is really there. Everywhere
-   else (closing balance, budget, yearly stats) the sheet's month is already
-   over by the time it's read, so the full total is correct as-is. */
-function getIncomeReceivedToDate(sheet){
-  const today = getTodayIso();
-  return getIncomeRows(sheet).reduce((sum,row)=>{
-    const iso = toIsoDate(row.date_raw);
-    if(iso && iso > today) return sum;
-    return sum + Number(row.amount || 0);
-  },0);
-}
 function getLoanSchedule(){
   return getDebtData().loanSchedule || [];
 }
@@ -5747,10 +5868,11 @@ function addLoanScheduleRow(){
   render();
 }
 function updateLoanScheduleRow(installment, field, value){
-  // C-2: total is now what every balance/cash-flow figure in the app actually
-  // reads (see getDisplayedClosingBalance etc.) - if principal is edited
-  // without keeping total in sync, those figures would silently drift from
-  // total = principal + interest without any input in this form to notice it.
+  // total is kept in sync as principal + interest for schedule-table display
+  // and reference; C-8 (18.09) confirmed the bank refunds the interest the
+  // same day, so every cash-flow figure now reads .principal instead (see
+  // getDisplayedClosingBalance etc.) - this sync only keeps .total itself
+  // internally consistent when principal is edited by hand.
   const data = getDebtData();
   data.loanSchedule = data.loanSchedule.map(row => {
     if(row.installment !== installment) return row;
@@ -5870,7 +5992,7 @@ function describeImportImpact(backup){
 function importBackupFile(file){
   if(!file) return;
   const reader = new FileReader();
-  reader.onload = () => {
+  reader.onload = async () => {
     try {
       const backup = JSON.parse(String(reader.result || "{}"));
       if(!backup || backup.app !== "raz-expenses-local" || !backup.data){
@@ -5901,7 +6023,25 @@ function importBackupFile(file){
       currentUser = backup.currentUser || localStorage.getItem(ACTIVE_USER_STORAGE_KEY) || currentUser;
       selectedSheet = backup.selectedSheet || selectedSheet;
       selectedYear = backup.selectedYear || selectedYear;
-      setBackupStatus(`הגיבוי נטען בהצלחה. לפני הייבוא הורד אוטומטית גיבוי בטיחות: ${beforeImportFilename}`);
+      // Found 18.09 while chasing a demo/phone data mismatch: unlike the two
+      // recovery-point restores (restoreCloudRecoveryPoint, restoreLocalRecoveryPoint),
+      // this path never called pushAllRowsFromLocal - the imported file replaced
+      // this device's localStorage but never reached Supabase. Any other device
+      // (or a fresh headless check) kept reading the OLD cloud row, with no
+      // visible error, because the self-row-freshness rule in
+      // assembleFromCloudRows silently prefers the (equally silent) unsynced
+      // local copy on THIS device. Same fix as the sibling restores.
+      let cloudPushFailed = null;
+      if(hasCloudSyncConfig() && !IS_LOCAL_DRAFT_FILE){
+        try {
+          await pushAllRowsFromLocal({message:"הגיבוי נטען ונשמר גם בענן.", reason:"ייבוא קובץ גיבוי"});
+        } catch(error){
+          cloudPushFailed = error;
+        }
+      }
+      setBackupStatus(cloudPushFailed
+        ? `הגיבוי נטען מקומית, אבל השמירה לענן נכשלה: ${cloudPushFailed.message}. נסה שוב או בדוק חיבור - עד אז מכשירים אחרים לא יראו את הנתונים האלה.`
+        : `הגיבוי נטען בהצלחה ונשמר גם בענן. לפני הייבוא הורד אוטומטית גיבוי בטיחות: ${beforeImportFilename}`);
       refreshRecoveryPoints();
       render();
     } catch(e){
@@ -6174,19 +6314,38 @@ window.addEventListener("load", () => { setTimeout(ingestAnchorFromUrl, 400); })
 /* The gap is a STATE, not an event - so it is never a toast (which disappears
    after 4.2s). It is computed against what the app would have said on its own,
    i.e. explicitly ignoring the anchor that is being checked. */
+/* Any opening balance that did NOT come from the carry-forward chain is an
+   independent claim about the account, and can therefore be checked against
+   what the chain computed. Until 18.09.2026 this only ran for anchored months,
+   which left the most common case silent: the audit found 9 of 13 month
+   transitions where a typed opening disagreed with the previous month's closing
+   - the largest by 8,048 - with nothing on screen to say so. A number the user
+   typed is exactly as capable of being wrong as one they read off the bank. */
 function getBalanceGapForSheet(sheet){
-  const anchor = getBalanceAnchorForSheet(sheet);
-  if(!anchor) return null;
+  const source = getOpeningBalanceSource(sheet);
+  // "carried" IS the chain's own output, so checking it against the chain would
+  // report zero by construction - there is no independent claim to test.
+  if(source === "carried" || source === "none") return null;
+  const observed = getDisplayedOpeningBalance(sheet);
+  if(observed == null) return null;
   const prev = getPrevSheet(sheet);
   let computed = null;
   if(prev && (SHEET_OPTIONS || []).includes(prev)){
+    // 18.09 "חושבין מחדש": back to the sheet basis (pre-U-4). The cash-basis
+    // comparison introduced a second, competing definition of "which month a
+    // charge belongs to" - Raz asked for exactly one, so the gap banner now
+    // measures against the same number the rest of the app shows.
     computed = getDisplayedClosingBalance(prev);
-  } else if(currentUser === "raz"){
+  } else if(source === "anchored" && currentUser === "raz"){
+    // No previous month to chain from: fall back to the seeded summary. Only
+    // valid for an anchor, because for a summary-sourced opening this would be
+    // comparing the number against itself.
     const summary = getSheetSummaryByName(sheet);
     if(summary.opening != null) computed = Number(summary.opening);
   }
   if(computed == null) return null;
-  return { anchor, computed, gap: anchor.amount - computed };
+  const anchor = getBalanceAnchorForSheet(sheet);
+  return { anchor, source, observed, computed, gap: observed - computed };
 }
 
 /* A gap without a lead is just an accusation. The previous month is where the
@@ -6612,6 +6771,22 @@ function getSheetAnchorDateIso(sheet){
   if(!month || !year) return "";
   return `${year}-${String(month).padStart(2,"0")}-01`;
 }
+/* Inverse of getSheetAnchorDateIso: which sheet does a YYYY-MM-01 anchor bind
+   to? Returns "" when no sheet exists for that month - an anchor for a month
+   the user never created is valid to store but has nothing to display against. */
+function findSheetForAnchorDate(dateIso){
+  syncSheetOptions();
+  return (SHEET_OPTIONS || []).find(sheet => getSheetAnchorDateIso(sheet) === dateIso) || "";
+}
+/* Plain-language provenance. "manual" and "summary" look equally authoritative
+   in a number; they are not, and the label is the only thing that says so. */
+const OPENING_SOURCE_LABELS = {
+  anchored: "מהבנק",
+  manual: "הוקלד ידנית",
+  summary: "מנתוני ייבוא",
+  carried: "מחושב מהחודש הקודם",
+  none: "לא ידוע"
+};
 /* Latest anchor wins for a given date - corrections are appended, not edited. */
 function getBalanceAnchorForSheet(sheet){
   const dateIso = getSheetAnchorDateIso(sheet);
@@ -6686,7 +6861,7 @@ function getDisplayedOpeningBalance(sheet, _depth=0){
     if(prev && (SHEET_OPTIONS || []).includes(prev)){
       const prevOpening = getDisplayedOpeningBalance(prev, _depth + 1);
       if(prevOpening != null){
-        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.total || 0) : 0;
+        const bank = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(prev)?.principal || 0) : 0; // C-8: bank refunds the interest same day - cash impact is principal only
         return prevOpening + getIncomeTotal(prev) - getExpenseStats(prev).total - bank;
       }
     }
@@ -6706,90 +6881,17 @@ function getOpeningBalanceSource(sheet){
   if(prev && (SHEET_OPTIONS || []).includes(prev) && getDisplayedOpeningBalance(prev) != null) return "carried";
   return "none";
 }
-/* ── D-13: cash-out view — "what is in the account" vs "what we spent" ──────
-   Raz's goal, stated 16.09: show at any moment how much is in the current
-   account, how much the card bills will still take this month, and have an
-   immediate charge already deducted.
-
-   The app cannot answer that from one number per row, because a row's sheet
-   says WHEN IT WAS BOUGHT while the balance depends on WHEN THE MONEY LEAVES.
-   For a card those are different months. So the charge month is DERIVED here
-   rather than stored - when a bank statement later supplies the truth, this
-   recomputes instead of migrating rows (D-13).
-
-   Scans EVERY sheet, not just the adjacent ones. The first version limited
-   itself to this month ±1 on the reasoning that a billing cycle never spans
-   more than two adjacent months - true for a correctly filed row, false for
-   the data that actually exists. A row dated 2025-12-01 sits in the "יולי 26"
-   sheet (one of the mis-dated AIG rows), and the window silently dropped
-   ₪1,033 from December's total. The probe caught it as a conservation failure.
-   Roughly 900 rows is not worth optimising against correctness.
-
-   NOTE this is a pure read model. It does NOT change getExpenseStats or
-   getDisplayedClosingBalance, which still answer the "what did we spend in
-   this month" question the rest of the app is built on. Wiring the balance
-   itself onto the cash-out basis is a separate, gated step. */
-function getChargeMonthForRow(row){
-  const iso = toIsoDate(row && (row.date_raw || row.date) || "");
-  if(!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return "";
-  const year = Number(iso.slice(0,4)), month = Number(iso.slice(5,7)), day = Number(iso.slice(8,10));
-  if(!row.payment) return `${year}-${String(month).padStart(2,"0")}`;
-  const method = getPaymentMethodByName(row.payment);
-  // No method on file, or an immediate one: the money leaves when it is spent.
-  if(!method || method.isImmediate || isRowImmediate(row)){
-    return `${year}-${String(month).padStart(2,"0")}`;
-  }
-  const billingDay = Number(getBillingDayForDate(method, iso)) || 10;
-  if(day < billingDay) return `${year}-${String(month).padStart(2,"0")}`;
-  const next = shiftMonth(year, month, 1);
-  return `${next.year}-${String(next.month).padStart(2,"0")}`;
-}
-function getCashOutSummary(sheet){
-  const {month, year} = getSheetMonthYear(sheet);
-  if(!month || !year) return null;
-  const targetMonth = `${year}-${String(month).padStart(2,"0")}`;
-  syncSheetOptions();
-
-  let alreadyLeft = 0, cardDue = 0;
-  const byCard = {};
-  for(const candidate of SHEET_OPTIONS){
-    for(const row of getEditableRows(candidate)){
-      if(getChargeMonthForRow(row) !== targetMonth) continue;
-      const amount = Number(row.amount || 0);
-      const method = row.payment ? getPaymentMethodByName(row.payment) : null;
-      const isCardBill = Boolean(method && !method.isImmediate && !isRowImmediate(row));
-      if(isCardBill){
-        cardDue += amount;
-        byCard[row.payment] = (byCard[row.payment] || 0) + amount;
-      } else {
-        alreadyLeft += amount;
-      }
-    }
-  }
-  const opening = getDisplayedOpeningBalance(sheet);
-  const income = getIncomeReceivedToDate(sheet);
-  const loan = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
-  // null, not 0, when the opening balance is unknown - the CARRY-14 rule: an
-  // uncomputable number must read as "—", never as a confident zero.
-  const nowBalance = opening == null ? null : opening + income - alreadyLeft - loan;
-  return {
-    month: targetMonth,
-    alreadyLeft,
-    cardDue,
-    byCard,
-    nowBalance,
-    afterCardsBalance: nowBalance == null ? null : nowBalance - cardDue
-  };
-}
 function getDisplayedClosingBalance(sheet){
-  // C-2: this is cash actually leaving the account, so it's .total (principal
-  // + interest), not .principal alone - the bank does not lend you the
-  // interest portion for free. getLoanPrincipalBase()/bankRemaining/
-  // bankProgress (the loan-payoff-progress figures elsewhere) correctly stay
-  // on .principal - paying interest doesn't reduce what you owe the bank.
+  // C-8 (18.09): the bank charges the full installment (principal + interest)
+  // and refunds the interest the same day (מקדמה/הטבת ריבית בהלוואה),
+  // verified against the real bank statement on 9/12 months to the agora.
+  // Net cash impact is .principal - the C-2 (13.09) change to .total
+  // double-counted interest the household never actually pays.
+  // getLoanPrincipalBase()/bankRemaining/bankProgress (payoff-progress
+  // figures elsewhere) were always correct on .principal.
   const opening = getDisplayedOpeningBalance(sheet);
   if(opening == null) return null;
-  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0;
+  const bankMonthlyPayment = isDebtTrackingEnabled() ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0;
   return opening + getIncomeTotal(sheet) - getExpenseStats(sheet).total - bankMonthlyPayment;
 }
 function getAvailableYears(){
@@ -6811,7 +6913,7 @@ function getDashboardWidgetCatalog(sheet){
   const openingBalance = getDisplayedOpeningBalance(sheet);
   const closingBalance = getDisplayedClosingBalance(sheet);
   const debtEnabled = isDebtTrackingEnabled();
-  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.total || 0) : 0; // C-2: cash out, not principal alone
+  const bankMonthly = debtEnabled ? (getLoanScheduleEntryForSheet(sheet)?.principal || 0) : 0; // C-8: bank refunds interest same day - principal is the real cash impact
   const monthlyBalance = income - stats.total - bankMonthly;
   const categorySums = getMonthlyCategorySums(sheet);
   const biggestExpense = rows.reduce((max,row)=>Number(row.amount || 0) > Number(max.amount || 0) ? row : max, {amount:0, merchant:""});
@@ -6870,10 +6972,11 @@ function getYearlyRowsData(year){
     const loanEntry = getLoanScheduleEntryForSheet(sheet);
     const stats = getExpenseStats(sheet);
     const income = getIncomeTotal(sheet);
-    // C-2: both the running balance and the displayed "loan" column must use
+    // C-8: both the running balance and the displayed "loan" column must use
     // the same field, or the yearly table's own numbers stop adding up on
-    // the same row.
-    const monthlyBalance = income - stats.total - Number(loanEntry?.total || 0);
+    // the same row. Principal, not total - the bank refunds the interest
+    // the same day.
+    const monthlyBalance = income - stats.total - Number(loanEntry?.principal || 0);
     runningBalance += monthlyBalance;
     return {
       sheet,
@@ -6885,7 +6988,7 @@ function getYearlyRowsData(year){
       cumulativeBalance: runningBalance,
       immediate: stats.immediate,
       transfers: stats.transfers,
-      loan: loanEntry?.total || null,
+      loan: loanEntry?.principal || null,
       father: getFatherRepaymentTotal(sheet)
     };
   });
@@ -7063,7 +7166,7 @@ function openDebtDetailsModal(){
   const modal = document.getElementById("debtDetailsModal");
   const body = document.getElementById("debtDetailsModalBody");
   const summary = getYearlySummaryData(selectedYear);
-  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.total || 0; // C-2: "charges this month" is cash out, not principal alone
+  const currentLoan = getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0; // C-8: bank refunds interest same day - principal is the real cash impact
   const currentFather = getFatherRepaymentTotal(selectedSheet) || 0;
   body.innerHTML = `
     <div class="modal-grid">
@@ -7595,24 +7698,45 @@ function renderBalanceAnchorState(){
     banner.textContent = "";
     return;
   }
+  // The banner now covers typed openings too, so it may no longer say "בבנק" -
+  // claiming a hand-typed number came from the bank is the exact confusion this
+  // whole change exists to remove.
+  const fromBank = info.source === "anchored";
   // Below a shekel is rounding, not a discrepancy.
   if(Math.abs(info.gap) <= 1){
     banner.className = "balance-gap-banner is-visible is-match";
-    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת למה שראית בבנק (${fmt(info.anchor.amount)}).</span>`;
+    banner.innerHTML = `<span>✅</span><span>היתרה שהאפליקציה חישבה תואמת ל${fromBank ? "מה שראית בבנק" : "יתרת הפתיחה שהוזנה"} (${fmt(info.observed)}).</span>`;
     return;
   }
   // Say the direction in words. A signed number alone is read wrong under
   // stress, and this banner exists precisely for the stressful case.
-  const bankHasLess = info.gap < 0;
-  const words = bankHasLess
-    ? `בבנק יש ${fmt(Math.abs(info.gap))} פחות ממה שהאפליקציה חישבה`
-    : `בבנק יש ${fmt(Math.abs(info.gap))} יותר ממה שהאפליקציה חישבה`;
+  const observedIsLess = info.gap < 0;
+  const prevSheet = getPrevSheet(selectedSheet);
+  const prevLabel = prevSheet ? formatSheetLabel(prevSheet) : "החודש הקודם";
+  const thisLabel = formatSheetLabel(selectedSheet);
+  /* Name the two months and what each number IS. The previous wording printed a
+     bare "החישוב: 755.30" - a cash-basis closing balance that appears on no
+     screen - next to the bank's figure, so the banner asserted a discrepancy
+     without giving the reader anything to check it against. */
+  const words = observedIsLess
+    ? `חסרים ${fmt(Math.abs(info.gap))} ב${prevLabel}`
+    : `עודפים ${fmt(Math.abs(info.gap))} ב${prevLabel}`;
   const leads = findGapSuspects(selectedSheet, info.gap);
+  /* Direction matters for where to look. More money than expected is usually
+     income that was never recorded; less is usually an expense that was not.
+     The old text only ever suggested a missing expense, which points the wrong
+     way half the time. */
+  const advice = !fromBank
+    ? `יתרת הפתיחה של ${thisLabel} הוקלדה ולא נמדדה. ייבוא דוח תנועות עו״ש יחליף אותה ביתרה אמיתית מהבנק.`
+    : observedIsLess
+      ? `כנראה חסרה הוצאה ב${prevLabel}, או שהכנסה נרשמה פעמיים, או ששיוך חודש החיוב לא מדויק.`
+      : `כנראה חסרה הכנסה ב${prevLabel} (למשל זיכוי או ריבית שהבנק נתן ולא נרשמה), או שהוצאה נרשמה פעמיים.`;
   banner.className = "balance-gap-banner is-visible";
   banner.innerHTML =
     `<span>⚠️</span><span><strong>${words}.</strong> ` +
-    `החישוב: ${fmt(info.computed)} · מהבנק: ${fmt(info.anchor.amount)}. ` +
-    `בדרך כלל זה אומר שחסרה או כפולה הוצאה בחודש הקודם, או ששיוך חודש החיוב לא מדויק.` +
+    `${thisLabel} נפתח בפועל על ${fmt(info.observed)} ${fromBank ? "לפי הבנק" : "לפי מה שהוזן"}, ` +
+    `אבל לפי מה שרשום ב${prevLabel} הוא היה אמור להיפתח על ${fmt(info.computed)}. ` +
+    advice +
     (leads.length
       ? `<span class="gap-lead">🔎 אולי קשור: ${leads.map(escapeHtmlAttr).join(" · ")}</span>`
       : "") +
@@ -7622,19 +7746,19 @@ function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
   const balEl = document.getElementById("heroBalance");
   if(!heroEl || !balEl) return;
-  // The hero label promises "עד היום" (up to today) - getDisplayedClosingBalance
-  // is a full-MONTH projection (assumes all income already landed), which is
-  // right for chaining next month's opening balance but wrong for a "now"
-  // headline. getCashOutSummary's nowBalance is the one figure that actually
-  // excludes not-yet-received income, so it - not the closing balance - is
-  // what belongs here.
-  const closing = getCashOutSummary(selectedSheet)?.nowBalance ?? null;
+  // 18.09 "חושבין מחדש": back to the one number the rest of the app already
+  // uses - opening + this month's income - this month's expenses - loan
+  // principal, by sheet. Raz asked to drop the separate "cash position right
+  // now, before this month's card bills land" question (D-13/getCashOutSummary)
+  // entirely; a full-month projection is exactly what answers "will I end up
+  // negative", which is what he actually wants from this number.
+  const closing = getDisplayedClosingBalance(selectedSheet);
   const value = closing == null ? 0 : closing;
   document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
   const monthlyExpenses = getExpenseStats(selectedSheet).total;
   const monthlyDebt = isDebtTrackingEnabled()
-    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-2
+    ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-8: principal is the real cash impact
     : 0;
   const incomeMetric = document.getElementById("dashboardIncomeMetric");
   const expenseMetric = document.getElementById("dashboardExpenseMetric");
@@ -7666,7 +7790,6 @@ function renderDashboardHero(){
       forecastLine.style.display = "none";
     }
   }
-  renderHeroCashout();
   // CARRY-14 (BALANCE_ANCHOR_SPEC R-2): closing == null means "we have no opening
   // balance for this month", not "the balance is zero" - but the hero rendered it
   // as a confident ₪0. That is the single number on the dashboard, and per
@@ -7693,7 +7816,8 @@ function renderDashboardHero(){
       balEl.dataset.initialized = "1";
     }
   }
-  /* delta vs previous month */
+  /* delta vs previous month - both sides are now the same sheet-basis closing
+     balance, so this is a plain apples-to-apples comparison. */
   const prevSheet = getPrevSheet(selectedSheet);
   const deltaEl = document.getElementById("heroDelta");
   if(prevSheet && deltaEl && hasBalance){
@@ -7742,36 +7866,6 @@ function renderDashboardHero(){
   }
 }
 
-/* D-13: getCashOutSummary is a bank-reality read model (charge-month, not
-   purchase-month) — deliberately separate from the hero-balance above so a
-   discrepancy between the two is visible, not silently reconciled. */
-function renderHeroCashout(){
-  const box = document.getElementById("heroCashout");
-  if(!box) return;
-  const sum = getCashOutSummary(selectedSheet);
-  if(!sum){ box.style.display = "none"; return; }
-  box.style.display = "block";
-  const nowEl = document.getElementById("cashOutNow");
-  const dueEl = document.getElementById("cashOutDue");
-  const afterEl = document.getElementById("cashOutAfter");
-  const fmtOrDash = v => v == null ? "—" : fmtIls(v);
-  if(nowEl){ nowEl.textContent = fmtOrDash(sum.nowBalance); nowEl.classList.toggle("is-negative", sum.nowBalance != null && sum.nowBalance < 0); }
-  if(dueEl) dueEl.textContent = fmtIls(sum.cardDue);
-  if(afterEl){ afterEl.textContent = fmtOrDash(sum.afterCardsBalance); afterEl.classList.toggle("is-negative", sum.afterCardsBalance != null && sum.afterCardsBalance < 0); }
-  const detail = document.getElementById("heroCashoutDetail");
-  const byCardEl = document.getElementById("heroCashoutByCard");
-  const cards = Object.entries(sum.byCard || {}).filter(([, amt]) => amt > 0).sort((a, b) => b[1] - a[1]);
-  if(detail && byCardEl){
-    if(cards.length){
-      detail.style.display = "block";
-      byCardEl.innerHTML = cards.map(([name, amt]) =>
-        `<div class="hero-cashout-card-row"><span>${escapeHtmlAttr(name)}</span><strong>${fmtIls(amt)}</strong></div>`
-      ).join("");
-    } else {
-      detail.style.display = "none";
-    }
-  }
-}
 
 /* Compares this month's rows against last month's "קבועה" (fixed) rows and
    flags fixed merchants that had no matching row imported/entered yet this
@@ -8227,14 +8321,14 @@ function renderChart(rows){
     /* D-10 wave 3, item C — close the last inherited gap from C-2/C-5.
        getDisplayedClosingBalance subtracts the month's bank loan payment, but
        this chart never did, so the card and the graph disagreed by exactly that
-       payment (~948 for the month reviewed under C-2). While the balance was an
-       unanchored projection that discrepancy was merely confusing; now that the
-       hero can say "anchored to the bank", the first gap the anchor surfaces
-       would have been OUR OWN known bug, and the user would reasonably blame
-       the bank. Same field as the card - .total, i.e. principal + interest,
-       because that is the cash that actually leaves the account. Applied at day
+       payment. While the balance was an unanchored projection that discrepancy
+       was merely confusing; now that the hero can say "anchored to the bank",
+       the first gap the anchor surfaces would have been OUR OWN known bug, and
+       the user would reasonably blame the bank. Same field as the card -
+       .principal (C-8, 18.09: the bank refunds the interest the same day, so
+       principal is the cash that actually leaves the account). Applied at day
        1 alongside income, which shares the same "not reliably dated" caveat. */
-    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.total || 0) : 0;
+    const bankMonthly = isDebtTrackingEnabled() ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) : 0;
     /* actual: opening + (income spread isn't dated, so apply at day 1) - bank loan - cumulative expense up to today */
     let runExp=0;
     const actual = dayLabels.map((_,i)=>{
@@ -9903,7 +9997,7 @@ function renderDebts(){
     : loanSchedule.filter(entry => toIsoDate(entry.dueDate) && toIsoDate(entry.dueDate) <= todayIso);
   const bankProgress = getLoanPrincipalBase() ? Math.max(0, Math.min(100, Math.round((bankPaidPrincipal / getLoanPrincipalBase()) * 100))) : 0;
   const fatherProgress = getFatherDebtStart() ? Math.max(0, Math.min(100, Math.round((getTotalFatherRepayments() / getFatherDebtStart()) * 100))) : 0;
-  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.total); // C-2: "החזר בנק בחודש" means the full payment, not principal alone
+  document.getElementById("debtMonthlyLoan").textContent = fmtOrDash(currentLoanEntry?.principal); // C-8: bank refunds interest same day - principal is the real cash impact
   document.getElementById("debtFatherThisMonth").textContent = fatherThisMonth ? fmt(fatherThisMonth) : fmt(0);
   countUpIfChanged(document.getElementById("debtBankRemainingHero"), bankRemaining);
   countUpIfChanged(document.getElementById("debtFatherRemainingHero"), fatherRemaining);
@@ -10252,7 +10346,8 @@ document.querySelectorAll(".tab-btn").forEach(btn=>{
   root.addEventListener("click", e => {
     const applyBtn = e.target.closest("[data-bank-apply]");
     if(applyBtn){ applyDiscoveredBillingHistory(applyBtn.dataset.bankApply); return; }
-    if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
+    if(e.target.closest("[data-bank-month-anchors]")) saveMonthStartAnchorsFromBankStatement();
+    else if(e.target.closest("[data-bank-anchor]")) saveAnchorFromBankStatement();
   });
   root.addEventListener("change", e => {
     const select = e.target.closest("[data-bank-map-card]");
@@ -11049,6 +11144,49 @@ function verifyBankStatementBalance(parsed){
   };
 }
 
+/* Raz's decision, 18.09.2026: months before this line stay as they were
+   imported. The bank export reaches back to 09/2025, but 09-11/2025 have no
+   income rows at all in the app and their card charges were never entered, so
+   anchoring them would pin a correct opening onto a month whose contents are
+   known-incomplete - a confident-looking number built on a hole. From this date
+   forward the bank is the authority on the opening balance. */
+const BANK_ANCHOR_BACKFILL_FROM_ISO = "2026-01-01";
+
+/* The reason the manual openings drifted from the bank in every single month
+   (audit 18.09.2026: up to 8,748 off) is that nothing ever wrote a measured
+   opening - the "save as anchor" button offers only the file's LAST balance, at
+   its own date, and an anchor binds to a month only when its date is the 1st
+   (getSheetAnchorDateIso). So that anchor could never become an opening.
+
+   The export already carries a running-balance column, which means the balance
+   at the start of every month it covers is a fact sitting in the file, not
+   something we have to infer. This derives one per month: the running balance
+   of the last transaction STRICTLY BEFORE the 1st, which is by definition what
+   the account held when the month opened. A month with no prior balance-bearing
+   row (the first month in the file) is skipped rather than guessed. */
+function deriveMonthStartBalances(parsed, fromIso = BANK_ANCHOR_BACKFILL_FROM_ISO){
+  const withBalance = (parsed && parsed.transactions || []).filter(t => t.balance != null);
+  if(withBalance.length < 2) return [];
+  const boundaries = new Set();
+  for(const t of withBalance){
+    const iso = String(t.dateIso || "");
+    if(iso.length < 7) continue;
+    boundaries.add(`${iso.slice(0,7)}-01`);
+  }
+  const out = [];
+  for(const dateIso of [...boundaries].sort()){
+    if(fromIso && dateIso < fromIso) continue;
+    let prior = null;
+    for(const t of withBalance){
+      if(t.dateIso >= dateIso) break;
+      prior = t;
+    }
+    if(!prior) continue; // nothing before this month in the file - not a guess we may make
+    out.push({ dateIso, amount: prior.balance, basedOn: prior.dateRaw });
+  }
+  return out;
+}
+
 /* Bank transaction labels that plausibly represent a credit-card charge, with
    how many times each appears. Offered to the user for mapping onto their
    cards, because the app's card name is never the bank's label ("חבר" bills
@@ -11333,6 +11471,46 @@ function renderBankSync(){
       </button>
     </div>` : "";
 
+  /* Shows every month-start balance the file can prove, next to what the app
+     currently opens that month on, BEFORE writing anything. The delta column is
+     the point: it is the only place the user can see that a number they typed
+     months ago disagrees with the bank, and by how much. */
+  const derivedOpenings = verdict.consistent ? deriveMonthStartBalances(parsed) : [];
+  const openingRows = derivedOpenings.map(entry => {
+    const sheet = findSheetForAnchorDate(entry.dateIso);
+    const current = sheet ? getDisplayedOpeningBalance(sheet) : null;
+    const src = sheet ? getOpeningBalanceSource(sheet) : "none";
+    const delta = current == null ? null : entry.amount - current;
+    const deltaText = delta == null
+      ? `<span class="bank-open-new">חדש</span>`
+      : (Math.abs(delta) < 1
+          ? `<span class="bank-open-same">זהה</span>`
+          : `<span class="bank-open-diff">${delta > 0 ? "+" : ""}${money(delta)}</span>`);
+    return `<div class="bank-open-row">
+      <span class="bank-open-month">${escapeHtmlAttr(sheet || entry.dateIso.slice(0,7))}</span>
+      <span class="bank-open-bank">${money(entry.amount)}</span>
+      <span class="bank-open-cur">${current == null ? "—" : money(current)}<small>${escapeHtmlAttr(OPENING_SOURCE_LABELS[src] || src)}</small></span>
+      ${deltaText}
+    </div>`;
+  }).join("");
+  const openingsBlock = derivedOpenings.length ? `
+    <div class="bank-openings">
+      <div class="bank-openings-title">יתרות פתיחה שאפשר לקבוע מהקובץ</div>
+      <div class="bank-openings-sub">
+        היתרה הרצה בקובץ קובעת כמה היה בעו״ש ב-1 בכל חודש. שמירה תחליף את
+        יתרות הפתיחה שהוקלדו ידנית בנתון מדוד מהבנק.
+      </div>
+      <div class="bank-open-head">
+        <span>חודש</span><span>לפי הבנק</span><span>באפליקציה</span><span>הפרש</span>
+      </div>
+      ${openingRows}
+      <div class="bank-actions">
+        <button type="button" class="success-btn" data-bank-month-anchors="1">
+          שמירת ${derivedOpenings.length} יתרות פתיחה מהבנק
+        </button>
+      </div>
+    </div>` : "";
+
   const map = getBankLabelMapping();
   const cards = getPaymentMethods().filter(m => !m.isImmediate && !m.archivedAtIso);
   const labelOptions = (selected) => [`<option value="">— ללא —</option>`]
@@ -11433,6 +11611,7 @@ function renderBankSync(){
 
   root.innerHTML = `
     ${verdictBlock}
+    ${openingsBlock}
     ${anchorBlock}
     <div class="section open" style="margin-top:16px">
       <!-- .header renders a chevron via CSS, so it must actually collapse -
@@ -11460,6 +11639,52 @@ function saveAnchorFromBankStatement(){
   }, anchors.length));
   saveBalanceAnchors(anchors.filter(Boolean));
   showToast("העוגן נשמר מהקובץ.", "success");
+  render();
+}
+
+/* Writes one opening-balance anchor per month covered by the statement. This is
+   what actually replaces the typed openings: anchors outrank manual/summary in
+   getDisplayedOpeningBalance, so after this runs every affected month opens on
+   a measured bank balance instead of a number somebody remembered.
+
+   Refuses to run on an inconsistent file. The whole value here is that the
+   running-balance column is trustworthy; if verifyBankStatementBalance found
+   mismatches, that assumption is already broken and writing 9 anchors off it
+   would spread the damage rather than contain it. */
+function saveMonthStartAnchorsFromBankStatement(){
+  if(!bankSyncState) return;
+  const { parsed, verdict } = bankSyncState;
+  if(!verdict.consistent){
+    showToast("הקובץ לא עקבי — לא כותבים עוגנים ממנו.", "error");
+    return;
+  }
+  const derived = deriveMonthStartBalances(parsed);
+  if(!derived.length){
+    showToast("אין חודשים שאפשר לגזור להם יתרת פתיחה מהקובץ.", "error");
+    return;
+  }
+  const anchors = getBalanceAnchors();
+  // Re-importing the same file must not pile up identical anchors. An anchor
+  // whose date AND amount already exist adds no information.
+  const existing = new Set(anchors.map(a => `${a.dateIso}|${Number(a.amount).toFixed(2)}`));
+  let added = 0;
+  derived.forEach((entry, i) => {
+    if(existing.has(`${entry.dateIso}|${Number(entry.amount).toFixed(2)}`)) return;
+    const normalized = normalizeBalanceAnchor({
+      dateIso: entry.dateIso,
+      amount: entry.amount,
+      enteredBy: currentUser,
+      source: "statement-import",
+      note: `יתרת פתיחה מדוח הבנק (לפי התנועה מ-${entry.basedOn})`
+    }, anchors.length + i);
+    if(normalized){ anchors.push(normalized); added++; }
+  });
+  if(!added){
+    showToast("כל יתרות הפתיחה מהקובץ כבר שמורות.", "success");
+    return;
+  }
+  saveBalanceAnchors(anchors);
+  showToast(`נשמרו ${added} יתרות פתיחה מהבנק.`, "success", {duration:6000});
   render();
 }
 
@@ -11899,20 +12124,15 @@ function buildCCImportTable(){
    entirely in whichever month the dropdown happened to show.
    Returns the dropdown value only when routing genuinely cannot be determined:
    no card, or a date the parser could not read. Those rows are still imported,
-   so nothing is silently dropped. */
+   so nothing is silently dropped.
+
+   18.09 "\u05d7\u05d5\u05e9\u05d1\u05d9\u05df \u05de\u05d7\u05d3\u05e9": no longer prefers the statement's own stated billing
+   date (D-08/row.billingDateRaw). Raz: an expense belongs to the month it was
+   PURCHASED in, by the card's own cycle day - never by what the bank chooses
+   to call the bill that collects it. A single getBillingSheetForExpense call
+   is now the only routing rule in the app, for both import and manual entry. */
 function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
   try {
-    // D-08 \u00a73: when the statement itself states a billing date, that IS the
-    // month - no per-row recalculation. This is deliberately not merely a
-    // tie-breaker: getBillingSheetForExpense's cycleDay heuristic is exactly
-    // what D-08 found unreliable (verified against 17 real Mizrahi rows, off
-    // by a full month). A stated date, when present, is ground truth and
-    // bypasses that heuristic entirely rather than being reconciled with it.
-    const billingIso = toIsoDate(row.billingDateRaw);
-    if(billingIso){
-      const [by, bm] = billingIso.split("-").map(Number);
-      if(by && bm) return resolveSheetName(formatSheetFromMonth(by, bm));
-    }
     const iso = toIsoDate(row.date_raw);
     if(!iso) return fallbackSheet;
     const computed = getBillingSheetForExpense(iso, payment, isImmediate ? "\u05db\u05df" : "", shiftMonths || 0);
@@ -11921,10 +12141,10 @@ function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallba
     return fallbackSheet;
   }
 }
-/* domain-risk-reviewer 2026-09-15 (H-2): preferring the statement's stated
- * billing date (below, via resolveImportTargetSheet) makes an import land on
- * a FUTURE month more often than the old per-row calculation did - and this
- * function has never checked whether its target sheet is closed, because
+/* domain-risk-reviewer 2026-09-15 (H-2, now moot - see 18.09 note above:
+ * resolveImportTargetSheet no longer prefers a stated billing date, so this
+ * is no more likely to land on a future month than manual entry always was).
+ * This function has never checked whether its target sheet is closed, because
  * MONTH_CLOSE_SPEC's month-close concept (expense_app_month_close_v1,
  * closeMonth/reopenMonth) does not exist in this file yet. No check is added
  * here for that reason: there is nothing to check against today, and a stub
@@ -11974,9 +12194,7 @@ function confirmCCImport(){
     // domain-risk-reviewer 2026-09-15 (M-3): addNewExpense already does this
     // for manual entry (line ~8493); confirmCCImport never did, so an import
     // landing on a month with no rows yet skipped the recurring-income seed
-    // that ensureSheetExists provides. Preferring the statement's stated
-    // billing date makes landing on a not-yet-touched future month more
-    // common, not less, so this stops being a rare edge case.
+    // that ensureSheetExists provides.
     ensureSheetExists(targetSheet);
     if(!overrides[targetSheet]) overrides[targetSheet] = [];
     countBySheet[targetSheet] = (countBySheet[targetSheet] || 0) + 1;
