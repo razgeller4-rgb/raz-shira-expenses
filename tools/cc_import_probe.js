@@ -151,10 +151,17 @@ if (result.format === "max") {
     const fallbackSheet = "FALLBACK_SHOULD_NOT_APPEAR";
     const withStated = api.resolveImportTargetSheet(sample, "ויזה מזרחי", false, 0, fallbackSheet);
     const withoutStated = api.resolveImportTargetSheet({ ...sample, billingDateRaw: "" }, "ויזה מזרחי", false, 0, fallbackSheet);
+    /* INVERTED 21.09.2026. This assertion was written for D-08, when a stated
+       billing date was supposed to WIN over the purchase date. The 18.09
+       "חושבין מחדש" deleted that preference on Raz's explicit instruction -
+       "החיוב הוא ב10 לאוקטובר... זה הוצאות של ספטמבר" - so the statement's own
+       billing date must now be ignored entirely and both paths must agree.
+       The old assertion kept failing green-to-red against correct code; left
+       as-is it would have trained us to ignore this probe. */
     check(
-      "a row WITH a stated billing date routes differently than the old date-only calculation",
-      withStated !== withoutStated,
-      `stated -> ${withStated}, calculated -> ${withoutStated} (if these match, the statement's date is being silently ignored)`
+      "a stated billing date is IGNORED - routing matches the date-only calculation",
+      withStated === withoutStated,
+      `stated -> ${withStated}, calculated -> ${withoutStated} (they must match; a difference means billingDateRaw is steering routing again)`
     );
     check(
       "with NO billing date, routing still produces something (regression: fallback path not broken)",

@@ -11979,18 +11979,16 @@ function showCCImportModal(result, filename){
   if(guessName) paySel.value = guessName;
   paySel.onchange = updateCCImportSummary;
 
-  // Populate sheet selector
+  // Populate sheet selector. F-22: the list is now the app's REAL sheet list
+  // (newest first), not six months counted back from today - the old list could
+  // not offer a sheet the user actually has, and offered months that do not
+  // exist as sheets at all.
   const sheetSel = document.getElementById("ccImportSheet");
-  const now = new Date();
-  const opts = [];
-  for(let i = 0; i < 6; i++){
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const heb = ["\u05d9\u05e0\u05d5\u05d0\u05e8","\u05e4\u05d1\u05e8\u05d5\u05d0\u05e8","\u05de\u05e8\u05e5","\u05d0\u05e4\u05e8\u05d9\u05dc","\u05de\u05d0\u05d9","\u05d9\u05d5\u05e0\u05d9","\u05d9\u05d5\u05dc\u05d9","\u05d0\u05d5\u05d2\u05d5\u05e1\u05d8","\u05e1\u05e4\u05d8\u05de\u05d1\u05e8","\u05d0\u05d5\u05e7\u05d8\u05d5\u05d1\u05e8","\u05e0\u05d5\u05d1\u05de\u05d1\u05e8","\u05d3\u05e6\u05de\u05d1\u05e8"];
-    const lbl = heb[d.getMonth()] + " " + String(d.getFullYear()).slice(2);
-    opts.push("<option value=\""+lbl+"\">" + lbl + "</option>");
-  }
-  sheetSel.innerHTML = opts.join("");
-  sheetSel.value = selectedSheet;
+  sheetSel.innerHTML = getCCImportSheetChoices()
+    .map(s => "<option value=\""+escapeHtmlAttr(s)+"\">"+escapeHtmlAttr(s)+"</option>")
+    .join("");
+  sheetSel.value = CC_IMPORT_SHEET_AUTO;
+  sheetSel.onchange = buildCCImportTable;
 
   // Detected info
   const det = document.getElementById("ccImportDetected");
@@ -12047,24 +12045,80 @@ function findDuplicateExpense(txn){
   return false;
 }
 
-/* Renders the month an import row will land in, next to its date. The routing
-   itself is done by resolveImportTargetSheet; this is purely so the user can
-   see it before committing. The badge is highlighted when the destination is
-   not the month the dropdown shows, since that is the case worth noticing. */
+/* \u2500\u2500 F-22 (21.09.2026): the target sheet is the USER's call, not a derivation \u2500\u2500
+   Raz, from his phone, after the Mizrahi import: "\u05d4\u05d4\u05d5\u05e6\u05d0\u05d5\u05ea \u05de\u05d49/9 \u05e9\u05d5\u05d9\u05d9\u05db\u05d5 \u05e2\u05dc \u05e4\u05d9
+   \u05d7\u05d1\u05e8\u05ea \u05d4\u05d0\u05e9\u05e8\u05d0\u05d9 \u05dc\u05d2\u05d9\u05dc\u05d9\u05d5\u05df \u05e1\u05e4\u05d8\u05de\u05d1\u05e8 \u05db\u05d1\u05e8, \u05d5\u05dc\u05d0 \u05e0\u05db\u05dc\u05dc\u05d5 \u05d1\u05d4\u05d5\u05e6\u05d0\u05d5\u05ea \u05e9\u05dc \u05d7\u05d5\u05d3\u05e9 \u05d0\u05d5\u05d2\u05d5\u05e1\u05d8... \u05d6\u05d4 \u05dc\u05de\u05d4
+   \u05d4\u05e9\u05dc\u05d9\u05d8\u05d4 \u05d4\u05d9\u05d3\u05e0\u05d9\u05ea \u05e9\u05dc\u05d9 \u05d7\u05e9\u05d5\u05d1\u05d4 \u05d1\u05d1\u05d7\u05d9\u05e8\u05ea \u05d2\u05d9\u05dc\u05d9\u05d5\u05df."
+
+   Measured, not assumed: \u05d5\u05d9\u05d6\u05d4 \u05de\u05d6\u05e8\u05d7\u05d9 is configured cycleDay=10, so a purchase on
+   09/09 (day 9 < 10) routes back to \u05d0\u05d5\u05d2\u05d5\u05e1\u05d8. The card's real statement put that
+   same purchase on the bill of 11/10 - i.e. \u05e1\u05e4\u05d8\u05de\u05d1\u05e8. The cycle-day model and the
+   issuer disagree, and the issuer is the one holding the money. Rather than
+   guess a new cycle day from one statement (exactly the derived-model complexity
+   the 18.09 reset removed), the routing stays as the DEFAULT and the user gets a
+   real override.
+
+   Three levels, most specific wins:
+     1. per-row override  (row._sheetOverride)  - one transaction
+     2. global override   (the "\u05d2\u05d9\u05dc\u05d9\u05d5\u05df \u05d9\u05e2\u05d3" dropdown, when not \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9) - whole file
+     3. automatic         - getBillingSheetForExpense, unchanged
+
+   Note what did NOT change: resolveImportTargetSheet keeps its exact signature
+   and behaviour, so it remains the single shared routing rule with manual entry
+   (guarded by consistency_audit_probe section F). The override is a layer on
+   top of it, never a second formula inside it. */
+const CC_IMPORT_SHEET_AUTO = "\u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 \u2014 \u05dc\u05e4\u05d9 \u05de\u05d7\u05d6\u05d5\u05e8 \u05d4\u05db\u05e8\u05d8\u05d9\u05e1";
+
+function getCCImportSheetChoices(){
+  syncSheetOptions();
+  const all = [...SHEET_OPTIONS].reverse();
+  if(selectedSheet && !all.includes(selectedSheet)) all.unshift(selectedSheet);
+  return [CC_IMPORT_SHEET_AUTO, ...all];
+}
+
+/* The global dropdown's value, or "" when it is left on \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9. */
+function getCCImportForcedSheet(){
+  const el = document.getElementById("ccImportSheet");
+  const value = el ? String(el.value || "") : "";
+  return (!value || value === CC_IMPORT_SHEET_AUTO) ? "" : value;
+}
+
+/* The one place that answers "where does this import row go?". Returns the
+   sheet plus WHY, so the preview can tell the user which of the three levels
+   decided it instead of just showing a month with no explanation. */
+function resolveImportRowSheet(row, payment, isImmediate, shiftMonths, fallbackSheet){
+  const rowOverride = String(row && row._sheetOverride || "").trim();
+  if(rowOverride && rowOverride !== CC_IMPORT_SHEET_AUTO){
+    return {sheet: rowOverride, origin: "row"};
+  }
+  const forced = getCCImportForcedSheet();
+  if(forced) return {sheet: forced, origin: "global"};
+  return {
+    sheet: resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallbackSheet),
+    origin: "auto"
+  };
+}
+
+/* Renders the month an import row will land in, next to its date, before
+   anything is committed. Colour encodes the ORIGIN, not "is it different from
+   the dropdown" - under F-22 the dropdown may itself be the thing deciding. */
 function describeImportTargetSheet(row, index){
   try {
-    const fallback = (document.getElementById("ccImportSheet") || {}).value || selectedSheet;
     const payment = row.payment || (document.getElementById("ccImportPayment") || {}).value || "";
     if(!payment) return "";
     const isImm = isPaymentMethodImmediate(payment) || String(row.immediate || "").trim() === "\u05db\u05df";
     const shift = Math.max(0, Number(row.billingShiftMonths || 0));
-    const target = resolveImportTargetSheet(row, payment, isImm, shift, fallback);
+    const {sheet: target, origin} = resolveImportRowSheet(row, payment, isImm, shift, selectedSheet);
     if(!target) return "";
-    const differs = target !== fallback;
-    const style = differs
-      ? "background:#d4833a;color:#fff;font-weight:800"
+    const manual = origin !== "auto";
+    const style = manual
+      ? "background:var(--accent,#3a6ed4);color:#fff;font-weight:800"
       : "background:var(--line,#ddd);color:var(--text-2,#555);font-weight:700";
-    return ` <span style="display:inline-block;${style};font-size:10px;border-radius:6px;padding:1px 6px;margin-inline-start:6px">\u2190 ${escapeHtmlAttr(target)}</span>`;
+    const mark = manual ? "\u270e " : "\u2190 ";
+    const title = origin === "row" ? "\u05e0\u05d1\u05d7\u05e8 \u05d9\u05d3\u05e0\u05d9\u05ea \u05dc\u05e9\u05d5\u05e8\u05d4 \u05d4\u05d6\u05d5"
+      : origin === "global" ? "\u05e0\u05d1\u05d7\u05e8 \u05d9\u05d3\u05e0\u05d9\u05ea \u05dc\u05db\u05dc \u05d4\u05e7\u05d5\u05d1\u05e5"
+      : "\u05d7\u05d5\u05e9\u05d1 \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9\u05ea \u05dc\u05e4\u05d9 \u05de\u05d7\u05d6\u05d5\u05e8 \u05d4\u05d7\u05d9\u05d5\u05d1 \u05e9\u05dc \u05d4\u05db\u05e8\u05d8\u05d9\u05e1";
+    return ` <span title="${escapeHtmlAttr(title)}" style="display:inline-block;${style};font-size:10px;border-radius:6px;padding:1px 6px;margin-inline-start:6px">${mark}${escapeHtmlAttr(target)}</span>`;
   } catch(e){
     return "";
   }
@@ -12075,6 +12129,16 @@ function buildCCImportTable(){
     .concat(cats.map(c => ({value:c, label:c})));
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
   const paymentOptionDefs = getImportPaymentOptions();
+  // F-22: a row's "auto" means "whatever the form above decided" - which is the
+  // global override when one is set, and the billing cycle otherwise. Spelling
+  // that out beats a bare "\u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9" that means two different things.
+  const forcedSheet = getCCImportForcedSheet();
+  const sheetOptionDefs = getCCImportSheetChoices().map(s => ({
+    value: s,
+    label: s === CC_IMPORT_SHEET_AUTO
+      ? (forcedSheet ? `\u05db\u05de\u05d5 \u05db\u05dc \u05d4\u05e7\u05d5\u05d1\u05e5 (${forcedSheet})` : "\u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 \u2014 \u05dc\u05e4\u05d9 \u05de\u05d7\u05d6\u05d5\u05e8 \u05d4\u05db\u05e8\u05d8\u05d9\u05e1")
+      : s
+  }));
 
   const selectStyle = "padding:7px 8px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px;width:100%;box-sizing:border-box";
 
@@ -12100,6 +12164,10 @@ function buildCCImportTable(){
         <select onchange="updateCCImportField(${i}, 'payment', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(paymentOptionDefs, row.payment)}</select>
         <select onchange="updateCCImportField(${i}, 'category', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(categoryOptionDefs, row.category)}</select>
         <select onchange="updateCCImportField(${i}, 'type', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(typeOptionDefs, row.type)}</select>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-top:10px">
+        <span style="font-size:11px;font-weight:700;color:var(--muted);white-space:nowrap">\u05d2\u05d9\u05dc\u05d9\u05d5\u05df</span>
+        <select onchange="updateCCImportField(${i}, '_sheetOverride', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(sheetOptionDefs, row._sheetOverride || CC_IMPORT_SHEET_AUTO)}</select>
       </div>
       <div style="display:flex;gap:16px;margin-top:10px">
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;color:var(--text-2)">
@@ -12159,7 +12227,10 @@ function resolveImportTargetSheet(row, payment, isImmediate, shiftMonths, fallba
 function confirmCCImport(){
  try {
   const defaultPayment = document.getElementById("ccImportPayment").value || "";
-  const sheet = document.getElementById("ccImportSheet").value || selectedSheet;
+  // F-22: the dropdown is no longer the fallback - it is one of three override
+  // levels, resolved per row by resolveImportRowSheet. selectedSheet stays the
+  // last-resort landing spot for a row whose date the parser could not read.
+  const sheet = selectedSheet;
   const toImport = ccImportRows.filter(r => !r._skip);
   if(!toImport.length){ showToast("אין עסקאות לייבוא. סמן לפחות שורה אחת (ה-checkbox בצד).", "error"); return; }
   const unresolved = toImport.filter(r => !(r.payment || defaultPayment || ""));
@@ -12190,7 +12261,7 @@ function confirmCCImport(){
       rememberMerchantMapping(r.merchant, {category:r.category, payment, type:r.type});
     }
     const shift = Math.max(0, Number(r.billingShiftMonths || 0));
-    const targetSheet = resolveImportTargetSheet(r, payment, isImm, shift, sheet);
+    const targetSheet = resolveImportRowSheet(r, payment, isImm, shift, sheet).sheet;
     // domain-risk-reviewer 2026-09-15 (M-3): addNewExpense already does this
     // for manual entry (line ~8493); confirmCCImport never did, so an import
     // landing on a month with no rows yet skipped the recurring-income seed
@@ -12231,8 +12302,15 @@ function confirmCCImport(){
   // what was just imported rather than an arbitrary month.
   const importedSheets = Object.keys(countBySheet);
   selectedSheet = importedSheets.sort((x, y) => countBySheet[y] - countBySheet[x])[0] || sheet;
+  // Name every sheet that received rows. The old message always claimed the
+  // dropdown's month even when the import had been split across two sheets -
+  // which is precisely how 15 Mizrahi rows landed in October unnoticed.
+  const whereLabel = importedSheets
+    .sort((x, y) => countBySheet[y] - countBySheet[x])
+    .map(s => `${s} (${countBySheet[s]})`)
+    .join(" · ");
   render();
-  showToast("יובאו " + toImport.length + " עסקאות לגיליון " + sheet + " בהצלחה!", "success", {
+  showToast("יובאו " + toImport.length + " עסקאות: " + whereLabel, "success", {
     actionLabel: "בטל ייבוא",
     onAction: () => restoreLocalRecoveryPoint(preImportRecoveryPoint.id)
   });
@@ -12260,10 +12338,13 @@ function confirmCCImport(){
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">כרטיס ברירת מחדל לשורות שלא זוהו</div>
         <select id="ccImportPayment" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px"></select>
       </div>
-      <div style="flex:1;min-width:120px">
-        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">גיליון יעד</div>
+      <div style="flex:1;min-width:160px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">גיליון יעד לכל הקובץ</div>
         <select id="ccImportSheet" style="width:100%;padding:9px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--text);font-size:14px"></select>
       </div>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin:-8px 0 16px;line-height:1.5">
+      באוטומטי כל שורה מנותבת לפי מחזור החיוב של הכרטיס. אם חברת האשראי שייכה אחרת — בחר כאן גיליון לכל הקובץ, או שנה גיליון לשורה בודדת למטה. התווית שליד התאריך מראה לאן השורה תיכנס בפועל.
     </div>
     <div id="ccImportTable" style="overflow-x:auto;margin-bottom:16px"></div>
     <div style="display:flex;gap:10px;justify-content:flex-end">
