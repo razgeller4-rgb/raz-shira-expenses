@@ -78,12 +78,20 @@ class C { constructor(){ this.data={datasets:[]}; this.options={}; } update(){} 
 const X = { utils:{book_new:()=>({}),json_to_sheet:()=>({}),book_append_sheet:noop,sheet_to_json:()=>[]}, writeFile:noop, read:()=>({SheetNames:[],Sheets:{}}) };
 process.on("unhandledRejection", () => {});
 
-localStorage.setItem("demo__expense_app_active_user_v1", user);
+/* The demo namespaces every key with "demo__" and production does not, so the
+   seed prefix has to follow the file under test. This used to hardcode
+   "demo__": run against expense-app-v37.html it seeded keys production never
+   reads, so the app loaded an EMPTY dataset, fell back to the 6 base sheets,
+   and the three "should flag this known duplicate" assertions failed - looking
+   exactly like a production regression while production was in fact fine.
+   Fixed 21.09; same sniff consistency_audit_probe.js already used. */
+const NS = /const STORAGE_NS_PREFIX\s*=\s*"demo__"/.test(html) ? "demo__" : "";
+localStorage.setItem(`${NS}expense_app_active_user_v1`, user);
 for (const base of ["expense_app_overrides_v29","expense_app_payment_methods_v1",
                     "expense_app_manual_settings_v35","expense_app_income_entries_v1",
                     "expense_app_debt_entries_v1"]) {
   const v = raw(base + suffix);
-  if (v != null) localStorage.setItem(`demo__${base}${suffix}`, v);
+  if (v != null) localStorage.setItem(`${NS}${base}${suffix}`, v);
 }
 
 const scripts = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/script>/g)].map((m) => m[1]);
