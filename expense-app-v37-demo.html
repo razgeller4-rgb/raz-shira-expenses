@@ -10909,8 +10909,29 @@ function guessPaymentMethodForImport(cardLabel="", cardLast4="", cardBrand="", s
   }
   return candidates[0] ? candidates[0].name : "";
 }
-function getImportPaymentOptions(){
-  return [{value:"", label:"בחר כרטיס"}, ...getPaymentOptions(true)];
+/* Options for the credit-card import form's card pickers.
+   Reported by Raz 21.09: every row showed "העברה בנקאית" as its card.
+
+   Cause: this returned [{value:""}, ...getPaymentOptions(true)], and
+   getPaymentOptions(true) ALSO prepends a {value:""} entry labelled
+   "העברה בנקאית" - two options sharing the empty value. buildCCImportOptionMarkup
+   marks every option whose value matches as selected, and a browser honours the
+   LAST one, so an unassigned row rendered as a bank transfer. Meanwhile
+   confirmCCImport reads "" as "use the default card" (r.payment || defaultPayment).
+   The form said one thing and the import would have written another - the same
+   class of bug as the sheet <select> caught earlier today.
+
+   Two fixes, both deliberate:
+   1. Exactly one empty option now. A row in a credit-card statement is never a
+      bank transfer, so that entry has no business in this list at all.
+   2. For a row, "" does not mean "nothing" - it means "whatever the default card
+      above is". The label now says so, instead of leaving the user to guess. */
+function getImportPaymentOptions(forRow=false){
+  const fallback = forRow
+    ? String((document.getElementById("ccImportPayment") || {}).value || "").trim()
+    : "";
+  const emptyLabel = fallback ? `כמו ברירת המחדל (${fallback})` : "בחר כרטיס";
+  return [{value:"", label:emptyLabel}, ...getPaymentOptions(false)];
 }
 
 /* pdf.js is fetched on first use only. The app already pulls xlsx and chart.js
@@ -11977,7 +11998,9 @@ function showCCImportModal(result, filename){
   // Auto-guess the default card for unmatched rows, using the robust matcher.
   const guessName = guessPaymentMethodForImport(result.cardName || "", result.last4 || "", result.cardName || "", "");
   if(guessName) paySel.value = guessName;
-  paySel.onchange = updateCCImportSummary;
+  // Rebuild the whole table, not just the summary: every row's "כמו ברירת
+  // המחדל (X)" label and every target-sheet badge is derived from this value.
+  paySel.onchange = buildCCImportTable;
 
   // Populate sheet selector. F-22: the list is now the app's REAL sheet list
   // (newest first), not six months counted back from today - the old list could
@@ -12155,7 +12178,7 @@ function buildCCImportTable(){
   const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
     .concat(cats.map(c => ({value:c, label:c})));
   const typeOptionDefs = ["\u05de\u05e9\u05ea\u05e0\u05d4","\u05e7\u05d1\u05d5\u05e2\u05d4"].map(t => ({value:t, label:t}));
-  const paymentOptionDefs = getImportPaymentOptions();
+  const paymentOptionDefs = getImportPaymentOptions(true);
   // F-22: a row's "auto" means "whatever the form above decided" - which is the
   // global override when one is set, and the billing cycle otherwise. Spelling
   // that out beats a bare "\u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9" that means two different things.

@@ -95,7 +95,8 @@ const scripts = [...html.matchAll(/<script(?![^>]*\ssrc=)[^>]*>([\s\S]*?)<\/scri
 const main = scripts.reduce((a, b) => (b.length > a.length ? b : a), "");
 const EXPORTS = ["syncSheetOptions","resolveImportTargetSheet","resolveImportRowSheet",
                  "getCCImportForcedSheet","getCCImportSheetChoices","getBillingSheetForExpense",
-                 "getPaymentMethodByName","isPaymentMethodImmediate","toIsoDate"];
+                 "getPaymentMethodByName","isPaymentMethodImmediate","toIsoDate",
+                 "getImportPaymentOptions","getPaymentMethods"];
 let api;
 try {
   api = new Function(
@@ -203,6 +204,37 @@ if (!api.getCCImportSheetChoices().includes(future)) flag(`the globally-forced s
 else pass(`the globally-forced sheet is always present in its own list`);
 api.setImportRows([]);
 setDropdown(api.AUTO);
+
+console.log("\nH. The card picker must not offer two options with the same value");
+/* Reported by Raz 21.09: every import row displayed "העברה בנקאית" as its card.
+   getImportPaymentOptions returned TWO options with value "" - its own
+   "בחר כרטיס" plus the "העברה בנקאית" that getPaymentOptions(true) prepends.
+   buildCCImportOptionMarkup marks every value match as selected and a browser
+   honours the LAST, so an unassigned row rendered as a bank transfer while
+   confirmCCImport actually treated "" as "use the default card". */
+const globalOpts = api.getImportPaymentOptions(false);
+const emptyGlobal = globalOpts.filter(o => String(o.value || "") === "");
+if (emptyGlobal.length !== 1) flag(`global card picker has ${emptyGlobal.length} options with value "" - a browser will pick the last one: ${JSON.stringify(emptyGlobal.map(o=>o.label))}`);
+else pass(`global card picker: exactly one empty option ("${emptyGlobal[0].label}")`);
+
+getEl("ccImportPayment").value = CARD;
+const rowOpts = api.getImportPaymentOptions(true);
+const emptyRow = rowOpts.filter(o => String(o.value || "") === "");
+if (emptyRow.length !== 1) flag(`row card picker has ${emptyRow.length} options with value ""`);
+else if (!emptyRow[0].label.includes(CARD)) flag(`a row's empty option should name the default card (${CARD}); it says "${emptyRow[0].label}"`);
+else pass(`row empty option names the actual fallback: "${emptyRow[0].label}"`);
+
+// A credit-card statement row is never a bank transfer - that entry must be gone.
+if (rowOpts.some(o => /העברה בנקאית/.test(String(o.label || ""))))
+  flag(`"העברה בנקאית" is still offered in a credit-card import row`);
+else pass(`no "העברה בנקאית" entry in a credit-card import row`);
+
+// Every real card must still be offered.
+const cardNames = api.getPaymentMethods().map(m => m.name);
+const missingCards = cardNames.filter(n => !rowOpts.some(o => o.value === n));
+if (missingCards.length) flag(`cards dropped from the picker: ${missingCards.join(", ")}`);
+else pass(`all ${cardNames.length} cards still offered`);
+getEl("ccImportPayment").value = "";
 
 console.log(`\n${issues ? `${issues} failure(s)` : "F-22 verified: manual sheet control works at all three levels"}`);
 process.exit(issues ? 1 : 0);
