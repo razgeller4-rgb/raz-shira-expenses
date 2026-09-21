@@ -103,6 +103,7 @@ try {
     "requestAnimationFrame","getComputedStyle","alert","confirm","prompt","fetch","Chart","XLSX","render",
     `${main}\n;return { sheetOptions: () => SHEET_OPTIONS, AUTO: CC_IMPORT_SHEET_AUTO, ` +
     `setSelectedSheet: (s) => { selectedSheet = s; }, getSelectedSheet: () => selectedSheet, ` +
+    `setImportRows: (r) => { ccImportRows = r; }, ` +
     `${EXPORTS.map(n=>`${n}: typeof ${n} === "undefined" ? undefined : ${n}`).join(", ")} };`
   )(
     localStorage, document, w, w.navigator, w.location, w.matchMedia, noop, w.getComputedStyle,
@@ -178,6 +179,30 @@ const real = api.sheetOptions();
 const missing = real.filter(s => !choices.includes(s));
 if (missing.length) flag(`these real sheets are not offered: ${missing.join(", ")}`);
 else pass(`all ${real.length} real sheets offered, AUTO first`);
+
+console.log("\nG. Every value the form can hold must have a matching <option>");
+/* Found live in the browser, 21.09: pinning a row to a month with no sheet yet
+   left the <select> with no matching option, so the browser displayed the FIRST
+   option ("אוטומטי") while the model still held the pinned month. The form said
+   one thing, the import would have done another. A select is only honest if its
+   option list is a superset of every value the model can hold. */
+setDropdown(api.AUTO);
+const future = "אוקטובר 26";
+api.setImportRows([{date_raw:"16/09/2026", _sheetOverride: future}]);
+const choicesWithPin = api.getCCImportSheetChoices();
+if (!choicesWithPin.includes(future)) flag(`a row pinned to "${future}" is not offered in the list - the select would silently show אוטומטי instead`);
+else pass(`pinned "${future}" appears in the list even though no such sheet exists yet`);
+
+// A statement routinely arrives before its month has a sheet.
+const nextMonth = "אוקטובר 26";
+if (!choicesWithPin.includes(nextMonth)) flag(`next month "${nextMonth}" is not offerable`);
+else pass(`future months are offerable (ensureSheetExists creates them on import)`);
+
+setDropdown(future);
+if (!api.getCCImportSheetChoices().includes(future)) flag(`the globally-forced sheet "${future}" is missing from its own list`);
+else pass(`the globally-forced sheet is always present in its own list`);
+api.setImportRows([]);
+setDropdown(api.AUTO);
 
 console.log(`\n${issues ? `${issues} failure(s)` : "F-22 verified: manual sheet control works at all three levels"}`);
 process.exit(issues ? 1 : 0);

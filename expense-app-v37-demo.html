@@ -11984,6 +11984,8 @@ function showCCImportModal(result, filename){
   // not offer a sheet the user actually has, and offered months that do not
   // exist as sheets at all.
   const sheetSel = document.getElementById("ccImportSheet");
+  sheetSel.value = CC_IMPORT_SHEET_AUTO; // clear last session's choice before the
+                                         // list is built from it
   sheetSel.innerHTML = getCCImportSheetChoices()
     .map(s => "<option value=\""+escapeHtmlAttr(s)+"\">"+escapeHtmlAttr(s)+"</option>")
     .join("");
@@ -12069,11 +12071,36 @@ function findDuplicateExpense(txn){
    top of it, never a second formula inside it. */
 const CC_IMPORT_SHEET_AUTO = "\u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9 \u2014 \u05dc\u05e4\u05d9 \u05de\u05d7\u05d6\u05d5\u05e8 \u05d4\u05db\u05e8\u05d8\u05d9\u05e1";
 
+/* Every sheet the user may pick, newest first.
+   Three sources, and all three are load-bearing:
+     - SHEET_OPTIONS: the sheets that actually exist.
+     - the next 3 months: a statement routinely arrives before its month has a
+       sheet. ensureSheetExists() creates it on import, so offering it is safe.
+     - whatever is ALREADY selected anywhere in this form.
+   That last one is not defensive padding. A <select> whose value has no
+   matching <option> silently displays the first option instead, so pinning a
+   row to a month missing from the list showed "אוטומטי" on screen while the
+   model still held the pinned month - the form would have said one thing and
+   the import done another. Caught live in the browser, 21.09. */
 function getCCImportSheetChoices(){
   syncSheetOptions();
-  const all = [...SHEET_OPTIONS].reverse();
-  if(selectedSheet && !all.includes(selectedSheet)) all.unshift(selectedSheet);
-  return [CC_IMPORT_SHEET_AUTO, ...all];
+  const seen = new Set(SHEET_OPTIONS);
+  const now = new Date();
+  for(let i = 0; i <= 3; i++){
+    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+    seen.add(formatSheetFromMonth(d.getFullYear(), d.getMonth() + 1));
+  }
+  if(selectedSheet) seen.add(selectedSheet);
+  (Array.isArray(ccImportRows) ? ccImportRows : []).forEach(row => {
+    const pinned = String(row && row._sheetOverride || "").trim();
+    if(pinned && pinned !== CC_IMPORT_SHEET_AUTO) seen.add(pinned);
+  });
+  const forced = getCCImportForcedSheet();
+  if(forced) seen.add(forced);
+  const sorted = [...seen]
+    .filter(sheet => { const {month, year} = getSheetMonthYear(sheet); return month && year; })
+    .sort((a,b) => getSheetSortValue(b) - getSheetSortValue(a));
+  return [CC_IMPORT_SHEET_AUTO, ...sorted];
 }
 
 /* The global dropdown's value, or "" when it is left on \u05d0\u05d5\u05d8\u05d5\u05de\u05d8\u05d9. */
