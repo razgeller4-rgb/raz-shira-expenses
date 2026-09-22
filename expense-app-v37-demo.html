@@ -51,6 +51,7 @@
      the faintest text in its own card. This measures 10.4:1. Scoped to the hero
      for now rather than repainting every green in the app in one step. */
   --hero-num: #13462D;
+  --sage: #E7F0E1;
   --accent-light: rgba(126,155,110,.14); --accent-ring: rgba(94,122,80,.34);
   /* Wood — walnut warm structural accents */
   --wood: #B07D56; --wood-strong: #8A5E3C; --wood-light: rgba(176,125,86,.14);
@@ -1219,7 +1220,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   .topbar { padding: 0 12px 0 14px; }
   .topbar-logo { font-size: 13px; }
   .topbar-logo-icon { width: 28px; height: 28px; font-size: 14px; }
-  .topbar-select { height: 30px; padding: 0 8px; font-size: 12px; }
+  .topbar-select { height: 44px; padding: 0 8px; font-size: 12px; }  /* 23.09: was 30px, under the 44px touch minimum */
 }
 @media (max-width:400px) {
   .pill-btn { padding: 5px 8px; font-size: 11px; }
@@ -1241,6 +1242,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   --accent:#A6C08F; --accent-2:#BFD4AC; --accent-strong:#8AAA72;
   /* dark mode inverts the panel, so the numeral has to come UP not down */
   --hero-num: #9FD3B0;
+  --sage: #2C3A2A;
   --accent-light:rgba(166,192,143,.16); --accent-ring:rgba(166,192,143,.42);
   --wood:#C99B72; --wood-strong:#A6764C; --wood-light:rgba(201,155,114,.16);
   --income:#7FB276; --income-light:rgba(127,178,118,.16);
@@ -1919,8 +1921,11 @@ body { background:var(--bg); }
   background:var(--surface-2); border-color:var(--border); color:var(--text);
   border-radius:14px; min-width:96px;
 }
+/* 23.09 — 38px measured on device, under the 44px minimum. The fix is free:
+   .topbar is min-height:64px with padding-block:10px, leaving exactly 44px of
+   content box, so nothing reflows. */
 .topbar-dark-btn,.topbar-mobile-menu {
-  min-width:38px; min-height:38px; border:1px solid var(--border);
+  min-width:44px; min-height:44px; border:1px solid var(--border);
   border-radius:14px; background:var(--surface); display:inline-flex;
   align-items:center; justify-content:center;
 }
@@ -1930,6 +1935,9 @@ body { background:var(--bg); }
   background:var(--surface); border:1px solid var(--border); border-radius:18px;
   box-shadow:var(--shadow-xs); color:var(--text-2);
 }
+/* required: the author `display:flex` above out-ranks the UA stylesheet's
+   [hidden]{display:none}, so setting .hidden in JS alone would do nothing. */
+.app-status-strip[hidden] { display:none; }
 .status-dot { width:11px; height:11px; border-radius:50%; background:var(--warn); flex:0 0 auto; box-shadow:0 0 0 4px var(--warn-light); }
 .app-status-strip.is-connected .status-dot { background:var(--accent); box-shadow:0 0 0 4px var(--accent-light); }
 .app-status-strip.is-error .status-dot { background:var(--expense); box-shadow:0 0 0 4px var(--expense-light); }
@@ -2016,25 +2024,59 @@ body { background:var(--bg); }
    - Text is in normal flow. Nothing is position:absolute over an image, which is
      what forced the v2 numeral down to 31px and broke dark mode.
    - Theme-aware: the panel uses var(--surface), so dark mode inverts for free. */
-.hero-v3 {
-  /* full-bleed out of the page gutter, like the reference - no card, no border */
-  width:calc(100% + 32px); margin-inline:-16px; margin-block:4px 18px;
-}
+/* 23.09 — the full bleed is GONE. Measured on the shipped build: the wood ran
+   dead flat tangent against both bezels for 145 consecutive rows, 57% of the
+   card's height. option-01 insets the object ~18px with page visible on both
+   sides and a contact shadow under it; an object that touches both edges of the
+   screen stops reading as an object. Now it shares the page gutter with the
+   switch and the banners below it, which all measure x=12..372. */
+.hero-v3 { margin-block:4px 18px; }
 /* The frame is deliberately NOT uniform. In option-01 the wooden body is a wedge:
    thin along the top, and thick on one side where the house is carved into it.
    A uniform 16px ring reads as a rounded rectangle with a brown border - which is
    exactly what v3.0 looked like on first render. The asymmetric padding is what
    makes the silhouette read as an object instead of a box, and it is also what
    creates the surface the house icon needs to sit on. */
+/* ⚠️ NEVER use the `padding` shorthand on .hv-frame, in any rule or media query.
+   v3.1 set padding-inline-start:54px here and then `@media (max-width:400px){
+   .hv-frame{padding:14px} }` silently reset it, so on every shipping iPhone the
+   wedge collapsed back to a uniform ring - measured 14px / 13px / 14px rails,
+   ratio 1.08. The whole headline change of that round did not render, and the
+   card read as "a rounded rectangle with a brown border", which is exactly what
+   the comment above it warned about. Logical longhands only, everywhere. */
 .hv-frame {
   position:relative;
-  padding:14px 14px 18px;
-  padding-inline-start:54px;
-  border-radius:74px 30px 62px 34px / 52px 62px 34px 66px;
+  padding-block:12px 18px;
+  padding-inline:46px 12px;
+  /* Percentage radii, not px: with px the top edge measured flat within 1px for
+     303px - 79% of the width - against a ~13px longest flat run in option-01.
+     Percentages make a straight section geometrically impossible. Each edge pair
+     sums to 100 (58+42, 46+54 / 55+45, 45+55) so the curve closes cleanly. */
+  border-radius:58% 42% 46% 54% / 55% 45% 55% 45%;
   background:
     radial-gradient(130% 80% at 8% 12%, rgba(246,223,198,.85), transparent 46%),
     linear-gradient(152deg, #E4C7A4 0%, #CDA179 30%, #BB9069 58%, #96714C 100%);
   box-shadow:0 16px 28px -16px rgba(92,64,38,.45), 0 2px 5px rgba(92,64,38,.16);
+}
+/* The wood had NO dark theme at all - sampled #C59D78 at the same pixel in both
+   captures, byte-identical, so a light-mode object was glowing around a black
+   panel. All four rules are needed: darkening only the linear-gradient leaves
+   the light radial and the ::after lip blowing out the top-left corner. */
+[data-theme="dark"] .hv-frame{
+  background:
+    radial-gradient(130% 80% at 8% 12%, rgba(168,132,94,.26), transparent 46%),
+    linear-gradient(152deg,#7A6047 0%,#6B5540 30%,#55412E 58%,#3E2E1F 100%);
+  box-shadow:inset 0 1.5px 0 rgba(214,182,146,.28),
+             0 18px 30px -18px rgba(0,0,0,.65),
+             0 2px 6px rgba(0,0,0,.38);
+}
+[data-theme="dark"] .hv-frame::before{ mix-blend-mode:screen; opacity:.22; }
+[data-theme="dark"] .hv-frame::after{
+  background:radial-gradient(120% 90% at 22% 0%, rgba(255,236,210,.10), transparent 58%);
+}
+[data-theme="dark"] .hv-house{
+  color:rgba(232,206,176,.44);
+  filter:drop-shadow(0 1px 0 rgba(0,0,0,.45));
 }
 /* Grain: three very low-alpha repeating gradients at slightly different angles.
    No image file - the wood rails in option-01 are too narrow to yield a clean
@@ -2066,10 +2108,30 @@ body { background:var(--bg); }
 .hv-face {
   position:relative; z-index:1;
   background:var(--surface);
-  border-radius:50px 24px 44px 30px / 36px 44px 28px 48px;
-  padding:22px 22px 24px;
+  /* percentages, offset-matched to the outer shape - with px radii the wood band
+     swelled and pinched (measured TL 11px vs BL 17px on the 45° diagonals) */
+  border-radius:46% 34% 38% 42% / 44% 36% 44% 36%;
+  padding:20px 14px 22px;
   display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
-  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 3px rgba(92,64,38,.10);
+  /* Ambient occlusion, which is what makes this an inlay rather than a border.
+     Measured before: panel luminance at the left contact edge 253.1, and 30px
+     inside 253.1 - a delta of exactly 0.0 on three of four sides. option-01 has
+     a 27px ramp from L=179 at contact to L=255 interior. The old white
+     `inset 0 1px 0 rgba(255,255,255,.7)` was actively fighting this, so it is
+     gone rather than reduced. */
+  box-shadow:
+    inset 0 3px 6px -3px rgba(92,64,38,.42),
+    inset 0 -2px 4px -2px rgba(92,64,38,.26),
+    inset 3px 0 5px -3px rgba(92,64,38,.32),
+    inset -3px 0 5px -3px rgba(92,64,38,.32),
+    0 1px 3px rgba(92,64,38,.10);
+}
+[data-theme="dark"] .hv-face{
+  box-shadow:
+    inset 0 3px 6px -3px rgba(0,0,0,.58),
+    inset 0 -2px 4px -2px rgba(0,0,0,.38),
+    inset 3px 0 5px -3px rgba(0,0,0,.44),
+    inset -3px 0 5px -3px rgba(0,0,0,.44);
 }
 .hv-label { font-size:13px; font-weight:var(--fw-semi); color:var(--text-2); }
 /* 46px, up from v2's 31px. Measured from the mockup: the numeral's cap height is
@@ -2078,11 +2140,24 @@ body { background:var(--bg); }
    itself - it measures 10.4:1 on the panel, against 4.0:1 for the old --accent-strong. */
 .hero-v3 .hero-balance.hv-amount {
   margin:0; justify-content:center;
-  font-size:clamp(34px,11.8vw,50px); font-weight:var(--fw-black);
+  /* Serif, matching the reference: option-01's numeral is a high-contrast serif
+     with visible thick/thin modulation, not a uniform-weight geometric sans.
+     Weight 700 deliberately, NOT --fw-black/800 - the <link> loads Frank Ruhl
+     Libre at 500/600/700 only, and asking for 800 would have the browser
+     synthesise it, which is the exact mistake the 900->800 sweep just fixed. */
+  font-family:var(--font-serif); font-weight:700;
+  font-size:clamp(34px,11.8vw,50px);
   letter-spacing:-.03em; line-height:1.04; color:var(--hero-num);
   text-shadow:none;
+  /* .hero-balance sets direction:ltr, which pushed ₪ to the trailing edge, so
+     the headline put it on the RIGHT while both stats 60px below put it on the
+     LEFT - two opposite currency conventions in one card. */
+  direction:rtl;
 }
-.hero-v3 .hv-amount .hero-cur { font-size:.42em; color:var(--hero-num); opacity:.72; }
+/* was .42em at opacity .72 — the headline's currency mark rendered smaller than
+   an entire secondary number, and the fade put it at 4.79:1 next to digits at
+   10.64:1. The reference fades neither. */
+.hero-v3 .hv-amount .hero-cur { font-size:.58em; color:var(--hero-num); opacity:1; }
 .hv-stats {
   display:flex; align-items:stretch; justify-content:center; gap:18px;
   margin-top:6px; width:100%;
@@ -2094,21 +2169,31 @@ body { background:var(--bg); }
   font-variant-numeric:tabular-nums; unicode-bidi:isolate;
 }
 .hv-divider { width:1px; background:var(--border); flex:0 0 1px; }
+/* Measured at 100%: 321 x 9.5px of solid #C16A4F with zero track visible, the
+   most saturated object on the whole screen (Lab C* 44.2 vs the numeral's 25.9).
+   The blur test says the numeral still wins the hierarchy, so this is
+   over-weighting rather than an inversion - trimmed proportionately, not gutted.
+   The 1px padding + border-box is what keeps a sliver of track visible at 100%,
+   so a full bar still reads as a bar and not as a solid slab. */
 .hv-bar {
-  width:100%; height:10px; margin-top:12px; border-radius:999px;
+  width:86%; height:8px; padding:1px; box-sizing:border-box;
+  margin-top:14px; border-radius:999px;
   background:var(--border); overflow:hidden;
 }
 .hv-bar > i { display:block; height:100%; width:0%; border-radius:999px;
   background:var(--hero-num); transition:width .35s var(--ease-out); }
-.hv-bar > i.is-over { background:var(--bad); }
-.hv-cap { font-size:13px; color:var(--text-2); }
+.hv-bar > i.is-over { background:#B5745C; }
+.hv-cap { font-size:12px; color:var(--text-2); }
+.hv-cap strong { font-size:14px; font-weight:var(--fw-bold); color:var(--text); }
+.hv-cap strong.is-over { color:var(--bad); }
 .hero-v3 .hero-unknown-hint { text-align:center; margin-top:8px; }
 .hero-aux { margin-bottom:16px; }
-@media (max-width:400px) {
-  .hero-v3 { width:calc(100% + 24px); margin-inline:-12px; }
-  .hv-frame { padding:14px; }
-  .hv-face { padding:20px 18px 22px; }
-}
+/* The ≤400px block that used to live here is deleted, not corrected. It carried
+   three rules and every one of them undid a deliberate decision above:
+   `.hero-v3{width:calc(100% + 24px)}` re-applied the full bleed, and
+   `.hv-frame{padding:14px}` - a shorthand - reset the wedge to a uniform ring on
+   exactly the devices this app runs on. The base rules already target 390px;
+   they do not need a narrow-screen override at all. */
 /* re-scoped 22.09 (v3): the delta chip moved out of .monthly-status-card into
    .hero-aux when the hero was rebuilt, so the old selector stopped matching. */
 .hero-aux .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
@@ -2266,7 +2351,13 @@ button.secondary.active,.edit-toggle-btn.active { background:var(--wood-light); 
 [data-theme="dark"] .sync-card { background:var(--surface-2); }
 
 /* V39 Warm Tech — selected visual direction: personal-first, light maple and sage. */
-:root { --font-sans:'Rubik','Heebo',system-ui,sans-serif; --font-num:'Rubik','Heebo',system-ui,sans-serif; --font-serif:'Rubik','Heebo',sans-serif; }
+/* 23.09 — --font-serif was redefined here to Rubik, later in the cascade than the
+   real definition at line 99, so all eight consumers (.panel-hero-title,
+   .section-title, .card-title, .empty-title, .review-queue-title, the auth-gate
+   heading...) silently rendered as sans while the app still paid to download
+   Frank Ruhl Libre from the <link>. Removed; --font-sans and --font-num keep
+   their Rubik values, which were intentional. */
+:root { --font-sans:'Rubik','Heebo',system-ui,sans-serif; --font-num:'Rubik','Heebo',system-ui,sans-serif; }
 body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacing:-.01em; }
 .topbar { background:rgba(255,253,249,.92); backdrop-filter:blur(18px); }
 /* .78 alpha let the body's gradient (line above) bleed through unpredictably -
@@ -2281,8 +2372,14 @@ body { background:linear-gradient(180deg,#FFFDF9 0%,#F7F0E7 100%); letter-spacin
 .tab-panel.active { animation:warmPanelIn .32s var(--ease-out); }
 @keyframes warmPanelIn { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:none} }
 .workspace-switch { display:inline-grid; grid-template-columns:1fr 1fr; padding:4px; gap:4px; margin:0 0 14px; background:var(--surface); border:1px solid var(--border); border-radius:18px; box-shadow:var(--shadow-xs); }
-.workspace-btn { min-width:104px; min-height:42px; border:0; border-radius:13px; background:transparent; color:var(--muted); font-weight:800; transition:background .2s var(--ease-out),color .2s var(--ease-out),transform .2s var(--ease-out); }
-.workspace-btn.active { background:var(--sage,#E7F0E1); color:var(--accent-strong); box-shadow:0 3px 10px rgba(91,124,83,.12); }
+.workspace-btn { min-width:104px; min-height:44px; border:0; border-radius:13px; background:transparent; color:var(--muted); font-weight:800; transition:background .2s var(--ease-out),color .2s var(--ease-out),transform .2s var(--ease-out); }
+/* --sage was referenced only here, declared nowhere in 12,864 lines, so the
+   hardcoded fallback won in BOTH themes: a light #E7F0E1 chip, byte-identical
+   between the light and dark captures, carrying --accent-strong text. In dark
+   that measured 2.22:1 - the worst-contrast text on either screen, and at the
+   same time the brightest object on the dark one. Now a real token per theme. */
+.workspace-btn.active { background:var(--sage); color:var(--hero-num); box-shadow:0 3px 10px rgba(91,124,83,.12); }
+[data-theme="dark"] .workspace-btn.active { color:#CFE6C4; }
 .workspace-btn:active,.dashboard-quick-actions button:active { transform:scale(.97); }
 .monthly-status-card { overflow:hidden; background:linear-gradient(110deg,#FFFDF9 0%,#FFFDF9 65%,#F0F6EC 100%) !important; }
 .monthly-status-card::before { width:5px !important; background:var(--wood) !important; opacity:.45 !important; }
@@ -2521,10 +2618,12 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
               <div class="hero-balance hv-amount" id="heroBalance" data-target="0" role="text" aria-live="polite">
                 <span class="hero-int">0</span><span class="hero-cur">₪</span>
               </div>
+              <!-- הכנסות first, matching option-01: in RTL the first child reads
+                   rightmost, and the reference puts income there. -->
               <div class="hv-stats">
-                <div class="hv-stat"><span>הוצאות</span><strong id="heroBlobExpense">—</strong></div>
-                <div class="hv-divider" aria-hidden="true"></div>
                 <div class="hv-stat"><span>הכנסות</span><strong id="heroBlobIncome">—</strong></div>
+                <div class="hv-divider" aria-hidden="true"></div>
+                <div class="hv-stat"><span>הוצאות</span><strong id="heroBlobExpense">—</strong></div>
               </div>
               <div class="hv-bar" id="heroBlobBarTrack"><i id="heroBlobBarFill"></i></div>
               <div class="hv-cap" id="heroBlobBarCaption"></div>
@@ -3924,19 +4023,30 @@ function renderAppConnectionSummary(){
   strip.classList.toggle("is-connected", loggedIn && hasCloudSyncConfig() && !config.disabled && !hasSyncError && !isSyncing);
   strip.classList.toggle("is-error", hasSyncError && !isSyncing);
   strip.classList.toggle("is-syncing", isSyncing);
+  /* 23.09 — the strip used to render in all five branches, so a healthy signed-in
+     session still spent ~50px above the balance saying "מחובר ומסונכרן עכשיו",
+     permanently, where the reference has a greeting. A status bar that is always
+     on cannot signal status. It now shows only when there is something to act on;
+     the healthy state is silence. The sync state is still fully visible in the
+     גיבוי tab, so nothing was removed from the app. */
   if(isSyncing){
+    strip.hidden = false;
     title.textContent = "מסנכרן…";
     meta.textContent = message || "מעדכן מול הענן…";
   } else if(config.disabled){
+    strip.hidden = false;
     title.textContent = "הסנכרון כבוי במכשיר הזה";
     meta.textContent = "הנתונים נשמרים כרגע רק בדפדפן המקומי.";
   } else if(!loggedIn){
+    strip.hidden = false;
     title.textContent = "נדרשת כניסה כדי לסנכרן";
     meta.textContent = "הנתונים המקומיים נשמרים, אבל עדכון בין המכשירים ממתין להתחברות.";
   } else if(hasSyncError){
+    strip.hidden = false;
     title.textContent = "הסנכרון דורש בדיקה";
     meta.textContent = message || "החיבור קיים, אך העדכון האחרון לא הושלם.";
   } else {
+    strip.hidden = true;
     title.textContent = "מחובר ומסונכרן עכשיו";
     const latest = cloudSyncState.lastPulledAt || cloudSyncState.lastPushedAt;
     meta.textContent = latest ? `העדכון האחרון הושלם ב־${getReadableDateTime(latest)}.` : "החיבור מאובטח ומוכן לעדכון בין המכשירים.";
@@ -7969,8 +8079,14 @@ function getBudgetUtilizationForSheet(sheet){
   const totalBudget = cats.reduce((s,c)=>s+(c.budget!=null ? Number(c.budget)||0 : 0),0);
   const totalSpent  = cats.reduce((s,c)=>s+(sums[c.name]||0),0);
   const hasBudget   = totalBudget > 0;
-  const pct         = hasBudget ? Math.min(Math.round((totalSpent/totalBudget)*100),100) : 0;
-  return {totalBudget, totalSpent, hasBudget, pct, overBudget: hasBudget && (totalBudget-totalSpent) < 0};
+  /* 23.09 — pct was clamped to 100 and then used for BOTH the bar width and the
+     caption, so a household 75% over budget read "100% מהתקציב נוצל" and saw a
+     pixel-identical screen to one exactly on budget. In a finance app that is a
+     correctness bug, not a styling one. rawPct is the true figure for the text;
+     pct stays clamped so the fill can never overflow its own track. */
+  const rawPct      = hasBudget ? Math.round((totalSpent/totalBudget)*100) : 0;
+  const pct         = Math.min(rawPct, 100);
+  return {totalBudget, totalSpent, hasBudget, pct, rawPct, overBudget: hasBudget && (totalBudget-totalSpent) < 0};
 }
 /* HERO_CARD_VISUAL_SPEC.md §7 step 3 (v2, 22.09.2026): matches
    refinement-02/option-01.png exactly - a horizontal progress BAR under the
@@ -7986,13 +8102,14 @@ function renderHeroBudgetProgress(sheet){
   const fill = document.getElementById("heroBlobBarFill");
   const caption = document.getElementById("heroBlobBarCaption");
   if(!track || !fill || !caption) return;
-  const {totalBudget, totalSpent, hasBudget, pct, overBudget} = getBudgetUtilizationForSheet(sheet);
+  const {hasBudget, pct, rawPct, overBudget} = getBudgetUtilizationForSheet(sheet);
   track.style.display = hasBudget ? "block" : "none";
   caption.style.display = hasBudget ? "block" : "none";
   if(!hasBudget) return;
-  fill.style.width = pct + "%";
+  fill.style.width = pct + "%";              // clamped: never overflows the track
   fill.classList.toggle("is-over", overBudget);
-  caption.textContent = `${pct}% מהתקציב נוצל`;
+  // rawPct, not pct - this is the line that has to tell 100% and 175% apart.
+  caption.innerHTML = `<strong class="${overBudget ? "is-over" : ""}">${rawPct}%</strong> מהתקציב נוצל`;
 }
 /* HERO_CARD_VISUAL_SPEC.md §7 step 3 (v2): option-01 shows הוצאות/הכנסות as a
    pair inside the blob itself, not only in the "פרטים נוספים" fold. Both
@@ -8000,11 +8117,19 @@ function renderHeroBudgetProgress(sheet){
    - kept deliberately, since the fold's 3-column grid also carries חובות,
    which the blob does not show at all. Same numbers, read from the same
    renderDashboardHero computation, so there is no second calculation to drift. */
+/* One money format inside the hero card. The panel was showing three at once -
+   "8,843" (countUp rounds), "₪ 8,616.18" and "₪ 6,600.00" (fmt). fmt() sets only
+   maximumFractionDigits, so Intl's ILS default minimumFractionDigits:2 stands and
+   every round amount gets a permanent ".00". The reference shows three whole
+   numbers. Deliberately local: changing the global fmt() would round every amount
+   everywhere, including the places where agorot genuinely matter. */
+const fmtWholeIls = new Intl.NumberFormat("he-IL",
+  {style:"currency", currency:"ILS", maximumFractionDigits:0, minimumFractionDigits:0});
 function renderHeroBlobStats(monthlyIncome, monthlyExpenses){
   const expEl = document.getElementById("heroBlobExpense");
   const incEl = document.getElementById("heroBlobIncome");
-  if(expEl) expEl.textContent = fmt(monthlyExpenses);
-  if(incEl) incEl.textContent = fmt(monthlyIncome);
+  if(expEl) expEl.textContent = fmtWholeIls.format(Number(monthlyExpenses) || 0);
+  if(incEl) incEl.textContent = fmtWholeIls.format(Number(monthlyIncome) || 0);
 }
 function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
