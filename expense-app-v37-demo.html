@@ -547,18 +547,12 @@ input, select, textarea { font: inherit; }
   border: 1px solid var(--border);
 }
 .kpi:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
-.kpi::before {
-  content:""; position:absolute; inset-block:0; inset-inline-start:0;
-  width:3px; background:var(--accent); opacity:.85; border-radius:0 2px 2px 0;
-}
-[data-panel="budget"]   .kpi::before { background: var(--accent); }
-[data-panel="income"]   .kpi::before { background: var(--income); }
-[data-panel="cards"]    .kpi::before { background: var(--c-cards); }
-[data-panel="expenses"] .kpi::before { background: var(--c-expenses); }
-[data-panel="shared"]   .kpi::before { background: var(--c-shared); }
-[data-panel="debts"]    .kpi::before { background: var(--bad); }
-[data-panel="yearly"]   .kpi::before { background: var(--accent-strong); }
-[data-panel="backup"]   .kpi::before { background: var(--accent-2); }
+/* 22.09.2026 — the 3px edge stripes are gone. Twelve of them existed across the
+   KPI and bento tiles in five unrelated hues (terracotta, tan, teal, pink,
+   walnut) with no key a user could learn, and because they were ::before boxes
+   on a radiused card their square corners visibly protruded past the silhouette.
+   Neither approved mockup contains a stripe. Status still reads through the
+   value's own .good/.bad/.warn colour, which is where it belongs. */
 .kpi-label, .kpi .label { font-size: 10px; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: .05em; }
 .kpi .value, .kpi-value { font-size: clamp(20px,2.5vw,30px); font-weight:800;
@@ -833,12 +827,9 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 }
 .filter-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
 
-/* ── Demo / Backup Banner ─────────────────────────────────────── */
-.demo-banner {
-  background: linear-gradient(90deg,#d97706,#f97316);
-  color: #fff; padding: 8px 16px; display: flex; align-items: center;
-  gap: 12px; font-size: 12px; font-weight: 700; flex-wrap: wrap; justify-content: center;
-}
+/* ── Backup Banner ────────────────────────────────────────────── */
+/* .demo-banner removed 22.09.2026: one CSS definition, zero uses anywhere in the
+   markup or JS - dead since before this session, and another Tailwind gradient. */
 /* 22.09.2026 — was a teal-to-brown gradient using two unrelated palette colours,
    with #fff body text that measured 1.07:1 against the middle of the gradient,
    i.e. literally unreadable, as the first thing on the screen. Neither approved
@@ -1328,9 +1319,13 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .fab {
   position:fixed; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); right:20px; z-index:45;
   width:54px; height:54px; border-radius:50%;
-  background:linear-gradient(135deg,#f97316,#fb923c);
+  /* 22.09.2026 — was linear-gradient(#f97316,#fb923c), Tailwind orange: a hue
+     that appears nowhere in the approved palette, and white-on-#f97316 measures
+     2.80:1, under even the 3:1 minimum for a graphical control. Flat brand green
+     instead - white on #13462D is 10.4:1, and neither mockup uses a gradient. */
+  background:var(--hero-num);
   color:#fff; border:none; font-size:26px; font-weight:400; line-height:1;
-  box-shadow:0 4px 20px rgba(249,115,22,.45);
+  box-shadow:0 6px 18px rgba(19,70,45,.34);
   cursor:pointer; transition:transform .15s, box-shadow .15s;
   display:flex; align-items:center; justify-content:center;
 }
@@ -1713,14 +1708,13 @@ body{ background:
   transition:transform var(--dur-fast) var(--ease-out), box-shadow var(--dur-fast);
 }
 .bento-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
-.bento-card::before{
-  content:""; position:absolute; inset-block:0; inset-inline-start:0;
-  width:3px; background:var(--accent); opacity:.85; border-radius:0 2px 2px 0;
-}
-.bento-card.is-expense::before{ background:var(--expense); }
-.bento-card.is-forecast::before{ background:var(--info); }
-.bento-card.is-shared::before{ background:var(--c-shared); }
-.bento-card.is-income::before{ background:var(--income); }
+/* stripes removed - see the note on .kpi::before above */
+/* status dot, replacing the 🔴🟡🟢 emoji in the budget overview badge */
+.stat-dot { display:inline-block; width:8px; height:8px; border-radius:50%;
+  margin-inline-end:6px; vertical-align:middle; background:var(--accent); }
+.stat-dot-bad { background:var(--bad); }
+.stat-dot-warn { background:var(--warn); }
+.stat-dot-good { background:var(--hero-num); }
 .bento-label{ font-size:var(--fs-xs); font-weight:var(--fw-bold); color:var(--muted);
   text-transform:uppercase; letter-spacing:.05em; }
 .bento-value{ font-size:clamp(20px,5vw,26px); font-weight:var(--fw-black);
@@ -8378,9 +8372,20 @@ function renderBudgetOverview(rows){
   /* Stage 8 — budget hero: radial SVG progress + 2-column layout on mobile */
   const circR = 52, circC = 60, circLen = +(2*Math.PI*circR).toFixed(1);
   const dashFill = hasBudget ? +(circLen*pct/100).toFixed(1) : 0;
-  const radialColor = tone==="bad" ? "#dc2626" : tone==="warn" ? "#d97706" : "#10b981";
-  const radialText  = tone==="bad" ? "#7f1d1d" : tone==="warn" ? "#78350f" : "#064e3b";
-  const statIcon = (t) => t==="bad" ? "🔴" : t==="warn" ? "🟡" : "🟢";
+  // 22.09.2026: was Tailwind red/amber/emerald (#dc2626/#d97706/#10b981) with
+  // emoji status dots - four hues and three emoji that exist nowhere else in the
+  // app. Now the app's own tokens, read live so they follow the theme, with a
+  // CSS dot instead of an emoji (emoji render differently per OS, so the look
+  // was not reproducible).
+  const cssVar = (n, fallback) => {
+    const v = getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+    return v || fallback;
+  };
+  const radialColor = tone==="bad" ? cssVar("--bad","#C16A4F")
+                    : tone==="warn" ? cssVar("--warn","#D9A441")
+                    : cssVar("--hero-num","#13462D");
+  const radialText  = cssVar("--text","#2E2A22");
+  const statIcon = (t) => `<span class="stat-dot stat-dot-${t}" aria-hidden="true"></span>`;
   el.innerHTML = `
     <div class="budget-overview-hero">
       <div class="budget-overview-top">
@@ -8668,8 +8673,9 @@ function renderChart(rows){
       data:{
         labels:dayLabels,
         datasets:[
-          {label:"הוצאה יומית",data:dayValues,borderColor:"#3b82f6",backgroundColor:"rgba(59,130,246,.13)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
-          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#e11d48",backgroundColor:"rgba(225,29,72,.06)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
+          // 22.09.2026: Tailwind blue/rose -> the app's own sage and terracotta.
+          {label:"הוצאה יומית",data:dayValues,borderColor:"#5E7A50",backgroundColor:"rgba(94,122,80,.13)",borderWidth:2,tension:.35,fill:true,pointRadius:2},
+          {label:"מצטבר חודשי",data:cumulativeValues,borderColor:"#C16A4F",backgroundColor:"rgba(193,106,79,.06)",borderWidth:2.5,tension:.25,fill:false,pointRadius:0}
         ]
       },
       options:{
@@ -9755,10 +9761,16 @@ function updateRowSharedSplit(rowNumber, mode, rawValue){
   render();
 }
 /* ── Category color palette for feed dots ─────────────────────── */
+/* 22.09.2026 — was a 15-colour Tailwind rainbow (indigo, emerald, orange, rose,
+   violet, sky, pink...) dropped onto a sage/wood/cream page. Those hues exist
+   nowhere else in the app and were the most saturated pixels on screen. This set
+   is built from the app's own --dv-* data-viz tokens plus darker/lighter members
+   of the same families, so it still separates 15 categories but stays inside the
+   approved palette. Order is arranged so ADJACENT entries contrast. */
 const CAT_COLORS = [
-  "#6366f1","#10b981","#f97316","#f43f5e","#8b5cf6",
-  "#3b82f6","#22c55e","#ef4444","#d97706","#0ea5e9",
-  "#ec4899","#14b8a6","#64748b","#a855f7","#84cc16"
+  "#7E9B6E","#B07D56","#D9A441","#C16A4F","#6E8B8A",
+  "#9D8AA8","#5E7A50","#8A5E3C","#C9A86B","#9A4E36",
+  "#4F6B68","#7A6A86","#A6C08F","#D3B08A","#3C5E3A"
 ];
 function getCategoryColor(cat){
   if(!cat) return "#64748b";
