@@ -2013,10 +2013,10 @@ body { background:var(--bg); }
    measured, only observed). */
 .hero-blob-wrap {
   position:relative; width:calc(100% + 48px); margin-inline:-24px;
-  aspect-ratio:420/260; margin-block:10px 6px;
+  aspect-ratio:420/320; margin-block:10px 6px;
 }
 .hero-blob-svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
-.hero-blob-outer { fill:url(#heroBlobWoodGrad); }
+.hero-blob-outer { fill:url(#heroBlobWoodGrad); filter:drop-shadow(0 3px 6px rgba(80,60,30,.18)); }
 .hero-blob-inner { fill:var(--surface); }
 /* stop-color set via CSS, not the SVG attribute directly - presentation
    attributes resolving var() is inconsistent enough across engines that this
@@ -2026,13 +2026,27 @@ body { background:var(--bg); }
 .hero-blob-content {
   position:relative; height:100%; box-sizing:border-box;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding-inline:78px; gap:2px;
+  text-align:center; padding-inline:90px; gap:2px;
 }
 .hero-blob-content .hero-balance { justify-content:center; margin-block:0; }
-.hero-blob-content .hero-budget-progress { justify-content:center; }
+/* 22.09: caught live (design/audit/blob-live-zoom.png) - the ring at its
+   normal 60px budget-tab size clipped against the wood boundary at 390px
+   width. Fixed properly by regenerating the blob with gentler curvature at
+   the vertical middle (design/audit/blob-live-zoom-v3shape.png), not by
+   padding alone - padding without a rounder shape just pushed the wrap point
+   around, it didn't remove it. Ring shrunk/tightened for this narrower
+   context regardless; the budget tab's own ring (renderBudgetOverview) is
+   untouched. Stress-tested with a 7-digit negative balance
+   (design/audit/blob-live-stress-negative.png) - still fits on one line. */
+.hero-blob-content .hero-budget-progress { justify-content:center; gap:6px; }
+.hero-blob-content .hero-budget-ring { width:40px; height:40px; }
 @media (max-width:400px) {
+  /* This breakpoint is the one that actually matters - Raz's iPhone (390px)
+     falls inside it. padding-inline:58px is the exact value verified live
+     against the real shape (blob-live-zoom-v3shape.png / stress-negative.png),
+     not a guess scaled down from the wider default above. */
   .hero-blob-wrap { width:calc(100% + 32px); margin-inline:-16px; }
-  .hero-blob-content { padding-inline:54px; }
+  .hero-blob-content { padding-inline:58px; }
 }
 .monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
 .hero-month-metrics {
@@ -2426,15 +2440,15 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
           </div>
           <div class="hero-blob-wrap">
-            <svg class="hero-blob-svg" viewBox="-15 0 435 265" preserveAspectRatio="none" aria-hidden="true">
+            <svg class="hero-blob-svg" viewBox="-25 5 450 270" preserveAspectRatio="none" aria-hidden="true">
               <defs>
                 <linearGradient id="heroBlobWoodGrad" x1="0" y1="0" x2="1" y2="1">
                   <stop class="hero-blob-grad-start" offset="0%"/>
                   <stop class="hero-blob-grad-end" offset="100%"/>
                 </linearGradient>
               </defs>
-              <path class="hero-blob-outer" d="M 408.6 107.3 C 407.2 130.1, 364.7 148.8, 346.3 172.1 C 328.0 195.4, 327.9 237.0, 298.3 247.0 C 268.7 256.9, 209.8 237.9, 168.8 231.9 C 127.9 225.9, 73.3 226.7, 52.7 211.1 C 32.2 195.4, 53.1 162.8, 45.5 138.1 C 37.9 113.5, -10.7 74.9, 7.2 63.0 C 25.1 51.0, 115.5 74.7, 153.0 66.7 C 190.5 58.6, 198.6 19.9, 232.2 14.6 C 265.7 9.3, 324.9 19.4, 354.3 34.8 C 383.7 50.3, 409.9 84.4, 408.6 107.3 Z"/>
-              <path class="hero-blob-inner" d="M 375.2 110.1 C 374.1 129.3, 338.4 145.0, 322.9 164.6 C 307.5 184.1, 307.4 219.1, 282.6 227.5 C 257.7 235.8, 208.2 219.8, 173.8 214.8 C 139.4 209.8, 93.5 210.4, 76.3 197.3 C 59.0 184.2, 76.6 156.8, 70.2 136.0 C 63.9 115.3, 23.0 82.9, 38.0 72.9 C 53.1 62.9, 129.0 82.8, 160.5 76.0 C 192.0 69.2, 198.8 36.7, 227.0 32.3 C 255.2 27.8, 304.9 36.3, 329.6 49.3 C 354.3 62.2, 376.3 90.9, 375.2 110.1 Z"/>
+              <path class="hero-blob-outer" d="M 409.1 125 C 404.1 148.7, 371.7 166.7, 349.3 189.5 C 326.9 212.4, 308.6 256.2, 274.8 261.9 C 240.9 267.6, 189.0 233.3, 146.2 223.6 C 103.3 214.0, 42.8 220.3, 17.6 203.9 C -7.6 187.4, -3.6 151.9, -5 125.0 C -6.4 98.1, -18.3 54.5, 9.3 42.5 C 36.9 30.5, 118.6 58.3, 160.7 53.1 C 202.9 47.9, 225.7 12.2, 262.1 11.3 C 298.5 10.4, 354.6 28.6, 379.1 47.6 C 403.6 66.5, 414.1 101.3, 409.1 125 Z"/>
+              <path class="hero-blob-inner" d="M 367.3 125 C 363.3 143.9, 337.3 158.4, 319.4 176.6 C 301.5 194.9, 286.9 230.0, 259.8 234.5 C 232.7 239.1, 191.2 211.6, 156.9 203.9 C 122.6 196.2, 74.2 201.3, 54.1 188.1 C 33.9 175.0, 37.1 146.5, 36 125.0 C 34.9 103.5, 25.3 68.6, 47.4 59.0 C 69.5 49.4, 134.9 71.6, 168.6 67.4 C 202.3 63.3, 220.5 34.8, 249.7 34.0 C 278.8 33.3, 323.7 47.9, 343.3 63.0 C 362.9 78.2, 371.3 106.1, 367.3 125 Z"/>
             </svg>
             <div class="hero-blob-content">
               <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
