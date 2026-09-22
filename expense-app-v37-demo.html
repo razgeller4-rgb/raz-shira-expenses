@@ -275,6 +275,16 @@ input, select, textarea { font: inherit; }
    the chip's (.16): the only tappable thing on the card was also its quietest
    element, at 33.5px tall (under the 44px target) and 167px down a 428px card.
    It was reported as missing, which is the correct reading of that design. */
+/* 22.09.2026 (found while visually verifying step 2 above, both themes,
+   390x844): .hero-anchor-btn's white fill was written for the colored
+   gradient hero this card used to be. Measured live that .hero.is-negative
+   and .hero.is-unknown's gradients are dead - .monthly-status-card's flat
+   var(--surface) background is later in source order and wins every time
+   regardless of state (checked all three states, both themes). So #fff was
+   never protecting real contrast against a colored background - on the actual
+   flat surface it read as barely-there in light mode and blew out in dark
+   mode. Swapped for the same wood-light/wood-strong pill already used for
+   .review-action elsewhere on this exact card, both theme-aware. */
 /* 22.09.2026: moved from the always-visible hero into the "פרטים נוספים" fold
    (HERO_CARD_VISUAL_SPEC §7 step 2 — Raz's decision after weighing it: neither
    approved mockup shows an action button on the hero, and it is a reconcile-
@@ -294,17 +304,19 @@ input, select, textarea { font: inherit; }
 .hero-anchor-chip.is-gap{ font-weight:var(--fw-semi); opacity:1; }
 .hero-anchor-btn{ display:inline-flex; align-items:center; gap:7px; font-size:15px;
   font-weight:var(--fw-bold); padding:11px 18px; min-height:44px; border:none;
-  border-radius:999px; cursor:pointer; background:#fff; color:#3E5233;
-  box-shadow:0 2px 10px rgba(0,0,0,.18); transition:transform .12s var(--ease-out); }
-.hero-anchor-btn:hover{ transform:translateY(-1px); }
+  border-radius:999px; cursor:pointer; background:var(--wood-light); color:var(--wood-strong);
+  box-shadow:none; transition:transform .12s var(--ease-out), background .12s var(--ease-out); }
+.hero-anchor-btn:hover{ transform:translateY(-1px); background:color-mix(in srgb, var(--wood-light) 60%, var(--wood) 20%); }
 .hero-anchor-btn:active{ transform:translateY(0); }
 /* "Due" is the state the whole feature depends on: a reconciliation tool that
    waits to be remembered never runs, because not noticing drift is the problem
-   it exists to solve. Three pulses, then it stops nagging. */
+   it exists to solve. Three pulses, then it stops nagging. Ring color now
+   matches --warn (the same tone as the due-dot on the summary line), not the
+   old white pulse that assumed a colored gradient background. */
 .hero-anchor-btn.is-due{ animation:anchorDuePulse 2.2s var(--ease-out) 3; }
 @keyframes anchorDuePulse{
-  0%,100%{ box-shadow:0 2px 10px rgba(0,0,0,.18); }
-  50%{ box-shadow:0 2px 10px rgba(0,0,0,.18), 0 0 0 7px rgba(255,255,255,.32); } }
+  0%,100%{ box-shadow:0 0 0 0 var(--warn-light); }
+  50%{ box-shadow:0 0 0 6px var(--warn-light); } }
 @media (prefers-reduced-motion: reduce){ .hero-anchor-btn.is-due{ animation:none; } }
 /* The gap is a state, not an event — a persistent banner, not a toast. */
 .balance-gap-banner{ display:none; align-items:flex-start; gap:10px; margin:0 0 14px;
