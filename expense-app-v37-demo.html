@@ -275,7 +275,21 @@ input, select, textarea { font: inherit; }
    the chip's (.16): the only tappable thing on the card was also its quietest
    element, at 33.5px tall (under the 44px target) and 167px down a 428px card.
    It was reported as missing, which is the correct reading of that design. */
-.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:14px; }
+/* 22.09.2026: moved from the always-visible hero into the "פרטים נוספים" fold
+   (HERO_CARD_VISUAL_SPEC §7 step 2 — Raz's decision after weighing it: neither
+   approved mockup shows an action button on the hero, and it is a reconcile-
+   when-needed action, not a daily one — U-7's own logic for what belongs
+   behind a tap). The gap banner above the card, which is the "something is
+   actually wrong" signal, was deliberately left where it is. margin-top:0
+   because it is now the first thing after <summary>, not stacked under the
+   unknown-hint like before. */
+.hero-anchor-row{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-top:0; }
+/* The pulse on the button (.is-due below) is invisible while the fold is
+   closed, which is most of the time — this dot on the summary line is the
+   part that is actually always visible, so "due" still gets noticed without
+   the button competing with the headline. */
+.hero-details-due-dot{ display:inline-block; width:8px; height:8px; border-radius:50%;
+  background:var(--warn); margin-inline-start:6px; vertical-align:middle; }
 .hero-anchor-chip{ font-size:var(--fs-sm); opacity:.9; white-space:nowrap; }
 .hero-anchor-chip.is-gap{ font-weight:var(--fw-semi); opacity:1; }
 .hero-anchor-btn{ display:inline-flex; align-items:center; gap:7px; font-size:15px;
@@ -2367,12 +2381,12 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
           <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
           <div id="heroBudgetProgress"></div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
-          <div class="hero-anchor-row" id="heroAnchorRow">
-            <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
-            <span class="hero-anchor-chip" id="heroAnchorChip"></span>
-          </div>
           <details class="hero-details" id="heroDetails">
-            <summary>פרטים נוספים</summary>
+            <summary>פרטים נוספים<span class="hero-details-due-dot" id="heroDetailsDueDot" hidden aria-label="יש עדכון יתרה שממתין"></span></summary>
+            <div class="hero-anchor-row" id="heroAnchorRow">
+              <button type="button" class="hero-anchor-btn" id="heroAnchorBtn" onclick="openBalanceAnchorSheet()"><span aria-hidden="true">🏦</span><span id="heroAnchorBtnLabel">עדכן יתרה מהבנק</span></button>
+              <span class="hero-anchor-chip" id="heroAnchorChip"></span>
+            </div>
             <div class="hero-delta" id="heroDelta" style="display:none"></div>
             <div id="heroForecastLine" style="display:none;font-size:12px;color:var(--text-2)"></div>
             <div class="hero-month-metrics" aria-label="סיכום חודשי">
@@ -7708,7 +7722,13 @@ function renderBalanceAnchorState(){
   if(btnLabel) btnLabel.textContent = getAnchorAskCopy(selectedSheet).inWindow
     ? "כמה יש עכשיו בבנק?"
     : (anchor ? "עדכן יתרה מהבנק" : "הזן יתרה מהבנק");
-  if(btn) btn.classList.toggle("is-due", reading.due && !anchor);
+  const isDue = reading.due && !anchor;
+  if(btn) btn.classList.toggle("is-due", isDue);
+  // 22.09: the button's pulse is inside the collapsed "פרטים נוספים" fold now,
+  // so it is invisible until opened - this dot on the summary line is what
+  // actually carries the "due" signal while the fold is closed.
+  const dueDot = document.getElementById("heroDetailsDueDot");
+  if(dueDot) dueDot.hidden = !isDue;
   if(!banner) return;
 
   const info = getBalanceGapForSheet(selectedSheet);
