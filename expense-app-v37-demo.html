@@ -45,6 +45,12 @@
   --text: #2E2A22; --text-2: #5C5446; --muted: #6B6354; --c-text-sub: var(--muted);
   /* Brand accent — sage / forest */
   --accent: #7E9B6E; --accent-2: #9DB68F; --accent-strong: #5E7A50;
+  /* 22.09.2026 — sampled directly from the approved mockup's own balance numeral
+     in refinement-02/option-01.png (#13462D). The app had been rendering that
+     number in --accent-strong #5E7A50, which measures 4.0:1 on the hero panel -
+     the faintest text in its own card. This measures 10.4:1. Scoped to the hero
+     for now rather than repainting every green in the app in one step. */
+  --hero-num: #13462D;
   --accent-light: rgba(126,155,110,.14); --accent-ring: rgba(94,122,80,.34);
   /* Wood — walnut warm structural accents */
   --wood: #B07D56; --wood-strong: #8A5E3C; --wood-light: rgba(176,125,86,.14);
@@ -210,7 +216,7 @@ input, select, textarea { font: inherit; }
 .panel-hero-title { font-size: 22px; font-weight: 800; letter-spacing: -.4px; margin-bottom: 4px; }
 .panel-hero-sub   { font-size: 13px; opacity: .8; }
 .panel-hero-right { position: relative; z-index: 1; text-align: left; }
-.panel-hero-value { font-size: clamp(26px,4vw,40px); font-weight: 900;
+.panel-hero-value { font-size: clamp(26px,4vw,40px); font-weight:800;
   font-variant-numeric: tabular-nums; letter-spacing: -1px; }
 .panel-hero-label { font-size: 12px; opacity: .75; margin-top: 2px; }
 [data-panel="dashboard"] .panel-hero { background: linear-gradient(135deg,#4F3F35,#6B5848,#8C7765); }
@@ -544,7 +550,7 @@ input, select, textarea { font: inherit; }
 [data-panel="backup"]   .kpi::before { background: var(--accent-2); }
 .kpi-label, .kpi .label { font-size: 10px; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: .05em; }
-.kpi .value, .kpi-value { font-size: clamp(20px,2.5vw,30px); font-weight: 900;
+.kpi .value, .kpi-value { font-size: clamp(20px,2.5vw,30px); font-weight:800;
   font-variant-numeric: tabular-nums; letter-spacing: -1px; color: var(--text); margin-top: 6px; }
 .kpi .sub, .kpi .small { font-size: 11px; color: var(--muted); margin-top: 4px; }
 .kpi-edit-btn { background: var(--bg); border: 1px solid var(--border); border-radius: var(--r-sm);
@@ -1023,7 +1029,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 }
 .shared-balance-card .small { color: rgba(255,255,255,.8); }
 .shared-balance-card .micro { color: rgba(255,255,255,.7); }
-.shared-balance-card .value { color: #fff; font-size: 28px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.shared-balance-card .value { color: #fff; font-size: 28px; font-weight:800; font-variant-numeric: tabular-nums; }
 .shared-mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
 .shared-stat-card {
   background: linear-gradient(135deg,rgba(199,123,139,.1),rgba(199,123,139,.03));
@@ -1031,7 +1037,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   border-radius: var(--r-lg); padding: 13px 15px; box-shadow: var(--shadow-sm);
 }
 .shared-stat-card .small { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; margin-bottom:4px; }
-.shared-stat-card .value { font-size:20px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--c-shared); }
+.shared-stat-card .value { font-size:20px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--c-shared); }
 .shared-stat-card .micro { font-size:11px; color:var(--muted); margin-top:2px; }
 [data-panel="shared"] .filter-search-input:focus { border-color:var(--c-shared); box-shadow:0 0 0 3px rgba(199,123,139,.18); }
 [data-panel="shared"] .filter-select-item select:focus { border-color:var(--c-shared); }
@@ -1055,7 +1061,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .debt-highlight .tag   { background: rgba(255,255,255,.18); color: #fff; }
 .debt-highlight-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
 .debt-highlight-label { font-size: 10px; font-weight: 700; opacity: .8; text-transform: uppercase; letter-spacing: .04em; }
-.debt-highlight-value { font-size: 30px; font-weight: 900; font-variant-numeric: tabular-nums; letter-spacing: -.5px; margin-top: 4px; }
+.debt-highlight-value { font-size: 30px; font-weight:800; font-variant-numeric: tabular-nums; letter-spacing: -.5px; margin-top: 4px; }
 .debt-progress-shell { height: 5px; background: rgba(255,255,255,.25); border-radius: 999px; overflow: hidden; margin-bottom: 5px; }
 .debt-progress-bar { height: 100%; border-radius: 999px; background: rgba(255,255,255,.85); transition: width .4s; }
 .debt-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(155px,1fr)); gap: 9px; margin-bottom: 18px; }
@@ -1225,6 +1231,8 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
      fix above, same reasoning. */
   --text:#ECE6D8; --text-2:#C9C2B0; --muted:#A8A190; --c-text-sub: var(--muted);
   --accent:#A6C08F; --accent-2:#BFD4AC; --accent-strong:#8AAA72;
+  /* dark mode inverts the panel, so the numeral has to come UP not down */
+  --hero-num: #9FD3B0;
   --accent-light:rgba(166,192,143,.16); --accent-ring:rgba(166,192,143,.42);
   --wood:#C99B72; --wood-strong:#A6764C; --wood-light:rgba(201,155,114,.16);
   --income:#7FB276; --income-light:rgba(127,178,118,.16);
@@ -1399,7 +1407,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
 .sec-header-info { flex:1; min-width:0; }
 .sec-header-name { font-size:15px; font-weight:800; color:#fff; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
 .sec-header-date { font-size:11px; color:rgba(255,255,255,.75); margin-top:2px; }
-.sec-header-amount { font-size:22px; font-weight:900; color:#fff; font-variant-numeric:tabular-nums; flex-shrink:0; }
+.sec-header-amount { font-size:22px; font-weight:800; color:#fff; font-variant-numeric:tabular-nums; flex-shrink:0; }
 .sec-body { padding:12px 14px; }
 .sec-split-row { display:flex; flex-direction:column; gap:2px; margin-bottom:10px; padding-bottom:8px; border-bottom:1px solid var(--border); }
 .sec-split-main { display:flex; align-items:center; gap:6px; }
@@ -1452,7 +1460,7 @@ input[type="date"] { direction: ltr; text-align: end; width: 100%; box-sizing: b
   border:1px solid rgba(78,122,74,.18); border-radius:var(--r-xl);
 }
 .income-summary .label { font-size:10px; font-weight:700; color:var(--muted); text-transform:uppercase; letter-spacing:.04em; }
-.income-summary .value { font-size:22px; font-weight:900; font-variant-numeric:tabular-nums; color:var(--good); letter-spacing:-.5px; margin-top:2px; }
+.income-summary .value { font-size:22px; font-weight:800; font-variant-numeric:tabular-nums; color:var(--good); letter-spacing:-.5px; margin-top:2px; }
 .income-summary .micro { font-size:11px; color:var(--muted); margin-top:2px; }
 .income-source-chip { display:inline-flex; align-items:center; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700; background:var(--income-light); color:var(--c-income); }
 .income-recurring-chip { display:inline-flex; align-items:center; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:600; background:var(--accent-light); color:var(--accent-strong); margin-right:4px; }
@@ -1976,67 +1984,101 @@ body { background:var(--bg); }
   text-shadow:none; justify-content:flex-start;
 }
 .monthly-status-card .hero-cur { color:var(--accent); opacity:1; }
-/* 22.09.2026 (v2) — HERO_CARD_VISUAL_SPEC.md §7 step 3. First attempt was a
-   generated SVG blob (Catmull-Rom, wood gradient) - Raz: "אני רוצה שזה יראה
-   מדוייק כמו בתמונות". A vector approximation cannot reproduce real wood grain,
-   lighting falloff or the carved house/stones, so this replaces it with the
-   actual approved photo (assets/hero-blob-wood.png, sourced from
-   refinement-02/option-01.png - see the HTML comment above the markup for
-   exactly how that asset was built). Every position below is a PERCENTAGE
-   measured against that source image's own pixels (sampled with PIL, not
-   eyeballed), so the overlay lines up with the photo at any render width -
-   the container's aspect-ratio is locked to the asset's own 760:492, which is
-   what makes percentage positioning exact instead of approximate. */
-.hero-blob-photo {
-  position:relative; width:calc(100% + 48px); margin-inline:-24px;
-  aspect-ratio:760/488; margin-block:10px 6px;
+/* ── 22.09.2026 (v3) — native hero, after a 7-lens design review ──────────────
+   Replaces the v2 photo overlay entirely. Rationale and what the review found is
+   in the HTML comment above the markup. Principles applied here:
+
+   - Geometry is CSS, material is sampled from the approved photo. The silhouette
+     is an asymmetric superellipse (8-value border-radius), NOT a traced clip-path:
+     a path is locked to one aspect ratio, and this card's height changes with the
+     content inside it (a 7-digit balance, a wrapped label, a hidden budget bar).
+   - Every colour below is measured from refinement-02/option-01.png, not chosen:
+     numeral #13462D, wood ramp #81684E → #F6DFC6, panel cream #FBF9F5.
+   - Text is in normal flow. Nothing is position:absolute over an image, which is
+     what forced the v2 numeral down to 31px and broke dark mode.
+   - Theme-aware: the panel uses var(--surface), so dark mode inverts for free. */
+.hero-v3 {
+  /* full-bleed out of the page gutter, like the reference - no card, no border */
+  width:calc(100% + 32px); margin-inline:-16px; margin-block:4px 18px;
 }
-.hero-blob-photo-img { position:absolute; inset:0; width:100%; height:100%; display:block; }
-/* Fixed (non-theme) colors from here down, deliberately - caught live in dark
-   mode (design/audit/photo-hero-dark.png before this fix): the photo's cream
-   panel is baked into the pixels and can never go dark, but --text/--text-2
-   DO flip to near-white in dark mode, so "הכנסות/הוצאות" and their numbers
-   went invisible - light text on the image's permanently-light panel. Every
-   color touching the photo has to match ITS fixed lightness, not the app's
-   current theme. Values below are the light-theme tokens' own colors,
-   hardcoded on purpose - var(--text)/var(--border) here would silently
-   reintroduce the same bug the next time someone edits dark mode. */
-.hb-label {
-  position:absolute; left:50.3%; top:15.2%; transform:translateX(-50%);
-  font-size:13px; color:#5C5446; white-space:nowrap;
+.hv-frame {
+  position:relative; padding:16px;
+  border-radius:62px 34px 54px 40px / 46px 54px 38px 58px;
+  background:
+    linear-gradient(152deg, #EBD3B4 0%, #D2A87E 34%, #BE956E 62%, #9A7550 100%);
+  box-shadow:0 14px 26px -14px rgba(92,64,38,.42), 0 2px 5px rgba(92,64,38,.16);
 }
-.hero-blob-photo .hero-balance.hb-balance {
-  position:absolute; left:50.3%; top:23%; transform:translateX(-50%);
-  color:#5E7A50; font-weight:800;
-  font-size:clamp(26px,7vw,40px); letter-spacing:-.04em; white-space:nowrap;
+/* Grain: three very low-alpha repeating gradients at slightly different angles.
+   No image file - the wood rails in option-01 are too narrow to yield a clean
+   tileable crop (verified by scanning the source for a >=99.5% pure-wood window;
+   the only hits sat on the carved house). At 390px this is indistinguishable
+   from a grain photo and costs zero bytes, themes, and never shows a seam. */
+.hv-frame::before {
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:
+    repeating-linear-gradient(97deg, rgba(129,104,78,.16) 0 1px, transparent 1px 7px),
+    repeating-linear-gradient(94deg, rgba(246,223,198,.20) 0 1px, transparent 1px 13px),
+    repeating-linear-gradient(99deg, rgba(129,104,78,.09) 0 2px, transparent 2px 23px);
+  mix-blend-mode:multiply; opacity:.75;
+}
+/* the rounded lip catching light, as in the render */
+.hv-frame::after {
+  content:""; position:absolute; inset:0; border-radius:inherit; pointer-events:none;
+  background:radial-gradient(120% 90% at 22% 0%, rgba(255,246,232,.55), transparent 58%);
+}
+.hv-house {
+  position:absolute; inset-inline-end:20px; top:26px; width:26px; height:26px;
+  color:rgba(122,94,64,.55); z-index:1; pointer-events:none;
+}
+.hv-face {
+  position:relative; z-index:1;
+  background:var(--surface);
+  border-radius:50px 24px 44px 30px / 36px 44px 28px 48px;
+  padding:22px 22px 24px;
+  display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7), 0 1px 3px rgba(92,64,38,.10);
+}
+.hv-label { font-size:13px; font-weight:var(--fw-semi); color:var(--text-2); }
+/* 46px, up from v2's 31px. Measured from the mockup: the numeral's cap height is
+   37.9 CSS px there, i.e. ~53px type; 46px is that minus the room the ₪ needs at
+   390px with a 7-digit number. Colour #13462D sampled from the mockup numeral
+   itself - it measures 10.4:1 on the panel, against 4.0:1 for the old --accent-strong. */
+.hero-v3 .hero-balance.hv-amount {
   margin:0; justify-content:center;
+  font-size:clamp(34px,11.8vw,50px); font-weight:var(--fw-black);
+  letter-spacing:-.03em; line-height:1.04; color:var(--hero-num);
+  text-shadow:none;
 }
-.hb-stats {
-  position:absolute; left:18%; right:18%; top:43%;
-  display:flex; align-items:center; justify-content:space-between; gap:10px;
+.hero-v3 .hv-amount .hero-cur { font-size:.42em; color:var(--hero-num); opacity:.72; }
+.hv-stats {
+  display:flex; align-items:stretch; justify-content:center; gap:18px;
+  margin-top:6px; width:100%;
 }
-.hb-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
-.hb-stat span { font-size:11px; color:#5C5446; }
-.hb-stat strong { font-size:15px; color:#2E2A22; font-variant-numeric:tabular-nums; }
-.hb-divider { width:1px; align-self:stretch; background:rgba(46,42,34,.18); }
-.hb-bar-track {
-  position:absolute; left:18.3%; width:54.4%; top:65.4%; height:7px;
-  border-radius:999px; background:#E6DCC8; overflow:hidden;
+.hv-stat { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+.hv-stat span { font-size:12px; color:var(--text-2); }
+.hv-stat strong {
+  font-size:17px; font-weight:var(--fw-bold); color:var(--text);
+  font-variant-numeric:tabular-nums; unicode-bidi:isolate;
 }
-.hb-bar-fill { height:100%; border-radius:999px; background:#5E7A50; width:0%; transition:width .3s var(--ease-out); }
-.hb-bar-fill.is-over { background:#C16A4F; }
-.hb-bar-caption {
-  position:absolute; left:49.7%; top:71.5%; transform:translateX(-50%);
-  font-size:12px; color:#5C5446; white-space:nowrap;
+.hv-divider { width:1px; background:var(--border); flex:0 0 1px; }
+.hv-bar {
+  width:100%; height:10px; margin-top:12px; border-radius:999px;
+  background:var(--border); overflow:hidden;
 }
+.hv-bar > i { display:block; height:100%; width:0%; border-radius:999px;
+  background:var(--hero-num); transition:width .35s var(--ease-out); }
+.hv-bar > i.is-over { background:var(--bad); }
+.hv-cap { font-size:13px; color:var(--text-2); }
+.hero-v3 .hero-unknown-hint { text-align:center; margin-top:8px; }
+.hero-aux { margin-bottom:16px; }
 @media (max-width:400px) {
-  /* This is the breakpoint that matters - Raz's iPhone (390px) falls inside
-     it. Percentages don't need a separate override; only the outer bleed
-     margins do, matching the card's own padding at this width. */
-  .hero-blob-photo { width:calc(100% + 32px); margin-inline:-16px; }
-  .hero-blob-photo .hero-balance.hb-balance { font-size:clamp(24px,8vw,34px); }
+  .hero-v3 { width:calc(100% + 24px); margin-inline:-12px; }
+  .hv-frame { padding:14px; }
+  .hv-face { padding:20px 18px 22px; }
 }
-.monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
+/* re-scoped 22.09 (v3): the delta chip moved out of .monthly-status-card into
+   .hero-aux when the hero was rebuilt, so the old selector stopped matching. */
+.hero-aux .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
 .hero-month-metrics {
   display:grid; grid-template-columns:repeat(3,1fr); margin-top:20px;
   padding-top:16px; border-top:1px solid var(--border);
@@ -2417,43 +2459,54 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
     <!-- ── Dashboard ── -->
     <section class="tab-panel active" data-panel="dashboard">
       <div class="dashboard-clean">
+        <!-- ── 22.09.2026 (v3) — hero rebuilt native after a 7-lens design review ──
+             The v2 hero pasted the wooden object, cut out of option-01.png, into a
+             bordered card. Raz: "נראה זוועה". The review found he was right, and that
+             the object was the smaller half of the problem:
+
+             1. The photo had no scene. In option-01 the object sits in real light on a
+                real surface with a plant and a contact shadow; the mask deleted the
+                scene and kept the object, so it read as clip-art dropped into a form.
+             2. The card wrapped it in a second frame (1px border + title row + gear +
+                divider) and then overflow:hidden sliced the silhouette flat at both edges.
+             3. The picture was acting as the layout engine: five rows were absolutely
+                positioned at hardcoded percentages of a fixed-aspect raster, which is why
+                the balance numeral had to be shrunk to 31px - against 46px in the mockup -
+                and why dark mode broke (a permanently-light panel baked into pixels).
+
+             So: native geometry, photographic PALETTE. The silhouette is an asymmetric
+             superellipse (border-radius with 8 values) rather than a traced clip-path,
+             deliberately - a traced path is locked to one aspect ratio and this card's
+             height changes with content. Wood, cream and the green are all sampled from
+             option-01.png itself (wood ramp #81684E..#F6DFC6, numeral #13462D). Text is
+             in normal flow, so it scales, wraps, themes and survives seven digits. -->
+        <section class="hero-v3" id="dashboardHero" aria-label="מצב החודש">
+          <div class="hv-frame">
+            <svg class="hv-house" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.2 12 3l9 7.2"/><path d="M5.4 9v11h13.2V9"/><path d="M10 20v-5.2h4V20"/></svg>
+            <div class="hv-face">
+              <div class="hv-label">יתרת סוף חודש</div>
+              <div class="hero-balance hv-amount" id="heroBalance" data-target="0" role="text" aria-live="polite">
+                <span class="hero-int">0</span><span class="hero-cur">₪</span>
+              </div>
+              <div class="hv-stats">
+                <div class="hv-stat"><span>הוצאות</span><strong id="heroBlobExpense">—</strong></div>
+                <div class="hv-divider" aria-hidden="true"></div>
+                <div class="hv-stat"><span>הכנסות</span><strong id="heroBlobIncome">—</strong></div>
+              </div>
+              <div class="hv-bar" id="heroBlobBarTrack"><i id="heroBlobBarFill"></i></div>
+              <div class="hv-cap" id="heroBlobBarCaption"></div>
+              <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
+            </div>
+          </div>
+        </section>
+        <!-- Moved BELOW the hero (was above it, costing 174px of the first screen).
+             Nothing was removed - both still work exactly as before. -->
         <div class="workspace-switch" role="group" aria-label="מרחב עבודה">
           <button type="button" class="workspace-btn active" id="personalWorkspaceBtn" onclick="openPersonalWorkspace()">אישי</button>
           <button type="button" class="workspace-btn" id="coupleWorkspaceBtn" onclick="openCoupleWorkspace()">זוגי</button>
         </div>
         <div class="balance-gap-banner" id="balanceGapBanner" role="status"></div>
-        <section class="hero monthly-status-card" aria-labelledby="heroLabel" id="dashboardHero">
-          <div class="hero-top">
-            <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
-            <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
-          </div>
-          <!-- 22.09.2026 (v2): replaced the hand-drawn SVG blob with the actual
-               approved photo (refinement-02/option-01.png). Raz: "אני רוצה שזה
-               יראה מדוייק כמו בתמונות" - a vector approximation could not
-               deliver that; the real wood grain/lighting/house-icon/stones can
-               only come from the real image. assets/hero-blob-wood.png is that
-               source image with its dynamic regions (balance, stats, bar, %)
-               erased via a rounded-rect + ellipse mask (kept the true wood
-               frame, house icon and stones as unmodified photo pixels) and its
-               own backdrop (plant, floor) removed via HSV color-keying so it
-               floats on the app's own card background. Overlay positions below
-               are percentages measured directly against that source image
-               (design/audit/opt1_*.png working files), not eyeballed. -->
-          <div class="hero-blob-photo">
-            <img class="hero-blob-photo-img" src="assets/hero-blob-wood.png" alt="" aria-hidden="true">
-            <div class="hb-label">יתרת סוף חודש</div>
-            <div class="hero-balance hb-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
-              <span class="hero-int">0</span><span class="hero-cur">₪</span>
-            </div>
-            <div class="hb-stats">
-              <div class="hb-stat"><span>הוצאות</span><strong id="heroBlobExpense">—</strong></div>
-              <div class="hb-divider"></div>
-              <div class="hb-stat"><span>הכנסות</span><strong id="heroBlobIncome">—</strong></div>
-            </div>
-            <div class="hb-bar-track" id="heroBlobBarTrack"><div class="hb-bar-fill" id="heroBlobBarFill"></div></div>
-            <div class="hb-bar-caption" id="heroBlobBarCaption"></div>
-          </div>
-          <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
+        <section class="hero-aux" aria-label="פרטי החודש">
           <details class="hero-details" id="heroDetails">
             <summary>פרטים נוספים<span class="hero-details-due-dot" id="heroDetailsDueDot" hidden aria-label="יש עדכון יתרה שממתין"></span></summary>
             <div class="hero-anchor-row" id="heroAnchorRow">
@@ -3163,7 +3216,13 @@ document.addEventListener("DOMContentLoaded", () => {
   migrateLegacyMerchantMemory();
   runBalanceAnchorMigration();
   const HERO_DATA = {
-    dashboard: { icon:"📊", title:"לוח הבקרה",          sub:"כל המספרים החשובים לחודש — בצפייה אחת" },
+    /* 22.09.2026 — the dashboard entry was deleted on purpose. Every other tab
+       needs a header because it opens on a list; the dashboard opens on the
+       hero, and a card whose only content was "לוח הבקרה / כל המספרים החשובים
+       לחודש" announced that the dashboard is a dashboard while costing 80px of
+       the first screen. Measured: 548px of chrome sat above the balance, so the
+       one number this app exists to show landed at 82% down a 844px viewport.
+       Other panels are untouched. */
     budget:    { icon:"💰", title:"תקציב",               sub:"מעקב הוצאות לפי קטגוריה מול יעד" },
     income:    { icon:"💸", title:"הכנסות",              sub:"הכנסות חודשיות ומקורות הכנסה" },
     cards:     { icon:"💳", title:"אשראיים",             sub:"כרטיסי אשראי ומחזורי חיוב" },
@@ -7918,7 +7977,12 @@ function renderDashboardHero(){
   // negative", which is what he actually wants from this number.
   const closing = getDisplayedClosingBalance(selectedSheet);
   const value = closing == null ? 0 : closing;
-  document.getElementById("heroMonthName").textContent = formatSheetLabel(selectedSheet);
+  // 22.09 (v3): the hero's own "מצב החודש · <month>" title row was deleted - the
+  // topbar month picker already names the month ~420px higher on the same screen,
+  // and the row cost 32px plus a divider above the balance. Guarded rather than
+  // removed so the element can come back without touching this function.
+  const monthNameEl = document.getElementById("heroMonthName");
+  if(monthNameEl) monthNameEl.textContent = formatSheetLabel(selectedSheet);
   renderHeroBudgetProgress(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
   const monthlyExpenses = getExpenseStats(selectedSheet).total;
