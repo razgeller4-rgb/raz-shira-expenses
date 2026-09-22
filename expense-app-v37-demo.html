@@ -2050,9 +2050,12 @@ body { background:var(--bg); }
   padding-inline:46px 12px;
   /* Percentage radii, not px: with px the top edge measured flat within 1px for
      303px - 79% of the width - against a ~13px longest flat run in option-01.
-     Percentages make a straight section geometrically impossible. Each edge pair
-     sums to 100 (58+42, 46+54 / 55+45, 45+55) so the curve closes cleanly. */
-  border-radius:58% 42% 46% 54% / 55% 45% 55% 45%;
+     But percentages whose per-edge pair sums to 100 force a true ellipse, which
+     is what the first attempt at this produced - an egg, not a wedge, and it ate
+     the corners the panel needs. These sum to ~70, which keeps every corner
+     visibly different while leaving gently curved (never dead-flat) edges.
+     Iterated against the live render at 390px, not derived. */
+  border-radius:42% 26% 34% 30% / 38% 32% 36% 30%;
   background:
     radial-gradient(130% 80% at 8% 12%, rgba(246,223,198,.85), transparent 46%),
     linear-gradient(152deg, #E4C7A4 0%, #CDA179 30%, #BB9069 58%, #96714C 100%);
@@ -2100,7 +2103,8 @@ body { background:var(--bg); }
    so it sits above .hv-face; the drop-shadow/highlight pair is what reads as
    "cut into the wood" rather than "drawn on top of it". */
 .hv-house {
-  position:absolute; inset-inline-start:13px; top:50%; transform:translateY(-50%);
+  /* centred in the 46px rail: (46 - 28) / 2 = 9 */
+  position:absolute; inset-inline-start:9px; top:50%; transform:translateY(-50%);
   width:28px; height:28px; z-index:2; pointer-events:none;
   color:rgba(120,90,60,.42);
   filter:drop-shadow(0 1px 0 rgba(255,245,230,.55));
@@ -2108,9 +2112,10 @@ body { background:var(--bg); }
 .hv-face {
   position:relative; z-index:1;
   background:var(--surface);
-  /* percentages, offset-matched to the outer shape - with px radii the wood band
-     swelled and pinched (measured TL 11px vs BL 17px on the 45° diagonals) */
-  border-radius:46% 34% 38% 42% / 44% 36% 44% 36%;
+  /* offset-matched to the outer shape, scaled by the inset ratio - with px radii
+     the wood band swelled and pinched (measured TL 11px vs BL 17px on the 45°
+     diagonals) */
+  border-radius:36% 22% 28% 26% / 32% 28% 30% 26%;
   padding:20px 14px 22px;
   display:flex; flex-direction:column; align-items:center; text-align:center; gap:6px;
   /* Ambient occlusion, which is what makes this an inlay rather than a border.
