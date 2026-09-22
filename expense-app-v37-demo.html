@@ -1709,12 +1709,20 @@ body{ background:
 }
 .bento-card:hover{ transform:translateY(-2px); box-shadow:var(--shadow-md); }
 /* stripes removed - see the note on .kpi::before above */
-/* status dot, replacing the 🔴🟡🟢 emoji in the budget overview badge */
+/* Status dot, replacing the 🔴🟡🟢 emoji in the budget overview badge.
+   Caught on first render: .budget-overview-badge.bad already paints the whole
+   badge in --bad with white text, so a --bad dot on it measured identical to its
+   own background - invisible. Inside a filled badge the dot inherits the badge's
+   text colour; the tinted variants only apply when it sits on a plain surface. */
 .stat-dot { display:inline-block; width:8px; height:8px; border-radius:50%;
-  margin-inline-end:6px; vertical-align:middle; background:var(--accent); }
-.stat-dot-bad { background:var(--bad); }
+  margin-inline-end:6px; vertical-align:middle; background:currentColor; }
+.budget-overview-badge .stat-dot { background:currentColor; opacity:.9; }
+.stat-dot-bad  { background:var(--bad); }
 .stat-dot-warn { background:var(--warn); }
 .stat-dot-good { background:var(--hero-num); }
+.budget-overview-badge .stat-dot-bad,
+.budget-overview-badge .stat-dot-warn,
+.budget-overview-badge .stat-dot-good { background:currentColor; }
 .bento-label{ font-size:var(--fs-xs); font-weight:var(--fw-bold); color:var(--muted);
   text-transform:uppercase; letter-spacing:.05em; }
 .bento-value{ font-size:clamp(20px,5vw,26px); font-weight:var(--fw-black);
