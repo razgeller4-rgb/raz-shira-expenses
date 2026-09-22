@@ -11005,6 +11005,53 @@ async function extractPdfRows(arrayBuffer){
   }
   return rows;
 }
+/* ── F-21 (22.09.2026): a Max/bank export carries THREE sheets, not one ──────
+   "עסקאות במועד החיוב" (settled, on this bill), "עסקאות שאושרו וטרם נקלטו"
+   (approved, not yet captured - still awaiting settlement), and "עסקאות חו״ל
+   ומט״ח" (foreign currency). Reading only wb.SheetNames[0] silently dropped
+   the other two. Raz reported this directly: "הייבוא אשראי... לא קורא עסקאות
+   שאושרו וטרם נקלטו."
+
+   Verified empirically (tools/cycle_boundary_forensics.js, 21.09) that every
+   sheet uses the identical header row and column layout - parseCCStatement
+   already handles any of them correctly on its own. The bug was purely in the
+   CALLER only handing it sheet[0]. So the fix is: parse every sheet that
+   actually looks like a statement (has txns), then merge - no change to
+   parseCCStatement's per-format parsing at all. */
+const CC_PENDING_SHEET_MARKER = /טרם נקלטו/;
+const CC_FOREIGN_SHEET_MARKER = /חו"?ל|מט"?ח/;
+
+function parseCCWorkbook(wb, filename){
+  const perSheet = wb.SheetNames.map(name => {
+    const raw = XLSX.utils.sheet_to_json(wb.Sheets[name], {header:1, defval:null});
+    const r = parseCCStatement(raw, filename);
+    return {name, r};
+  }).filter(x => x.r && x.r.format && x.r.txns.length);
+
+  if(!perSheet.length) return {cardName:"", chargeDate:"", format:null, last4:"", txns:[]};
+
+  const base = perSheet[0].r;
+  const seen = new Set();
+  const txns = [];
+  for(const {name, r} of perSheet){
+    const pending = CC_PENDING_SHEET_MARKER.test(name);
+    const foreignSheet = CC_FOREIGN_SHEET_MARKER.test(name);
+    for(const t of r.txns){
+      // Guard against the same transaction genuinely appearing on two sheets
+      // in one export (not expected, but cheap to rule out rather than assume).
+      const key = `${t.date_raw}|${Number(t.amount).toFixed(2)}|${normalizeImportMerchant(t.merchant)}|${t.sourceCardLast4||""}`;
+      if(seen.has(key)) continue;
+      seen.add(key);
+      txns.push(Object.assign({}, t, {
+        _sourceSheetName: name,
+        _pendingCapture: pending,
+        _foreignSheet: foreignSheet
+      }));
+    }
+  }
+  return Object.assign({}, base, {txns});
+}
+
 function handleCCFile(e){
   const file = e.target.files[0];
   if(!file) return;
@@ -11030,9 +11077,11 @@ function handleCCFile(e){
     }
     try {
       const wb = XLSX.read(ev.target.result, {type:"array"});
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const raw = XLSX.utils.sheet_to_json(ws, {header:1, defval:null});
-      const result = parseCCStatement(raw, file.name);
+      const result = parseCCWorkbook(wb, file.name);
+      if(!result.format){
+        showToast("קראתי את הקובץ אבל לא זיהיתי את מבנה הדף", "error", {duration:9000});
+        return;
+      }
       showCCImportModal(result, file.name);
     } catch(err){
       showToast("לא הצלחתי לקרוא את הקובץ: " + err.message, "error");
@@ -11801,10 +11850,23 @@ function parseCCStatement(rows, filename){
       if(!/^\d{1,2}-\d{1,2}-\d{2,4}$/.test(d)) continue;
       merchant = normalizeStatementCell(r[1]);
       if(!merchant || merchant === "\u05e1\u05da \u05d4\u05db\u05dc") continue;
-      amtCharge = parseFloat(r[5]);
-      if(isNaN(amtCharge) || amtCharge <= 0) continue;
       currOrig = normalizeStatementCell(r[8]||"\u20aa").replace("\u20aa","\u20aa").trim();
       amtOrig = r[7];
+      /* F-21 (22.09): "\u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05e9\u05d0\u05d5\u05e9\u05e8\u05d5 \u05d5\u05d8\u05e8\u05dd \u05e0\u05e7\u05dc\u05d8\u05d5" leaves \u05e1\u05db\u05d5\u05dd \u05d7\u05d9\u05d5\u05d1
+         (col 5) EMPTY - it has not been converted/billed yet, only approved.
+         Verified against the real archived file: every settled row (sheet
+         "\u05d1\u05de\u05d5\u05e2\u05d3 \u05d4\u05d7\u05d9\u05d5\u05d1") has col 5 populated; every pending row (sheet "\u05d8\u05e8\u05dd \u05e0\u05e7\u05dc\u05d8\u05d5")
+         does not. \u05e1\u05db\u05d5\u05dd \u05e2\u05e1\u05e7\u05d4 \u05de\u05e7\u05d5\u05e8\u05d9 (col 7) is populated on both, and on the pending
+         rows seen so far it is already in \u20aa - so it is used ONLY as a
+         fallback, and only when the original currency is ILS: a genuine
+         foreign-currency pending charge should still fail rather than be
+         silently priced in the wrong currency. */
+      const chargeCell = parseFloat(r[5]);
+      const isIls = currOrig === "\u20aa" || currOrig === "\u05e9\u05e7\u05dc" || currOrig === "ILS" || !currOrig;
+      amtCharge = Number.isFinite(chargeCell) && chargeCell > 0
+        ? chargeCell
+        : (isIls ? parseFloat(amtOrig) : NaN);
+      if(isNaN(amtCharge) || amtCharge <= 0) continue;
       notes = normalizeStatementCell(r[10]);
       /* F-20 (21.09): this used to read
              if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
@@ -12294,13 +12356,18 @@ function buildCCImportTable(){
     if(isDup && row._skip === undefined) row._skip = true;
     const checked = !row._skip;
     const dupBadge = isDup ? `<span title="\u05e2\u05e9\u05d5\u05d9\u05d4 \u05dc\u05d4\u05d9\u05d5\u05ea \u05db\u05e4\u05d5\u05dc\u05d4" style="display:inline-block;background:#d4833a;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05db\u05e4\u05d5\u05dc?</span>` : "";
+    // F-21: mark rows the issuer has approved but not yet captured - the bank
+    // may still change the amount or drop the charge before it settles, so the
+    // user should see that this is not a final number, not just get it merged
+    // in silently indistinguishable from a settled transaction.
+    const pendingBadge = row._pendingCapture ? `<span title="\u05d0\u05d5\u05e9\u05e8\u05d4 \u05d0\u05d1\u05dc \u05d8\u05e8\u05dd \u05e0\u05e7\u05dc\u05d8\u05d4 \u05e1\u05d5\u05e4\u05d9\u05ea \u2014 \u05d4\u05e1\u05db\u05d5\u05dd \u05e2\u05dc\u05d5\u05dc \u05dc\u05d4\u05e9\u05ea\u05e0\u05d5\u05ea \u05e2\u05d3 \u05e9\u05d4\u05d7\u05d9\u05d5\u05d1 \u05e0\u05e7\u05dc\u05d8" style="display:inline-block;background:#5a8fd4;color:#fff;font-size:10px;font-weight:800;border-radius:6px;padding:1px 5px;margin-inline-end:4px">\u05d8\u05e8\u05dd \u05e0\u05e7\u05dc\u05d8</span>` : "";
     const isImmediateChecked = String(row.immediate || "").trim() === "\u05db\u05df";
     const isSharedChecked = Boolean(row.sharedExpense);
     return `<div class="summary-row${isDup ? " status-bad" : ""}" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px">
         <input type="checkbox" ${checked?"checked":""} onchange="toggleCCImportRow(${i}, this.checked)" style="width:18px;height:18px;flex-shrink:0">
         <div style="flex:1;min-width:0">
-          ${dupBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
+          ${dupBadge}${pendingBadge}<input type="text" value="${escapeHtmlAttr(row.merchant)}" onchange="updateCCImportField(${i}, 'merchant', this.value)" style="width:100%;padding:7px 10px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:14px;font-weight:700;box-sizing:border-box">
         </div>
         <strong style="font-size:14px;color:var(--accent);white-space:nowrap">${fmt(row.amount)}${amtExtra}</strong>
       </div>
