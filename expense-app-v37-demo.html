@@ -1976,77 +1976,56 @@ body { background:var(--bg); }
   text-shadow:none; justify-content:flex-start;
 }
 .monthly-status-card .hero-cur { color:var(--accent); opacity:1; }
-.hero-balance-label { color:var(--text-2); font-size:15px; }
-/* 22.09.2026 — HERO_CARD_VISUAL_SPEC.md §7 step 1: the approved mockups
-   (refinement-02/option-01, tabs-03/02-budget) show a visual progress ring for
-   "% of budget used", not a text line. renderBudgetOverview already builds an
-   identical ring for the budget tab (Stage 8, 15.09) - this reuses the same
-   SVG technique on the main dashboard hero, lowest-risk item on the spec's
-   recommended order because it copies a working pattern rather than inventing
-   one. Deliberately does NOT touch the organic-blob card shape (spec: "אחרון
-   בכוונה" - biggest, least reversible, saved for last). */
-.hero-budget-progress {
-  display:flex; align-items:center; gap:14px; margin-block:10px 4px;
-}
-.hero-budget-ring { flex-shrink:0; width:60px; height:60px; }
-.hero-budget-progress-text { display:flex; flex-direction:column; gap:2px; }
-.hero-budget-progress-text strong { font-size:14px; color:var(--text); }
-.hero-budget-progress-text span { font-size:12px; color:var(--muted); }
-/* 22.09.2026 — HERO_CARD_VISUAL_SPEC.md §7 step 3, the last and biggest item on
-   the spec's own recommended order ("הכי גדול, הכי לא הפיך... אחרון בכוונה").
-   De-risked from a literal clip-path on the whole interactive card (which
-   would risk clipping content on a variable-height accordion card) to a
-   bounded decorative shape holding only the three short, length-controlled
-   pieces that were already in the always-visible zone: balance, its label,
-   and the budget ring. Nothing else moved - hero-top and hero-details are
-   unchanged, outside the blob, same DOM ids, same JS. The unknown-balance
-   hint stays OUTSIDE the blob on purpose: it is a full sentence of
-   explanatory text for an edge case, and forcing prose into a narrow organic
-   safe-zone was more likely to look broken than the shape was worth.
-   Path is generated (not hand-drawn) via Catmull-Rom-through-varied-radius-
-   points - iterated visually 3 times against a live browser render before
-   being adopted (design/audit/blob-shape-test-v1..v3.png) after a hand-typed
-   first attempt produced a self-crossing shape. Outer/inner are the same
-   generator output scaled ~14% apart, which is why the "frame" is even
-   rather than matching the mockup's varying thickness - an honest
-   approximation, not a traced copy (spec §6: exact mockup pixels were never
-   measured, only observed). */
-.hero-blob-wrap {
+/* 22.09.2026 (v2) — HERO_CARD_VISUAL_SPEC.md §7 step 3. First attempt was a
+   generated SVG blob (Catmull-Rom, wood gradient) - Raz: "אני רוצה שזה יראה
+   מדוייק כמו בתמונות". A vector approximation cannot reproduce real wood grain,
+   lighting falloff or the carved house/stones, so this replaces it with the
+   actual approved photo (assets/hero-blob-wood.png, sourced from
+   refinement-02/option-01.png - see the HTML comment above the markup for
+   exactly how that asset was built). Every position below is a PERCENTAGE
+   measured against that source image's own pixels (sampled with PIL, not
+   eyeballed), so the overlay lines up with the photo at any render width -
+   the container's aspect-ratio is locked to the asset's own 760:492, which is
+   what makes percentage positioning exact instead of approximate. */
+.hero-blob-photo {
   position:relative; width:calc(100% + 48px); margin-inline:-24px;
-  aspect-ratio:420/320; margin-block:10px 6px;
+  aspect-ratio:760/492; margin-block:10px 6px;
 }
-.hero-blob-svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
-.hero-blob-outer { fill:url(#heroBlobWoodGrad); filter:drop-shadow(0 3px 6px rgba(80,60,30,.18)); }
-.hero-blob-inner { fill:var(--surface); }
-/* stop-color set via CSS, not the SVG attribute directly - presentation
-   attributes resolving var() is inconsistent enough across engines that this
-   is the safe way to make the gradient theme-aware. */
-.hero-blob-grad-start { stop-color:var(--wood); }
-.hero-blob-grad-end { stop-color:var(--wood-strong); }
-.hero-blob-content {
-  position:relative; height:100%; box-sizing:border-box;
-  display:flex; flex-direction:column; align-items:center; justify-content:center;
-  text-align:center; padding-inline:90px; gap:2px;
+.hero-blob-photo-img { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.hb-label {
+  position:absolute; left:50.3%; top:15.2%; transform:translateX(-50%);
+  font-size:13px; color:var(--text-2); white-space:nowrap;
 }
-.hero-blob-content .hero-balance { justify-content:center; margin-block:0; }
-/* 22.09: caught live (design/audit/blob-live-zoom.png) - the ring at its
-   normal 60px budget-tab size clipped against the wood boundary at 390px
-   width. Fixed properly by regenerating the blob with gentler curvature at
-   the vertical middle (design/audit/blob-live-zoom-v3shape.png), not by
-   padding alone - padding without a rounder shape just pushed the wrap point
-   around, it didn't remove it. Ring shrunk/tightened for this narrower
-   context regardless; the budget tab's own ring (renderBudgetOverview) is
-   untouched. Stress-tested with a 7-digit negative balance
-   (design/audit/blob-live-stress-negative.png) - still fits on one line. */
-.hero-blob-content .hero-budget-progress { justify-content:center; gap:6px; }
-.hero-blob-content .hero-budget-ring { width:40px; height:40px; }
+.hero-blob-photo .hero-balance.hb-balance {
+  position:absolute; left:50.3%; top:23%; transform:translateX(-50%);
+  color:var(--accent-strong); font-weight:800;
+  font-size:clamp(26px,7vw,40px); letter-spacing:-.04em; white-space:nowrap;
+  margin:0; justify-content:center;
+}
+.hb-stats {
+  position:absolute; left:18%; right:18%; top:43%;
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+}
+.hb-stat { display:flex; flex-direction:column; align-items:center; gap:2px; }
+.hb-stat span { font-size:11px; color:var(--text-2); }
+.hb-stat strong { font-size:15px; color:var(--text); font-variant-numeric:tabular-nums; }
+.hb-divider { width:1px; align-self:stretch; background:var(--border); }
+.hb-bar-track {
+  position:absolute; left:18.3%; width:54.4%; top:65.4%; height:7px;
+  border-radius:999px; background:var(--border-2); overflow:hidden;
+}
+.hb-bar-fill { height:100%; border-radius:999px; background:var(--accent-strong); width:0%; transition:width .3s var(--ease-out); }
+.hb-bar-fill.is-over { background:var(--bad); }
+.hb-bar-caption {
+  position:absolute; left:49.7%; top:71.5%; transform:translateX(-50%);
+  font-size:12px; color:var(--text-2); white-space:nowrap;
+}
 @media (max-width:400px) {
-  /* This breakpoint is the one that actually matters - Raz's iPhone (390px)
-     falls inside it. padding-inline:58px is the exact value verified live
-     against the real shape (blob-live-zoom-v3shape.png / stress-negative.png),
-     not a guess scaled down from the wider default above. */
-  .hero-blob-wrap { width:calc(100% + 32px); margin-inline:-16px; }
-  .hero-blob-content { padding-inline:58px; }
+  /* This is the breakpoint that matters - Raz's iPhone (390px) falls inside
+     it. Percentages don't need a separate override; only the outer bleed
+     margins do, matching the card's own padding at this width. */
+  .hero-blob-photo { width:calc(100% + 32px); margin-inline:-16px; }
+  .hero-blob-photo .hero-balance.hb-balance { font-size:clamp(24px,8vw,34px); }
 }
 .monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
 .hero-month-metrics {
@@ -2439,28 +2418,31 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
             <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
           </div>
-          <div class="hero-blob-wrap">
-            <svg class="hero-blob-svg" viewBox="-25 5 450 270" preserveAspectRatio="none" aria-hidden="true">
-              <defs>
-                <linearGradient id="heroBlobWoodGrad" x1="0" y1="0" x2="1" y2="1">
-                  <stop class="hero-blob-grad-start" offset="0%"/>
-                  <stop class="hero-blob-grad-end" offset="100%"/>
-                </linearGradient>
-              </defs>
-              <path class="hero-blob-outer" d="M 409.1 125 C 404.1 148.7, 371.7 166.7, 349.3 189.5 C 326.9 212.4, 308.6 256.2, 274.8 261.9 C 240.9 267.6, 189.0 233.3, 146.2 223.6 C 103.3 214.0, 42.8 220.3, 17.6 203.9 C -7.6 187.4, -3.6 151.9, -5 125.0 C -6.4 98.1, -18.3 54.5, 9.3 42.5 C 36.9 30.5, 118.6 58.3, 160.7 53.1 C 202.9 47.9, 225.7 12.2, 262.1 11.3 C 298.5 10.4, 354.6 28.6, 379.1 47.6 C 403.6 66.5, 414.1 101.3, 409.1 125 Z"/>
-              <path class="hero-blob-inner" d="M 367.3 125 C 363.3 143.9, 337.3 158.4, 319.4 176.6 C 301.5 194.9, 286.9 230.0, 259.8 234.5 C 232.7 239.1, 191.2 211.6, 156.9 203.9 C 122.6 196.2, 74.2 201.3, 54.1 188.1 C 33.9 175.0, 37.1 146.5, 36 125.0 C 34.9 103.5, 25.3 68.6, 47.4 59.0 C 69.5 49.4, 134.9 71.6, 168.6 67.4 C 202.3 63.3, 220.5 34.8, 249.7 34.0 C 278.8 33.3, 323.7 47.9, 343.3 63.0 C 362.9 78.2, 371.3 106.1, 367.3 125 Z"/>
-            </svg>
-            <div class="hero-blob-content">
-              <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
-                <span class="hero-int">0</span><span class="hero-cur">₪</span>
-              </div>
-              <!-- 18.09 "חושבין מחדש": one number, one basis - opening + this
-                   month's income − this month's expenses − loan principal, all by
-                   SHEET (the month a row is filed under, never a derived charge
-                   month). No separate "cash position right now" question. -->
-              <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
-              <div id="heroBudgetProgress"></div>
+          <!-- 22.09.2026 (v2): replaced the hand-drawn SVG blob with the actual
+               approved photo (refinement-02/option-01.png). Raz: "אני רוצה שזה
+               יראה מדוייק כמו בתמונות" - a vector approximation could not
+               deliver that; the real wood grain/lighting/house-icon/stones can
+               only come from the real image. assets/hero-blob-wood.png is that
+               source image with its dynamic regions (balance, stats, bar, %)
+               erased via a rounded-rect + ellipse mask (kept the true wood
+               frame, house icon and stones as unmodified photo pixels) and its
+               own backdrop (plant, floor) removed via HSV color-keying so it
+               floats on the app's own card background. Overlay positions below
+               are percentages measured directly against that source image
+               (design/audit/opt1_*.png working files), not eyeballed. -->
+          <div class="hero-blob-photo">
+            <img class="hero-blob-photo-img" src="assets/hero-blob-wood.png" alt="" aria-hidden="true">
+            <div class="hb-label">יתרת סוף חודש</div>
+            <div class="hero-balance hb-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
+              <span class="hero-int">0</span><span class="hero-cur">₪</span>
             </div>
+            <div class="hb-stats">
+              <div class="hb-stat"><span>הוצאות</span><strong id="heroBlobExpense">—</strong></div>
+              <div class="hb-divider"></div>
+              <div class="hb-stat"><span>הכנסות</span><strong id="heroBlobIncome">—</strong></div>
+            </div>
+            <div class="hb-bar-track" id="heroBlobBarTrack"><div class="hb-bar-fill" id="heroBlobBarFill"></div></div>
+            <div class="hb-bar-caption" id="heroBlobBarCaption"></div>
           </div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <details class="hero-details" id="heroDetails">
@@ -7881,39 +7863,39 @@ function getBudgetUtilizationForSheet(sheet){
   const pct         = hasBudget ? Math.min(Math.round((totalSpent/totalBudget)*100),100) : 0;
   return {totalBudget, totalSpent, hasBudget, pct, overBudget: hasBudget && (totalBudget-totalSpent) < 0};
 }
-/* HERO_CARD_VISUAL_SPEC.md §7 step 1 (22.09.2026): the approved mockups show
-   this as a donut ring, not the plain text line the dashboard had before.
-   Hidden entirely when no budget is set - same condition renderBudgetOverview
-   already uses, so there is nothing to show a ring FOR. */
+/* HERO_CARD_VISUAL_SPEC.md §7 step 3 (v2, 22.09.2026): matches
+   refinement-02/option-01.png exactly - a horizontal progress BAR under the
+   caption, not the ring step-1 used (the ring matched tabs-03/02-budget,
+   which is the BUDGET TAB's own reference image, not the dashboard's). Raz
+   asked for exact fidelity to the approved pictures, and option-01 is the
+   one explicitly named for this screen (CLAUDE.md, "הנחיית רז" 14.09).
+   When there is no budget, the bar and caption are hidden entirely - same
+   condition renderBudgetOverview already uses elsewhere, so there is nothing
+   to show a bar FOR. */
 function renderHeroBudgetProgress(sheet){
-  const el = document.getElementById("heroBudgetProgress");
-  if(!el) return;
+  const track = document.getElementById("heroBlobBarTrack");
+  const fill = document.getElementById("heroBlobBarFill");
+  const caption = document.getElementById("heroBlobBarCaption");
+  if(!track || !fill || !caption) return;
   const {totalBudget, totalSpent, hasBudget, pct, overBudget} = getBudgetUtilizationForSheet(sheet);
-  if(!hasBudget){ el.innerHTML = ""; return; }
-  const warnLevel = pct >= 85;
-  const ringColor = overBudget ? "var(--bad)" : warnLevel ? "var(--warn)" : "var(--accent)";
-  const circR = 24, circC = 30, circLen = +(2*Math.PI*circR).toFixed(1);
-  const dashFill = +(circLen*pct/100).toFixed(1);
-  const caption = overBudget
-    ? `חריגה של ${fmt(Math.abs(totalBudget-totalSpent))}`
-    : `נשאר ${fmt(totalBudget-totalSpent)} מתוך ${fmt(totalBudget)}`;
-  el.innerHTML = `
-    <div class="hero-budget-progress">
-      <svg class="hero-budget-ring" viewBox="0 0 60 60" aria-hidden="true">
-        <circle cx="${circC}" cy="${circC}" r="${circR}" fill="none"
-          stroke="color-mix(in srgb, var(--accent) 18%, transparent)" stroke-width="7"/>
-        <circle cx="${circC}" cy="${circC}" r="${circR}" fill="none"
-          stroke="${ringColor}" stroke-width="7" stroke-linecap="round"
-          stroke-dasharray="${dashFill} ${circLen}"
-          transform="rotate(-90 ${circC} ${circC})"/>
-        <text x="${circC}" y="${circC+5}" text-anchor="middle"
-          fill="var(--text)" font-size="15" font-weight="800" font-family="Arial,sans-serif">${pct}%</text>
-      </svg>
-      <div class="hero-budget-progress-text">
-        <strong>${pct}% מהתקציב נוצל</strong>
-        <span>${caption}</span>
-      </div>
-    </div>`;
+  track.style.display = hasBudget ? "block" : "none";
+  caption.style.display = hasBudget ? "block" : "none";
+  if(!hasBudget) return;
+  fill.style.width = pct + "%";
+  fill.classList.toggle("is-over", overBudget);
+  caption.textContent = `${pct}% מהתקציב נוצל`;
+}
+/* HERO_CARD_VISUAL_SPEC.md §7 step 3 (v2): option-01 shows הוצאות/הכנסות as a
+   pair inside the blob itself, not only in the "פרטים נוספים" fold. Both
+   still render in the fold too (dashboardExpenseMetric/dashboardIncomeMetric)
+   - kept deliberately, since the fold's 3-column grid also carries חובות,
+   which the blob does not show at all. Same numbers, read from the same
+   renderDashboardHero computation, so there is no second calculation to drift. */
+function renderHeroBlobStats(monthlyIncome, monthlyExpenses){
+  const expEl = document.getElementById("heroBlobExpense");
+  const incEl = document.getElementById("heroBlobIncome");
+  if(expEl) expEl.textContent = fmt(monthlyExpenses);
+  if(incEl) incEl.textContent = fmt(monthlyIncome);
 }
 function renderDashboardHero(){
   const heroEl = document.getElementById("dashboardHero");
@@ -7931,6 +7913,7 @@ function renderDashboardHero(){
   renderHeroBudgetProgress(selectedSheet);
   const monthlyIncome = getIncomeTotal(selectedSheet);
   const monthlyExpenses = getExpenseStats(selectedSheet).total;
+  renderHeroBlobStats(monthlyIncome, monthlyExpenses);
   const monthlyDebt = isDebtTrackingEnabled()
     ? Number(getLoanScheduleEntryForSheet(selectedSheet)?.principal || 0) + Number(getFatherRepaymentTotal(selectedSheet) || 0) // C-8: principal is the real cash impact
     : 0;
