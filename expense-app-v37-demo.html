@@ -1992,6 +1992,48 @@ body { background:var(--bg); }
 .hero-budget-progress-text { display:flex; flex-direction:column; gap:2px; }
 .hero-budget-progress-text strong { font-size:14px; color:var(--text); }
 .hero-budget-progress-text span { font-size:12px; color:var(--muted); }
+/* 22.09.2026 — HERO_CARD_VISUAL_SPEC.md §7 step 3, the last and biggest item on
+   the spec's own recommended order ("הכי גדול, הכי לא הפיך... אחרון בכוונה").
+   De-risked from a literal clip-path on the whole interactive card (which
+   would risk clipping content on a variable-height accordion card) to a
+   bounded decorative shape holding only the three short, length-controlled
+   pieces that were already in the always-visible zone: balance, its label,
+   and the budget ring. Nothing else moved - hero-top and hero-details are
+   unchanged, outside the blob, same DOM ids, same JS. The unknown-balance
+   hint stays OUTSIDE the blob on purpose: it is a full sentence of
+   explanatory text for an edge case, and forcing prose into a narrow organic
+   safe-zone was more likely to look broken than the shape was worth.
+   Path is generated (not hand-drawn) via Catmull-Rom-through-varied-radius-
+   points - iterated visually 3 times against a live browser render before
+   being adopted (design/audit/blob-shape-test-v1..v3.png) after a hand-typed
+   first attempt produced a self-crossing shape. Outer/inner are the same
+   generator output scaled ~14% apart, which is why the "frame" is even
+   rather than matching the mockup's varying thickness - an honest
+   approximation, not a traced copy (spec §6: exact mockup pixels were never
+   measured, only observed). */
+.hero-blob-wrap {
+  position:relative; width:calc(100% + 48px); margin-inline:-24px;
+  aspect-ratio:420/260; margin-block:10px 6px;
+}
+.hero-blob-svg { position:absolute; inset:0; width:100%; height:100%; display:block; }
+.hero-blob-outer { fill:url(#heroBlobWoodGrad); }
+.hero-blob-inner { fill:var(--surface); }
+/* stop-color set via CSS, not the SVG attribute directly - presentation
+   attributes resolving var() is inconsistent enough across engines that this
+   is the safe way to make the gradient theme-aware. */
+.hero-blob-grad-start { stop-color:var(--wood); }
+.hero-blob-grad-end { stop-color:var(--wood-strong); }
+.hero-blob-content {
+  position:relative; height:100%; box-sizing:border-box;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  text-align:center; padding-inline:78px; gap:2px;
+}
+.hero-blob-content .hero-balance { justify-content:center; margin-block:0; }
+.hero-blob-content .hero-budget-progress { justify-content:center; }
+@media (max-width:400px) {
+  .hero-blob-wrap { width:calc(100% + 32px); margin-inline:-16px; }
+  .hero-blob-content { padding-inline:54px; }
+}
 .monthly-status-card .hero-delta { margin-top:9px; background:var(--accent-light); color:var(--accent-strong); }
 .hero-month-metrics {
   display:grid; grid-template-columns:repeat(3,1fr); margin-top:20px;
@@ -2383,15 +2425,29 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
             <span class="hero-label" id="heroLabel">מצב החודש · <span id="heroMonthName">—</span></span>
             <button class="hero-cfg" id="heroCfgBtn" type="button" aria-label="התאם כרטיסיות" onclick="document.getElementById('toggleDashboardPrefsBtn').click()">⚙</button>
           </div>
-          <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
-            <span class="hero-int">0</span><span class="hero-cur">₪</span>
+          <div class="hero-blob-wrap">
+            <svg class="hero-blob-svg" viewBox="-15 0 435 265" preserveAspectRatio="none" aria-hidden="true">
+              <defs>
+                <linearGradient id="heroBlobWoodGrad" x1="0" y1="0" x2="1" y2="1">
+                  <stop class="hero-blob-grad-start" offset="0%"/>
+                  <stop class="hero-blob-grad-end" offset="100%"/>
+                </linearGradient>
+              </defs>
+              <path class="hero-blob-outer" d="M 408.6 107.3 C 407.2 130.1, 364.7 148.8, 346.3 172.1 C 328.0 195.4, 327.9 237.0, 298.3 247.0 C 268.7 256.9, 209.8 237.9, 168.8 231.9 C 127.9 225.9, 73.3 226.7, 52.7 211.1 C 32.2 195.4, 53.1 162.8, 45.5 138.1 C 37.9 113.5, -10.7 74.9, 7.2 63.0 C 25.1 51.0, 115.5 74.7, 153.0 66.7 C 190.5 58.6, 198.6 19.9, 232.2 14.6 C 265.7 9.3, 324.9 19.4, 354.3 34.8 C 383.7 50.3, 409.9 84.4, 408.6 107.3 Z"/>
+              <path class="hero-blob-inner" d="M 375.2 110.1 C 374.1 129.3, 338.4 145.0, 322.9 164.6 C 307.5 184.1, 307.4 219.1, 282.6 227.5 C 257.7 235.8, 208.2 219.8, 173.8 214.8 C 139.4 209.8, 93.5 210.4, 76.3 197.3 C 59.0 184.2, 76.6 156.8, 70.2 136.0 C 63.9 115.3, 23.0 82.9, 38.0 72.9 C 53.1 62.9, 129.0 82.8, 160.5 76.0 C 192.0 69.2, 198.8 36.7, 227.0 32.3 C 255.2 27.8, 304.9 36.3, 329.6 49.3 C 354.3 62.2, 376.3 90.9, 375.2 110.1 Z"/>
+            </svg>
+            <div class="hero-blob-content">
+              <div class="hero-balance" id="heroBalance" data-target="0" role="text" aria-live="polite">
+                <span class="hero-int">0</span><span class="hero-cur">₪</span>
+              </div>
+              <!-- 18.09 "חושבין מחדש": one number, one basis - opening + this
+                   month's income − this month's expenses − loan principal, all by
+                   SHEET (the month a row is filed under, never a derived charge
+                   month). No separate "cash position right now" question. -->
+              <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
+              <div id="heroBudgetProgress"></div>
+            </div>
           </div>
-          <!-- 18.09 "חושבין מחדש": one number, one basis - opening + this
-               month's income − this month's expenses − loan principal, all by
-               SHEET (the month a row is filed under, never a derived charge
-               month). No separate "cash position right now" question. -->
-          <div class="hero-balance-label">יתרת סוף חודש · הכנסות פחות הוצאות</div>
-          <div id="heroBudgetProgress"></div>
           <div class="hero-unknown-hint" id="heroUnknownHint">לא הוגדר עו״ש פתיחה לחודש הזה — אי אפשר לחשב יתרה. הוסיפו את הכרטיסייה ״עו״ש פתיחה״ בהתאמה אישית כדי להזין אותו.</div>
           <details class="hero-details" id="heroDetails">
             <summary>פרטים נוספים<span class="hero-details-due-dot" id="heroDetailsDueDot" hidden aria-label="יש עדכון יתרה שממתין"></span></summary>
