@@ -11806,8 +11806,22 @@ function parseCCStatement(rows, filename){
       currOrig = normalizeStatementCell(r[8]||"\u20aa").replace("\u20aa","\u20aa").trim();
       amtOrig = r[7];
       notes = normalizeStatementCell(r[10]);
-      if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
-      sourceCardLast4 = last4;
+      /* F-20 (21.09): this used to read
+             if(!last4 && r[3]) last4 = normalizeStatementCell(r[3]);
+             sourceCardLast4 = last4;
+         `last4` is a FILE-level variable, so the guard set it from the first
+         row only and every subsequent row then copied that same value. A Max
+         export that mixes two cards - and two of Raz's archived files do,
+         0294 and 8948 interleaved in one sheet - therefore attributed every
+         transaction to whichever card happened to appear first.
+         Column 3 carries the card per row; read it per row. `last4` is still
+         maintained as the file-level value, purely for the "detected" banner. */
+      const rowLast4 = normalizeStatementCell(r[3]);
+      if(!last4 && rowLast4) last4 = rowLast4;
+      sourceCardLast4 = rowLast4 || last4;
+      // Shown next to the row's date so the user can SEE which card it came
+      // from; without it a mixed file looks uniform.
+      sourceCardLabel = sourceCardLast4 ? `כרטיס ${sourceCardLast4}` : "";
       payment = guessPaymentMethodForImport(cardName, sourceCardLast4, cardName, "");
       dateStr = parseDashedStatementDate(d);
       // D-08 \u00a73 / domain-risk-reviewer 2026-09-15 (trap #1): r[9] is in the
@@ -12173,6 +12187,87 @@ function describeImportTargetSheet(row, index){
     return "";
   }
 }
+/* ── F-20: one file, several cards ─────────────────────────────────────────
+   Raz: "הקובץ ייבוא שאני עושה ממקס מכיל 2 כרטיסים, אני רוצה שהייבוא אשראי
+   ידע לקרוא ולסווג כל עסקה לכרטיס הרלוונטי."
+
+   Two of his archived Max exports really do interleave cards 0294 and 8948 in
+   a single sheet (tools/multicard_scan.js). parseCCStatement now reads the
+   card per row, but that only makes the split VISIBLE - the app still has to
+   learn which of its own cards each four-digit number is. Neither of his cards
+   has a last4 configured, so guessPaymentMethodForImport cannot match, and
+   guessing from the file's mashed-together card name would be a coin flip.
+
+   So the mapping is asked once per file, not per row, and then taught to the
+   app: assigning a group also fills in that card's last4 when it is blank, so
+   the next import resolves by itself. */
+function getCCImportCardGroups(){
+  const groups = new Map();
+  (Array.isArray(ccImportRows) ? ccImportRows : []).forEach(row => {
+    const l4 = extractLast4(row && row.sourceCardLast4);
+    if(!l4) return;
+    if(!groups.has(l4)) groups.set(l4, {last4:l4, count:0, sum:0});
+    const g = groups.get(l4);
+    g.count++;
+    g.sum += Number(row.amount || 0);
+  });
+  return [...groups.values()].sort((a,b) => b.count - a.count);
+}
+
+/* The card currently assigned to a group, or "" when its rows disagree. */
+function getCCImportCardMapping(last4){
+  const l4 = extractLast4(last4);
+  const rows = (Array.isArray(ccImportRows) ? ccImportRows : [])
+    .filter(r => extractLast4(r && r.sourceCardLast4) === l4);
+  const distinct = [...new Set(rows.map(r => r.payment || ""))];
+  return distinct.length === 1 ? distinct[0] : "";
+}
+
+function setCCImportCardMapping(last4, methodName){
+  const l4 = extractLast4(last4);
+  if(!l4) return;
+  (Array.isArray(ccImportRows) ? ccImportRows : []).forEach(row => {
+    if(extractLast4(row && row.sourceCardLast4) !== l4) return;
+    row.payment = methodName;
+    row._sourceFingerprint = createImportFingerprint(row);
+  });
+  // Teach the app the number, so next month resolves without being asked.
+  // Only ever fills a BLANK last4 - silently overwriting one the user already
+  // configured would break matching for a card they had set up correctly.
+  if(methodName){
+    const methods = getPaymentMethods();
+    const idx = methods.findIndex(m => m.name === methodName);
+    if(idx >= 0 && !extractLast4(methods[idx].last4)){
+      methods[idx].last4 = l4;
+      savePaymentMethods(methods);
+    }
+  }
+  refreshCCImportDuplicateState();
+  buildCCImportTable();
+}
+
+function renderCCImportCardMap(){
+  const root = document.getElementById("ccImportCardMap");
+  if(!root) return;
+  const groups = getCCImportCardGroups();
+  // A single-card file needs no mapping question - the default-card picker
+  // above already covers it.
+  if(groups.length < 2){ root.style.display = "none"; root.innerHTML = ""; return; }
+  const opts = getImportPaymentOptions(true);
+  const selectStyle = "flex:1;min-width:120px;padding:7px 9px;border-radius:9px;border:1px solid var(--border,var(--line));background:var(--surface,var(--bg));color:var(--text);font-size:12px";
+  root.style.display = "block";
+  root.innerHTML = `
+    <div style="font-weight:800;font-size:13px;color:var(--text);margin-bottom:4px">בקובץ הזה יש ${groups.length} כרטיסים</div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:10px;line-height:1.5">שייך כל אחד לכרטיס באפליקציה — הבחירה חלה על כל השורות שלו. אם לכרטיס באפליקציה אין עדיין 4 ספרות, הן יישמרו אליו כדי שהייבוא הבא יזהה לבד.</div>
+    ${groups.map(g => `
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="font-weight:700;font-size:13px;white-space:nowrap;direction:ltr">•••• ${escapeHtmlAttr(g.last4)}</span>
+        <span style="font-size:11px;color:var(--muted);white-space:nowrap">${g.count} עסקאות · ${fmt(g.sum)}</span>
+        <select onchange="setCCImportCardMapping('${escapeHtmlAttr(g.last4)}', this.value)" style="${selectStyle}">${buildCCImportOptionMarkup(opts, getCCImportCardMapping(g.last4))}</select>
+      </div>`).join("")}
+  `;
+}
+
 function buildCCImportTable(){
   const cats = getCategoryDefinitions().map(c => c.name);
   const categoryOptionDefs = [{value:"", label:"\u05d1\u05d7\u05e8 \u05e7\u05d8\u05d2\u05d5\u05e8\u05d9\u05d4"}]
@@ -12232,6 +12327,7 @@ function buildCCImportTable(){
     </div>`;
   }).join("");
   document.getElementById("ccImportTable").innerHTML = html || `<div class="info-box">\u05d0\u05d9\u05df \u05e2\u05e1\u05e7\u05d0\u05d5\u05ea \u05d1\u05e7\u05d5\u05d1\u05e5 \u05d4\u05d6\u05d4.</div>`;
+  renderCCImportCardMap();
   updateCCImportSummary();
 }
 
@@ -12383,6 +12479,8 @@ function confirmCCImport(){
     <div id="ccImportDetected" style="background:var(--bg);border-radius:12px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--muted);display:none"></div>
     <div id="ccImportDupNote" style="display:none;background:rgba(212,130,50,.15);border:1px solid rgba(212,130,50,.4);border-radius:12px;padding:10px 16px;margin-bottom:12px;font-size:13px;color:var(--text);font-weight:600"></div>
     <div id="ccImportSummary" class="cc-import-summary" aria-live="polite"></div>
+    <!-- F-20: shown only when the file carries more than one card -->
+    <div id="ccImportCardMap" style="display:none;background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:16px"></div>
     <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;align-items:center">
       <div style="flex:1;min-width:160px">
         <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:6px">כרטיס ברירת מחדל לשורות שלא זוהו</div>
