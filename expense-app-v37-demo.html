@@ -1776,7 +1776,7 @@ body{ background:
 @media (max-width:600px){
   .pill-nav{ display:none; }
   .botanic-tabbar{
-    display:grid; grid-template-columns:repeat(5,1fr);
+    display:grid; grid-template-columns:auto repeat(4,1fr) auto;
     position:fixed; inset-inline:0; inset-block-end:0; z-index:60;
     background:color-mix(in srgb, var(--surface) 92%, transparent);
     backdrop-filter:blur(12px);
@@ -1802,7 +1802,19 @@ body{ background:
     background:var(--accent); opacity:.9;
   }
   .btab:active .btab-ico{ transform:scale(.9); transition:transform .1s; }
-  .fab{ inset-block-end:calc(78px + env(safe-area-inset-bottom,0px)) !important; }
+  /* The floating .fab only ever showed on the "expenses" tab (renderTabs:
+     fab.style.display = activeTab === "expenses" ? "grid" : "none"), so the
+     dashboard - where the reference has a permanent add action - never had one
+     at all. .btab-add replaces it everywhere the tabbar is visible; the old
+     floating circle is now redundant on every tab, not just five of six. */
+  .fab{ display:none !important; }
+  .btab-add{
+    background:var(--hero-num); border-radius:16px; color:#fff;
+    padding-block:5px 3px; margin-inline:2px;
+    box-shadow:0 4px 14px rgba(19,70,45,.32);
+  }
+  .btab-add .btab-lbl{ color:#fff; }
+  .btab-add:active{ transform:scale(.96); }
 }
 /* More sheet (reuses bottom-sheet pattern) */
 .more-backdrop{ position:fixed; inset:0; z-index:200; background:rgba(46,42,34,.45);
@@ -3239,21 +3251,32 @@ details[open] > .recovery-summary .recovery-summary-main::before { transform: ro
   </main>
 
   <!-- ── iOS Botanic bottom tab bar (mobile) ───────────────────── -->
+  <!-- 23.09.2026 — round-1 critique, item 6: "ארבעה מתוך חמישה אייקוני הניווט
+       הם צמחים כמעט זהים ב-24px — שיבולת (עוד), שלוש שיבולים (תקציב), נבט
+       (משותף), עלה עם סימן קריאה (הוצאות) — חסרי כל משמעות סמנטית." Verified
+       by reading the actual paths above before touching anything: true, all
+       four were leaf/sprout variants. Replaced with the literal set the
+       reference itself uses (home / list / two people / pie / dots), plus the
+       permanent "+ הוצאה" the reference has and the floating FAB never gave the
+       dashboard tab - fabAddExpense() already existed, just gated to one tab. -->
   <nav class="botanic-tabbar" aria-label="ניווט תחתון" role="tablist">
+    <button class="btab btab-add" type="button" onclick="fabAddExpense()" aria-label="הוצאה חדשה">
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg><span class="btab-lbl">הוצאה</span>
+    </button>
     <button class="btab tab-btn active" data-tab="dashboard" role="tab" aria-selected="true">
-      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d='M9 21h6l-1-7H10z'/><path d='M12 14V8'/><path d='M12 11c0-4 3-6.5 7-7.5-1 4.5-3.5 7-7 9z'/><path d='M12 12c0-4-3-6.5-7-7.5 1 4.5 3.5 7 7 9z'/></svg><span class="btab-lbl">דשבורד</span>
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 4l9 6.5"/><path d="M5.5 9.5V20h13V9.5"/><path d="M9.5 20v-6h5v6"/></svg><span class="btab-lbl">בית</span>
     </button>
     <button class="btab tab-btn" data-tab="expenses" role="tab">
-      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d='M12 4c4 3 6 6 6 10a6 6 0 0 1-12 0c0-4 2-7 6-10z'/><path d='M12 8v9'/></svg><span class="btab-lbl">הוצאות</span>
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M5 6.5h14M5 12h14M5 17.5h9"/></svg><span class="btab-lbl">הוצאות</span>
     </button>
     <button class="btab tab-btn" data-tab="shared" role="tab">
-      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d='M12 21V9'/><path d='M12 12c-1-4-4-5.5-7-6 .5 4 3 6 7 7z'/><path d='M12 11c1-4 4-5.5 7-6-.5 4-3 6-7 7z'/></svg><span class="btab-lbl">משותף</span>
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="8.5" cy="8" r="2.6"/><circle cx="16" cy="9" r="2.2"/><path d="M3.5 19c0-3 2.3-5 5-5s5 2 5 5"/><path d="M13.5 19c.3-2.3 1.9-4 3.9-4 2.2 0 4 1.9 4 4.3"/></svg><span class="btab-lbl">משותף</span>
     </button>
     <button class="btab tab-btn" data-tab="budget" role="tab">
-      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d='M6 21v-5'/><path d='M12 21v-9'/><path d='M18 21v-13'/><path d='M6 16c-1.5-1-2-2.5-1.5-4 1.5.5 2.2 2 1.5 4z'/><path d='M12 12c-1.5-1.5-2-3.5-1.2-5.5 1.7.8 2.4 2.8 1.2 5.5z'/><path d='M18 8c1.5-1.5 2-3.5 1.2-5.5C17.5 3.3 16.8 5.3 18 8z'/></svg><span class="btab-lbl">תקציב</span>
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="8"/><path d="M12 4v8l6 3"/></svg><span class="btab-lbl">תקציב</span>
     </button>
     <button class="btab btab-more" type="button" aria-haspopup="dialog" onclick="openMoreSheet()">
-      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true"><path d='M12 21V6'/><path d='M12 14c-2.5-1-4-3-4-6 2.5.5 4 2.5 4 6z'/><path d='M12 11c2-1 3-2.5 3-5-2 .4-3 2-3 5z'/><path d='M12 17c-2-1-3-2.5-3-5 2 .4 3 2 3 5z'/></svg><span class="btab-lbl">עוד</span>
+      <svg class="btab-ico" viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg><span class="btab-lbl">עוד</span>
     </button>
   </nav>
 
