@@ -8712,6 +8712,23 @@ function renderChart(rows){
   const ctx=document.getElementById("budgetChart");
   const chartBox = ctx?.closest(".chart-box");
   if(chartInstance) chartInstance.destroy();
+  /* 23.09.2026 — round-1 critique, item 7: a single spending category is, by
+     definition, 100% of the pie - Chart.js renders that correctly as a full
+     circle, but a full-width 320px donut with a one-row legend to explain a
+     fact the user already knows ("all my spending is in one category") reads
+     as a chart that has nothing to say. Below two categories there is nothing
+     to compare, so there is nothing a pie/bar/doughnut usefully shows - a plain
+     sentence replaces it instead of an oversized, near-empty chart. */
+  if((type === "pie" || type === "bar") && nonZero.length < 2){
+    if(ctx) ctx.style.display = "none";
+    let note = chartBox && chartBox.querySelector(".bullet-chart");
+    if(!note){ note = document.createElement("div"); note.className = "bullet-chart"; if(chartBox) chartBox.appendChild(note); }
+    if(chartBox){ chartBox.style.height = "auto"; chartBox.style.minHeight = "0"; }
+    note.innerHTML = nonZero.length === 1
+      ? `<div class="info-box">כל ההוצאה החודשית (${fmt(nonZero[0].value)}) נמצאת בקטגוריה אחת — ${escapeHtmlAttr(nonZero[0].label)}. גרף משווה בין קטגוריות מופיע מרגע שיש שתיים.</div>`
+      : `<div class="info-box">אין עדיין הוצאות מסווגות בגיליון הזה להצגה בגרף.</div>`;
+    return;
+  }
   // clean up bullet chart if switching away
   if(ctx) ctx.style.display="block";
   const _oldBullet = chartBox && chartBox.querySelector(".bullet-chart");
